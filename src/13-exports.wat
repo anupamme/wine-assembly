@@ -1599,6 +1599,37 @@
     (global.set $current_thunk_eip (local.get $saved_thunk_eip))
     (local.get $bits))
 
+  ;; Page-index split, process-wide in $SHARED_COUNTERS +40 so every instance
+  ;; created afterwards ($init_thread) agrees with the one that chose it.
+  ;;   0  default: main 512 slots (0x480000), fifteen workers 16 (0x24000)
+  ;;   1  worker-heavy: main 256 (0x240000), fifteen workers 32 (0x48000)
+  ;; Both fit the one $PAGE_INDEX_ARENA (1: 0x240000 + 15*0x48000 = 0x678000).
+  ;; 32 worker slots stay inside a worker's 768KB code partition (16KB chunk
+  ;; per compiled page). Applies the stored mode to this instance's globals.
+  (func $page_index_layout_apply
+    (if (i32.eq (i32.atomic.load offset=40 (global.get $SHARED_COUNTERS)) (i32.const 1))
+      (then
+        (global.set $PAGE_INDEX_MAIN_BYTES (i32.const 0x00240000))
+        (global.set $PAGE_INDEX_STRIDE (i32.const 0x00048000))
+        (global.set $PAGE_INDEX_WORKER_SLOTS (i32.const 32)))
+      (else
+        (global.set $PAGE_INDEX_MAIN_BYTES (i32.const 0x00480000))
+        (global.set $PAGE_INDEX_STRIDE (i32.const 0x00024000))
+        (global.set $PAGE_INDEX_WORKER_SLOTS (i32.const 16)))))
+
+  ;; Host-side opt-in (lib/apps.js `workerHeavyCodeCache`). Call on the first
+  ;; instance before anything is decoded and before any worker is spawned. The
+  ;; calling instance is the main thread here (a CLI or page main never runs
+  ;; $init_thread), so its own slot count is set too; workers and a Worker-
+  ;; hosted main pick the mode up in $init_thread. Returns the mode in force.
+  (func (export "set_page_index_layout") (param $mode i32) (result i32)
+    (i32.atomic.store offset=40 (global.get $SHARED_COUNTERS)
+      (select (i32.const 1) (i32.const 0) (i32.eq (local.get $mode) (i32.const 1))))
+    (call $page_index_layout_apply)
+    (global.set $PAGE_INDEX_SLOTS
+      (i32.div_u (global.get $PAGE_INDEX_MAIN_BYTES) (global.get $PAGE_INDEX_BYTES)))
+    (i32.atomic.load offset=40 (global.get $SHARED_COUNTERS)))
+
   ;; Thread init — called by host after creating worker instance
   (func (export "init_thread") (param $tid i32)
       (param $img_base i32) (param $code_s i32) (param $code_e i32)
@@ -1608,6 +1639,8 @@
     ;; A reused Worker instance must not retain heap-backed queue overflow from
     ;; its previous guest thread. Do this before replacing allocator cursors.
     (call $post_queue_reset)
+    ;; Which page-index split this process chose (set_page_index_layout).
+    (call $page_index_layout_apply)
     ;; The three per-thread arenas are split, not strided: the main thread
     ;; (tid 0) gets a large partition at offset 0 and every worker gets a small
     ;; one after it. A worker compiles the single routine it was spawned for,

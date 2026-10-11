@@ -4758,6 +4758,18 @@ async function main() {
 
   const instance = await WebAssembly.instantiate(wasmModule, imports);
   ctx.exports = instance.exports;
+  // An app whose game loop runs on a worker thread opts into the worker-heavy
+  // page-index split (lib/apps.js `workerHeavyCodeCache`), before anything is
+  // decoded and before any thread instance is created. --worker-heavy-code-cache
+  // forces it for any exe, --no-worker-heavy-code-cache turns the app's off.
+  {
+    const wantHeavy = hasFlag('worker-heavy-code-cache')
+      || (!hasFlag('no-worker-heavy-code-cache') && APP_ENTRY && APP_ENTRY.workerHeavyCodeCache === true);
+    if (wantHeavy && instance.exports.set_page_index_layout) {
+      instance.exports.set_page_index_layout(1);
+      console.log('[cache] worker-heavy page-index layout: main 256 slots, workers 32');
+    }
+  }
   if (D3D_WORKER) {
     const {Worker} = require('worker_threads');
     const {Encoder} = require('../lib/d3d-command-stream');

@@ -2930,6 +2930,14 @@ class WineAssembly {
     if (this.instance.exports.set_process_id) {
       this.instance.exports.set_process_id(this.processId);
     }
+    // `workerHeavyCodeCache: true` in lib/apps.js: the app's game loop runs on
+    // a worker thread, so trade main-thread page-index slots for worker ones
+    // (main 256 / workers 32). Process-wide in shared memory, so it must be set
+    // here, before the first decode and before any guest thread (or a
+    // Worker-hosted main) runs init_thread.
+    if (this.workerHeavyCodeCache && this.instance.exports.set_page_index_layout) {
+      this.instance.exports.set_page_index_layout(1);
+    }
     // Decode-time superop switches, applied before the first decode. These are
     // per-instance mut globals, so a worker thread has to be told separately
     // (see thread-manager.js) or an A/B measures the folded build on one side.

@@ -1239,7 +1239,8 @@
   ;;                                     +16 last QPC count, i64,
   ;;                                     +24 gamma ramp generation,
   ;;                                     +28 gamma ramp guest address,
-  ;;                                     +32 LOCK atomic mode, +36 its mutex)
+  ;;                                     +32 LOCK atomic mode, +36 its mutex,
+  ;;                                     +40 page-index layout mode)
   ;; 0x07F0CE60 16B      GDI_TABLE_MARKS (high-water slot counts, 3 used)
   ;; The three TV_* tables below were at 0x07F0C900/0x07F0C904/0x07F0CA00 on
   ;; main. They move here on the merge into the threads branch, which grew
@@ -1389,8 +1390,14 @@
   ;; $PAGE_INDEX in $init_thread, and the defaults here are the main thread's.
   (global $PAGE_INDEX_ARENA i32 (region.addr $PAGE_INDEX_ARENA 0))
   (global $PAGE_INDEX_ARENA_SIZE i32 (region.size $PAGE_INDEX_ARENA))
-  (global $PAGE_INDEX_MAIN_BYTES i32 (i32.const 0x00480000))
-  (global $PAGE_INDEX_STRIDE i32 (i32.const 0x00024000))
+  ;; Mutable for one reason: an app whose game loop runs on a WORKER can opt
+  ;; into the worker-heavy split instead (main 256 slots, each worker 32),
+  ;; same arena, via set_page_index_layout before anything is decoded. Hype
+  ;; runs its whole game on tid1 and with 16 slots recompiled 4.4M pages in
+  ;; 3000 gameplay batches (docs/re-notes/hype.md). The default stays what
+  ;; Warcraft III's ~450-page main thread needs. $page_index_layout_apply.
+  (global $PAGE_INDEX_MAIN_BYTES (mut i32) (i32.const 0x00480000))
+  (global $PAGE_INDEX_STRIDE (mut i32) (i32.const 0x00024000))
   (global $PAGE_INDEX_BYTES  i32 (i32.const 0x2400))
   ;; Block-executor round 13 (docs/block-executor-design.md section 22). The
   ;; threaded stream is not self-describing: an op is (handler, operand) plus
@@ -1414,7 +1421,7 @@
   (global $PAGE_OPBITS_END   i32 (i32.const 0x2200))
   (global $PAGE_OPBITS_BYTES i32 (i32.const 0x200))
   (global $PAGE_INDEX_SLOTS  (mut i32) (i32.const 512))
-  (global $PAGE_INDEX_WORKER_SLOTS i32 (i32.const 16))
+  (global $PAGE_INDEX_WORKER_SLOTS (mut i32) (i32.const 16))
   (global $PAGE_INDEX_NONE   i32 (i32.const 0xFFFF))
   ;; Bit 14 marks an interior byte. "Is this offset an entry point" is therefore
   ;; the single test `(entry & PAGE_INDEX_COVER) == 0`, which catches 0xFFFF too.
