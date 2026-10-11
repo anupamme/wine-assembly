@@ -8631,3 +8631,30 @@ WorkerThread 40.6%, main 2.4%; run `20261011T0030Z-bw2-render-park-ab-boat`).
   That window ran about 12 draws per present; the heavier ~670-draw world frames
   are what the next run measures.
 - **Local microbench**, 300 draws through drawAsync: 7.3-7.5 -> 4.8-5.2 ms/draw.
+
+## 2026-10-11: route to free play, and the camera does not move
+
+Two live runs on software D3D9, CLI probe with live input
+(`black-white-software-probe.js --skip-intro --control-stdin`):
+- `scratch/runs/20261011T0551Z-bw2-gold-scroll-camera-boat` on 514b36f38;
+- `20261011T1310Z-bw2-speech-camera-boat` on c8a2f25c3.
+
+**Route.**
+- **Boot inputs at 450 s:** `relmousemove:-2000:-2000`, `relmousemove:250:277`, `di-mousedown:1`/`di-mouseup:1`, then `keydown:13`.
+- **The in-world Land3 intro cannot be skipped.** Escape held 3 s (window key plus `di-keydown:27`) and a left click at ~1600 s change nothing.
+- **Intro end:** it runs to ~4200-4560 s, then the objective "Click on the Gold Scroll" appears.
+- **Moving the hand:** `relmousemove` moves it at about 0.65 capture px per unit in x and 1:1 in y. From the boot position, `relmousemove:205:-77` puts it on the scroll at about (405,225).
+- **After the click:** `di-mousedown:1`/`di-mouseup:1` consumes the scroll and a scripted camera pans over the field and storehouse.
+- **By ~5400 s:** "Re-establish this village", a food counter, and the good advisor's Field tooltip.
+- **By ~6300 s:** the advisor is gone and villagers walk through the village. This is free play.
+- The game image fills only the top-left 520x390 of the 640x480 capture.
+
+**The camera never moves.** These inputs leave the land pixel-identical while the hand cursor tracks the mouse, both during the Field tutorial and after it:
+- Left (37) held 5-6 s;
+- W (87) held 5 s;
+- held-left land drags (`di-mousedown:1`, three `relmousemove` steps, `di-mouseup:1`).
+
+Not yet tried:
+- right or middle button drags, or both buttons together;
+- the mouse wheel;
+- what the camera code actually polls. Trace `GetDeviceState`/`GetDeviceData` during a drag, and compare with what `lib/renderer-input.js` delivers for `di-mouse*` and `relmousemove`.
