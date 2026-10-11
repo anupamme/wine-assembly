@@ -75,3 +75,13 @@ Do not classify that modal as an emulator regression. With
 `--gl-renderer=software`, the bounded run continues to 144166 batches/30s,
 but the final GDI canvas capture is gray. Next inspect the GL/DirectDraw
 surface or a real browser route; no menu/gameplay qualification yet.
+
+Run20261011T1702Z-oni-surfaces removes png-canvas and dumps the DX surfaces.
+The selected GL target26 and backbuffer27 are both gray640x480, so this is
+not merely the GDI capture selecting the wrong surface. Census:27536triangles,
+zero eye-plane drops/culls,191presents,13texture uploads,zero unsupported
+textures and a clear WAT mirror trust latch. Textured asset surfaces exist.
+Guest startup logs reach "launch the out-of-game UI". Next compare real
+WebGL and inspect GL state/draw ordering if gray persists. This software run
+uses base3cf809538 plus root fixes, not main's later projective-vertex change;
+do not attribute the result to current-main WebGL without testing it.

@@ -209,3 +209,15 @@ black transition canvas; planned movement5710 never runs. Retain this as a
 menu/transition result only. Next longer bounded continuation with input after
 the level is visible, then no-input control; do not reuse attract captures as
 proof of gameplay. All commands/logs are in the same run folder.
+
+## Actual New Game movement (17:04Z)
+
+The same route with a100s wall guard reaches the actual New Game level.
+At6500 the player stands above water with weapon/100health visible. Up held
+from6510 through the6614 endpoint moves underwater. A separate no-input
+control with identical route and exact6614-batch endpoint remains above water
+at the starting position. Both reviewed; run20261011T1701Z-turok-long contains
+commands, logs and before/input/control screenshots. This establishes CLI
+player movement, unlike the earlier attract captures. The key release6700
+was not reached; no claim of release behavior. Next register the extraction/
+data-directory layout and verify the browser route; FPS/audio/mobile unknown.
