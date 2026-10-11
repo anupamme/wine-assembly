@@ -706,6 +706,11 @@ for (const mode of ['fit', 'zoom']) {
   for (const id of ['bricks', 'cwordzap']) {
     assert.strictEqual(apps[id].singleAppMaximize, false, `${id} is not auto-maximized`);
   }
+  // Taipei draws its title splash with a DC outside WM_PAINT; the phone
+  // maximize repainted over it and phones showed an empty green window until
+  // the first tap (TAIPEI-PHONE-EMPTY, runs/20261011T1600Z-taipei-phone-w6).
+  assert.strictEqual(apps.taipei.singleAppMaximize, false,
+    'taipei is not auto-maximized: the maximize repaint erased its splash');
 }
 
 // MAGNIFICATION: `mobileZoom` shrinks the guest's desktop so the single-app
