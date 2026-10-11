@@ -56,3 +56,22 @@ Two causes, neither in the music code the console log pointed at:
 - Main is busy in `physics.dll` and in an exe name-list walk (`0x45ed52`,
   a strcmp over a linked list) once in-world: ~20M API calls per 112k
   batches. FPS and the browser are separate.
+
+## "Sys_GetGameAPI without Sys_UnloadingGame" (claude:w4, 2026-10-11)
+
+User report from the dashboard: picking a difficulty showed this error box,
+then the game exited. The message is daikatana.exe `0x4781f0`, the PHYSICS.DLL
+loader. It keeps the module handle at `[0xa72814]` and the game API at
+`[0x9dfc58]`. Unload (`0x470f60` -> `0x478090`) runs only while the API is
+set. So the fatal is always the *second* attempt, after one that loaded the
+DLL but raised a drop error before storing the API.
+
+That first error was `Game Error: Unable to load dll: ./dlls\world.dll` (in
+`dk_console.log`). physics.dll's `GetGameAPI` (`0x1000fa40`) scans
+`./dlls\*.dll` and LoadLibrarys world, gce and weapons. world.dll imports
+StackWalk/SymInitialize/... from `imagehlp.dll`, and the vendor-DLL rule from
+058a8d830 refused it as missing. Fixed in a392fbf6c (Windows system DLLs are
+exempt). The menu route now works: Select Difficulty is up by batch ~29000
+(`--tick-ms-per-batch=5`), clicking Samurai at 295,350 is in e1m1a by ~99000,
+and the browser in Threads mode is in-world too.
+Evidence: `scratch/runs/20261011T1030Z-daikatana-getgameapi`.
