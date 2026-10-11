@@ -385,6 +385,41 @@
 
   ;; The same rounding by an explicit RC value, for callers that round by a
   ;; mode of their own without touching the control word (WIN87EM BX=6).
+  ;; FSCALE: $v * 2^trunc($n), exactly, like ldexp. The factor is applied in
+  ;; representable steps (2^1023 / 2^-1022) because 2^n on its own leaves f64
+  ;; for |n| > 1023 while x87's 80-bit exponent does not: the MSVC CRT's
+  ;; underflow fix-up scales a zero result by 2^1536 and back, and one
+  ;; 2^1536 = +Inf factor turned every CRT function that returns 0.0 into
+  ;; 0 * Inf = NaN (MDK2's camera). Zero, infinity and NaN scale to themselves,
+  ;; except the x87's invalid cases 0 * 2^+Inf and Inf * 2^-Inf (NaN).
+  (func $fpu_scale (param $v f64) (param $n f64) (result f64)
+    (local $k i32)
+    (if (f64.ne (local.get $n) (local.get $n)) (then (return (local.get $n))))
+    (if (i32.or (f64.eq (local.get $v) (f64.const 0))
+                (i32.or (f64.ne (local.get $v) (local.get $v))
+                        (f64.eq (f64.abs (local.get $v)) (f64.const inf))))
+      (then
+        (if (i32.or
+              (i32.and (f64.eq (local.get $v) (f64.const 0)) (f64.eq (local.get $n) (f64.const inf)))
+              (i32.and (f64.eq (f64.abs (local.get $v)) (f64.const inf)) (f64.eq (local.get $n) (f64.const -inf))))
+          (then (call $fpu_set_exc (i32.const 0x01)) (return (f64.const nan))))
+        (return (local.get $v))))
+    ;; A finite nonzero f64 reaches 0 or Inf well inside +-4200 steps.
+    (local.set $k (i32.trunc_sat_f64_s
+      (f64.min (f64.max (f64.trunc (local.get $n)) (f64.const -4200)) (f64.const 4200))))
+    (block $up_done (loop $up
+      (br_if $up_done (i32.le_s (local.get $k) (i32.const 1023)))
+      (local.set $v (f64.mul (local.get $v) (f64.reinterpret_i64 (i64.const 0x7FE0000000000000))))
+      (local.set $k (i32.sub (local.get $k) (i32.const 1023)))
+      (br $up)))
+    (block $down_done (loop $down
+      (br_if $down_done (i32.ge_s (local.get $k) (i32.const -1022)))
+      (local.set $v (f64.mul (local.get $v) (f64.reinterpret_i64 (i64.const 0x0010000000000000))))
+      (local.set $k (i32.add (local.get $k) (i32.const 1022)))
+      (br $down)))
+    (f64.mul (local.get $v)
+      (f64.reinterpret_i64 (i64.shl (i64.extend_i32_u (i32.add (local.get $k) (i32.const 1023))) (i64.const 52)))))
+
   (func $fpu_round_by (param $v f64) (param $rc i32) (result f64)
     (if (result f64) (i32.eq (local.get $rc) (i32.const 1)) (then (f64.floor (local.get $v)))
     (else (if (result f64) (i32.eq (local.get $rc) (i32.const 2)) (then (f64.ceil (local.get $v)))
@@ -934,7 +969,7 @@
                 (drop (call $fpu_pop)) (return)))
             (if (i32.eq (local.get $rm) (i32.const 5))
               (then ;; FSCALE: ST(0) = ST(0) * 2^trunc(ST(1))
-                (call $fpu_set (i32.const 0) (f64.mul (local.get $st0) (call $host_math_pow2 (f64.trunc (call $fpu_get (i32.const 1)))))) (return)))
+                (call $fpu_set (i32.const 0) (call $fpu_scale (local.get $st0) (call $fpu_get (i32.const 1)))) (return)))
             (call $fpu_crash_op (local.get $group) (local.get $reg) (local.get $rm)) (return)))
         (call $fpu_crash_op (local.get $group) (local.get $reg) (local.get $rm)) (return)))
     ;; Group 2 (DA): FCMOV / FUCOMPP

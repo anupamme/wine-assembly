@@ -3,7 +3,7 @@
 **Status: registered (`mdk2_demo`), playable in the browser.** Projective
 vertices work since 9be0a0efb. Menu, New Game, the intro and the tutorial
 level all render and take input (Chromium, real WebGL), but the world is
-often black from a guest NaN (see Black world). The "attract demo ignores
+black after the intro until the FSCALE fix (see Black world). The "attract demo ignores
 input" puzzle was only the menu's idle timer (see Menu). The fetch
 needs a real `unshield` (IS6 cabs; `tools/is5-extract.js` refuses them).
 
@@ -119,67 +119,44 @@ by the arrow... face the exit". Unskipped, the Jim Dandy cutscene is still
 running at t260. Evidence:
 `scratch/runs/20261011T1715Z-mdk2_demo-browser-gameplay-w5`.
 
-## Black world (NaN camera)
+## Black world (NaN camera) -- FIXED: our FSCALE
 
-The world sometimes renders black with the HUD and Doc's prompts drawn: in
-the CLI tutorial, in the browser after most Esc-skip routes (always when the
-skips run into the "Aboard the Alien Minecrawler" card), and in WebKit
-software GL. It is **a guest NaN, not a renderer fault**: `--trace-gl` on a
-black frame shows the 3D pass's sprite quads arriving with `xyz=NaN` and no
-level geometry submitted at all (a NaN camera fails every visibility test),
-while the ortho HUD is finite; identical under WebGL and the WAT rasterizer.
+**Root cause (fixed in the commit that added `test/test-x87-fscale.js`):** our
+FSCALE computed `ST0 * pow2(trunc(ST1))` as one f64 factor. The MSVC CRT's
+transcendental exit (`_check_range_exit`, `0x484b29`) sends every result
+whose double exponent is 0 -- including an exact `0.0` -- through an
+underflow fix-up at `0x484b7a`: `fld qword [1536.0] ; fxch ; fscale`.
+2^1536 is +Inf in f64 (x87's 80-bit exponent holds it), so `0 * Inf = NaN`:
+every CRT math call that legitimately returned 0.0 handed the game a NaN. Four
+such calls during the intro produced the NaNs at an object transform
+(`0x084da14c/150`), which spread through the matrix code
+(`0x46d520/0x46d756/0x46d8b0`) into the camera; with a NaN camera the 3D pass
+culls all level geometry and only the ortho HUD draws. FSCALE is now an exact
+ldexp (`$fpu_scale`, 06-fpu.wat): zero/Inf/NaN scale to themselves (x87's
+invalid `0*2^+Inf`/`Inf*2^-Inf` give NaN) and the exponent is applied in
+representable steps. After it: no IE flood, the tutorial room renders in the
+CLI route at b6000/b6400 (evidence
+`scratch/runs/20261011T2110Z-mdk2_demo-fscale-fix-w5`).
 
-Where the NaN comes from (CLI route, boat bx_td2jejvz, 2026-10-11; evidence
+How it was found (tools worth reusing; boat-only hooks in
 `scratch/runs/20261011T2000Z-mdk2_demo-nan-source-w5`):
-
-- It is **file data**: the ARGB colour **0xffc9a893** at offset 0x154 of
-  `data\base.zip:Ricochet.mod` (the bullet-ricochet particle model; the
-  record named `RICOCHET_EMIT` starts at 0xe0). The worker thread T1 (the
-  `_beginthread(0x451f30)` file worker) copies the decompressed bytes into a
-  heap buffer with `rep movsd` at `0x457765`.
-- The archives are PKWARE DCL "implode" (zip method 10, flags 0), which the
-  game explodes itself. A JS port of zlib's `contrib/blast`
-  (`scratch/wip/mdk2-dcl-explode-zipblast-w5.js`) explodes all 856 entries
-  of base/local/scripts.zip with 0 failures, and `Ricochet.mod` holds the
-  same bytes the emulator produced: **the guest's decompression is correct.**
-- **That NaN is the game's own and harmless (corrected 2026-10-11 20:30Z).**
-  The node-array init at `0x45eefe..0x45ef74` copies `src[edi+8]` raw into
-  each 40-byte node's weight `+0x14` for `count = word header[+8]` (7)
-  32-byte records at `src = [ebp+8]`. Measured per model (`--count=0x45ec66`
-  + a per-hit struct log): Ricochet's struct has `[eax] = file base` and
-  `[eax+8] = base + 0x180`, the second entry of the file's own offset table
-  at `+0x20` (0xe0, 0x180, 0x280, ...) -- so the pointer is what the format
-  says, not our heap/copy/file offset (an earlier note here guessed 0x14c; that
-  was wrong). Record 0 at 0x180 is a colour record (`0, -1, 0xffc9a893,
-  0xffc8a794, ...`), its +8 at file 0x188 is a packed colour, and node 0's
-  weight becomes that NaN. Right after the loop the game overwrites node 0's
-  weight with 1.0 (`mov [ecx+0x14], 0x3f800000` at `0x45ef8e`); the one
-  NaN load (`0x45f880` -> `fld [ecx+0x14]; fcomp` at `0x45f97a`, main
-  thread) only compares and branches. Real hardware does exactly the same.
-- So the camera NaN has another source. Lead: the C-runtime math-error paths
-  (`0x483929` / `0x484b7a`) that raise right after -- a libm function
-  (acos/asin/log/pow) getting an out-of-domain argument, which on our x87 can
-  differ from hardware (we ignore precision control). Next: break on the
-  math-error handler and log the function and its argument.
-- Ruled out: plain FADD/FSUB/FMUL/FDIV making it (trace-only "NaN made"
-  check, `scratch/wip/fpu-nan-made-trace-w5.patch`, 0 hits); the uop tier
-  and x87 island predecode (both off: still NaN); SSE/3DNow (CPUID exposes no
-  extended leaves, SSE off) and MMX (0 retired); a corrupted constant
-  (`[0x48c228]` stays 0.0); our decompression, heap and model pointers.
-- The frame meter at `0x401f28` divides 1000 by an unset frame delta once at
-  startup (ZE, inf in a 32-slot ring). Real hardware does the same.
+- `--trace-gl` on a black frame: world sprites `xyz=NaN`, no geometry.
+- `--trace-fpu` counts the IE flood; a boat-only hook logging the guest
+  address + thread of every NaN x87 m32 load found the first NaN floats and,
+  in order before them, the four CRT math-error IEs (`0x484b7a`).
+- A red herring on the way: `Ricochet.mod`'s colour record (`0xffc9a893`)
+  is copied into node 0's weight by the node init at `0x45eefe` and
+  overwritten with 1.0 at `0x45ef8e`; harmless, same on hardware.
+- Also checked and not the cause: the initial x87 control word (ours 0x037F,
+  Windows 0x027F; the CRT exit compares the saved CW with 0x27F, but switching
+  did not change the frame), SSE/3DNow/MMX, decompression (JS blast port,
+  `scratch/wip/mdk2-dcl-explode-zipblast-w5.js`, 856/856 entries).
 - Tooling gotchas: `--trace-at` halts each batch at its first hit, so those
-  runs fall behind and never reach the NaN frame. Plain `--watch` (chaining
-  off) shifts allocation addresses, and neither watch mode sees a value that
-  is written and read inside one fall-through chain (no desk trip): log the
-  load's address instead (boat-only `ldtrace.js`/`ldtid.js` in the
-  evidence folder) and scan memory for the bits (`scanhook.js`).
-  `$current_thread_id` is 1 on the main thread.
+  runs fall behind; plain `--watch` shifts allocation addresses, and neither
+  watch mode sees a value written and read inside one fall-through chain.
 
 ## Open
 
-- Find the camera NaN's real source: the C-runtime math-error paths
-  (`0x483929`/`0x484b7a`) -- which libm function, which argument (see Black world).
 - Jump: the binding is the game's own (Mouse B2) and the button is mapped;
   not yet seen in lit play, because the reliable route now lands in the black
   world.
