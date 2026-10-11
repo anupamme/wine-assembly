@@ -7,6 +7,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { createReader, safeFile } = require('./readers');
+const { references } = require('./check-run-evidence');
 
 const {inventory,readyApp,fixtureSummary} = require('./corpus-inventory');
 const {classifyCandidate} = require('./corpus-categories');
@@ -18,7 +19,7 @@ const REVIEWED_SCENES = new Map([
 
 
 function classifyRun(run, raw, logicalEvidenceValid=false) {
-  const declared = new Set([raw.screenshot, ...(raw.screenshots || [])].filter(v => typeof v === 'string'));
+  const declared = new Set([raw.screenshot, ...(Array.isArray(raw.screenshots) ? raw.screenshots : [])].filter(v => typeof v === 'string'));
   const present = run.screenshots.filter(s => declared.has(s.name)).map(s => `${run.key}/${s.name}`);
   const reviewed = run.verification === 'reviewed';
   const pinned = REVIEWED_SCENES.get(run.id);
@@ -67,7 +68,7 @@ async function coverage(root, options={}) {
   const sceneReviews=await reviewScenes(root,options.sceneReviews);
   const runData = await Promise.all(snapshot.runs.map(async run => {
     const raw = await readJson(root, `${run.key}/result.json`);
-    const declared = [...new Set([raw.screenshot, ...(raw.screenshots || []), ...(raw.artifacts || []), ...(raw.diagrams || [])].filter(v=>typeof v==='string'))];
+    const declared = [...new Set(references(raw).map(ref => ref.value))];
     const missingArtifacts = [];
     for(const name of declared) if(!await safeFile(path.join(root,run.key),name)) missingArtifacts.push(`${run.key}/${name}`);
     let logicalEvidenceValid=false;

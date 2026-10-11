@@ -7,6 +7,19 @@ const os=require('node:os');
 const path=require('node:path');
 const crypto=require('node:crypto');
 
+test('object-shaped historical artifacts retain missing paths without aborting coverage',async t=>{
+  const root=await fs.mkdtemp(path.join(os.tmpdir(),'coverage-artifact-shape-'));
+  t.after(()=>fs.rm(root,{recursive:true,force:true}));
+  const put=async(p,data)=>{await fs.mkdir(path.dirname(path.join(root,p)),{recursive:true});await fs.writeFile(path.join(root,p),data);};
+  await put('test/candidate-corpus/manifest.json',JSON.stringify({candidates:[{id:'demo',executables:[]}]}));
+  await put('lib/apps.js','module.exports={APPS:{}};');
+  await put('scratch/runs/legacy/result.json',JSON.stringify({candidateId:'demo',startedAt:'2026-10-11T00:00:00Z',outcome:'unknown',screenshots:{old:'missing.png'},artifacts:{trace:'missing.log',metadata:{label:'not a filename',path:'present.txt'}}}));
+  await put('scratch/runs/legacy/present.txt','retained evidence');
+  const result=await coverage(root);
+  assert.deepEqual(result.entries[0].missingArtifacts.sort(),['scratch/runs/legacy/missing.log','scratch/runs/legacy/missing.png']);
+  assert.equal(result.entries[0].screenshotStatus,'missing');
+});
+
 test('union preserves registry-only titles, maps exact executable aliases and retains missing declared paths',()=>{
   const rows=inventory({candidates:[{id:'game-demo',name:'Game',kind:'installer',executables:['game.exe']} ]},
     {installed:{exe:'binaries/candidates/game-demo/game.exe',files:[{url:'binaries/candidates/game-demo/data.bin'}]},
