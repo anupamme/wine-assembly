@@ -769,6 +769,41 @@
       }
     },
     {
+      "id": "requiem-demo",
+      "name": "Requiem: Avenging Angel Demo",
+      "kind": "game",
+      "version": "1999 Cyclone Studios / 3DO PC demo (InstallShield 5 self-extractor, one 'Critical Files' group over data1..data5.cab; ReqDemo_D3D/_3Dfx/_SW.exe renderers)",
+      "executables": [
+        "installed/requiem/ReqDemo_D3D.exe"
+      ],
+      "sourcePage": "https://archive.org/details/RequiemAvengingAngel",
+      "license": "proprietary 3DO demo: no redistribution grant, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/RequiemAvengingAngel/reqdemo.exe",
+          "sha1": "c39e826665850f038fa8dec8961cb0a5b3eb9653",
+          "type": "archive",
+          "into": "sfx"
+        }
+      ],
+      "postExtract": [
+        { "type": "unshield", "cab": "sfx/data1.cab", "into": "cab", "group": "Critical Files" },
+        { "type": "copyTree", "from": "cab/Critical_Files", "into": "installed/requiem" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/requiem/ReqDemo_D3D.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "evolva-demo",
       "name": "Evolva Demo",
       "kind": "game",

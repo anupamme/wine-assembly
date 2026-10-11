@@ -121,6 +121,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Trespasser demo (DreamWorks Interactive, Direct3D; msvcirt, reserved-page commits, menu-to-level route) | [trespasser-demo.md](trespasser-demo.md) |
 | Battlezone demo (Activision, Direct3D; vendor DLLs, sub-1 MB heap fragmentation, INI .trn eager, keypad bindings) | [battlezone-demo.md](battlezone-demo.md) |
 | Evolva demo (Direct3D 7; IS5 cab groups, ImageLoader COM self-registration, HKLM XxxDir paths, SearchPath lists, DirectInput COM, vertex-fog specular) | [evolva-demo.md](evolva-demo.md) |
+| Requiem: Avenging Angel demo (Direct3D; IS5 files split across 5 volumes, Enter = console, readme keymap) | [requiem-demo.md](requiem-demo.md) |
 | Kingpin Demo (Quake II engine GL, loopback timeouts during a slow level load) | [kingpin-demo.md](kingpin-demo.md) |
 | Hexen II Demo (GL build vs bundled 3Dfx MiniGL, WinDirect software build, slow meshing) | [hexen2-demo.md](hexen2-demo.md) |
 | SiN Demo (Quake II engine GL, long scripted intro before control) | [sin-demo.md](sin-demo.md) |
