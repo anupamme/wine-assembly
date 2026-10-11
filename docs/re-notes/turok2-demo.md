@@ -341,3 +341,19 @@ FindResourceA(0x01370000,102,RT_DIALOG), then supplies nonzero template
 Direct3D Properties dialog with Threads still enabled. No guest file/settings
 patch or cooperative fallback. Next ordinary Properties OK, then Single
 Player/New Game and player movement; no browser gameplay qualification yet.
+
+## Threads browser player control verified
+
+Run20261011T1828Z-turok-level-wait, actual start18:28:27Z, uses the
+same0d8387d8 module plus worker filename fix923139b5b, Chromium152,
+Threads on and lazy loading. Ordinary clicks accept Properties and enter
+Single Player. Wait85s, hold Up160ms to interrupt attract, Down160ms selects
+Start Game, then Enter160ms twice selects New Game. Wait150s for the
+opening cinematic; the player starts above water with weapon and health100.
+Holding Up1800ms then releasing visibly moves into the water. Both gameplay
+captures reviewed. This is browser player control, not the attract demo.
+
+Earlier runs1817Z/1825Z are retained as menu/cinematic evidence only;
+45s after New Game was insufficient. FPS, audio and mobile controls remain
+unverified. Missing test/binaries/tlbs/stdole2.tlb did not block this route.
+Main integration is still pending; no public deployment or release approval.
