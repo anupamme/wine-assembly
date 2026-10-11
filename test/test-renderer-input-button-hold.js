@@ -160,6 +160,65 @@ const drainTimer = () => { const t = timers.shift(); if (t) t.fn(); return t; };
   check('negative host floor: the hold is off for that host', rel && rel.msg === 0x0202);
 }
 
+{
+  // A press that arrives with the move that brought the pointer onto a new
+  // spot waits for the guest to have had a frame with the move. Disciples II
+  // arms a menu button from hover, worked out once a frame from where the
+  // pointer is; a tap (move + press + release together) drew the button
+  // pressed and did nothing, so every phone menu needed two taps.
+  const at = (msg, x, y) => ({ msg, wParam: msg === 0x0201 ? 1 : 0, lParam: (y << 16) | x, hwnd: 0x10001, mouseX: x, mouseY: y });
+  const r = renderer();
+  timers.length = 0;
+  r.inputQueue.push(at(0x0200, 630, 36), at(0x0201, 630, 36), at(0x0202, 630, 36));
+  const m = r.takeInput(null);
+  check('tap: the move onto the button is delivered first', m && m.msg === 0x0200);
+  check('tap: the press waits: the pump that took the move ends', r.takeInput(null) === null);
+  check('tap: press and release keep their order behind it', r.inputQueue.length === 2 && r.inputQueue[0].msg === 0x0201);
+  const t = drainTimer();
+  check('tap: a wake is scheduled for the held press', !!t && t.ms > 0 && t.ms <= 30, t ? `${t.ms}ms` : 'none');
+  check('tap: still held before the floor', r.takeInput(null) === null);
+  drainTimer();
+  fakeNow += 30;
+  const p = r.takeInput(null);
+  check('tap: after an empty poll and the floor the press is delivered', p && p.msg === 0x0201);
+  check('tap: and the release is then held as before', r.takeInput(null) === null);
+  drainTimer();
+  fakeNow += 30;
+  const u = r.takeInput(null);
+  check('tap: then the release', u && u.msg === 0x0202);
+
+  // The pointer already resting on the button: no delay.
+  const r2 = renderer();
+  timers.length = 0;
+  r2.inputQueue.push(at(0x0200, 100, 100));
+  r2.takeInput(null);
+  check('rest: an empty poll after the move', r2.takeInput(null) === null);
+  fakeNow += 30;
+  r2.inputQueue.push(at(0x0201, 100, 100));
+  const p2 = r2.takeInput(null);
+  check('rest: a press on a spot the guest has seen is not delayed', p2 && p2.msg === 0x0201);
+
+  // A move that does not change the spot does not re-arm the hold.
+  const r3 = renderer();
+  timers.length = 0;
+  r3.inputQueue.push(at(0x0200, 50, 50));
+  r3.takeInput(null);
+  r3.takeInput(null);
+  fakeNow += 30;
+  r3.inputQueue.push(at(0x0200, 50, 50), at(0x0201, 50, 50));
+  r3.takeInput(null);
+  const p3 = r3.takeInput(null);
+  check('same spot: a repeated move does not hold the press', p3 && p3.msg === 0x0201);
+
+  // A host that turns the hold off turns this off too.
+  const r4 = renderer();
+  r4._buttonHoldFloorMs = -1;
+  r4.inputQueue.push(at(0x0200, 10, 10), at(0x0201, 10, 10));
+  r4.takeInput(null);
+  const p4 = r4.takeInput(null);
+  check('negative host floor: no press hold either', p4 && p4.msg === 0x0201);
+}
+
 performance.now = realNow;
 global.setTimeout = realSetTimeout;
 delete global.window;
