@@ -43,6 +43,16 @@ keyboard is DirectInput `GetDeviceState`. Left click selects and orders.
   `--fault-null=raise` is not a substitute, as it also raises for MSS's
   `0xac44` probe, which Win98 answers.
 
+- **Browser only: "Invalid cursor file [.\dark\graphics\intface\mouse.crs]"**
+  ~20 s after launch under the default lazy file policy (`?eager-files` and
+  the CLI were fine). The cursor loader at `0x4147a0` opens the file through
+  `0x445a30` (msvcrt `_open(path, _O_BINARY)`) and reads its header with
+  `_read(fd, buf, 4)`. The CRT read family used the BOOL host read, which
+  reports a nonresident lazy chunk as a failure, so `_read` returned -1. The
+  msvcrt readers (`_read`, `fread`, `fgets`, `getc`/`fgetc`) now park on
+  IO_WAIT and retry like `ReadFile` (`test/test-crt-lazy-read-park.js`).
+  Reproduce headless with `--lazy-ranges`.
+
 ## Leads
 
 - T1 is MSS's DirectSound service thread (`CreateThread(0x97c2b0)`), which

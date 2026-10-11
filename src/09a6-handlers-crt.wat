@@ -1385,11 +1385,17 @@
     (local.get $written))
 
   ;; fread/fgets core: MSVCRT's _filbuf state checks, then an unbuffered read.
-  ;; Returns bytes read (a short count sets _IOEOF, a failure _IOERR), or -1
-  ;; for a FILE* this CRT does not own.
+  ;; Returns bytes read (a short count sets _IOEOF, a failure _IOERR), -1 for
+  ;; a FILE* this CRT does not own, or $CRT_READ_PARKED when the bytes are in
+  ;; a lazy file chunk that has not arrived. The host has then rewound the
+  ;; position and nothing reached the stream's flags, so the calling API parks
+  ;; ($crt_park) and runs again once the host has filled the chunk -- the
+  ;; ReadFile contract. Treating it as a failed read made a streamed file look
+  ;; empty: Dark Reign's cursor loader (_open/_read of mouse.crs) died with
+  ;; "Invalid cursor file" in the browser and only there.
   (func $crt_file_read (param $file i32) (param $buf i32) (param $len i32) (result i32)
     (local $rec i32) (local $flags i32) (local $handle i32) (local $read i32)
-    (local $bytes_ga i32) (local $bytes_wa i32)
+    (local $bytes_ga i32) (local $bytes_wa i32) (local $err i32)
     (local.set $rec (call $crt_stream_lookup (local.get $file)))
     (if (i32.eqz (local.get $rec)) (then (return (i32.const -1))))
     (local.set $flags (call $crt_file_flags (local.get $file)))
@@ -1409,9 +1415,12 @@
     (local.set $bytes_ga (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (local.set $bytes_wa (call $g2w (local.get $bytes_ga)))
     (i32.store (local.get $bytes_wa) (i32.const 0))
-    (if (i32.or (i32.eqz (local.get $handle))
-                (i32.eqz (call $host_fs_read_file
-                  (local.get $handle) (local.get $buf) (local.get $len) (local.get $bytes_ga))))
+    (local.set $err (if (result i32) (local.get $handle)
+      (then (call $host_fs_read_file_result
+        (local.get $handle) (local.get $buf) (local.get $len) (local.get $bytes_ga)))
+      (else (i32.const 6)))) ;; ERROR_INVALID_HANDLE
+    (if (i32.eq (local.get $err) (i32.const 997)) (then (return (global.get $CRT_READ_PARKED))))
+    (if (local.get $err)
       (then
         (call $crt_file_set_flags (local.get $file) (i32.or (local.get $flags) (i32.const 0x20)))
         (return (i32.const 0))))
@@ -1419,6 +1428,26 @@
     (if (i32.lt_u (local.get $read) (local.get $len))
       (then (call $crt_file_set_flags (local.get $file) (i32.or (local.get $flags) (i32.const 0x10)))))
     (local.get $read))
+
+  ;; A CRT read that reached a nonresident lazy chunk. Distinct from every
+  ;; byte count and from -1 (a stream this CRT does not own).
+  (global $CRT_READ_PARKED i32 (i32.const -2))
+
+  ;; Park a cdecl CRT call on IO_WAIT. Called before the handler pops its
+  ;; return address, so nothing is unpopped: the guest's frame is exactly as
+  ;; it built it and the retry runs the same call with the same arguments.
+  (func $crt_park
+    (call $io_block (i32.const 0)))
+
+  ;; Give back $count bytes a parked call already took from the stream, so its
+  ;; retry starts where the call did (fgets reads one byte at a time).
+  (func $crt_file_unread (param $file i32) (param $count i32)
+    (local $rec i32)
+    (if (i32.eqz (local.get $count)) (then (return)))
+    (local.set $rec (call $crt_stream_lookup (local.get $file)))
+    (if (i32.eqz (local.get $rec)) (then (return)))
+    (drop (call $host_fs_set_file_pointer (call $crt_stream_handle (local.get $rec))
+      (i32.sub (i32.const 0) (local.get $count)) (i32.const 1))))
 
   ;; Close a raw handle (_close's descriptor contract): 0, or -1 on failure.
   (func $crt_close_raw_handle (param $handle i32) (result i32)
@@ -1591,6 +1620,11 @@
       (br_if $done (i32.ge_u (local.get $count) (i32.sub (local.get $arg1) (i32.const 1))))
       (local.set $got (call $crt_file_read (local.get $arg2)
         (i32.add (local.get $arg0) (local.get $count)) (i32.const 1)))
+      (if (i32.eq (local.get $got) (global.get $CRT_READ_PARKED))
+        (then
+          (call $crt_file_unread (local.get $arg2) (local.get $count))
+          (call $crt_park)
+          (return)))
       (if (i32.ne (local.get $got) (i32.const 1))
         (then
           (if (i32.eqz (local.get $count)) (then (local.set $result (i32.const 0))))
@@ -1616,6 +1650,8 @@
         (return)))
     (local.set $read (call $crt_file_read (local.get $arg3) (local.get $arg0)
       (i32.mul (local.get $arg1) (local.get $arg2))))
+    (if (i32.eq (local.get $read) (global.get $CRT_READ_PARKED))
+      (then (call $crt_park) (return)))
     (i32.store offset=0 (global.get $reg_base) (if (result i32) (i32.lt_s (local.get $read) (i32.const 0))
         (then (i32.const 0))
         (else (i32.div_u (local.get $read) (local.get $arg1)))))
@@ -1731,14 +1767,18 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
   )
 
+  ;; _read(fd, buf, count) -> bytes read, 0 at end of file, -1 on error. A
+  ;; nonresident lazy chunk parks the call like ReadFile (see $crt_file_read).
   (func $handle__read (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $bytes_ga i32) (local $bytes_wa i32)
+    (local $bytes_ga i32) (local $bytes_wa i32) (local $err i32)
     (local.set $bytes_ga (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (local.set $bytes_wa (call $g2w (local.get $bytes_ga)))
     (i32.store (local.get $bytes_wa) (i32.const 0))
-    (i32.store offset=0 (global.get $reg_base) (if (result i32) (call $host_fs_read_file
-            (local.get $arg0) (local.get $arg1) (local.get $arg2)
-            (local.get $bytes_ga))
+    (local.set $err (call $host_fs_read_file_result
+      (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $bytes_ga)))
+    (if (i32.eq (local.get $err) (i32.const 997))
+      (then (call $crt_park) (return)))
+    (i32.store offset=0 (global.get $reg_base) (if (result i32) (i32.eqz (local.get $err))
         (then (i32.load (local.get $bytes_wa)))
         (else (i32.const -1))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -1826,6 +1866,8 @@
     (local.set $slot (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (local.get $slot) (i32.const 0))
     (local.set $read (call $crt_file_read (local.get $arg0) (local.get $slot) (i32.const 1)))
+    (if (i32.eq (local.get $read) (global.get $CRT_READ_PARKED))
+      (then (call $crt_park) (return)))
     (i32.store offset=0 (global.get $reg_base)
       (select (call $gl8 (local.get $slot)) (i32.const -1)
         (i32.eq (local.get $read) (i32.const 1))))
