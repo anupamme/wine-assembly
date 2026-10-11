@@ -40,8 +40,11 @@
   ;;   +3932  immutable legacy creation version (0=other) (i32, 4)
   ;;   +3968  render Worker producer descriptor scratch (32)
   ;;   +4000  D3DCLIPSTATUS round-trip storage          (24)
+  ;;   +4024  texture-transform block guest ptr        (i32, 4)  ($d3dim_tex_block)
   ;;   +4032  vertex_project vec temp                  (16)
+  ;;   +4048  texgen temp A                            (16)
   ;;   +4064  vertex_project clip temp                 (16)
+  ;;   +4080  texgen temp B                            (16)
   ;; Last (texture slot, resolved?) pair reported through $host_dx_trace kind
   ;; 16. Only a change is logged, so a per-triangle call site stays quiet while
   ;; still showing every rebind. -1 can never collide with a real pair.
@@ -861,17 +864,22 @@
     (i32.const 0))
 
   (func $d3dim_stateblock_apply (param $dev_this i32) (param $handle i32)
-    (local $entry i32) (local $snapshot_guest i32) (local $state_guest i32)
+    (local $entry i32) (local $snapshot_guest i32) (local $state_guest i32) (local $tex_block i32)
     (local.set $entry (call $d3dim_stateblock_entry (local.get $handle)))
     (if (i32.eqz (local.get $entry)) (then (return)))
     (local.set $snapshot_guest (i32.load (local.get $entry)))
     (if (i32.eqz (local.get $snapshot_guest)) (then (return)))
     (local.set $state_guest (call $d3ddev_state (local.get $dev_this)))
     (if (i32.eqz (local.get $state_guest)) (then (return)))
+    ;; The texture-transform block (+4024) is the device's own allocation, not
+    ;; a value: keep it rather than adopt the pointer a capture copied, so an
+    ;; apply never aliases or drops it. Its matrices are not part of the block.
+    (local.set $tex_block (call $gl32 (i32.add (local.get $state_guest) (i32.const 4024))))
     (call $memcpy
       (call $g2w (local.get $state_guest))
       (call $g2w (local.get $snapshot_guest))
-      (i32.const 4096)))
+      (i32.const 4096))
+    (call $gs32 (i32.add (local.get $state_guest) (i32.const 4024)) (local.get $tex_block)))
 
   (func $d3dim_stateblock_capture (param $dev_this i32) (param $handle i32)
     (local $entry i32) (local $snapshot_guest i32) (local $state_guest i32)
@@ -1212,10 +1220,14 @@
   ;; guest matrix ptr via $g2w) and the D3DOP_STATETRANSFORM walker (which
   ;; resolves a matrix handle into D3DIM_MATRICES).
   (func $d3dim_apply_transform (param $this i32) (param $xtype i32) (param $src_wa i32)
-    (local $state i32) (local $slot i32)
+    (local $state i32) (local $slot i32) (local $tex i32)
     (if (i32.eqz (local.get $src_wa)) (then (return)))
     (local.set $state (call $d3ddev_state (local.get $this)))
     (if (i32.eqz (local.get $state)) (then (return)))
+    (local.set $tex (call $d3dim_tex_matrix (local.get $state) (local.get $xtype)))
+    (if (local.get $tex) (then
+      (call $memcpy (local.get $tex) (local.get $src_wa) (i32.const 64))
+      (return)))
     (local.set $slot (call $d3ddev_matrix_slot (local.get $xtype)))
     (call $memcpy
       (call $g2w (i32.add (local.get $state) (i32.mul (local.get $slot) (i32.const 64))))
@@ -1280,10 +1292,15 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)))
 
   (func $d3dim_get_transform (param $this i32) (param $xtype i32) (param $lpmat i32)
-    (local $state i32) (local $slot i32)
+    (local $state i32) (local $slot i32) (local $tex i32)
     (if (i32.eqz (local.get $lpmat)) (then (i32.store offset=0 (global.get $reg_base) (i32.const 0)) (return)))
     (local.set $state (call $d3ddev_state (local.get $this)))
     (if (i32.eqz (local.get $state)) (then (i32.store offset=0 (global.get $reg_base) (i32.const 0)) (return)))
+    (local.set $tex (call $d3dim_tex_matrix (local.get $state) (local.get $xtype)))
+    (if (local.get $tex) (then
+      (call $memcpy (call $g2w (local.get $lpmat)) (local.get $tex) (i32.const 64))
+      (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+      (return)))
     (local.set $slot (call $d3ddev_matrix_slot (local.get $xtype)))
     (call $memcpy
       (call $g2w (local.get $lpmat))
@@ -1298,7 +1315,9 @@
     (if (i32.eqz (local.get $state)) (then (i32.store offset=0 (global.get $reg_base) (i32.const 0)) (return)))
     (local.set $sw (call $g2w (local.get $state)))
     (local.set $slot (call $d3ddev_matrix_slot (local.get $xtype)))
-    (local.set $dst_wa (i32.add (local.get $sw) (i32.mul (local.get $slot) (i32.const 64))))
+    (local.set $dst_wa (call $d3dim_tex_matrix (local.get $state) (local.get $xtype)))
+    (if (i32.eqz (local.get $dst_wa)) (then
+      (local.set $dst_wa (i32.add (local.get $sw) (i32.mul (local.get $slot) (i32.const 64))))))
     (local.set $tmp_wa (i32.add (local.get $sw) (i32.const 3136)))
     (call $host_dx_trace (i32.const 27) (i32.or (local.get $xtype) (i32.const 0x100))
       (call $g2w (local.get $lpmat)) (i32.const 0) (i32.const 0))
@@ -3422,9 +3441,15 @@
   ;; games also depend on coordinate selection, addressing, and filtering;
   ;; those six extended states live in otherwise-unused device-state space.
   (func $d3dim_tss_addr (param $state i32) (param $stage i32) (param $type i32) (result i32)
-    (local $ext i32)
+    (local $ext i32) (local $block i32)
     (if (i32.or (i32.eqz (local.get $state)) (i32.ge_u (local.get $stage) (i32.const 8)))
       (then (return (i32.const 0))))
+    ;; TEXTURETRANSFORMFLAGS (24) lives beside the stage's texture matrix.
+    (if (i32.eq (local.get $type) (i32.const 24)) (then
+      (local.set $block (call $d3dim_tex_block (local.get $state)))
+      (if (i32.eqz (local.get $block)) (then (return (i32.const 0))))
+      (return (i32.add (local.get $block)
+        (i32.add (i32.const 512) (i32.shl (local.get $stage) (i32.const 2)))))))
     (if (i32.lt_u (local.get $type) (i32.const 8)) (then
       (return (i32.add (local.get $state)
         (i32.add (global.get $D3DIM_OFF_TSS_STATE)
@@ -3440,6 +3465,41 @@
     (i32.add (local.get $state)
       (i32.add (global.get $D3DIM_OFF_TSS_EXT)
         (i32.shl (i32.add (i32.mul (local.get $stage) (i32.const 6)) (local.get $ext)) (i32.const 2)))))
+
+  ;; Texture transforms. TEXTURE0..7 (D3DTRANSFORMSTATE 16..23) are not one
+  ;; of the three device matrices: $d3ddev_matrix_slot sends them to slot 3,
+  ;; which is the composite world*view*projection scratch, so a
+  ;; SetTransform(TEXTURE0) silently replaced the composite until the next
+  ;; draw rebuilt it. They live in a per-device block allocated on first use:
+  ;; eight matrices (identity until set) at +0, then the eight stages'
+  ;; TEXTURETRANSFORMFLAGS at +512. The block's guest address is the state's
+  ;; dword at +4024, free between the clip status and the projection temps.
+  (func $d3dim_tex_block (param $state i32) (result i32)
+    (local $block i32) (local $wa i32) (local $i i32)
+    (local.set $block (call $gl32 (i32.add (local.get $state) (i32.const 4024))))
+    (if (local.get $block) (then (return (local.get $block))))
+    (local.set $block (call $heap_alloc (i32.const 544)))
+    (if (i32.eqz (local.get $block)) (then (return (i32.const 0))))
+    (local.set $wa (call $g2w (local.get $block)))
+    (call $zero_memory (local.get $wa) (i32.const 544))
+    (block $done (loop $lp
+      (br_if $done (i32.ge_u (local.get $i) (i32.const 8)))
+      (call $test_mat4_identity (i32.add (local.get $wa) (i32.shl (local.get $i) (i32.const 6))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br $lp)))
+    (call $gs32 (i32.add (local.get $state) (i32.const 4024)) (local.get $block))
+    (local.get $block))
+
+  ;; WASM address of the texture matrix for D3DTRANSFORMSTATE $xtype, or 0
+  ;; when $xtype is not TEXTURE0..7 (or the block cannot be allocated).
+  (func $d3dim_tex_matrix (param $state i32) (param $xtype i32) (result i32)
+    (local $block i32)
+    (if (i32.gt_u (i32.sub (local.get $xtype) (i32.const 16)) (i32.const 7))
+      (then (return (i32.const 0))))
+    (local.set $block (call $d3dim_tex_block (local.get $state)))
+    (if (i32.eqz (local.get $block)) (then (return (i32.const 0))))
+    (i32.add (call $g2w (local.get $block))
+      (i32.shl (i32.sub (local.get $xtype) (i32.const 16)) (i32.const 6))))
 
   (func $d3dim_tss_load (param $state i32) (param $stage i32) (param $type i32) (result i32)
     (local $addr i32)
@@ -6296,9 +6356,58 @@
     (local.set $f (f32.min (f32.const 1) (f32.max (f32.const 0) (local.get $f))))
     (i32.trunc_sat_f32_u (f32.nearest (f32.mul (local.get $f) (f32.const 255)))))
 
+  ;; Stage 0 texture-coordinate generation for a vertex $vertex_project just
+  ;; transformed (it left (x,y,z,1) at state +4032). D3DTSS_TEXCOORDINDEX's high
+  ;; word picks the source: CAMERASPACEPOSITION (2) is the position, and
+  ;; CAMERASPACENORMAL (1) the normal of a D3DVERTEX, through world*view. When
+  ;; TEXTURETRANSFORMFLAGS has a count, [x y z 1] then goes through stage 0's
+  ;; TEXTURE0 matrix, divided by its last element if PROJECTED (0x100).
+  ;; Returns the WASM address of the (u, v) pair, or 0 when the coordinates
+  ;; are the vertex's own. Reflection vectors (3) are not generated yet.
+  ;; Reference: wine-mirror/wine dlls/wined3d/glsl_shader.c, the FFP vertex
+  ;; shader's WINED3DTSS_TCI_* cases.
+  (func $d3dim_texgen (param $state_guest i32) (param $vtxType i32) (param $src_wa i32) (result i32)
+    (local $sw i32) (local $mode i32) (local $a i32) (local $b i32) (local $block i32)
+    (local $flags i32) (local $count i32) (local $q f32)
+    (local.set $mode (i32.shr_u
+      (call $d3dim_tss_load (local.get $state_guest) (i32.const 0) (i32.const 11)) (i32.const 16)))
+    (if (i32.eqz (local.get $mode)) (then (return (i32.const 0))))
+    (if (i32.gt_u (local.get $mode) (i32.const 2)) (then (return (i32.const 0))))
+    (local.set $sw (call $g2w (local.get $state_guest)))
+    (local.set $a (i32.add (local.get $sw) (i32.const 4048)))
+    (local.set $b (i32.add (local.get $sw) (i32.const 4080)))
+    (if (i32.eq (local.get $mode) (i32.const 2))
+      (then (call $mat4_transform_vec4 (local.get $a) (local.get $sw)
+        (i32.add (local.get $sw) (i32.const 4032))))
+      (else
+        ;; Only a D3DVERTEX carries a normal (+12..+23).
+        (if (i32.ne (local.get $vtxType) (i32.const 1)) (then (return (i32.const 0))))
+        (f32.store (local.get $b) (f32.load offset=12 (local.get $src_wa)))
+        (f32.store offset=4 (local.get $b) (f32.load offset=16 (local.get $src_wa)))
+        (f32.store offset=8 (local.get $b) (f32.load offset=20 (local.get $src_wa)))
+        (f32.store offset=12 (local.get $b) (f32.const 0))
+        (call $mat4_transform_vec4 (local.get $a) (local.get $sw) (local.get $b))))
+    ;; view @ +64
+    (call $mat4_transform_vec4 (local.get $b) (i32.add (local.get $sw) (i32.const 64)) (local.get $a))
+    (local.set $block (call $gl32 (i32.add (local.get $state_guest) (i32.const 4024))))
+    (if (local.get $block)
+      (then (local.set $flags (call $gl32 (i32.add (local.get $block) (i32.const 512))))))
+    (local.set $count (i32.and (local.get $flags) (i32.const 0xFF)))
+    (if (i32.or (i32.eqz (local.get $count)) (i32.gt_u (local.get $count) (i32.const 4)))
+      (then (return (local.get $b))))
+    (f32.store offset=12 (local.get $b) (f32.const 1))
+    (call $mat4_transform_vec4 (local.get $a) (call $g2w (local.get $block)) (local.get $b))
+    (if (i32.and (local.get $flags) (i32.const 0x100)) (then
+      (local.set $q (f32.load (i32.add (local.get $a)
+        (i32.shl (i32.sub (local.get $count) (i32.const 1)) (i32.const 2)))))
+      (if (f32.ne (local.get $q) (f32.const 0)) (then
+        (f32.store (local.get $a) (f32.div (f32.load (local.get $a)) (local.get $q)))
+        (f32.store offset=4 (local.get $a) (f32.div (f32.load offset=4 (local.get $a)) (local.get $q)))))))
+    (local.get $a))
+
   (func $d3dim_prepare_draw_vertex
     (param $state_guest i32) (param $vtxType i32) (param $src_wa i32) (param $dst_wa i32)
-    (local $color i32) (local $spec i32) (local $tu i32) (local $tv i32)
+    (local $color i32) (local $spec i32) (local $tu i32) (local $tv i32) (local $gen i32)
     (if (i32.eq (local.get $vtxType) (i32.const 3)) (then
       (call $memcpy (local.get $dst_wa) (local.get $src_wa) (i32.const 32))
       (return)))
@@ -6317,6 +6426,14 @@
         (local.set $tu    (i32.load (i32.add (local.get $src_wa) (i32.const 24))))
         (local.set $tv    (i32.load (i32.add (local.get $src_wa) (i32.const 28))))))
     (call $vertex_project (local.get $state_guest) (local.get $src_wa) (local.get $dst_wa))
+    ;; Stage 0's coordinates may be generated rather than supplied. Giants'
+    ;; terrain is XYZ|DIFFUSE with no texture coordinates at all: it sets
+    ;; TCI_CAMERASPACEPOSITION with a TEXTURE0 planar mapping, and without it
+    ;; every ground vertex sampled texel (0,0).
+    (local.set $gen (call $d3dim_texgen (local.get $state_guest) (local.get $vtxType) (local.get $src_wa)))
+    (if (local.get $gen) (then
+      (local.set $tu (i32.load (local.get $gen)))
+      (local.set $tv (i32.load offset=4 (local.get $gen)))))
     ;; ...and when a fog vertex mode is in effect, that alpha is the
     ;; pipeline's computed fog factor instead ($d3dim_vertex_fog_alpha gives
     ;; 255 otherwise, the same default). Giants uses LINEAR vertex fog; with

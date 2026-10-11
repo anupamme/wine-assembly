@@ -65,9 +65,41 @@ moving selects the highlighted item. Not an emulator bug -- a real mouse
 user only ever moves relative to the cursor they see. On a phone this is
 why the layout uses trackpad (relative) touch.
 
-Open: the terrain renders mostly untextured (flat green) in the CLI's
-headless GL path; not investigated.
+| 2950 | mousedown/up | dismisses Mission Objectives: gameplay |
+
+## Rendering: the flat green world (fixed)
+
+The green was **fog colour** (`FOGCOLOR` 0x2D654E, matched to the pixel),
+not a texture. The renderer is D3D7 vertex buffers: `ProcessVertices` from
+untransformed sources into XYZRHW buffers, then `DrawIndexedPrimitiveVB`.
+Per-object FVFs, from `--trace-dx` (`PVtx` records): models 0x112
+(XYZ|NORMAL|TEX1) -> 0x1C4, sprites/foliage 0x142 -> 0x144, and the
+**terrain 0x42 (XYZ|DIFFUSE, no texture coordinates) -> 0x144**. Fog is
+`FOGENABLE` with `FOGVERTEXMODE` LINEAR, `FOGTABLEMODE` NONE, start 0, end
+1536 (later 6000).
+
+1. Buildings and statues (0x112): the pipeline wrote specular alpha 0 = 100%
+   fog. Fixed in ba9eac483 (`$d3dim_vertex_fog_alpha`).
+2. Terrain, cliffs, player: stage 0 is `TEXCOORDINDEX` = 0x20000
+   (TCI_CAMERASPACEPOSITION) with `TEXTURETRANSFORMFLAGS` = COUNT2 and a
+   planar `SetTransform(TEXTURE0)` before every terrain `ProcessVertices`
+   (`Xform Set 16` in `--trace-dx`). Nothing generated the coordinates, and
+   TEXTURE0 went to matrix slot 3 -- the composite world*view*projection
+   scratch. Fixed by generating stage-0 coordinates in
+   `$d3dim_prepare_draw_vertex` (`$d3dim_texgen`) and storing TEXTURE0..7 and
+   TTFF in a per-device block (`$d3dim_tex_block`);
+   `test/test-d3dim-texgen-camera-position.js`.
+
+Still open after the fix: the ground and the far cliffs render very dark
+(ground texels 0x010100..0x080E00, cliff silhouettes 0x000000). Uniform
+texture is present, so the next suspects are the terrain's multi-pass
+blend (stage 0 alternates SELECTARG1 / MODULATE textures with ALPHAOP
+MODULATE) and the reflection-vector texgen mode (TCI 3), which is not
+generated yet. Untested in the browser.
 
 Evidence: `scratch/runs/20261011T1840Z-giants-demo-w6`,
 `scratch/runs/20261011T1950Z-giants-di-cursor-w6` (m1-p0..p3 measure the
-cursor; m2/m3 the route into the mission).
+cursor; m2/m3 the route into the mission),
+`scratch/runs/20261011T2040Z-giants-untextured-w6` (fog: gl3100 before,
+fix-g3100 after ba9eac483), `scratch/runs/20261012T0000Z-giants-texgen-w6`
+(texgen: texgen-g3100/g3200).
