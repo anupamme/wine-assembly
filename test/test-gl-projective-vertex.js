@@ -104,10 +104,12 @@ async function main() {
     `w = 1 | 3: perspective-correct s reaches 0.5 at three quarters (column ${edge}, affine would be ${mid})`);
   assert.strictEqual(proj[Math.round(VP * 0.6)], RED, '60% across is still red under w = 1 | 3');
 
-  // Unit 1 texture Q is independent of position w. Keep the ordinary
+  // Each texture unit Q is independent of position w. Keep the ordinary
   // position controls above so a renderer cannot fix Q by changing clip w.
+  for(const unit of [0,1]) {
+  glCall(CALL_INDEX.glActiveTextureARB, 0x84C0+1-unit);
   glCall(CALL_INDEX.glDisable, GL_TEXTURE_2D);
-  glCall(CALL_INDEX.glActiveTextureARB, 0x84C1);
+  glCall(CALL_INDEX.glActiveTextureARB, 0x84C0+unit);
   e.gl_mtx_observe(CALL_INDEX.glActiveTextureARB, stack);
   glCall(CALL_INDEX.glBindTexture, GL_TEXTURE_2D, 7);
   glCall(CALL_INDEX.glEnable, GL_TEXTURE_2D);
@@ -120,7 +122,7 @@ async function main() {
   quad(1,1);
   const textureEdge=boundary(row());
   assert.ok(Math.abs(textureEdge-VP/4)<=1,
-    'unit1 texture Q must cross at one quarter, got '+textureEdge);
+    'unit'+unit+' texture Q must cross at one quarter, got '+textureEdge);
   for(const z of [-1.5,1.5]) {
     quad(1,1,z);
     const clipped=row();
@@ -131,11 +133,12 @@ async function main() {
   quad(1,3);
   const combinedEdge=boundary(row());
   assert.ok(Math.abs(combinedEdge-VP/2)<=1,
-    'unit1 texture Q and position w must be independent, got '+combinedEdge);
+    'unit'+unit+' texture Q and position w must be independent, got '+combinedEdge);
   e.gl_mtx_load_identity();
   quad(1,1);
   assert.strictEqual(boundary(row()),mid,'identity texture matrix restores Q=1');
-  console.log('PASS unit1 homogeneous texture matrix: '+textureEdge+', combined '+combinedEdge);
+  console.log('PASS unit'+unit+' homogeneous texture matrix: '+textureEdge+', combined '+combinedEdge);
+  }
 
   console.log(`PASS  software GL divides by the vertex w: boundary ${mid} -> ${edge} of ${VP}`);
 }

@@ -134,6 +134,13 @@
   ;; texture), sampler, and u*q, v*q and q as screen-space planes so the span
   ;; divides back per pixel. Unit 1 is combined after unit 0 and before fog,
   ;; which is the order the WebGL frontend's fragment shader has.
+  ;; Unit0 triangle texture Q/w, separate from position 1/w. Enabled only
+  ;; around a GL triangle draw; D3D spans retain their supplied denominator.
+  (global $gl_sw_triangle_texq (mut i32) (i32.const 0))
+  (global $rast_t0_q_on (mut i32) (i32.const 0))
+  (global $rast_t0_qa (mut f32) (f32.const 0))
+  (global $rast_t0_qb (mut f32) (f32.const 0))
+  (global $rast_t0_qc (mut f32) (f32.const 1))
   (global $rast_t1_on (mut i32) (i32.const 0))
   (global $rast_t1_entry (mut i32) (i32.const 0))
   (global $rast_t1_op (mut i32) (i32.const 4))
@@ -1849,8 +1856,8 @@
     (i32.const 1))
 
   ;; (s, t, 0, 1) through the column-major texture matrix, projected by q.
-  ;; The divide is per vertex, so a projective texture matrix is only affine
-  ;; across a triangle -- exact for the scale/translate/rotate apps load.
+  ;; Legacy line/point path: per-vertex divide is exact for affine matrices.
+  ;; Projective lines still need a separate interpolated texture denominator.
   ;; The (s, t) pair at $p through texture matrix $m, in place.
   (func $gl_sw_tex_transform (param $m i32) (param $p i32)
     (local $s f32) (local $t f32) (local $q f32)
@@ -1870,7 +1877,7 @@
       (f32.mul (f32.load offset=20 (local.get $m)) (local.get $t)))
       (f32.load offset=52 (local.get $m))) (local.get $q))))
 
-  ;; Unit 1 keeps S/T/Q homogeneous until the fragment sampler. Dividing
+  ;; Triangles keep S/T/Q homogeneous until the fragment sampler. Dividing
   ;; before clipping/interpolation gives an affine approximation instead.
   (func $gl_sw_tex_transform_homogeneous (param $m i32) (param $p i32) (param $qp i32)
     (local $s f32) (local $t f32)
@@ -1908,14 +1915,19 @@
     (f32.store offset=20 (local.get $clip) (f32.load offset=32 (local.get $src)))
     (if (global.get $gl_sw_sphere)
       (then (call $gl_sw_sphere_map (local.get $src) (local.get $clip))))
+    (f32.store offset=48 (local.get $clip) (f32.const 1))
     (if (global.get $gl_sw_texmtx)
-      (then (call $gl_sw_tex_transform (global.get $gl_sw_texmtx)
-        (i32.add (local.get $clip) (i32.const 16)))))
+      (then
+        (if (global.get $gl_sw_triangle_texq)
+          (then (call $gl_sw_tex_transform_homogeneous (global.get $gl_sw_texmtx)
+            (i32.add (local.get $clip) (i32.const 16))
+            (i32.add (local.get $clip) (i32.const 48))))
+          (else (call $gl_sw_tex_transform (global.get $gl_sw_texmtx)
+            (i32.add (local.get $clip) (i32.const 16)))))))
     ;; Unit 1's S/T (vertex +48) and matrix Q ride in the clip record,
     ;; so clipping interpolates all three with everything else.
     (f32.store offset=40 (local.get $clip) (f32.load offset=48 (local.get $src)))
     (f32.store offset=44 (local.get $clip) (f32.load offset=52 (local.get $src)))
-    (f32.store offset=48 (local.get $clip) (f32.const 1))
     (f32.store offset=52 (local.get $clip) (f32.const 1))
     (if (global.get $gl_sw_texmtx1)
       (then (call $gl_sw_tex_transform_homogeneous (global.get $gl_sw_texmtx1)
@@ -1941,6 +1953,7 @@
     (local $k i32) (local $bits i32)
     (local $inside i32) (local $n i32)
     (local $far_in i32) (local $poly i32)
+    (global.set $gl_sw_triangle_texq (i32.const 1))
     (local.set $k (i32.const 0))
     (loop $lp
       (local.set $bits (call $gl_sw_xform_vertex (local.get $mvp)
@@ -2478,6 +2491,20 @@
         (call $gl_sw_screen_at (i32.const 1)) (call $gl_sw_screen_at (i32.const 2)))))
     (call $gl_sw_t1_setup (local.get $c0) (local.get $c1) (local.get $c2))
     (call $gl_sw_mip_select)
+    ;; Unit0's numerator remains S/w,T/w in the shared rasterizer. Its
+    ;; denominator is the independent texture Q/w plane, never vertex w.
+    (if (global.get $gl_sw_texmtx) (then
+      (call $rast_plane
+        (i32.load (local.get $s0)) (i32.load offset=4 (local.get $s0))
+        (f32.mul (f32.load offset=48 (local.get $c0)) (f32.load offset=12 (local.get $s0)))
+        (i32.load (local.get $s1)) (i32.load offset=4 (local.get $s1))
+        (f32.mul (f32.load offset=48 (local.get $c1)) (f32.load offset=12 (local.get $s1)))
+        (i32.load (local.get $s2)) (i32.load offset=4 (local.get $s2))
+        (f32.mul (f32.load offset=48 (local.get $c2)) (f32.load offset=12 (local.get $s2))))
+      (global.set $rast_t0_qa (global.get $rast_pa))
+      (global.set $rast_t0_qb (global.get $rast_pb))
+      (global.set $rast_t0_qc (global.get $rast_pc))
+      (global.set $rast_t0_q_on (i32.const 1))))
     (call $rasterize_triangle_textured
       (global.get $gl_sw_r_rt) (global.get $gl_sw_r_tex)
       (i32.ne (i32.and (local.get $caps) (i32.const 2)) (i32.const 0))
@@ -2503,6 +2530,7 @@
       (global.get $gl_sw_r_zbuf)
       (i32.load offset=20 (local.get $s))
       (i32.load offset=24 (local.get $s)))
+    (global.set $rast_t0_q_on (i32.const 0))
     (global.set $rast_t1_on (i32.const 0))
     (global.set $rast_fog_on (i32.const 0)))
 
@@ -2602,6 +2630,7 @@
     (local $i i32) (local $hi i32) (local $minor i32) (local $row i32) (local $run i32)
     (local $j i32) (local $c0 i32) (local $c1 i32) (local $p i32) (local $q i32)
     (local $xmajor i32) (local $col i32)
+    (global.set $gl_sw_triangle_texq (i32.const 0))
     (drop (call $gl_sw_xform_vertex (local.get $mvp) (local.get $v0) (i32.const 0)))
     (drop (call $gl_sw_xform_vertex (local.get $mvp)
       (i32.add (local.get $v0) (i32.const 60)) (i32.const 1)))
@@ -2723,6 +2752,7 @@
   ;; pixel taking the vertex's colour, depth and texture coordinate.
   (func $gl_sw_point (param $mvp i32) (param $vp i32) (param $v0 i32)
     (local $r i32) (local $x i32) (local $y i32) (local $size i32) (local $off i32) (local $j i32)
+    (global.set $gl_sw_triangle_texq (i32.const 0))
     (if (i32.ne (call $gl_sw_xform_vertex (local.get $mvp) (local.get $v0) (i32.const 0)) (i32.const 3))
       (then
         (global.set $gl_sw_clipped (i32.add (global.get $gl_sw_clipped) (i32.const 1)))

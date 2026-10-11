@@ -121,3 +121,22 @@ position-w controls16/24. Full build and existing software raster,
 multitexture, lines and texgen suites pass on bx_k7xdfrq9. Evidence:
 scratch/runs/20261011T2141Z-oni-unit1-projective/. This is a scoped renderer
 prerequisite; Oni has not been replayed past its missing API.
+
+## Software texture unit 0 triangle prerequisite implemented
+
+Unit0 triangles now also retain homogeneous S/T/Q through clipping. Their
+shared span keeps the existing S/w,T/w numerators and selects an independent
+Q/w plane only during a GL triangle draw. Position reciprocal-w, color and
+depth remain on their original paths. The GL-only denominator flag is cleared
+after the draw, so ordinary D3D spans use their supplied denominator.
+
+The regression now exercises each texture unit: control unit0 boundary16
+instead of8 fails; both fixed units pass8, combined w/Q16, near/far clipping,
+identity reset and the position-w controls. Full build, software raster,
+multitexture, lines, texgen and D3DIM vertex-buffer draw (900 pixels) pass.
+Evidence: scratch/runs/20261011T2147Z-oni-unit0-projective/.
+
+This covers matrix-generated Q for triangles. Projective line interpolation
+and unit1 line/point sampling remain separate; the guest glTexCoord4f/4fv
+API/current state, context/attribute preservation and packed19-float stream
+are still pending. No ordinary Oni gameplay replay or qualification yet.

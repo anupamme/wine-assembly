@@ -5259,6 +5259,10 @@
       (local.set $tu (f32.add (local.get $u0) (f32.mul (f32.sub (local.get $u1) (local.get $u0)) (local.get $t))))
       (local.set $tv (f32.add (local.get $v0) (f32.mul (f32.sub (local.get $v1) (local.get $v0)) (local.get $t))))
       (local.set $tq (f32.add (local.get $q0) (f32.mul (f32.sub (local.get $q1) (local.get $q0)) (local.get $t))))
+      (if (global.get $rast_t0_q_on) (then
+        (local.set $tq (f32.add (global.get $rast_t0_qc)
+          (f32.add (f32.mul (global.get $rast_t0_qa) (f32.convert_i32_s (local.get $x)))
+            (f32.mul (global.get $rast_t0_qb) (f32.convert_i32_s (local.get $y))))))))
       (if (f32.gt (f32.abs (local.get $tq)) (f32.const 0.000000000001)) (then
         (local.set $tu (f32.div (local.get $tu) (local.get $tq)))
         (local.set $tv (f32.div (local.get $tv) (local.get $tq)))))
