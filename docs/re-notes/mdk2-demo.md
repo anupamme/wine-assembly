@@ -142,26 +142,30 @@ Where the NaN comes from (CLI route, boat bx_td2jejvz, 2026-10-11; evidence
   (`scratch/wip/mdk2-dcl-explode-zipblast-w5.js`) explodes all 856 entries
   of base/local/scripts.zip with 0 failures, and `Ricochet.mod` holds the
   same bytes the emulator produced: **the guest's decompression is correct.**
-- The colour becomes a float in the node-array init at
-  `0x45eefe..0x45ef74`: for `count = word header[+8]` (7 here) channels it
-  copies `src[edi+8]` raw into each 40-byte node's weight `+0x14`
-  (`src = [ebp+8]`, 32-byte records; `+0x10` -> node `+8`, `+0xc` ->
-  node `+0x1c`). For Ricochet.mod `src` is file offset **0x14c**, equal to
-  header word `+0xe`, so record 0's weight is the colour. The bytes at 0x14c
-  do not look like channel records; the dword offset table at file `+0x20`
-  (0xe0, 0x180, 0x280, 0xbe0, ...) looks like where records really start.
-- The first NaN x87 load is on the main thread (tid 1), `fld [ecx+0x14]`
-  of such a node (run head `0x45f97a`). From there it reaches the camera.
+- **That NaN is the game's own and harmless (corrected 2026-10-11 20:30Z).**
+  The node-array init at `0x45eefe..0x45ef74` copies `src[edi+8]` raw into
+  each 40-byte node's weight `+0x14` for `count = word header[+8]` (7)
+  32-byte records at `src = [ebp+8]`. Measured per model (`--count=0x45ec66`
+  + a per-hit struct log): Ricochet's struct has `[eax] = file base` and
+  `[eax+8] = base + 0x180`, the second entry of the file's own offset table
+  at `+0x20` (0xe0, 0x180, 0x280, ...) -- so the pointer is what the format
+  says, not our heap/copy/file offset (an earlier note here guessed 0x14c; that
+  was wrong). Record 0 at 0x180 is a colour record (`0, -1, 0xffc9a893,
+  0xffc8a794, ...`), its +8 at file 0x188 is a packed colour, and node 0's
+  weight becomes that NaN. Right after the loop the game overwrites node 0's
+  weight with 1.0 (`mov [ecx+0x14], 0x3f800000` at `0x45ef8e`); the one
+  NaN load (`0x45f880` -> `fld [ecx+0x14]; fcomp` at `0x45f97a`, main
+  thread) only compares and branches. Real hardware does exactly the same.
+- So the camera NaN has another source. Lead: the C-runtime math-error paths
+  (`0x483929` / `0x484b7a`) that raise right after -- a libm function
+  (acos/asin/log/pow) getting an out-of-domain argument, which on our x87 can
+  differ from hardware (we ignore precision control). Next: break on the
+  math-error handler and log the function and its argument.
 - Ruled out: plain FADD/FSUB/FMUL/FDIV making it (trace-only "NaN made"
   check, `scratch/wip/fpu-nan-made-trace-w5.patch`, 0 hits); the uop tier
   and x87 island predecode (both off: still NaN); SSE/3DNow (CPUID exposes no
   extended leaves, SSE off) and MMX (0 retired); a corrupted constant
-  (`[0x48c228]` stays 0.0).
-- Still open: is 0x14c really the channel-array offset the game intends?
-  Find the instruction that writes `[ebp+8]` and check its arithmetic
-  against the header (16-bit offset field, sign/zero extension, base). If our
-  execution matches Windows, the NaN is the game's own and the difference is
-  elsewhere (what Windows does with a NaN weight).
+  (`[0x48c228]` stays 0.0); our decompression, heap and model pointers.
 - The frame meter at `0x401f28` divides 1000 by an unset frame delta once at
   startup (ZE, inf in a 32-slot ring). Real hardware does the same.
 - Tooling gotchas: `--trace-at` halts each batch at its first hit, so those
@@ -174,9 +178,8 @@ Where the NaN comes from (CLI route, boat bx_td2jejvz, 2026-10-11; evidence
 
 ## Open
 
-- Find the writer of the channel-array pointer `[ebp+8]` used by the node
-  init at `0x45eefe` and check whether 0x14c (Ricochet.mod) is the offset the
-  game means (see Black world).
+- Find the camera NaN's real source: the C-runtime math-error paths
+  (`0x483929`/`0x484b7a`) -- which libm function, which argument (see Black world).
 - Jump: the binding is the game's own (Mouse B2) and the button is mapped;
   not yet seen in lit play, because the reliable route now lands in the black
   world.
