@@ -909,6 +909,101 @@
       }
     },
     {
+      "id": "hellbender-trial",
+      "name": "Hellbender Trial",
+      "kind": "game",
+      "version": "Trial Version 1.02 (Terminal Reality / Microsoft, 1996), heltrial.exe IExpress package",
+      "executables": [
+        "installed/HELLBNDX.EXE"
+      ],
+      "sourcePage": "https://archive.org/details/Hellbender_1020",
+      "license": "Microsoft trial licence (README.DOC section A): 'Reproduction and/or redistribution of this trial version is permitted for non-commercial, personal, and testing purposes only. Any other use is prohibited.' It also forbids reverse engineering or disassembly. Kept localOnly until a deployment decision is made",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Hellbender_1020/heltrial.zip",
+          "sha1": "175117d9483b7e1ca31b3013320939edd8bd9dc1",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "heltrial.exe",
+          "into": "setup"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/HELLBNDX.EXE",
+          "into": "installed/HELLBNDX.EXE"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/HELLBNDX.HLP",
+          "into": "installed/HELLBNDX.HLP"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/SMACKW32.DLL",
+          "into": "installed/SMACKW32.DLL"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/README.DOC",
+          "into": "installed/README.DOC"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/DPSERIAL.DLL",
+          "into": "installed/System/DPSERIAL.DLL"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/DPSOCKET.DLL",
+          "into": "installed/System/DPSOCKET.DLL"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/DPWSOCK.DLL",
+          "into": "installed/System/DPWSOCK.DLL"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/GAMEX.POD",
+          "into": "installed/System/GAMEX.POD"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/HELLBNDX.INF",
+          "into": "installed/System/HELLBNDX.INF"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/HELLBNDX.INI",
+          "into": "installed/System/HELLBNDX.INI"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/STARTUPX.POD",
+          "into": "installed/System/STARTUPX.POD"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/HELLBNDX.EXE"
+      },
+      "cli": {
+        "maxBatches": 1500,
+        "batchSize": 50000,
+        "dlls": [
+          "installed/SMACKW32.DLL"
+        ],
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
