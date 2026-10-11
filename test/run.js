@@ -1324,14 +1324,9 @@ const getAssetFiles = entry => {
     throw new Error(`${ASSET_ENTRY_ID || APP_ID || 'app'}: invalid local media manifest`);
   }
   const manifestDir = path.dirname(entry.localFileManifest);
-  for (const file of manifest.files) {
-    if (!file || !file.url) continue;
-    files.push({
-      ...file,
-      url: path.join(manifestDir, file.url),
-    });
-  }
-  return files;
+  const local = manifest.files.filter(file => file && file.url)
+    .map(file => ({ ...file, url: path.join(manifestDir, file.url) }));
+  return require('../lib/app-files').mergeLocalManifestFiles(files, local);
 };
 const WASM_PATH = getArg('wasm', ENV_WASM || path.join(ROOT, 'build', 'wine-assembly.wasm')); // --wasm=FILE (or $WINE_ASSEMBLY_WASM): isolated prebuilt used with --no-build
 // Was a SPECIFIC artifact asked for, as opposed to falling back on the canonical

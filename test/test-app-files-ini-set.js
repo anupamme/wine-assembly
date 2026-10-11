@@ -45,4 +45,25 @@ assert.strictEqual(iniEntry.iniSet['Engine.Engine'].GameRenderDevice, 'SoftDrv.S
 assert.strictEqual(iniEntry.iniSet['WinDrv.WindowsClient'].StartupFullscreen, 'True');
 assert(deus.dlls.some(d => /d3ddrv\.dll$/.test(d)), 'D3DDrv.dll is mounted');
 
-console.log('PASS applyIniSet: in-place, case-insensitive key edits; appended keys and sections; bytes preserved');
+// A registry entry with a guest path replaces the local media manifest's entry
+// for that path (Tachyon's Tachyon.cfg carries the D3D renderer choice; the
+// generated manifest mounts the shipped one), compared case-insensitively.
+const { mergeLocalManifestFiles } = require('../lib/app-files');
+const registry = [
+  { url: 'r/Tachyon.cfg', vfsPath: 'c:\\tachyon\\Tachyon.cfg', iniSet: { VIDEO: { HW_TYPE: '0' } } },
+  'r/plain.dll',
+];
+const manifest = [
+  { url: 'm/Exile.sbf', vfsPath: 'c:\\tachyon\\Exile.sbf' },
+  { url: 'm/Tachyon.cfg', vfsPath: 'C:\\TACHYON\\TACHYON.CFG' },
+  { url: 'm/alias.cfg', vfsPaths: ['c:\\other.cfg', 'c:\\tachyon\\tachyon.cfg'] },
+];
+const merged = mergeLocalManifestFiles(registry, manifest);
+assert.deepStrictEqual(merged.map(f => (typeof f === 'string' ? f : f.url)),
+  ['r/Tachyon.cfg', 'r/plain.dll', 'm/Exile.sbf'], 'the registry entry wins its path, aliases included');
+assert.deepStrictEqual(mergeLocalManifestFiles(undefined, manifest).map(f => f.url),
+  manifest.map(f => f.url), 'no registry files keeps the manifest whole');
+assert(/mergeLocalManifestFiles\(/.test(read('test/run.js')), 'run.js merges through mergeLocalManifestFiles');
+assert(/mergeLocalManifestFiles\(/.test(read('lib/browser-shell.js')), 'the page merges through mergeLocalManifestFiles');
+
+console.log('PASS applyIniSet: in-place, case-insensitive key edits; appended keys and sections; bytes preserved; registry files override the local manifest');
