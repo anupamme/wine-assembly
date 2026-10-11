@@ -105,6 +105,17 @@ for (const [mode, fn, factor, invert] of [
     view.getUint32(regions.BASE.GLIDE_STATE + 256 + 184 + i * 4, true)),
     [fn, factor, fn, factor, invert, invert], 'legacy texture combine mode ' + mode);
 }
+// grTexDetailControl keeps lodBias/detailScale/detailMax per TMU in the
+// extension block at +2448 (16 bytes a TMU); Dethkarz's 3Dfx renderer calls it
+// with 0, 4, 6, 1.0 right after its driver dialog.
+const f32bits = x => { const b = Buffer.alloc(4); b.writeFloatLE(x); return b.readUInt32LE(); };
+call('_grTexDetailControl@16', [0, 4, 6, f32bits(1.0)]);
+{
+  const ext = wa(view.getUint32(regions.BASE.GLIDE_STATE + 116, true));  // a guest pointer ($glide3_ext)
+  assert.deepStrictEqual([view.getInt32(ext + 2448, true), view.getUint32(ext + 2452, true), view.getFloat32(ext + 2456, true)],
+    [4, 6, 1], 'TMU0 detail control state');
+  // Glide 2 exposes TMU0 only ($glide_tmu); TMU1 is the Glide 3 path.
+}
 // Cross a noncontiguous guest page and compare all 64 bytes to the SDK's
 // normalized exponential equation, with its float intermediate rounding.
 const fogPtr = sparseBase + 4072;
@@ -374,6 +385,21 @@ call('_grGlideShutdown@0');
 call('_grGlideInit@0');
 assert.strictEqual(call('_grSstWinOpen@28', [0, 7, 0, 0, 0, 2, 1]), 1);
 call('_grBufferClear@12', [0, 255, 65535]);
+{
+  // Glide 2's grTexDownloadTablePartial(tmu, type, data, start, end) replaces
+  // only entries start..end of the shared palette, like the Glide 3 form.
+  // Recording a palette needs an open window, hence here; the extension block
+  // is re-allocated after the shutdown above, so it is read after the calls.
+  const tableA = 0x420000, tableB = 0x421000;
+  for (let i = 0; i < 1024; ++i) { a.guest_write8(tableA + i, (i * 7) & 255); a.guest_write8(tableB + i, (i * 13 + 5) & 255); }
+  call('_grTexDownloadTable@12', [0, 2, tableA]);
+  call('_grTexDownloadTablePartial@20', [0, 2, tableB, 10, 12]);
+  const ext = wa(view.getUint32(regions.BASE.GLIDE_STATE + 116, true));  // a guest pointer ($glide3_ext)
+  const pal = Buffer.from(new Uint8Array(memory.buffer, ext + 128, 1024));
+  assert.deepStrictEqual(pal.subarray(40, 52), readGuest(tableB + 40, 12), 'entries 10..12 come from the partial download');
+  assert.deepStrictEqual(pal.subarray(0, 40), readGuest(tableA, 40), 'entries below start keep the full table');
+  assert.deepStrictEqual(pal.subarray(52), readGuest(tableA + 52, 1024 - 52), 'entries above end keep the full table');
+}
 rejectBatch = true;
 assert.throws(() => call('_grBufferSwap@4', [0]), WebAssembly.RuntimeError,
   'a failed host batch traps even when worker RPC converted a host error to zero');

@@ -754,6 +754,37 @@
     (call $lock_release (global.get $GLIDE_STATE))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12))))
 
+  ;; grTexDetailControl(tmu, lodBias, detailScale, detailMax) -- Glide 2 and 3
+  ;; alike. It only parameterises the DETAIL blend factor that grTexCombine can
+  ;; select; that factor stays an explicit backend failure ('TMU detail/LOD
+  ;; combine factor' in lib/glide-backend.js), so these values are real state
+  ;; for it to read, not a substitute for it. SDK ranges: lodBias -32..31,
+  ;; detailScale 0..7, detailMax 0.0..1.0; outside them is a guest bug and
+  ;; fails loudly. Kept per TMU in the Glide extension block at +2448 (the
+  ;; gap between TMU1's state, which ends at +2444, and +2560): lodBias,
+  ;; detailScale, detailMax bits, 16 bytes a TMU. Dethkarz's default 3Dfx
+  ;; renderer ('Vertigo 3Dfx (Glide 2).dll') calls it with 0, 4, 6, 1.0 right
+  ;; after the driver dialog -- before this it was an unimplemented trap.
+  (func $handle_grTexDetailControl
+    (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+    (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $p i32) (local $max f32)
+    (call $glide_tmu (local.get $arg0))
+    (local.set $max (f32.reinterpret_i32 (local.get $arg3)))
+    (if (i32.or (i32.or (i32.lt_s (local.get $arg1) (i32.const -32)) (i32.gt_s (local.get $arg1) (i32.const 31)))
+          (i32.or (i32.gt_u (local.get $arg2) (i32.const 7))
+            (i32.eqz (i32.and (f32.ge (local.get $max) (f32.const 0)) (f32.le (local.get $max) (f32.const 1))))))
+      (then (call $glide_fail)))
+    (call $lock_acquire (global.get $GLIDE_STATE))
+    (local.set $p (i32.add (call $glide3_ext)
+      (i32.add (i32.const 2448) (i32.shl (local.get $arg0) (i32.const 4)))))
+    (i32.store (local.get $p) (local.get $arg1))
+    (i32.store offset=4 (local.get $p) (local.get $arg2))
+    (i32.store offset=8 (local.get $p) (local.get $arg3))
+    (call $lock_release (global.get $GLIDE_STATE))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20))))
+
   ;; Legacy utility mapping from pinned Glide2 sst1/glide/src/digutex.c.
   ;; Detail/trilinear factors retain the same explicit backend limitations as
   ;; grTexCombine; this entry point must not silently replace those factors.
@@ -1751,6 +1782,21 @@
     (i32.store (global.get $reg_base) (i32.const 0))
     (call $lock_release (global.get $GLIDE_STATE))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20))))
+
+  ;; Glide 2's grTexDownloadTablePartial(tmu, type, data, start, end), @20:
+  ;; the Glide 3 entry above minus the leading TMU. Same table, same range
+  ;; checks; the TMU is validated as for every Glide 2 per-TMU call and the
+  ;; table remains the one shared palette, as grTexDownloadTable keeps it.
+  ;; Dethkarz's 3Dfx renderer imports it.
+  (func $handle_glide2_grTexDownloadTablePartial
+    (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+    (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $sp i32)
+    (call $glide_tmu (local.get $arg0))
+    (local.set $sp (i32.load offset=16 (global.get $reg_base)))
+    (call $handle_grTexDownloadTablePartial (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4)
+      (i32.const 0) (local.get $name_ptr))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $sp) (i32.const 24))))
 
   (func $handle_guGammaCorrectionRGB
     (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)

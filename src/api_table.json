@@ -38573,5 +38573,28 @@
       }
     ],
     "ret": "MMRESULT"
+  },
+  {
+    "id": 4527,
+    "name": "grTexDetailControl",
+    "nargs": 4,
+    "convention": "stdcall",
+    "hash": 2736147873
+  },
+  {
+    "id": 4528,
+    "name": "_grTexDetailControl@16",
+    "nargs": 4,
+    "convention": "stdcall",
+    "hash": 3733229377,
+    "handler": "grTexDetailControl"
+  },
+  {
+    "id": 4529,
+    "name": "_grTexDownloadTablePartial@20",
+    "nargs": 5,
+    "convention": "stdcall",
+    "hash": 46278517,
+    "handler": "glide2_grTexDownloadTablePartial"
   }
 ]
