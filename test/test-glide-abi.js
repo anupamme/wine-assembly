@@ -400,6 +400,43 @@ call('_grBufferClear@12', [0, 255, 65535]);
   assert.deepStrictEqual(pal.subarray(0, 40), readGuest(tableA, 40), 'entries below start keep the full table');
   assert.deepStrictEqual(pal.subarray(52), readGuest(tableA + 52, 1024 - 52), 'entries above end keep the full table');
 }
+{
+  // grSstPerfStats: pixelsIn/pixelsOut are the rasterised area of the Glide 2
+  // triangles drawn since grSstResetPerfStats; the backend reports no fragment
+  // test results, so the three fail counters are 0. Two triangles tiling a 4x4
+  // square must count its 16 pixel centres exactly once (6 + 10).
+  const tri = 0x416000, stats = 0x416400;
+  const vertex = (i, x, y) => { for (let f = 0; f < 15; ++f) view.setFloat32(wa(tri + i * 60 + f * 4), f === 0 ? x : f === 1 ? y : 0.5, true); };
+  const perf = () => { call('_grSstPerfStats@4', [stats]); return Array.from({length: 5}, (_, i) => a.guest_read32(stats + i * 4) >>> 0); };
+  call('_grClipWindow@16', [0, 0, 640, 480]);
+  call('_grSstResetPerfStats@0');
+  assert.deepStrictEqual(perf(), [0, 0, 0, 0, 0], 'reset clears every counter');
+  vertex(0, 0, 0); vertex(1, 4, 0); vertex(2, 0, 4);
+  call('_grDrawTriangle@12', [tri, tri + 60, tri + 120]);
+  assert.deepStrictEqual(perf(), [6, 0, 0, 0, 6], 'lower-left half of the square covers 6 pixel centres');
+  vertex(3, 4, 4);
+  call('_grDrawTriangle@12', [tri + 60, tri + 180, tri + 120]);
+  assert.deepStrictEqual(perf(), [16, 0, 0, 0, 16], 'the shared diagonal is counted once: 4x4 = 16');
+  call('_grClipWindow@16', [0, 0, 2, 2]);
+  call('_grSstResetPerfStats@0');
+  call('_grDrawTriangle@12', [tri, tri + 60, tri + 120]);
+  assert.deepStrictEqual(perf(), [4, 0, 0, 0, 4], 'the clip window bounds the count (2x2, all inside x+y<4)');
+  call('_grClipWindow@16', [0, 0, 640, 480]);
+  // grAADrawTriangle: the triangle, then one native line per flagged edge.
+  const beforeAA = submissions.length;
+  call('_grAADrawTriangle@24', [tri, tri + 60, tri + 120, 1, 1, 1]);
+  call('_grAADrawTriangle@24', [tri, tri + 60, tri + 120, 0, 1, 0]);
+  call('_grAADrawLine@8', [tri, tri + 60]);
+  call('_grBufferSwap@4', [1]);
+  const aaBatch = submissions.slice(beforeAA).find(s => s.op === 0).bytes;
+  const ops = [];
+  for (let at = 0; at < aaBatch.length; at += 8 + ((aaBatch.readUInt32LE(at + 4) + 3) & ~3)) ops.push(aaBatch.readUInt32LE(at));
+  // The batch also carries the three perf-test triangles above; the AA calls are its tail.
+  assert.deepStrictEqual(ops.filter(op => op === 5 || op === 11).slice(-7), [5, 11, 11, 11, 5, 11, 11],
+    'each AA triangle draws itself, then a line for each flagged edge; grAADrawLine is one line');
+}
+// The swap above submitted the pending batch; give the rejected swap below one.
+call('_grBufferClear@12', [0, 255, 65535]);
 rejectBatch = true;
 assert.throws(() => call('_grBufferSwap@4', [0]), WebAssembly.RuntimeError,
   'a failed host batch traps even when worker RPC converted a host error to zero');

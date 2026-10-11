@@ -122,6 +122,60 @@
       (br_if $levels (i32.le_u (local.get $lod) (local.get $small))))
     (local.get $n))
 
+  ;; Pixel centres a Glide 2 triangle covers inside the clip window (state
+  ;; +104..+116), for grSstPerfStats. Vertices are already snap-decoded
+  ;; ($glide_copy_vertex). A row y counts when y+0.5 lies in [ymin, ymax); a
+  ;; column x when x+0.5 lies in [xleft, xright): half-open both ways, so two
+  ;; triangles sharing an edge never count its pixels twice. This is the
+  ;; rasterised AREA, i.e. what enters the pixel pipeline; the backend does not
+  ;; report which fragments the depth/alpha/chroma tests then reject.
+  (func $glide_count_pixels (param $p0 i32) (param $p1 i32) (param $p2 i32) (result i32)
+    (local $t i32) (local $y i32) (local $y_end i32) (local $xs i32) (local $xe i32) (local $n i32)
+    (local $x0 f32) (local $y0 f32) (local $x1 f32) (local $y1 f32) (local $x2 f32) (local $y2 f32)
+    (local $yc f32) (local $xa f32) (local $xb f32) (local $s f32)
+    (local $cx0 i32) (local $cy0 i32) (local $cx1 i32) (local $cy1 i32)
+    ;; Sort the three vertex pointers by y.
+    (if (f32.gt (f32.load offset=4 (local.get $p0)) (f32.load offset=4 (local.get $p1)))
+      (then (local.set $t (local.get $p0)) (local.set $p0 (local.get $p1)) (local.set $p1 (local.get $t))))
+    (if (f32.gt (f32.load offset=4 (local.get $p1)) (f32.load offset=4 (local.get $p2)))
+      (then (local.set $t (local.get $p1)) (local.set $p1 (local.get $p2)) (local.set $p2 (local.get $t))))
+    (if (f32.gt (f32.load offset=4 (local.get $p0)) (f32.load offset=4 (local.get $p1)))
+      (then (local.set $t (local.get $p0)) (local.set $p0 (local.get $p1)) (local.set $p1 (local.get $t))))
+    (local.set $x0 (f32.load (local.get $p0))) (local.set $y0 (f32.load offset=4 (local.get $p0)))
+    (local.set $x1 (f32.load (local.get $p1))) (local.set $y1 (f32.load offset=4 (local.get $p1)))
+    (local.set $x2 (f32.load (local.get $p2))) (local.set $y2 (f32.load offset=4 (local.get $p2)))
+    (local.set $cx0 (i32.load offset=104 (call $glide_state)))
+    (local.set $cy0 (i32.load offset=108 (call $glide_state)))
+    (local.set $cx1 (i32.load offset=112 (call $glide_state)))
+    (local.set $cy1 (i32.load offset=116 (call $glide_state)))
+    ;; Rows: clipped to the window first, so the walk is bounded by it.
+    (local.set $y (i32.trunc_sat_f32_s (f32.ceil (f32.sub (local.get $y0) (f32.const 0.5)))))
+    (local.set $y_end (i32.trunc_sat_f32_s (f32.ceil (f32.sub (local.get $y2) (f32.const 0.5)))))
+    (if (i32.lt_s (local.get $y) (local.get $cy0)) (then (local.set $y (local.get $cy0))))
+    (if (i32.gt_s (local.get $y_end) (local.get $cy1)) (then (local.set $y_end (local.get $cy1))))
+    (block $done (loop $rows
+      (br_if $done (i32.ge_s (local.get $y) (local.get $y_end)))
+      (local.set $yc (f32.add (f32.convert_i32_s (local.get $y)) (f32.const 0.5)))
+      ;; Long edge 0->2, and the short edge the row centre is on.
+      (local.set $xa (f32.add (local.get $x0) (f32.mul (f32.sub (local.get $x2) (local.get $x0))
+        (f32.div (f32.sub (local.get $yc) (local.get $y0)) (f32.sub (local.get $y2) (local.get $y0))))))
+      (if (f32.lt (local.get $yc) (local.get $y1))
+        (then (local.set $xb (f32.add (local.get $x0) (f32.mul (f32.sub (local.get $x1) (local.get $x0))
+          (f32.div (f32.sub (local.get $yc) (local.get $y0)) (f32.sub (local.get $y1) (local.get $y0)))))))
+        (else (local.set $xb (f32.add (local.get $x1) (f32.mul (f32.sub (local.get $x2) (local.get $x1))
+          (f32.div (f32.sub (local.get $yc) (local.get $y1)) (f32.sub (local.get $y2) (local.get $y1))))))))
+      (if (f32.gt (local.get $xa) (local.get $xb))
+        (then (local.set $s (local.get $xa)) (local.set $xa (local.get $xb)) (local.set $xb (local.get $s))))
+      (local.set $xs (i32.trunc_sat_f32_s (f32.ceil (f32.sub (local.get $xa) (f32.const 0.5)))))
+      (local.set $xe (i32.trunc_sat_f32_s (f32.ceil (f32.sub (local.get $xb) (f32.const 0.5)))))
+      (if (i32.lt_s (local.get $xs) (local.get $cx0)) (then (local.set $xs (local.get $cx0))))
+      (if (i32.gt_s (local.get $xe) (local.get $cx1)) (then (local.set $xe (local.get $cx1))))
+      (if (i32.gt_s (local.get $xe) (local.get $xs))
+        (then (local.set $n (i32.add (local.get $n) (i32.sub (local.get $xe) (local.get $xs))))))
+      (local.set $y (i32.add (local.get $y) (i32.const 1)))
+      (br $rows)))
+    (local.get $n))
+
   (func $glide_triangle (param $a i32) (param $b i32) (param $c i32)
     (local $p i32)
     (if (i32.eq (call $glide_api_version) (i32.const 3)) (then
@@ -136,8 +190,19 @@
     (call $glide_copy_vertex (i32.add (local.get $p) (i32.const 256)) (local.get $a))
     (call $glide_copy_vertex (i32.add (local.get $p) (i32.const 316)) (local.get $b))
     (call $glide_copy_vertex (i32.add (local.get $p) (i32.const 376)) (local.get $c))
+    ;; grSstPerfStats counters (extension +2480 pixelsIn, +2484 pixelsOut):
+    ;; the triangle's rasterised area enters and, with no per-fragment test
+    ;; results from the backend, leaves the pipeline. See $handle_grSstPerfStats.
+    (call $glide_perf_add (call $glide_count_pixels (i32.add (local.get $p) (i32.const 256))
+      (i32.add (local.get $p) (i32.const 316)) (i32.add (local.get $p) (i32.const 376))))
     (i32.store offset=36 (global.get $GLIDE_STATE)
       (i32.add (i32.load offset=36 (global.get $GLIDE_STATE)) (i32.const 1))))
+
+  (func $glide_perf_add (param $n i32)
+    (local $e i32)
+    (local.set $e (call $glide3_ext))
+    (i32.store offset=2480 (local.get $e) (i32.add (i32.load offset=2480 (local.get $e)) (local.get $n)))
+    (i32.store offset=2484 (local.get $e) (i32.add (i32.load offset=2484 (local.get $e)) (local.get $n))))
 
   ;; Retain topology explicitly. Thin lines and points must reach each
   ;; backend's native coverage rules, rather than pretending to be triangles.
@@ -1344,11 +1409,79 @@
     (call $lock_release (global.get $GLIDE_STATE))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 36))))
 
+  ;; grAADrawLine(a, b): the backend's native one-pixel line through the two
+  ;; vertices, under the app's own blend state -- as grAADrawTriangle's edges
+  ;; below; Glide's per-pixel coverage alpha is not computed. Dethkarz's 3Dfx
+  ;; renderer draws with it as soon as its race starts.
   (func $handle_grAADrawLine
     (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
     (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $host_log_i32 (i32.const 0x474c4944))
-    (call $crash_unimplemented (local.get $name_ptr)))
+    (call $lock_acquire (global.get $GLIDE_STATE))
+    (call $glide_check_guest (local.get $arg0) (i32.const 20))
+    (call $glide_check_guest (local.get $arg1) (i32.const 20))
+    (call $glide_small_primitive (i32.const 11) (local.get $arg0) (local.get $arg1))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (call $lock_release (global.get $GLIDE_STATE))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12))))
+
+  ;; grAADrawTriangle(a, b, c, ab_antialias, bc_antialias, ca_antialias): the
+  ;; triangle, then each flagged edge as the backend's native one-pixel line
+  ;; through the same vertices. Glide antialiases by drawing edge pixels with
+  ;; coverage in alpha under the app's own SRC_ALPHA blend; here the edge lines
+  ;; carry the vertices' own alpha under that same blend state, and per-pixel
+  ;; coverage is not computed. Dethkarz's 3Dfx renderer draws its race with it.
+  (func $handle_grAADrawTriangle
+    (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+    (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $sp i32) (local $ca i32)
+    (local.set $sp (i32.load offset=16 (global.get $reg_base)))
+    ;; Only five args reach a handler; the sixth (ca_antialias) is on the stack.
+    (local.set $ca (call $gl32 (i32.add (local.get $sp) (i32.const 24))))
+    (call $lock_acquire (global.get $GLIDE_STATE))
+    (call $glide_check_guest (local.get $arg0) (i32.const 20))
+    (call $glide_check_guest (local.get $arg1) (i32.const 20))
+    (call $glide_check_guest (local.get $arg2) (i32.const 20))
+    (call $glide_triangle (local.get $arg0) (local.get $arg1) (local.get $arg2))
+    (if (local.get $arg3) (then (call $glide_small_primitive (i32.const 11) (local.get $arg0) (local.get $arg1))))
+    (if (local.get $arg4) (then (call $glide_small_primitive (i32.const 11) (local.get $arg1) (local.get $arg2))))
+    (if (local.get $ca) (then (call $glide_small_primitive (i32.const 11) (local.get $arg2) (local.get $arg0))))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (call $lock_release (global.get $GLIDE_STATE))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28))))
+
+  ;; grSstPerfStats(GrSstPerfStats_t *): {pixelsIn, chromaFail, zFuncFail,
+  ;; aFuncFail, pixelsOut}, since the last grSstResetPerfStats. pixelsIn and
+  ;; pixelsOut are the rasterised area of every Glide 2 triangle drawn
+  ;; ($glide_count_pixels, at extension +2480/+2484). The backend renders on the
+  ;; host GPU and reports no per-fragment test results, so the three fail
+  ;; counters are 0 and pixelsOut equals pixelsIn; lines and points are not
+  ;; counted. Dethkarz's renderer reads and resets these once per frame.
+  (func $handle_grSstPerfStats
+    (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+    (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $e i32)
+    (call $glide_check_guest (local.get $arg0) (i32.const 20))
+    (call $lock_acquire (global.get $GLIDE_STATE))
+    (local.set $e (call $glide3_ext))
+    (call $gs32 (local.get $arg0) (i32.load offset=2480 (local.get $e)))
+    (call $gs32 (i32.add (local.get $arg0) (i32.const 4)) (i32.const 0))
+    (call $gs32 (i32.add (local.get $arg0) (i32.const 8)) (i32.const 0))
+    (call $gs32 (i32.add (local.get $arg0) (i32.const 12)) (i32.const 0))
+    (call $gs32 (i32.add (local.get $arg0) (i32.const 16)) (i32.load offset=2484 (local.get $e)))
+    (call $lock_release (global.get $GLIDE_STATE))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))
+
+  (func $handle_grSstResetPerfStats
+    (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+    (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $e i32)
+    (call $lock_acquire (global.get $GLIDE_STATE))
+    (local.set $e (call $glide3_ext))
+    (i64.store offset=2480 (local.get $e) (i64.const 0))
+    (call $lock_release (global.get $GLIDE_STATE))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4))))
 
   (func $handle_grDrawLine
       (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
@@ -1373,6 +1506,7 @@
   ;; depth range24/28, twelve {offset,enabled} layout entries32..127,
   ;; retained palette128..1151, strings1152..1407, array vertices1536..1715,
   ;; continuation count1720/topology1724, metrics2048..2334, TMU1state2368..2447,
+  ;; grTexDetailControl per TMU2448..2479, grSstPerfStats pixelsIn2480/Out2484,
   ;; clip polygons2560..4479, projected triangle4480..4659, direct raw vertices
   ;; 4800..4979. Never grow the packed static region.
   (func $glide_api_version (export "glide_api_version") (result i32)

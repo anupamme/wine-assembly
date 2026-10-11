@@ -32946,7 +32946,7 @@
     "nargs": 6,
     "convention": "stdcall",
     "hash": 700279752,
-    "handler": "grAADrawLine"
+    "handler": "grAADrawTriangle"
   },
   {
     "id": 3869,
@@ -32954,7 +32954,7 @@
     "nargs": 6,
     "convention": "stdcall",
     "hash": 2210710371,
-    "handler": "grAADrawLine"
+    "handler": "grAADrawTriangle"
   },
   {
     "id": 3870,
@@ -38596,5 +38596,35 @@
     "convention": "stdcall",
     "hash": 46278517,
     "handler": "glide2_grTexDownloadTablePartial"
+  },
+  {
+    "id": 4530,
+    "name": "grSstPerfStats",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 3665096948
+  },
+  {
+    "id": 4531,
+    "name": "_grSstPerfStats@4",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 2064468303,
+    "handler": "grSstPerfStats"
+  },
+  {
+    "id": 4532,
+    "name": "grSstResetPerfStats",
+    "nargs": 0,
+    "convention": "stdcall",
+    "hash": 1120035525
+  },
+  {
+    "id": 4533,
+    "name": "_grSstResetPerfStats@0",
+    "nargs": 0,
+    "convention": "stdcall",
+    "hash": 1976379696,
+    "handler": "grSstResetPerfStats"
   }
 ]
