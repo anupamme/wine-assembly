@@ -303,3 +303,20 @@ the properties step: no browser gameplay or driver-error-cleared claim.
 Next explicitly capture the Properties Return/Video OK sequence before
 entering Single Player. Module SHA256:
 0d8387d822799c57e7876f3773b569cf89b23a5534824930d8f3b5a781cd2565.
+
+## Properties dialog differs with Threads
+
+Runs20261011T1802Z-turok-properties and1804Z-turok-properties-coop repeat
+the same Options/Video/Direct3D/OK clicks, then wait five seconds without
+sending Enter. Same patched module, Chromium152 and lazy loading; the second
+run adds `?no-threads`. With Threads, renderer HWND0x10032 is visible but its
+title is empty and no properties contents appear. Without Threads, that HWND
+is a complete Direct3D Properties dialog with Video Card, Resolution, quality
+options and OK/Cancel. Both screenshots and window metadata are retained.
+
+Thus the remaining settings failure is worker-specific, not an unverified
+key-binding or Direct3D selection problem. Next inspect DialogBoxParam's
+hInstance/template lookup and DLL initialization/resource context in the
+worker; source routes DLL templates through push_rsrc_ctx before dlg_load.
+No root cause or additional fix is claimed yet. Do not disable Threads as
+the production fix or count the cooperative settings screen as gameplay.
