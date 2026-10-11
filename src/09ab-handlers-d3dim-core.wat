@@ -6252,6 +6252,46 @@
   ;; ── DrawIndexedPrimitive core (fixed-pipeline vertex transform) ─
   ;; Legacy DrawIndexedPrimitive commonly feeds D3DVERTEX/LVERTEX arrays and
   ;; relies on the device transforms instead of prebuilt TLVERTEX data.
+  ;; D3D's vertex fog for a vertex the pipeline transforms: FOGENABLE (28) with
+  ;; FOGTABLEMODE (35) NONE and FOGVERTEXMODE (140) LINEAR/EXP/EXP2, over the
+  ;; eye depth d = w = 1/rhw that $vertex_project left at +12. Linear is
+  ;; (FOGEND - d) / (FOGEND - FOGSTART); EXP e^(-density*d); EXP2
+  ;; e^(-(density*d)^2); clamped and scaled to the 0..255 specular alpha.
+  ;; 255 (no fog) whenever vertex fog is not in effect. Reference: wine-mirror
+  ;; wine dlls/wined3d/device.c process_vertices.
+  (func $d3dim_vertex_fog_alpha (param $state_guest i32) (param $tl_wa i32) (result i32)
+    (local $sw i32) (local $mode i32) (local $rhw f32) (local $d f32) (local $f f32)
+    (local $start f32) (local $end f32) (local $density f32)
+    (local.set $sw (call $g2w (local.get $state_guest)))
+    (if (i32.eqz (call $d3dim_d7_rs (local.get $sw) (i32.const 28))) (then (return (i32.const 255))))
+    (if (call $d3dim_d7_rs (local.get $sw) (i32.const 35)) (then (return (i32.const 255))))
+    (local.set $mode (call $d3dim_d7_rs (local.get $sw) (i32.const 140)))
+    (if (i32.or (i32.eqz (local.get $mode)) (i32.gt_u (local.get $mode) (i32.const 3)))
+      (then (return (i32.const 255))))
+    (local.set $rhw (f32.load offset=12 (local.get $tl_wa)))
+    (if (i32.eqz (f32.gt (local.get $rhw) (f32.const 0))) (then (return (i32.const 255))))
+    (local.set $d (f32.div (f32.const 1) (local.get $rhw)))
+    (if (i32.eq (local.get $mode) (i32.const 3))
+      (then
+        (local.set $start (f32.reinterpret_i32 (call $d3dim_d7_rs (local.get $sw) (i32.const 36))))
+        (local.set $end (f32.reinterpret_i32 (call $d3dim_d7_rs (local.get $sw) (i32.const 37))))
+        (if (f32.le (local.get $end) (local.get $start))
+          (then (return (select (i32.const 0) (i32.const 255)
+            (f32.ge (local.get $d) (local.get $end))))))
+        (local.set $f (f32.div (f32.sub (local.get $end) (local.get $d))
+                               (f32.sub (local.get $end) (local.get $start)))))
+      (else
+        (local.set $density (f32.mul
+          (f32.reinterpret_i32 (call $d3dim_d7_rs (local.get $sw) (i32.const 38)))
+          (local.get $d)))
+        (if (i32.eq (local.get $mode) (i32.const 2))
+          (then (local.set $density (f32.mul (local.get $density) (local.get $density)))))
+        ;; e^-x = 2^(-x * log2 e)
+        (local.set $f (f32.demote_f64 (call $host_math_pow2
+          (f64.mul (f64.promote_f32 (f32.neg (local.get $density))) (f64.const 1.4426950408889634)))))))
+    (local.set $f (f32.min (f32.const 1) (f32.max (f32.const 0) (local.get $f))))
+    (i32.trunc_sat_f32_u (f32.nearest (f32.mul (local.get $f) (f32.const 255)))))
+
   (func $d3dim_prepare_draw_vertex
     (param $state_guest i32) (param $vtxType i32) (param $src_wa i32) (param $dst_wa i32)
     (local $color i32) (local $spec i32) (local $tu i32) (local $tv i32)
@@ -6273,6 +6313,15 @@
         (local.set $tu    (i32.load (i32.add (local.get $src_wa) (i32.const 24))))
         (local.set $tv    (i32.load (i32.add (local.get $src_wa) (i32.const 28))))))
     (call $vertex_project (local.get $state_guest) (local.get $src_wa) (local.get $dst_wa))
+    ;; ...and when a fog vertex mode is in effect, that alpha is the
+    ;; pipeline's computed fog factor instead ($d3dim_vertex_fog_alpha gives
+    ;; 255 otherwise, the same default). Giants uses LINEAR vertex fog; with
+    ;; alpha 0 its buildings drew in the flat fog colour. Pre-lit vertices
+    ;; (type 2) keep the specular they supplied.
+    (if (i32.ne (local.get $vtxType) (i32.const 2))
+      (then (local.set $spec (i32.shl
+        (call $d3dim_vertex_fog_alpha (local.get $state_guest) (local.get $dst_wa))
+        (i32.const 24)))))
     (i32.store (i32.add (local.get $dst_wa) (i32.const 16)) (local.get $color))
     (i32.store (i32.add (local.get $dst_wa) (i32.const 20)) (local.get $spec))
     (i32.store (i32.add (local.get $dst_wa) (i32.const 24)) (local.get $tu))
