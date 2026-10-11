@@ -63,13 +63,14 @@ async function main() {
   glCall(CALL_INDEX.glEnable, GL_TEXTURE_2D);
 
   // One quad, its left corners at w = wl and its right corners at w = wr.
-  const quad = (wl, wr) => {
+  const quad = (wl, wr, bottomZ = 0) => {
     const tri = pts => {
       pts.forEach(([x, y], i) => {
         const w = x < 0 ? wl : wr;
         const f = new Float32Array(memory.buffer, verts + i * VERT_BYTES, VERTEX_FLOATS);
         f.fill(0);
-        f.set([x * w, y * w, 0, 1, 1, 1, 1, (x + 1) / 2, 0.5]);
+        f.set([x * w, y * w, (y < 0 ? bottomZ * w : 0), 1, 1, 1, 1, (x + 1) / 2, 0.5]);
+        f[12] = (x + 1) / 2; f[13] = 0.5;
         f[14] = w;
       });
       e.gl_sw_emit_triangles(verts, 3);
@@ -102,6 +103,39 @@ async function main() {
   assert.ok(Math.abs(edge - VP * 0.75) <= 1,
     `w = 1 | 3: perspective-correct s reaches 0.5 at three quarters (column ${edge}, affine would be ${mid})`);
   assert.strictEqual(proj[Math.round(VP * 0.6)], RED, '60% across is still red under w = 1 | 3');
+
+  // Unit 1 texture Q is independent of position w. Keep the ordinary
+  // position controls above so a renderer cannot fix Q by changing clip w.
+  glCall(CALL_INDEX.glDisable, GL_TEXTURE_2D);
+  glCall(CALL_INDEX.glActiveTextureARB, 0x84C1);
+  e.gl_mtx_observe(CALL_INDEX.glActiveTextureARB, stack);
+  glCall(CALL_INDEX.glBindTexture, GL_TEXTURE_2D, 7);
+  glCall(CALL_INDEX.glEnable, GL_TEXTURE_2D);
+  e.gl_mtx_set_mode(0x1702);
+  const matrixGuest=e.guest_alloc(64) >>> 0;
+  const matrix=new Float32Array(memory.buffer,toWasm(matrixGuest),16);
+  matrix.set([3,0,0,2, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+  words.fill(0); words[1]=matrixGuest;
+  e.gl_mtx_observe(CALL_INDEX.glLoadMatrixf,stack);
+  quad(1,1);
+  const textureEdge=boundary(row());
+  assert.ok(Math.abs(textureEdge-VP/4)<=1,
+    'unit1 texture Q must cross at one quarter, got '+textureEdge);
+  for(const z of [-1.5,1.5]) {
+    quad(1,1,z);
+    const clipped=row();
+    assert.ok(clipped.every(p=>p===RED||p===BLUE),'clipped row stays textured');
+    assert.ok(Math.abs(boundary(clipped)-VP/4)<=1,
+      'near/far clipping preserves texture Q within raster rounding, z='+z);
+  }
+  quad(1,3);
+  const combinedEdge=boundary(row());
+  assert.ok(Math.abs(combinedEdge-VP/2)<=1,
+    'unit1 texture Q and position w must be independent, got '+combinedEdge);
+  e.gl_mtx_load_identity();
+  quad(1,1);
+  assert.strictEqual(boundary(row()),mid,'identity texture matrix restores Q=1');
+  console.log('PASS unit1 homogeneous texture matrix: '+textureEdge+', combined '+combinedEdge);
 
   console.log(`PASS  software GL divides by the vertex w: boundary ${mid} -> ${edge} of ${VP}`);
 }

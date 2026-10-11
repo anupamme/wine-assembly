@@ -99,3 +99,25 @@ Next: implement this coordinated state/stream/raster change, then promote
 this diagnostic into the existing regression and run both software and
 WebGL quarter-boundary checks before replaying Oni. glTexCoord4f/4fv remain
 fail-fast until the complete route exists; no gameplay qualification yet.
+
+## Software texture unit 1 prerequisite implemented
+
+Unit1 triangles now carry matrix-generated S/T/Q through clipping and
+interpolate S/w, T/w and Q/w independently of vertex position w. The sampler
+already divides these planes per pixel; its denominator now uses texture Q.
+Unit0 retains its old per-vertex texture-matrix divide and remains pending.
+The guest glTexCoord4 APIs and packed15-float format are still unchanged.
+
+Clip records are now56 bytes, with reserved q0 and live q1 at48/52. The
+far-clipped polygon moved to scratch+0x680 (five records end0x798, inside
+the existing0x800 allocation), away from lighting and texgen scratch.
+The existing clip pass copied only40 bytes of its previous48-byte records,
+dropping unit1 coordinates on retained vertices; it now copies the full56.
+
+Extended test-gl-projective-vertex.js: old source fails unit1 boundary16
+instead of8; fixed source passes quarter boundary8, independent w/Q16,
+near/far clipping within one raster pixel, identity reset and original
+position-w controls16/24. Full build and existing software raster,
+multitexture, lines and texgen suites pass on bx_k7xdfrq9. Evidence:
+scratch/runs/20261011T2141Z-oni-unit1-projective/. This is a scoped renderer
+prerequisite; Oni has not been replayed past its missing API.

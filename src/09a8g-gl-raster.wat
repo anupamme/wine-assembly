@@ -830,16 +830,16 @@
   ;; Scratch: +0 the MVP, +64 one object-space vec4, +128 three screen
   ;; records, +256 three clip records, +512 up to four near-clipped ones,
   ;; +0x300 the default viewport $gl_sw_consume substitutes when none is
-  ;; set, +0x310 up to five far-clipped records (ends exactly at 0x400).
-  ;; Clip record, 48 bytes: +0 x, +4 y, +8 z, +12 w, +16 u, +20 v, then
+  ;; set, +0x680 up to five far-clipped records (ends at 0x798, inside 0x800).
+  ;; Clip record, 56 bytes: +0 x, +4 y, +8 z, +12 w, +16 u, +20 v, then
   ;; r, g, b, a at +24..+36, unit 1's u, v at +40, +44 -- all f32, so
-  ;; clipping lerps twelve floats alike.
+  ;; q0/q1 at +48/+52; clipping lerps fourteen floats alike.
   (func $gl_sw_clip_at (param $k i32) (result i32)
     (i32.add (global.get $gl_sw_scratch)
-      (i32.add (i32.const 256) (i32.mul (local.get $k) (i32.const 48)))))
+      (i32.add (i32.const 256) (i32.mul (local.get $k) (i32.const 56)))))
   (func $gl_sw_poly_at (param $k i32) (result i32)
     (i32.add (global.get $gl_sw_scratch)
-      (i32.add (i32.const 512) (i32.mul (local.get $k) (i32.const 48)))))
+      (i32.add (i32.const 512) (i32.mul (local.get $k) (i32.const 56)))))
   ;; Signed distance to GL's near clip plane, z >= -w.
   (func $gl_sw_near_d (param $c i32) (result f32)
     (f32.add (f32.load offset=8 (local.get $c)) (f32.load offset=12 (local.get $c))))
@@ -862,7 +862,7 @@
           (f32.mul (f32.sub (f32.load (i32.add (local.get $b) (local.get $i))) (local.get $x))
                    (local.get $t))))
       (local.set $i (i32.add (local.get $i) (i32.const 4)))
-      (br_if $lp (i32.lt_u (local.get $i) (i32.const 48)))))
+      (br_if $lp (i32.lt_u (local.get $i) (i32.const 56)))))
   ;; Per-vertex screen record, 32 bytes: +0 x, +4 y (i32), +8 z, +12 rhw,
   ;; +16 u, +20 v (f32), +24 colour (0xAARRGGBB).
   (func $gl_sw_screen_at (param $k i32) (result i32)
@@ -1870,6 +1870,25 @@
       (f32.mul (f32.load offset=20 (local.get $m)) (local.get $t)))
       (f32.load offset=52 (local.get $m))) (local.get $q))))
 
+  ;; Unit 1 keeps S/T/Q homogeneous until the fragment sampler. Dividing
+  ;; before clipping/interpolation gives an affine approximation instead.
+  (func $gl_sw_tex_transform_homogeneous (param $m i32) (param $p i32) (param $qp i32)
+    (local $s f32) (local $t f32)
+    (local.set $s (f32.load (local.get $p)))
+    (local.set $t (f32.load offset=4 (local.get $p)))
+    (f32.store (local.get $qp) (f32.add (f32.add
+      (f32.mul (f32.load offset=12 (local.get $m)) (local.get $s))
+      (f32.mul (f32.load offset=28 (local.get $m)) (local.get $t)))
+      (f32.load offset=60 (local.get $m))))
+    (f32.store (local.get $p) (f32.add (f32.add
+      (f32.mul (f32.load (local.get $m)) (local.get $s))
+      (f32.mul (f32.load offset=16 (local.get $m)) (local.get $t)))
+      (f32.load offset=48 (local.get $m))))
+    (f32.store offset=4 (local.get $p) (f32.add (f32.add
+      (f32.mul (f32.load offset=4 (local.get $m)) (local.get $s))
+      (f32.mul (f32.load offset=20 (local.get $m)) (local.get $t)))
+      (f32.load offset=52 (local.get $m)))))
+
   ;; One 60-byte GL vertex at $src into clip record $k: transformed, texture
   ;; matrix applied, lit or its colour copied. Returns 1 when it is on the
   ;; inside of the near plane, | 2 when on the inside of the far one.
@@ -1892,13 +1911,16 @@
     (if (global.get $gl_sw_texmtx)
       (then (call $gl_sw_tex_transform (global.get $gl_sw_texmtx)
         (i32.add (local.get $clip) (i32.const 16)))))
-    ;; Unit 1's coordinates (vertex +48) ride in the clip record's last two
-    ;; words, so clipping interpolates them with everything else.
+    ;; Unit 1's S/T (vertex +48) and matrix Q ride in the clip record,
+    ;; so clipping interpolates all three with everything else.
     (f32.store offset=40 (local.get $clip) (f32.load offset=48 (local.get $src)))
     (f32.store offset=44 (local.get $clip) (f32.load offset=52 (local.get $src)))
+    (f32.store offset=48 (local.get $clip) (f32.const 1))
+    (f32.store offset=52 (local.get $clip) (f32.const 1))
     (if (global.get $gl_sw_texmtx1)
-      (then (call $gl_sw_tex_transform (global.get $gl_sw_texmtx1)
-        (i32.add (local.get $clip) (i32.const 40)))))
+      (then (call $gl_sw_tex_transform_homogeneous (global.get $gl_sw_texmtx1)
+        (i32.add (local.get $clip) (i32.const 40))
+        (i32.add (local.get $clip) (i32.const 52)))))
     (if (global.get $gl_sw_lit)
       (then (call $gl_sw_light_vertex (local.get $src) (i32.add (local.get $clip) (i32.const 24))))
       (else (call $memcpy (i32.add (local.get $clip) (i32.const 24))
@@ -1961,14 +1983,14 @@
     (if (i32.ne (local.get $far_in) (i32.const 7))
       (then
         (local.set $n (call $gl_sw_clip_pass (local.get $poly) (local.get $n)
-          (i32.add (global.get $gl_sw_scratch) (i32.const 0x310)) (i32.const 1)))
-        (local.set $poly (i32.add (global.get $gl_sw_scratch) (i32.const 0x310)))))
+          (i32.add (global.get $gl_sw_scratch) (i32.const 0x680)) (i32.const 1)))
+        (local.set $poly (i32.add (global.get $gl_sw_scratch) (i32.const 0x680)))))
     (local.set $k (i32.const 1))
     (block $done (loop $fan
       (br_if $done (i32.ge_s (i32.add (local.get $k) (i32.const 1)) (local.get $n)))
       (call $gl_sw_emit (local.get $vp) (local.get $poly)
-        (i32.add (local.get $poly) (i32.mul (local.get $k) (i32.const 48)))
-        (i32.add (local.get $poly) (i32.mul (i32.add (local.get $k) (i32.const 1)) (i32.const 48))))
+        (i32.add (local.get $poly) (i32.mul (local.get $k) (i32.const 56)))
+        (i32.add (local.get $poly) (i32.mul (i32.add (local.get $k) (i32.const 1)) (i32.const 56))))
       (local.set $k (i32.add (local.get $k) (i32.const 1)))
       (br $fan))))
 
@@ -1980,21 +2002,21 @@
     (local $k i32) (local $m i32) (local $a i32) (local $b i32)
     (local $da f32) (local $db f32)
     (loop $edge
-      (local.set $a (i32.add (local.get $src) (i32.mul (local.get $k) (i32.const 48))))
+      (local.set $a (i32.add (local.get $src) (i32.mul (local.get $k) (i32.const 56))))
       (local.set $b (i32.add (local.get $src) (i32.mul
         (select (i32.const 0) (i32.add (local.get $k) (i32.const 1))
           (i32.eq (i32.add (local.get $k) (i32.const 1)) (local.get $n)))
-        (i32.const 48))))
+        (i32.const 56))))
       (local.set $da (call $gl_sw_plane_d (local.get $a) (local.get $far)))
       (local.set $db (call $gl_sw_plane_d (local.get $b) (local.get $far)))
       (if (f32.ge (local.get $da) (f32.const 0))
         (then
-          (call $memcpy (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 48)))
-            (local.get $a) (i32.const 40))
+          (call $memcpy (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 56)))
+            (local.get $a) (i32.const 56))
           (local.set $m (i32.add (local.get $m) (i32.const 1)))))
       (if (i32.ne (f32.ge (local.get $da) (f32.const 0)) (f32.ge (local.get $db) (f32.const 0)))
         (then
-          (call $gl_sw_lerp_into (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 48)))
+          (call $gl_sw_lerp_into (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 56)))
             (local.get $a) (local.get $b)
             (f32.div (local.get $da) (f32.sub (local.get $da) (local.get $db))))
           (local.set $m (i32.add (local.get $m) (i32.const 1)))))
@@ -2315,9 +2337,12 @@
     (local.set $q1 (f32.load offset=12 (local.get $s1)))
     (local.set $q2 (f32.load offset=12 (local.get $s2)))
     (call $rast_plane
-      (i32.load (local.get $s0)) (i32.load offset=4 (local.get $s0)) (local.get $q0)
-      (i32.load (local.get $s1)) (i32.load offset=4 (local.get $s1)) (local.get $q1)
-      (i32.load (local.get $s2)) (i32.load offset=4 (local.get $s2)) (local.get $q2))
+      (i32.load (local.get $s0)) (i32.load offset=4 (local.get $s0))
+      (f32.mul (f32.load offset=52 (local.get $c0)) (local.get $q0))
+      (i32.load (local.get $s1)) (i32.load offset=4 (local.get $s1))
+      (f32.mul (f32.load offset=52 (local.get $c1)) (local.get $q1))
+      (i32.load (local.get $s2)) (i32.load offset=4 (local.get $s2))
+      (f32.mul (f32.load offset=52 (local.get $c2)) (local.get $q2)))
     (global.set $rast_t1_qa (global.get $rast_pa))
     (global.set $rast_t1_qb (global.get $rast_pb))
     (global.set $rast_t1_qc (global.get $rast_pc))
