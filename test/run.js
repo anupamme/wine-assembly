@@ -4600,6 +4600,7 @@ async function main() {
     ? threadManager.releaseMutex((handle >>> 0) & 0x7fffffff, win32ThreadId())
     : threadManager.setEvent(handle);
   h.reset_event = (handle) => threadManager.resetEvent(handle);
+  h.close_event = handle => threadManager.closeEvent(handle);
   // A wait reached from inside a synchronous SendMessage cannot yield: the
   // recursive interpreter frame in $wnd_send_message would be abandoned. Give
   // the signalling worker a bounded inline turn instead, exactly as host.js

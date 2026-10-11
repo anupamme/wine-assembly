@@ -2621,6 +2621,7 @@ class WineAssembly {
       const name = readSyncName(nameWa, wide);
       return (wide & 2) ? self.threadManager.openMutex(name) : self.threadManager.openEvent(name);
     };
+    h.close_event = handle => self.threadManager ? self.threadManager.closeEvent(handle) : 0;
     h.set_event = (handle) => {
       if (!self.threadManager) return 1;
       const value = handle >>> 0;

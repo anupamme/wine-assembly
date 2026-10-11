@@ -55,7 +55,10 @@ assert.notStrictEqual(idHandle, idView.getUint32(threadIdWa, true),
   assert.strictEqual(events.waitSingle(event, 0), 0, 'manual reset stays signaled');
   assert.strictEqual(events.resetEvent(event), 1);
   assert.strictEqual(events.waitSingle(event, 0), 258);
-  assert.strictEqual(events.closeSyncHandle(event), true);
+  assert.strictEqual(events.closeEvent(semaphore), 0, 'typed close preserves other object types');
+  assert.strictEqual(events.closeEvent(0x12345678), 0);
+  assert.strictEqual(events.closeEvent(event), 1);
+  assert.strictEqual(events.closeEvent(event), 0, 'double event close fails');
   assert.strictEqual(events.setEvent(event), 0, 'closed handle cannot be signaled');
   assert.strictEqual(events.resetEvent(event), 0, 'closed handle cannot be reset');
 }

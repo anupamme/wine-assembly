@@ -90,6 +90,13 @@ async function main() {
         (i32.const 0) (i32.const 0) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsa_close_event") (param $event i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $dispatch_api_table (call $lookup_api_id "WSACloseEvent")
+        (local.get $event) (i32.const 0) (i32.const 0)
+        (i32.const 0) (i32.const 0) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     ;; A live HWND, so WSAAsyncSelect's posts route to this thread's queue.
     (func (export "test_make_window") (result i32)
       (local $hwnd i32)
@@ -328,6 +335,32 @@ async function main() {
       assert.strictEqual(wat.test_call_WSAGetLastError(), 6);
     }
     assert.strictEqual(hostContext.closeSyncHandle(mutex), true);
+    wat.test_wsa_cleanup();
+  });
+
+  check('WSACloseEvent closes only live events and checks initialization', () => {
+    const api = require('../src/api_table.json').find(a => a.name === 'WSACloseEvent');
+    assert(api, 'WSACloseEvent must resolve');
+    assert.strictEqual(api.nargs, 1);
+    const close = handle => {
+      const result = wat.test_wsa_close_event(handle);
+      assert.strictEqual(Number(result >> 32n), 0x00300008);
+      return Number(result & 0xffffffffn);
+    };
+    assert.strictEqual(close(0), 0);
+    assert.strictEqual(wat.test_call_WSAGetLastError(), 10093);
+    wat.test_wsa_startup(alloc(400));
+    const event = Number(wat.test_wsa_create_event() & 0xffffffffn);
+    const mutex = imports.host.create_event(0, 1, 0, 2);
+    for (const bad of [0, 0x12345678, mutex]) {
+      assert.strictEqual(close(bad), 0);
+      assert.strictEqual(wat.test_call_WSAGetLastError(), 6);
+    }
+    assert.strictEqual(close(event), 1);
+    assert.strictEqual(close(event), 0, 'double close must fail');
+    assert.strictEqual(wat.test_call_WSAGetLastError(), 6);
+    assert.strictEqual(imports.host.set_event(event), 0, 'closed event cannot be signaled');
+    assert.strictEqual(hostContext.closeSyncHandle(mutex), true, 'failed event close preserves mutex');
     wat.test_wsa_cleanup();
   });
 

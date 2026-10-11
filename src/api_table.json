@@ -38705,5 +38705,12 @@
     "nargs": 1,
     "convention": "stdcall",
     "hash": 3455686295
+  },
+  {
+    "id": 4545,
+    "name": "WSACloseEvent",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 1504196434
   }
 ]

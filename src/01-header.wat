@@ -551,6 +551,7 @@
   (import "host" "create_event" (func $host_create_event (param i32 i32 i32 i32) (result i32)))
   (import "host" "open_event" (func $host_open_event (param i32 i32) (result i32)))
   (import "host" "set_event" (func $host_set_event (param i32) (result i32)))
+  (import "host" "close_event" (func $host_close_event (param i32) (result i32)))
   (import "host" "reset_event" (func $host_reset_event (param i32) (result i32)))
   (import "host" "wait_single" (func $host_wait_single (param i32 i32) (result i32)))
   (import "host" "wait_multiple" (func $host_wait_multiple (param i32 i32 i32 i32) (result i32)))

@@ -157,6 +157,22 @@ ThreadManager regression checks the scheduler provider directly.
 Next: WSAEventSelect/WSAEnumNetworkEvents must latch requested socket events and
 reset atomically with their recorded errors. Do not hold a WAT spinlock across
 a host call: a worker RPC can wait for main while main spins on that lock.
-WSACloseEvent also needs strict event-handle validation: generic fs_close_handle
-currently accepts unknown non-file handles and cannot provide that contract
-by itself. Dark Reign 2 has not been rerun or qualified from these changes.
+The generic fs_close_handle accepts unknown non-file handles, so event close
+needs the typed provider path described below. Dark Reign 2 has not been rerun or qualified from these changes.
+
+## Typed event close
+
+WSACloseEvent now checks process startup and calls a typed close_event host
+import rather than the permissive filesystem CloseHandle fallback. Both the
+headless provider and ThreadManager verify the live object is an event before
+releasing it; unknown, closed, and wrong-type handles fail with
+WSA_INVALID_HANDLE (6). Browser and CLI install the same provider operation;
+worker import inheritance and generated RPC signatures include it.
+
+Evidence: scratch/runs/20261011T2219Z-winsock-event-close/. Old API lookup and
+missing-provider controls fail. The regression covers startup
+precondition, one-argument close stack cleanup, successful release, double
+close, rejected mutex close, and inability to signal the closed object.
+All 55 Winsock checks and the ThreadManager/mutex checks pass. The remaining
+Dark Reign 2 blocker is still WSAEnumNetworkEvents/WSAEventSelect, not this
+lifecycle prerequisite; no fresh gameplay or screenshot claim.
