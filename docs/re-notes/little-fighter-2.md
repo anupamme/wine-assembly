@@ -118,3 +118,34 @@ Blts (`0x439bc3`, `0x439d5b`, `0x439e83`, `0x439d27`, and one per frame from
 `0x40133d`) and presents it with that one Blt; no Lock/Unlock, Flip or palette
 calls. 974 of 988 presents change the picture, ~3.3 frames per 100,000-block
 batch (~30k guest blocks per frame).
+
+## Esc, the black bands, and fullscreen (2026-10-11, user report 17)
+
+**Esc quits, as on Windows.** The readme's function-key list ends `ESC: Quit`.
+The wndproc's WM_KEYDOWN path compares wParam with `0x1b` at `0x4389c9`, in
+every game state, and posts WM_CLOSE to its own window (`0x4389dd`). The window
+is then destroyed and `0x43888d` calls PostQuitMessage, and the process exits
+with code 0. F4 restarts a fight; there is no "back to menu" key.
+
+**The black bands are drawn by the game.** The stage is drawn by its `bg.dat`
+layers. LF2 .dat files are encoded: skip 123 bytes, then subtract the key
+`odBearBecauseHeIsVeryGoodSiuHungIsAGo`. In the stock background
+`bg/sys/hkc/bg.dat` (HK_Coliseum, the Hollywood Plaza skyline), the first layer
+starts at y=128, right under the 4x2 player HUD. The last ground strip is
+`y: 472 height: 42` and ends at y=514. Nothing covers rows 514-549 of the
+794x550 view, so they stay black, and so does the strip between the HUD
+panels and the skyline.
+
+**Fullscreen is Alt+Enter, and ours is broken.** The game is windowed by
+default (DDSCL_NORMAL, an 800x575 bordered window). WM_SYSKEYUP with VK_RETURN
+(`0x438a10`) is the toggle, enabled by the initialised global `[0x446858]=1`.
+It flips `[0x44e200]`, destroys the window, and creates an 800x600 WS_POPUP.
+It then calls `SetCooperativeLevel(..., DDSCL_EXCLUSIVE|DDSCL_FULLSCREEN)` and
+`SetDisplayMode(794, 550, 8)`, with the width and height from the globals at
+`0x446850/54`. The emulator accepts that mode, and the menu renders as
+striped garbage (`scratch/runs/20261011T0905Z-lf2-esc-fullscreen-w6/after-altenter.png`).
+The game draws for a 16-bit screen into what is now an 8-bit mode. A 794x550
+mode does not exist on real hardware, so a Win98 driver would most likely
+refuse it. Still open: what LF2 does after `0x438f60` when that call fails.
+Until then, use the page's own fullscreen (the "Use browser fullscreen" button
+on the bar above the game), which scales the windowed game.
