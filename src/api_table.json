@@ -9598,7 +9598,7 @@
   {
     "id": 1083,
     "name": "IDirectInput_Initialize",
-    "nargs": 4,
+    "nargs": 3,
     "convention": "stdcall",
     "hash": 3944384218
   },

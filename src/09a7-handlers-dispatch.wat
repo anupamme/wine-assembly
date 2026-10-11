@@ -3302,7 +3302,12 @@
       (if (call $guid_words_equal (local.get $clsid_wa)
             (i32.const 0xD7B70EE0) (i32.const 0x11CF4340)
             (i32.const 0x200063B0) (i32.const 0x35CDC2AF))
-        (then (local.set $local_class (i32.const 9))))))
+        (then (local.set $local_class (i32.const 9))))
+      ;; CLSID_DirectInput {25E609E0-B259-11CF-BFC7-444553540000}.
+      (if (call $guid_words_equal (local.get $clsid_wa)
+            (i32.const 0x25E609E0) (i32.const 0x11CFB259)
+            (i32.const 0x4544C7BF) (i32.const 0x00005453))
+        (then (local.set $local_class (i32.const 11))))))
 
     (if (local.get $local_class) (then
       (if (i32.eqz (local.get $arg4))
@@ -3355,6 +3360,10 @@
             (then
               (global.set $dx_ddraw_this (local.get $obj_guest))
               (call $dx_coop_hwnd_set (i32.const 0))))))
+      ;; The DirectInputCreateA object, uninitialized until IDirectInput::Initialize.
+      (if (i32.eq (local.get $local_class) (i32.const 11))
+        (then (local.set $obj_guest (call $dx_create_com_obj
+          (i32.const 6) (global.get $DX_VTBL_DINPUT)))))
       (if (i32.eqz (local.get $obj_guest))
         (then
           (i32.store offset=0 (global.get $reg_base) (i32.const 0x8007000E)) ;; E_OUTOFMEMORY
@@ -3407,6 +3416,9 @@
           (i32.const 0xC000CA8F) (i32.const 0x9D18D94F)))))
       (if (i32.eq (local.get $local_class) (i32.const 9))
         (then (local.set $hr (call $ddraw_cocreate_query_wa
+          (local.get $obj_guest) (local.get $iid_wa) (local.get $arg4)))))
+      (if (i32.eq (local.get $local_class) (i32.const 11))
+        (then (local.set $hr (call $dinput_cocreate_query_wa
           (local.get $obj_guest) (local.get $iid_wa) (local.get $arg4)))))
       (drop (call $dx_com_release_basic (local.get $obj_guest)))
       (i32.store offset=0 (global.get $reg_base) (local.get $hr))

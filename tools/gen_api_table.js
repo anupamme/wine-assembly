@@ -762,7 +762,7 @@ const extra = [
   { name: 'IDirectInput_EnumDevices', nargs: 5 },
   { name: 'IDirectInput_GetDeviceStatus', nargs: 2 },
   { name: 'IDirectInput_RunControlPanel', nargs: 3 },
-  { name: 'IDirectInput_Initialize', nargs: 4 },
+  { name: 'IDirectInput_Initialize', nargs: 3 }, // this, hinst, dwVersion
   // IDirectInputDeviceA vtable (18 methods)
   { name: 'IDirectInputDevice_QueryInterface', nargs: 3 },
   { name: 'IDirectInputDevice_AddRef', nargs: 1 },

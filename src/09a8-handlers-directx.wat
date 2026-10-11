@@ -2099,6 +2099,31 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)) ;; DI_OK
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))) ;; stdcall 4 args
 
+  ;; CoCreateInstance(CLSID_DirectInput, riid) for a fresh DirectInputCreate-
+  ;; shaped object: the same wrapper choice IDirectInput_QueryInterface makes,
+  ;; with no version yet (Initialize sets it). CLSID_DirectInput is the pre-8
+  ;; class, so IDirectInput8 is refused. Evolva builds its DirectInput this way
+  ;; (a #import smart pointer's CreateInstance) and throws when it fails.
+  (func $dinput_cocreate_query_wa (param $obj i32) (param $iid_wa i32) (param $out i32) (result i32)
+    (local $kind i32) (local $entry i32) (local $wrapper i32)
+    (call $gs32 (local.get $out) (i32.const 0))
+    (if (i32.eqz (local.get $iid_wa)) (then (return (i32.const 0x80004003)))) ;; E_POINTER
+    (local.set $kind (call $dinput_iid_kind_wa (local.get $iid_wa)))
+    (local.set $entry (call $dx_from_this (local.get $obj)))
+    (if (i32.or (i32.eqz (local.get $entry))
+          (i32.or (i32.eqz (local.get $kind)) (i32.eq (local.get $kind) (i32.const 5))))
+      (then (return (i32.const 0x80004002)))) ;; E_NOINTERFACE
+    (local.set $wrapper
+      (if (result i32) (i32.le_u (local.get $kind) (i32.const 2))
+        (then (local.get $obj))
+        (else (call $dx_get_wrapper_for_vtbl
+          (call $dx_slot_of (local.get $entry)) (global.get $DX_VTBL_DINPUT7)))))
+    (if (i32.eqz (local.get $wrapper)) (then (return (i32.const 0x80004002))))
+    (store.field DxObject refcount (local.get $entry)
+      (i32.add (load.field DxObject refcount (local.get $entry)) (i32.const 1)))
+    (call $gs32 (local.get $out) (local.get $wrapper))
+    (i32.const 0))
+
   ;; Complete DirectInput interface classifier. A/W pairs share the same
   ;; wrapper shape here, but remain distinct complete COM identities.
   (func $dinput_iid_kind_wa (param $iid_wa i32) (result i32)
@@ -9631,10 +9656,15 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
 
+  ;; IDirectInput::Initialize(this, hinst, dwVersion): 3 args + ret = 16 bytes.
+  ;; It popped 20 (api_table said 4 args). DirectInputCreate needs no Initialize,
+  ;; but a COM-created object does: Evolva calls it from an EBP-framed function
+  ;; whose epilogue then restored EBX/ESI/EDI from slots four bytes off, and
+  ;; its next CreateDevice got a NULL out pointer.
   (func $handle_IDirectInput_Initialize (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (store.field.memarg DxObject misc0 (call $dx_from_this (local.get $arg0)) (local.get $arg2))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
-    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20))))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
 
   ;; ════════════════════════════════════════════════════════════
   ;; IDirectInputDevice methods
