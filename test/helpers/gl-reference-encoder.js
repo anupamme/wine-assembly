@@ -678,6 +678,15 @@ const stats = {
         }
         return 0;
       }
+      if (opcode === 117) { // glMultiTexCoord2fvARB(target, v): 107 by pointer
+        const unit = (u32At(memoryView, stackWa, 0) - 0x84C0) >>> 0;
+        if (unit < TEXTURE_UNITS) {
+          const state = this._state();
+          // One word along, the pointer is argument 0 to the shared reader.
+          this._readPointerFloats(stackWa + 4, 2, unit === 0 ? state.texCoord : state.texCoord1);
+        }
+        return 0;
+      }
       if (opcode === 101) { // glColorPointer(size, type, stride, pointer)
         this._state().colorPointer = {
           size: u32At(memoryView, stackWa, 0), type: u32At(memoryView, stackWa, 1),

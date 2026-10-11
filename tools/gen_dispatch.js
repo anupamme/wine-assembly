@@ -291,6 +291,11 @@ const gpuApis = new Map([
   // Serious Sam's Engine probes GL_TEXTURE_GREEN_SIZE of a 1x1 GL_RGBA8 image
   // to decide whether 32-bit textures are available.
   ['glGetTexLevelParameteriv', 4], ['glGetTexLevelParameterfv', 4],
+  // Soldier of Fortune's ref_gl asks whether a texture name is live while
+  // loading a level.
+  ['glIsTexture', 1],
+  // ...and draws its lightmap texture coordinates through the vector form.
+  ['glMultiTexCoord2fvARB', 2],
 ]);
 const gpuApiOrder = [...gpuApis.keys()];
 

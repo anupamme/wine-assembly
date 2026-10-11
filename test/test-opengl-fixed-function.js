@@ -331,6 +331,16 @@ assert.strictEqual(lifecycleWin._gpuFrameLayer, null,
   call('glGetTexLevelParameteriv',GL.TEXTURE_2D,0,0xDEADBEEF,336);
   assert.strictEqual(dv.getUint32(336,true),0xDEADBEEF,'invalid level query must not write output');
   assert.strictEqual(call('glGetError'),GL.INVALID_ENUM);
+  // glIsTexture (Soldier of Fortune's ref_gl, during a level load): a name is
+  // a texture from its first bind until it is deleted; a reserved-only name,
+  // an unknown one and 0 are not.
+  call('glBindTexture',GL.TEXTURE_2D,77);
+  assert.strictEqual(call('glIsTexture',77),1,'a bound name is a texture');
+  assert.strictEqual(call('glIsTexture',78),0,'a never-bound name is not');
+  assert.strictEqual(call('glIsTexture',0),0,'0 is never a texture');
+  dv.setUint32(352,77,true);
+  call('glDeleteTextures',1,352);
+  assert.strictEqual(call('glIsTexture',77),0,'a deleted name is not');
   dv.setUint32(4,GL.TEXTURE_2D,true);dv.setUint32(8,GL.TEXTURE_BORDER_COLOR,true);dv.setUint32(12,256,true);
   host.call(CALL_INDEX.glTexParameterfv,0,0x505);
   assert.strictEqual(call('glGetError'),0x505,'native allocation failure reaches guest error query');

@@ -371,6 +371,15 @@
         (then (global.set $gl_tex1_s (f32.load offset=8 (local.get $stack))) (global.set $gl_tex1_t (f32.load offset=12 (local.get $stack))))
         (else (if (i32.eqz (local.get $unit)) (then (global.set $gl_tex_s (f32.load offset=8 (local.get $stack))) (global.set $gl_tex_t (f32.load offset=12 (local.get $stack)))))))
       (return (i32.const 1))))
+    ;; 117 glMultiTexCoord2fvARB(target, v): 107 with the pair behind a
+    ;; pointer (Soldier of Fortune's ref_gl draws its lightmap pass with it).
+    (if (i32.eq (local.get $op) (i32.const 117)) (then
+      (local.set $unit (i32.sub (i32.load offset=4 (local.get $stack)) (i32.const 0x84C0)))
+      (local.set $p (call $g2w (i32.load offset=8 (local.get $stack))))
+      (if (i32.eq (local.get $unit) (i32.const 1))
+        (then (global.set $gl_tex1_s (f32.load (local.get $p))) (global.set $gl_tex1_t (f32.load offset=4 (local.get $p))))
+        (else (if (i32.eqz (local.get $unit)) (then (global.set $gl_tex_s (f32.load (local.get $p))) (global.set $gl_tex_t (f32.load offset=4 (local.get $p)))))))
+      (return (i32.const 1))))
     (if (i32.or (i32.eq (local.get $op) (i32.const 29)) (i32.eq (local.get $op) (i32.const 30))) (then
       (local.set $z (f32.const 0))
       (if (i32.eq (local.get $op) (i32.const 30))

@@ -295,7 +295,10 @@ async function main() {
     // returns to 1 after glColor4ub left it at 64/255.
     gl.call(111, [0x1FF, 0x40, 0x80]); point(6.5);
     gl.call(95, [DATA]);
-    gl.call(107, [0x84C1, f32(0.375), f32(0.625)]);
+    gl.call(107, [0x84C1, f32(0.375), f32(0.625)]); point(6.75);
+    // glMultiTexCoord2fvARB: the same unit-1 coordinate read through a
+    // pointer (Soldier of Fortune's lightmap pass).
+    gl.call(117, [0x84C1, DATA]); point(6.875);
     gl.call(64, [DATA]);
     gl.call(76, [0xFFFFFFFF]);
     gl.call(25, [f32(0.9), f32(0.8), f32(0.7), f32(0.6)]); point(7);
