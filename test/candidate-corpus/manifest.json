@@ -911,6 +911,9 @@
           "destination": "Q3ADemo.exe"
         }
       ],
+      "postExtract": [
+        { "type": "installQuake3Demo", "installer": "Q3ADemo.exe", "into": "installed" }
+      ],
       "cli": {
         "maxBatches": 100,
         "batchSize": 10000

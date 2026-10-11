@@ -377,6 +377,22 @@ function runPostExtract(candidate, destination) {
       if (result.status !== 0) {
         throw new Error(`authentic Deus Ex installer failed with exit ${result.status}`);
       }
+    } else if (step.type === 'installQuake3Demo') {
+      // Q3ADemo.exe is an Installer VISE package no host tool unpacks; the
+      // tree comes from running that installer in the emulator
+      // (tools/install-quake3-demo.js), as the quake3_demo registry entry
+      // expects under installed/ with its browser manifest.
+      assertSafeRelative(step.installer, `${candidate.id}.postExtract[${index}].installer`);
+      assertSafeRelative(step.into, `${candidate.id}.postExtract[${index}].into`);
+      const result = spawnSync(process.execPath, [
+        path.join(ROOT, 'tools', 'install-quake3-demo.js'),
+        `--installer=${path.join(destination, step.installer)}`,
+        `--output=${path.join(destination, step.into)}`,
+      ], { cwd: ROOT, stdio: 'inherit' });
+      if (result.error) throw result.error;
+      if (result.status !== 0) {
+        throw new Error(`authentic Quake III demo installer failed with exit ${result.status}`);
+      }
     } else if (step.type === 'installWarcraft3Demo') {
       // W3Demo.exe is a small PE with an MPQ appended, not a 7-Zip/RAR
       // self-extractor: 7z and unar both fail on it on every host ("cannot
