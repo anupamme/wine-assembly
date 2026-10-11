@@ -195,3 +195,17 @@ _asyncKeys/pokeKeyDownState; the earlier W trial was not WM-only. The changed
 key binding, timing and menu state must be isolated. Run1634Z retains reviewed
 menu captures and exact input schedules. Next use the visible menu state to
 select Start Game via ordinary keyboard, then gameplay input controls.
+## Keyboard menu route (16:54Z)
+
+Run20261011T1652Z-turok-keyboard: existing Direct3D/Properties route, then
+Up5210..5220 interrupts attract and leaves Exit highlighted. Down5300..5301
+wraps to Start Game; Enter5350..5351 opens its New Game/Load submenu (reviewed).
+The previous test's6000/6200 inputs never ran: its40s guard stopped at5509.
+The corrected earlier-input run stopped at5532; this is a menu route, not
+gameplay. Next Enter on New Game, then validate movement in the actual level.
+
+Enter5420..5421 selects New Game. The50s bounded replay stops at5666 with a
+black transition canvas; planned movement5710 never runs. Retain this as a
+menu/transition result only. Next longer bounded continuation with input after
+the level is visible, then no-input control; do not reuse attract captures as
+proof of gameplay. All commands/logs are in the same run folder.
