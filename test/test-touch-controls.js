@@ -865,6 +865,7 @@ TouchControls.destroy();
     // pinball games with reviewed gameplay, checked in phone emulation.
     'wep16_ski', 'tworld', 'liquid_war', 'tetrinet', 'rodent2000',
     'tomb_raider_2_demo', 'tomb_raider_3_demo', 'crimsonland', 'pinball_plus95',
+    'wep16_tetris', 'wep16_chips', 'wep16_rattler',
   ];
   // A mouseButton is a DOM button number: 2 is the right button.
   assert.strictEqual(APPS.crimsonland.touchControls.buttons[1].mouseButton, 2, 'Reload is the right button');
