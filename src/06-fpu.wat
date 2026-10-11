@@ -1038,7 +1038,14 @@
           (then (call $fpu_set (local.get $rm) (f64.div (local.get $st0) (local.get $v))) (return)))
         (if (i32.eq (local.get $reg) (i32.const 7))
           (then (call $fpu_set (local.get $rm) (f64.div (local.get $v) (local.get $st0))) (return)))
-        ;; DC reg=2,3 are FCOM/FCOMP register-form aliases — uncommon, not impl.
+        ;; DC D0+i / DC D8+i: the undocumented FCOM / FCOMP ST(i) aliases of
+        ;; D8 D0+i / D8 D8+i, which every x87 since the 8087 executes the same
+        ;; way. Trespasser's compiler emits "fcomp st(0)" as DC D8 to compare
+        ;; and pop (0x539172 in its level loader).
+        (if (i32.eq (local.get $reg) (i32.const 2))
+          (then (call $fpu_compare (local.get $st0) (local.get $v)) (return)))
+        (if (i32.eq (local.get $reg) (i32.const 3))
+          (then (call $fpu_compare (local.get $st0) (local.get $v)) (drop (call $fpu_pop)) (return)))
         (call $fpu_crash_op (local.get $group) (local.get $reg) (local.get $rm)) (return)))
     ;; Group 5 (DD): FFREE, FST, FSTP, FUCOM, FUCOMP
     (if (i32.eq (local.get $group) (i32.const 5))

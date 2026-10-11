@@ -5321,6 +5321,18 @@
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
         (return)))
+    ;; A given address names every page holding a byte of [lpAddress,
+    ;; lpAddress + dwSize): Windows rounds the base down and the end up, and
+    ;; returns the rounded base. Rounding the size alone left an unaligned
+    ;; commit one page short. Trespasser's page manager commits from its access
+    ;; violation filter at the faulting address less 16 (0x17530ff0, 0x1000),
+    ;; so the page it had just touched never mapped and it faulted again until
+    ;; the process died with 0xC0000005.
+    (if (local.get $arg0)
+      (then
+        (local.set $arg1 (i32.sub (i32.add (local.get $arg0) (local.get $arg1))
+          (i32.and (local.get $arg0) (i32.const 0xFFFFF000))))
+        (local.set $arg0 (i32.and (local.get $arg0) (i32.const 0xFFFFF000)))))
     ;; Round size up to page boundary
     (local.set $size (i32.and (i32.add (local.get $arg1) (i32.const 0xFFF)) (i32.const 0xFFFFF000)))
     (if (i32.eqz (local.get $size))
