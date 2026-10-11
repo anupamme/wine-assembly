@@ -20,7 +20,11 @@ Evidence: scratch/runs/20261011T0835Z-avp2-bltfast-dxt.
 This was a rebuilt retained diagnostic source, not current-main qualification.
 The restored snapshot lacked build outputs, stdole2.tlb and pngjs; those were
 restored remotely before the successful capture. Earlier failed harness
-attempts are not game failures. Gameplay validation is still pending.
+attempts are not game failures. The original mission run completed cleanly at
+08:38:56Z with the candidate: reviewed before/after forward-input captures show
+textured walls, equipment and Marine clothing/face. Evidence:
+scratch/runs/20261011T0836Z-avp2-bltfast-gameplay. Main integration/revalidation,
+audio and logical FPS remain unqualified.
 
 Local original installer:
 `test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe`,
