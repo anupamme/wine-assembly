@@ -184,6 +184,82 @@
     (call $present_frame_end)
   )
 
+  ;; Layer planes. The one pixel format DescribePixelFormat reports has no
+  ;; overlay or underlay planes (bReserved 0, $gdi_pixel_format_write), so
+  ;; there is no layer plane to describe or to hold a palette, and opengl32
+  ;; answers as it does for such a format: FALSE, or 0 entries. MDK2's demo
+  ;; resolves all four through GetProcAddress and gives up on OpenGL when any
+  ;; of them is missing; it never calls them.
+  ;; Is iLayerPlane a layer plane of the DC's pixel format? Positive planes
+  ;; are overlays and negative ones underlays; the counts are the descriptor's
+  ;; bReserved nibbles (overlays low, underlays high), read from the same
+  ;; descriptor DescribePixelFormat reports. 0 is the main plane, never a
+  ;; layer. ERROR_INVALID_PARAMETER for anything that is not a layer.
+  (func $wgl_layer_plane_exists (param $hdc i32) (param $plane i32) (result i32)
+    (local $pfd i32) (local $reserved i32) (local $ok i32)
+    (if (i32.eqz (call $gdi_dc_state_entry (local.get $hdc) (i32.const 0)))
+      (then (global.set $last_error (i32.const 6)) (return (i32.const 0)))) ;; ERROR_INVALID_HANDLE
+    (local.set $pfd (call $heap_alloc (i32.const 40)))
+    (if (i32.eqz (local.get $pfd)) (then (global.set $last_error (i32.const 8)) (return (i32.const 0))))
+    (drop (call $gdi_pixel_format_write (call $g2w (local.get $pfd)) (i32.const 40)))
+    (local.set $reserved (call $gl8 (i32.add (local.get $pfd) (i32.const 36))))
+    (call $heap_free (local.get $pfd))
+    (local.set $ok (if (result i32) (i32.gt_s (local.get $plane) (i32.const 0))
+      (then (i32.le_s (local.get $plane) (i32.and (local.get $reserved) (i32.const 0x0f))))
+      (else (if (result i32) (i32.lt_s (local.get $plane) (i32.const 0))
+        (then (i32.le_s (i32.sub (i32.const 0) (local.get $plane))
+          (i32.shr_u (local.get $reserved) (i32.const 4))))
+        (else (i32.const 0))))))
+    (if (i32.eqz (local.get $ok)) (then (global.set $last_error (i32.const 87))))
+    (local.get $ok))
+
+  ;; A plane that does exist has no description or palette this frontend can
+  ;; supply yet, so these fail fast for it instead of answering.
+  ;; wglDescribeLayerPlane(hdc, iPixelFormat, iLayerPlane, nBytes, plpd) -> BOOL
+  (func $handle_wglDescribeLayerPlane (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (if (call $wgl_layer_plane_exists (local.get $arg0) (local.get $arg2))
+      (then (call $crash_unimplemented (local.get $name_ptr))))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24))))
+  ;; wglGetLayerPaletteEntries / wglSetLayerPaletteEntries(hdc, iLayerPlane,
+  ;; iStart, cEntries, pcr) -> entries copied: one body (api_table aliases).
+  (func $handle_wgl_layer_palette_entries (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (if (call $wgl_layer_plane_exists (local.get $arg0) (local.get $arg1))
+      (then (call $crash_unimplemented (local.get $name_ptr))))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24))))
+  ;; glVertex4f(x, y, z, w). MDK2's demo draws with w = 1.0, which is exactly
+  ;; glVertex3f(x, y, z): delegate to its encoder opcode (30, as in
+  ;; $gl_wat_encode_call) -- x, y and z sit where glVertex3f reads them -- and
+  ;; pop the fourth argument too. A projective vertex (w != 1) changes
+  ;; perspective-correct interpolation, which the packed vertex does not carry,
+  ;; so it fails fast instead of being divided through.
+  (func $handle_glVertex4f (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $esp i32)
+    (if (i32.ne (local.get $arg3) (i32.const 0x3f800000)) ;; 1.0f
+      (then (call $crash_unimplemented (local.get $name_ptr))))
+    (local.set $esp (i32.load offset=16 (global.get $reg_base)))
+    (call $handle_gpu_api (i32.const 30) (i32.const 3)
+      (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $esp) (i32.const 20))))
+
+  ;; glVertex4fv(v). The same frame as glVertex3fv(v), which reads v[0..2]:
+  ;; with v[3] = 1.0 it is exactly that call (opcode 31), else it fails fast
+  ;; for the reason glVertex4f does.
+  (func $handle_glVertex4fv (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (if (i32.or (i32.eqz (local.get $arg0))
+          (i32.ne (call $gl32 (i32.add (local.get $arg0) (i32.const 12))) (i32.const 0x3f800000)))
+      (then (call $crash_unimplemented (local.get $name_ptr))))
+    (call $handle_gpu_api (i32.const 31) (i32.const 1)
+      (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr)))
+
+  ;; wglRealizeLayerPalette(hdc, iLayerPlane, bRealize) -> BOOL
+  (func $handle_wglRealizeLayerPalette (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (if (call $wgl_layer_plane_exists (local.get $arg0) (local.get $arg1))
+      (then (call $crash_unimplemented (local.get $name_ptr))))
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
+
   ;; The OpenGL 1.1 surface outside the measured set. Unreal-engine OpenGlDrv
   ;; resolves its whole GL table through GetProcAddress and refuses to bind if
   ;; a single name is missing, so every GL 1.1 entry point is an api_table

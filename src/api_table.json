@@ -38014,16 +38014,14 @@
     "name": "glVertex4f",
     "nargs": 4,
     "convention": "stdcall",
-    "hash": 259944602,
-    "handler": "gl_unimplemented"
+    "hash": 259944602
   },
   {
     "id": 4461,
     "name": "glVertex4fv",
     "nargs": 1,
     "convention": "stdcall",
-    "hash": 1342948228,
-    "handler": "gl_unimplemented"
+    "hash": 1342948228
   },
   {
     "id": 4462,
@@ -38626,5 +38624,58 @@
     "convention": "stdcall",
     "hash": 1976379696,
     "handler": "grSstResetPerfStats"
+  },
+  {
+    "id": 4534,
+    "name": "ReBaseImage",
+    "nargs": 11,
+    "convention": "stdcall",
+    "hash": 155023466
+  },
+  {
+    "id": 4535,
+    "name": "wglDescribeLayerPlane",
+    "nargs": 5,
+    "convention": "stdcall",
+    "hash": 119477637
+  },
+  {
+    "id": 4536,
+    "name": "wglGetLayerPaletteEntries",
+    "nargs": 5,
+    "convention": "stdcall",
+    "hash": 639467637,
+    "handler": "wgl_layer_palette_entries"
+  },
+  {
+    "id": 4537,
+    "name": "wglSetLayerPaletteEntries",
+    "nargs": 5,
+    "convention": "stdcall",
+    "hash": 3391838593,
+    "handler": "wgl_layer_palette_entries"
+  },
+  {
+    "id": 4538,
+    "name": "wglRealizeLayerPalette",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 1294332905
+  },
+  {
+    "id": 4539,
+    "name": "wglUseFontBitmapsA",
+    "nargs": 4,
+    "convention": "stdcall",
+    "hash": 2470985246,
+    "handler": "gl_unimplemented"
+  },
+  {
+    "id": 4540,
+    "name": "wglUseFontOutlinesA",
+    "nargs": 8,
+    "convention": "stdcall",
+    "hash": 2793894589,
+    "handler": "gl_unimplemented"
   }
 ]

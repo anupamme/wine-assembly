@@ -109,6 +109,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Rollcage demo (working directory, ATD GFX chaining /FRONTEND child, DirectInput-only keys, licence) | [rollcage-demo.md](rollcage-demo.md) |
 | Dethkarz demo (Install Path GOB, "Device Libraries" renderers, Glide-default driver dialog, maximized WM_SIZE loop) | [dethkarz-demo.md](dethkarz-demo.md) |
 | Shogo demo (LithTech launcher vs direct Client.exe, menu-to-level route, licence) | [shogo-demo.md](shogo-demo.md) |
+| MDK2 demo (IS6 groups, launcher config.lua, GL-init deadlock via suspended worker, projective glVertex4fv blocker) | [mdk2-demo.md](mdk2-demo.md) |
 | Midtown Madness Trial (D3D device names, absolute DirectInput mouse, mouse driving) | [midtown-madness-trial.md](midtown-madness-trial.md) |
 | Monster Truck Madness 2 Trial (MFC CFormView WM_CREATE, DisplayDibWindow, renderer DLL probing) | [monster-truck-madness2-trial.md](monster-truck-madness2-trial.md) |
 | Heretic II Demo (early InstallShield 5 cabs, time bomb, GL window position) | [heretic2-demo.md](heretic2-demo.md) |

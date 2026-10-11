@@ -3830,3 +3830,23 @@
   (func $handle_SHCreateDirectoryExW (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (i32.store offset=0 (global.get $reg_base) (call $shell_create_directory_w (local.get $arg1) (local.get $arg2)))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
+
+  ;; ReBaseImage(CurrentImageName, SymbolPath, fReBase, fRebaseSysfileOk,
+  ;; fGoingDown, CheckImageSize, OldImageSize*, OldImageBase*, NewImageSize*,
+  ;; NewImageBase*, TimeStamp) -> BOOL, imagehlp, stdcall (11 args).
+  ;; Rewrites a PE file on disk at a new base. MDK2's demo asks it to rebase
+  ;; the OpenGL driver file below 0x64500000 before loading it and ignores the
+  ;; result. Our opengl32 is built in: there is no image file, and imagehlp
+  ;; answers a missing file with FALSE and ERROR_FILE_NOT_FOUND, leaving the
+  ;; outputs as the caller set them. Rebasing a real image file is not
+  ;; implemented, so that case still stops here.
+  (func $handle_ReBaseImage (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (if (i32.eqz (local.get $arg0))
+      (then (global.set $last_error (i32.const 87))) ;; ERROR_INVALID_PARAMETER
+      (else
+        (if (i32.ne (call $host_fs_get_file_attributes (call $g2w (local.get $arg0)) (i32.const 0))
+                    (i32.const -1))
+          (then (call $crash_unimplemented (local.get $name_ptr))))
+        (global.set $last_error (i32.const 2)))) ;; ERROR_FILE_NOT_FOUND
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 48))))
