@@ -38684,5 +38684,12 @@
     "nargs": 7,
     "convention": "stdcall",
     "hash": 2233096024
+  },
+  {
+    "id": 4542,
+    "name": "WSACreateEvent",
+    "nargs": 0,
+    "convention": "stdcall",
+    "hash": 3245002554
   }
 ]

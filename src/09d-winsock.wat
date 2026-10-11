@@ -3312,6 +3312,23 @@
     (drop (i32.atomic.rmw.add (global.get $WSA_STARTED_SHARED) (i32.const 1)))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)))
 
+  ;; WSACreateEvent(): unnamed, initially nonsignaled manual-reset event.
+  ;; Use the common Win32 event provider so waits and worker RPC see it.
+  (func $handle_WSACreateEvent (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+                               (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $event i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+    (if (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED)))
+      (then
+        (call $vsock_set_error (i32.const 10093)) ;; WSANOTINITIALISED
+        (i32.store (global.get $reg_base) (i32.const 0))
+        (return)))
+    (local.set $event (call $create_event_core
+      (i32.const 1) (i32.const 0) (i32.const 0) (i32.const 0)))
+    (if (i32.eqz (local.get $event))
+      (then (call $vsock_set_error (i32.const 8)))) ;; WSA_NOT_ENOUGH_MEMORY
+    (i32.store (global.get $reg_base) (local.get $event)))
+
   ;; WSACleanup() — the last matching call tears the room switch down.
   (func $handle_WSACleanup (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
                            (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)

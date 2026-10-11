@@ -121,3 +121,18 @@ checks and the full build pass. Memory-map ownership aliases were added for
 the new shared cell. Evidence: scratch/runs/20261011T2155Z-winsock-process-startup/.
 This is an initialization prerequisite; WSAEnumNetworkEvents/WSAEventSelect and
 the event-object entrypoints remain unimplemented, and gameplay is not qualified.
+
+## WSACreateEvent prerequisite
+
+WSACreateEvent now resolves through the append-only API table and delegates to
+the common Win32 event provider: unnamed, manual-reset, initially nonsignaled.
+It requires process-wide WSAStartup and reports WSANOTINITIALISED (10093) or
+WSA_NOT_ENOUGH_MEMORY (8) on creation failure. This follows the
+[Microsoft contract](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsacreateevent).
+
+The regression checks real host wait/set/reset behavior, distinct handles,
+manual-reset persistence, startup from a sibling instance, failure injection,
+and zero-argument stdcall stack cleanup. The old-source control fails API
+lookup; the implementation passes all 53 Winsock checks. Evidence:
+scratch/runs/20261011T2204Z-winsock-create-event/. This does not yet implement
+WSAEventSelect/WSAEnumNetworkEvents or qualify Dark Reign 2 gameplay.

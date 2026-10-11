@@ -72,6 +72,13 @@ async function main() {
         (i32.const 0) (i32.const 0) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsa_create_event") (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $dispatch_api_table (call $lookup_api_id "WSACreateEvent")
+        (i32.const 0) (i32.const 0) (i32.const 0)
+        (i32.const 0) (i32.const 0) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     ;; A live HWND, so WSAAsyncSelect's posts route to this thread's queue.
     (func (export "test_make_window") (result i32)
       (local $hwnd i32)
@@ -82,16 +89,18 @@ async function main() {
   ` : source);
   const memory = new WebAssembly.Memory({ initial: 8192, maximum: 8192, shared: true });
   const imports = createHostImports({ getMemory: () => memory.buffer, renderer: null, resourceJson: {} });
+  const realCreateEvent = imports.host.create_event;
+  let failCreateEvent = false;
+  const eventCalls = [];
+  imports.host.create_event = (...args) => {
+    eventCalls.push(args);
+    return failCreateEvent ? 0 : realCreateEvent(...args);
+  };
   Object.assign(imports.host, {
     memory,
     create_thread: () => 0,
     exit_thread: () => 0,
     terminate_thread: () => 0,
-    create_event: () => 0,
-    set_event: () => 0,
-    reset_event: () => 0,
-    wait_single: () => 0,
-    wait_multiple: () => 0,
     com_create_instance: () => 0x80004002,
   });
   const { instance } = await WebAssembly.instantiate(wasm, imports);
@@ -239,6 +248,37 @@ async function main() {
     assert.strictEqual(sibling.test_wsa_startup(data)|0,0);
     assert.strictEqual(wat.test_wsa_cleanup()|0,0,
       'startup on the other instance works after the zero-count error');
+  });
+
+  check('WSACreateEvent resolves and creates a real manual-reset event', () => {
+    const api = require('../src/api_table.json').find(a => a.name === 'WSACreateEvent');
+    assert(api, 'WSACreateEvent must resolve by name');
+    assert.strictEqual(api.nargs, 0);
+    const create = () => {
+      const result = wat.test_wsa_create_event();
+      assert.strictEqual(Number(result >> 32n), 0x00300004, 'zero-argument stdcall stack');
+      return Number(result & 0xffffffffn);
+    };
+    assert.strictEqual(create(), 0, 'requires process startup');
+    assert.strictEqual(wat.test_call_WSAGetLastError(), 10093);
+    assert.strictEqual(eventCalls.length, 0, 'failure creates no host object');
+    assert.strictEqual(sibling.test_wsa_startup(alloc(400)), 0);
+    const event = create(), other = create();
+    assert(event > 0 && other > 0 && event !== other, 'unnamed events are distinct');
+    assert.deepStrictEqual(eventCalls, [[1,0,0,0], [1,0,0,0]]);
+    assert.strictEqual(imports.host.wait_single(event, 0), 258, 'initially nonsignaled');
+    imports.host.set_event(event);
+    assert.strictEqual(imports.host.wait_single(event, 0), 0);
+    assert.strictEqual(imports.host.wait_single(event, 0), 0, 'manual reset survives a wait');
+    assert.strictEqual(imports.host.wait_single(other, 0), 258, 'other event stays independent');
+    imports.host.reset_event(event);
+    assert.strictEqual(imports.host.wait_single(event, 0), 258);
+    failCreateEvent = true;
+    try {
+      assert.strictEqual(create(), 0);
+      assert.strictEqual(wat.test_call_WSAGetLastError(), 8, 'WSA_NOT_ENOUGH_MEMORY');
+    } finally { failCreateEvent = false; }
+    assert.strictEqual(wat.test_wsa_cleanup(), 0);
   });
 
   check('WSAConnect is registered with seven arguments', () => {
