@@ -44,6 +44,26 @@ const GAME_PORT = 8035;
 async function main() {
   const root = path.join(__dirname, '..');
   const wasm = compileSrcWasm((file, source) => file === '13-exports.wat' ? source + String.raw`
+    (func (export "test_raw_seed") (param $local i32) (param $remote i32) (param $type i32) (result i32)
+      (local $i i32) (local $r i32)
+      (local.set $i (call $vsock_alloc)) (local.set $r (call $vsock_rec (local.get $i)))
+      (store.field VSock family (local.get $r) (i32.const 2))
+      (store.field VSock type (local.get $r) (local.get $type))
+      (store.field VSock proto (local.get $r) (i32.const 1))
+      (store.field VSock local_ip (local.get $r) (local.get $local))
+      (store.field VSock remote_ip (local.get $r) (local.get $remote))
+      (local.get $i))
+    (func (export "test_raw_ingress") (param $p i32) (param $n i32) (result i32)
+      (call $vsock_raw_ingress (call $g2w (local.get $p)) (local.get $n)))
+    (func (export "test_raw_ready") (param $i i32) (result i32) (call $vsock_read_ready (local.get $i)))
+    (func (export "test_raw_wrap") (param $i i32)
+      (drop (call $vsock_alloc_ring (local.get $i)))
+      (store.field VSock rx_head (call $vsock_rec (local.get $i)) (i32.const 65530)))
+    (func (export "test_raw_take") (param $i i32) (param $p i32) (result i32)
+      (local $n i32)
+      (if (i32.eqz (load.field VSock rx_len (call $vsock_rec (local.get $i)))) (then (return (i32.const 0))))
+      (local.set $n (i32.add (call $vsock_ring_get32 (local.get $i) (i32.const 0)) (i32.const 12)))
+      (call $vsock_ring_read (local.get $i) (local.get $p) (local.get $n)))
     (func (export "test_icmp_reply") (param $src i32) (param $n i32) (param $dst i32) (param $cap i32) (param $id i32) (result i32)
       (call $vsock_icmp_echo_reply (call $g2w (local.get $src)) (local.get $n)
         (call $g2w (local.get $dst)) (local.get $cap) (local.get $id)))
@@ -618,6 +638,34 @@ async function main() {
       reject(bad);
     }
     const badHeader=Buffer.from(original);badHeader[10]^=1;reject(badHeader);
+  });
+
+  check('raw ICMP ingress fans out full IPv4 datagrams with address filtering and bounded queues', () => {
+    wat.test_vsock_reset();
+    const local=0x7f000001, remote=0x0a000009;
+    const any=wat.test_raw_seed(0,0,3),bound=wat.test_raw_seed(local,remote,3);
+    const wrongLocal=wat.test_raw_seed(0x7f000002,0,3),wrongPeer=wat.test_raw_seed(0,0x0a000008,3),udp=wat.test_raw_seed(0,0,2);
+    wat.test_raw_wrap(bound);
+    const checksum=b=>{let s=0;for(let i=0;i<b.length;i+=2)s+=b[i]*256+(b[i+1]||0);while(s>65535)s=(s&65535)+Math.floor(s/65536);return 65535-s;};
+    const packet=Buffer.alloc(29);packet[0]=0x45;packet.writeUInt16BE(29,2);packet[8]=64;packet[9]=1;
+    packet.writeUInt32BE(remote,12);packet.writeUInt32BE(local,16);packet[20]=0;packet[24]=0x34;packet[28]=0x51;
+    const seal=b=>{b.writeUInt16BE(0,10);b.writeUInt16BE(0,22);b.writeUInt16BE(checksum(b.subarray(20)),22);b.writeUInt16BE(checksum(b.subarray(0,20)),10);};seal(packet);
+    const p=buf(packet),out=buf(100),receive=()=>wat.test_raw_ingress(p,packet.length);
+    assert.strictEqual(wat.test_raw_ready(any),0);assert.strictEqual(receive(),2);
+    for(const i of [any,bound]){
+      assert.strictEqual(wat.test_raw_ready(i),1);assert.strictEqual(wat.test_raw_take(i,out),41);
+      const b=Buffer.from(new Uint8Array(memory.buffer,wa(out),41));assert.strictEqual(b.readUInt32LE(0),29);
+      assert.strictEqual(b.readUInt32LE(4),remote);assert.strictEqual(b.readUInt32LE(8),0);assert.deepStrictEqual(b.subarray(12),packet);
+      assert.strictEqual(wat.test_raw_ready(i),0);
+    }
+    for(const i of [wrongLocal,wrongPeer,udp])assert.strictEqual(wat.test_raw_ready(i),0);
+    for(let i=0;i<32;i++)assert.strictEqual(receive(),2);
+    assert.strictEqual(receive(),0,'full datagram queues drop rather than overwrite');
+    assert.strictEqual(wat.test_raw_take(any,out),41);assert.strictEqual(receive(),1,'one full receiver does not prevent delivery to another');
+    const foreign=Buffer.from(packet);foreign.writeUInt32BE(0x0a0000fe,16);seal(foreign);
+    assert.strictEqual(wat.test_raw_ingress(buf(foreign),29),0,'foreign destination is never routed locally');
+    const corrupt=Buffer.from(packet);corrupt[28]^=1;assert.strictEqual(wat.test_raw_ingress(buf(corrupt),29),0);
+    wat.test_vsock_reset();assert.strictEqual(receive(),0,'closed sockets receive nothing');
   });
 
   check('WSASocket validates catalog selections and parks the full creation frame', () => {

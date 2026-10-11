@@ -365,3 +365,22 @@ These helpers are not wired to public sockets: no API capability change and no
 new ordinary-run screenshot. Next: raw-packet receive queues/room frame routing,
 read readiness, send/recv handlers and overlapped creation/operation state.
 Evidence: scratch/runs/20261011T2333Z-dark-reign2-icmp-packet/.
+
+## Raw receive queue prerequisite (2026-10-11 23:39Z)
+
+Internal raw ingress validates a complete IPv4/ICMP packet, rejects foreign
+destinations, and fans out to matching live AF_INET/SOCK_RAW/IPPROTO_ICMP
+records. Wildcard/bound local addresses and connected remote addresses filter
+independently. UDP sockets never receive these packets. Each queue preserves
+the complete IP header, source address and packet boundary; readiness follows
+queued bytes. Queue count and byte capacity bound delivery, so one full reader
+does not prevent delivery to another. Raw rings use the datagram capacity;
+stream rings retain their separate send-hold allocation.
+
+67/67 Winsock checks and full build pass, including local/peer/type filtering,
+in-place echo regression, receive-ring wraparound, queue count limits, drop
+isolation, checksum corruption, foreign destination and post-close behavior.
+This still uses internal seeded records in tests: public raw socket allocation,
+wire routing, send/recv entry points and overlapped operation state are not
+enabled. No new game replay or gameplay claim.
+Evidence: scratch/runs/20261011T2339Z-dark-reign2-icmp-ingress/.

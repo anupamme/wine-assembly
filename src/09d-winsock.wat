@@ -469,12 +469,12 @@
     (if (load.field VSock rx_buf (local.get $rec))
       (then (return (i32.const 1))))
     (local.set $cap (select (global.get $VSOCK_DGRAM_RX_CAP) (global.get $VSOCK_RX_CAP)
-      (i32.eq (load.field VSock type (local.get $rec)) (i32.const 2))))
+      (i32.ne (load.field VSock type (local.get $rec)) (i32.const 1))))
     (local.set $buf (call $heap_alloc (i32.add (local.get $cap)
       (select (i32.const 0) (i32.add (global.get $VSOCK_HOLD_DATA) (global.get $VSOCK_HOLD_CAP))
-        (i32.eq (load.field VSock type (local.get $rec)) (i32.const 2))))))
+        (i32.ne (load.field VSock type (local.get $rec)) (i32.const 1))))))
     (if (i32.eqz (local.get $buf)) (then (return (i32.const 0))))
-    (if (i32.ne (load.field VSock type (local.get $rec)) (i32.const 2))
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 1))
       (then
         (call $gs32 (i32.add (local.get $buf) (local.get $cap)) (i32.const 0))
         (call $gs32 (i32.add (local.get $buf) (i32.add (local.get $cap) (i32.const 8))) (i32.const 0))
@@ -1326,6 +1326,25 @@
       (i32.shr_u (local.get $sum) (i32.const 16))))
     (i32.xor (local.get $sum) (i32.const 65535)))
 
+  ;; Validate a complete IPv4 ICMP packet, without socket/route side effects.
+  (func $vsock_icmp_packet_valid (param $src i32) (param $n i32) (result i32)
+    (local $len i32)
+    (if (i32.lt_u (local.get $n) (i32.const 28)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load8_u (local.get $src)) (i32.const 0x45)) (then (return (i32.const 0))))
+    (local.set $len (i32.or
+      (i32.shl (i32.load8_u offset=2 (local.get $src)) (i32.const 8))
+      (i32.load8_u offset=3 (local.get $src))))
+    (if (i32.ne (local.get $len) (local.get $n)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load8_u offset=9 (local.get $src)) (i32.const 1)) (then (return (i32.const 0))))
+    ;; Only DF may be set: reserved flag, MF and fragment offset are rejected.
+    (if (i32.or (i32.and (i32.load8_u offset=6 (local.get $src)) (i32.const 0xbf))
+                (i32.load8_u offset=7 (local.get $src))) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.load8_u offset=8 (local.get $src))) (then (return (i32.const 0))))
+    (if (call $vsock_inet_checksum (local.get $src) (i32.const 20)) (then (return (i32.const 0))))
+    (if (call $vsock_inet_checksum (i32.add (local.get $src) (i32.const 20))
+          (i32.sub (local.get $len) (i32.const 20))) (then (return (i32.const 0))))
+    (i32.const 1))
+
   ;; Produce an echo reply only from a valid, complete IPv4 echo request.
   ;; Returns 0 without writing for unsupported options/fragments or malformed
   ;; packets. The caller owns routing/local-address checks; this is not a
@@ -1333,23 +1352,11 @@
   (func $vsock_icmp_echo_reply (param $src i32) (param $n i32)
       (param $dst i32) (param $cap i32) (param $id i32) (result i32)
     (local $len i32) (local $sum i32) (local $from i32) (local $to i32)
-    (if (i32.lt_u (local.get $n) (i32.const 28)) (then (return (i32.const 0))))
-    (if (i32.ne (i32.load8_u (local.get $src)) (i32.const 0x45)) (then (return (i32.const 0))))
-    (local.set $len (i32.or
-      (i32.shl (i32.load8_u offset=2 (local.get $src)) (i32.const 8))
-      (i32.load8_u offset=3 (local.get $src))))
-    (if (i32.ne (local.get $len) (local.get $n)) (then (return (i32.const 0))))
-    (if (i32.gt_u (local.get $len) (local.get $cap)) (then (return (i32.const 0))))
-    (if (i32.ne (i32.load8_u offset=9 (local.get $src)) (i32.const 1)) (then (return (i32.const 0))))
-    ;; Only DF may be set: reserved flag, MF and fragment offset are rejected.
-    (if (i32.or (i32.and (i32.load8_u offset=6 (local.get $src)) (i32.const 0xbf))
-                (i32.load8_u offset=7 (local.get $src))) (then (return (i32.const 0))))
-    (if (i32.eqz (i32.load8_u offset=8 (local.get $src))) (then (return (i32.const 0))))
-    (if (call $vsock_inet_checksum (local.get $src) (i32.const 20)) (then (return (i32.const 0))))
+    (if (i32.eqz (call $vsock_icmp_packet_valid (local.get $src) (local.get $n))) (then (return (i32.const 0))))
+    (if (i32.gt_u (local.get $n) (local.get $cap)) (then (return (i32.const 0))))
     (if (i32.ne (i32.load8_u offset=20 (local.get $src)) (i32.const 8)) (then (return (i32.const 0))))
     (if (i32.load8_u offset=21 (local.get $src)) (then (return (i32.const 0))))
-    (if (call $vsock_inet_checksum (i32.add (local.get $src) (i32.const 20))
-          (i32.sub (local.get $len) (i32.const 20))) (then (return (i32.const 0))))
+    (local.set $len (local.get $n))
     (local.set $from (i32.load offset=12 (local.get $src)))
     (local.set $to (i32.load offset=16 (local.get $src)))
     (memory.copy (local.get $dst) (local.get $src) (local.get $len))
@@ -1371,6 +1378,58 @@
     (i32.store8 offset=22 (local.get $dst) (i32.shr_u (local.get $sum) (i32.const 8)))
     (i32.store8 offset=23 (local.get $dst) (local.get $sum))
     (local.get $len))
+
+  ;; Internal raw IPv4 ingress. The full IP header remains in each datagram,
+  ;; as required by Winsock raw receive. Ports are not raw-socket filters.
+  ;; This does not allocate public raw sockets or fabricate echo responses.
+  (func $vsock_raw_ingress (param $packet i32) (param $n i32) (result i32)
+    (local $sip i32) (local $dip i32) (local $i i32) (local $rec i32)
+    (local $st i32) (local $count i32) (local $buf i32) (local $cap i32)
+    (local $end i32) (local $j i32)
+    (if (i32.eqz (call $vsock_icmp_packet_valid (local.get $packet) (local.get $n)))
+      (then (return (i32.const 0))))
+    (local.set $sip (call $bswap32 (i32.load offset=12 (local.get $packet))))
+    (local.set $dip (call $bswap32 (i32.load offset=16 (local.get $packet))))
+    (if (i32.eqz (local.get $dip)) (then (return (i32.const 0))))
+    (if (i32.eqz (call $vsock_is_local_addr (local.get $dip))) (then (return (i32.const 0))))
+    (block $done (loop $sockets
+      (br_if $done (i32.ge_u (local.get $i) (global.get $VSOCK_MAX)))
+      (local.set $rec (call $vsock_rec (local.get $i)))
+      (local.set $st (load.field VSock state (local.get $rec)))
+      (block $skip
+        (br_if $skip (i32.eqz (local.get $st)))
+        (br_if $skip (i32.eq (local.get $st) (i32.const 5)))
+        (br_if $skip (i32.ne (load.field VSock family (local.get $rec)) (i32.const 2)))
+        (br_if $skip (i32.ne (load.field VSock type (local.get $rec)) (i32.const 3)))
+        (br_if $skip (i32.ne (load.field VSock proto (local.get $rec)) (i32.const 1)))
+        (br_if $skip (i32.and (load.field VSock flags (local.get $rec)) (i32.const 1)))
+        (if (load.field VSock local_ip (local.get $rec)) (then
+          (br_if $skip (i32.ne (load.field VSock local_ip (local.get $rec)) (local.get $dip)))))
+        (if (load.field VSock remote_ip (local.get $rec)) (then
+          (br_if $skip (i32.ne (load.field VSock remote_ip (local.get $rec)) (local.get $sip)))))
+        (br_if $skip (i32.eqz (call $vsock_alloc_ring (local.get $i))))
+        (br_if $skip (i32.ge_u (call $vsock_dgram_count (local.get $i)) (global.get $VSOCK_DGRAM_MAX)))
+        (br_if $skip (i32.lt_u (call $vsock_rx_space (local.get $i))
+          (i32.add (local.get $n) (global.get $VSOCK_DGRAM_HDR))))
+        (call $vsock_ring_put32 (local.get $i) (local.get $n))
+        (call $vsock_ring_put32 (local.get $i) (local.get $sip))
+        (call $vsock_ring_put32 (local.get $i) (i32.const 0))
+        (local.set $buf (call $g2w (load.field VSock rx_buf (local.get $rec))))
+        (local.set $cap (load.field VSock rx_cap (local.get $rec)))
+        (local.set $end (i32.add (load.field VSock rx_head (local.get $rec)) (load.field VSock rx_len (local.get $rec))))
+        (local.set $j (i32.const 0))
+        (block $copied (loop $bytes
+          (br_if $copied (i32.ge_u (local.get $j) (local.get $n)))
+          (i32.store8 (i32.add (local.get $buf) (i32.rem_u (i32.add (local.get $end) (local.get $j)) (local.get $cap)))
+            (i32.load8_u (i32.add (local.get $packet) (local.get $j))))
+          (local.set $j (i32.add (local.get $j) (i32.const 1)))
+          (br $bytes)))
+        (store.field VSock rx_len (local.get $rec) (i32.add (load.field VSock rx_len (local.get $rec)) (local.get $n)))
+        (local.set $count (i32.add (local.get $count) (i32.const 1)))
+        (call $vsock_async_post (local.get $i) (i32.const 1) (i32.const 0)))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br $sockets)))
+    (local.get $count))
 
   ;; ---- handlers -------------------------------------------------------
 
