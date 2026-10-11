@@ -307,7 +307,12 @@ async function main() {
     assert.strictEqual(u32(out), v.pcmBytes, `${name}: acmStreamSize(SOURCE)`);
     assert.strictEqual(e.test_acm_call(OP.size, has, v.pcmBytes, out, 1, 0), 0);
     assert.strictEqual(u32(out), data.length, `${name}: acmStreamSize(DESTINATION)`);
+    dv().setUint32(wa(out), 0x8D659, true);   // stale caller stack, as FreeSpace's streamer had
     assert.strictEqual(e.test_acm_call(OP.size, has, 10, out, 0, 0), 512, 'less than one block');
+    assert.strictEqual(u32(out), 0, 'NOTPOSSIBLE still clears *pdwOutputBytes (SOURCE)');
+    dv().setUint32(wa(out), 0x8D659, true);
+    assert.strictEqual(e.test_acm_call(OP.size, has, 1792, out, 1, 0), 512, 'DESTINATION under one block');
+    assert.strictEqual(u32(out), 0, 'NOTPOSSIBLE still clears *pdwOutputBytes (DESTINATION)');
 
     const pbSrc = alloc(data.length + 1); put(pbSrc, data);
     const pbDst = alloc(v.pcmBytes + 64);

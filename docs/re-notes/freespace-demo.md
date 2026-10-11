@@ -56,3 +56,22 @@ What changed:
 - The ADPCM codecs now also decode to 8-bit PCM. Before that, step 4 returned ACMERR_NOTPOSSIBLE.
 
 The game now reaches Choose Pilot with its ADPCM streams converting.
+
+**Mission launch "Illegal subsystem type" (2026-10-11, w5).** Once FreeSpace found ADPCM codecs, COMMIT ended in `Error: Illegal subsystem type. File: Ship\AiCode.cpp Line: 8931` over a noise-filled view. The route flew on Oct 6 (0bf7f395) and on dc7e8454d^, when no codec existed.
+
+Bisecting is not useful here: every commit from dc7e8454d up to d33ffec74 crashes earlier, at the missing acmDriverPriority. dc7e8454d with d33ffec74 cherry-picked fails identically to main, with the same API count.
+
+How the fault was found:
+- `--break-api=MessageBoxA` gives the caller `0x4a312d`. Disassembly shows a subsystem loop with `type = [esi+0x4c]`, valid 1..10.
+- A dump at the assert shows ESI's record (`0x937bdc`) full of ADPCM-looking nibbles.
+- `--watch=0x937bdc --watch-js-only --watch-log` keeps the timing unchanged and shows the record overwritten at batch 1424. That is a 0x8D659-byte ReadFile into 0x8c391c from thread 3, the voice streamer.
+
+The streamer (T2) loops `acmStreamSize(has, N, &src, DESTINATION)` → `mmioRead(src)` → `acmStreamConvert`. At a stream's tail N=1792 is less than one 2024-byte block. We returned ACMERR_NOTPOSSIBLE without writing `*pdwOutputBytes`, and FreeSpace ignores the error and read the stale stack value.
+
+msacm32 (and Wine) clear the output before asking the driver, so `acmStreamSize` now does too. With that the mission flies with voice streams on, and T targets the instructor.
+
+Evidence:
+- `scratch/runs/20261011T1200Z-freespace_demo-mission-regression-w5` (diagnosis);
+- `scratch/runs/20261011T1240Z-freespace_demo-flight-w5` (fixed).
+
+Note for timing: `--watch` without `--watch-js-only` arms a per-block WAT watchpoint, and that moved this crash away. Sample in JS when timing matters.

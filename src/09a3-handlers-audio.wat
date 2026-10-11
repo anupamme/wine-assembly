@@ -1287,7 +1287,12 @@
   ;; acmStreamSize(has, cbInput, pdwOutputBytes, fdwSize). Whole blocks only:
   ;; SOURCE (0) gives the PCM bytes cbInput of ADPCM decodes to, DESTINATION
   ;; (1) the ADPCM bytes needed to fill cbInput of PCM. Less than one block
-  ;; is ACMERR_NOTPOSSIBLE.
+  ;; is ACMERR_NOTPOSSIBLE, with *pdwOutputBytes already 0: msacm32 clears
+  ;; it before asking the driver (Wine's acmStreamSize does the same).
+  ;; FreeSpace ignores the error at the tail of a voice stream (DESTINATION
+  ;; 1792 < one 2024-byte block) and passes the output straight to mmioRead;
+  ;; left unwritten, a stale 0x8D659 read 579 KB over its ship models
+  ;; ("Illegal subsystem type", AiCode.cpp:8931).
   (func $handle_acmStreamSize (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $st i32) (local $result i32) (local $blocks i32) (local $out i32)
     (local.set $st (call $acm_stream_lookup (local.get $arg0)))
@@ -1300,6 +1305,7 @@
           (then (local.set $result (i32.const 10))))
         (if (i32.eqz (local.get $result))
           (then
+            (call $gs32 (local.get $arg2) (i32.const 0))
             (if (i32.and (local.get $arg3) (i32.const 1))
               (then
                 (local.set $blocks (i32.div_u (local.get $arg1) (call $acm_stream_pcm_block_bytes (local.get $st))))
