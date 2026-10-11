@@ -861,12 +861,18 @@ TouchControls.destroy();
     'blobby_volley', 'cave_story', 'generally', 'little_fighter_2',
     'icy_tower', 'elasto_mania', 'atomic_bomberman_june_demo', 'jazz2_demo',
     'quake2_demo', 'gta2_demo', 'halflife_uplink', 'deus_ex_demo', 'abedemo',
+    // USER-MOBILE-CONTROLS-ALL-WORKING-20261011: keyboard, twin-stick and
+    // pinball games with reviewed gameplay, checked in phone emulation.
+    'wep16_ski', 'tworld', 'liquid_war', 'tetrinet', 'rodent2000',
+    'tomb_raider_2_demo', 'tomb_raider_3_demo', 'crimsonland', 'pinball_plus95',
   ];
+  // A mouseButton is a DOM button number: 2 is the right button.
+  assert.strictEqual(APPS.crimsonland.touchControls.buttons[1].mouseButton, 2, 'Reload is the right button');
   for (const id of actionApps) {
     assert(APPS[id] && APPS[id].touchControls,
       `${id} should expose phone gameplay controls`);
   }
-  for (const id of ['dxball']) {
+  for (const id of ['dxball', 'jardinains']) {
     assert.strictEqual(APPS[id].mobileTouch, 'direct', 'canvas remains an absolute mouse alongside the joystick');
     assert.strictEqual(APPS[id].touchControls.mouseJoystick.maxSpeed, 900);
     assert.strictEqual(APPS[id].touchControls.mouseJoystick.responseExponent, 3);
