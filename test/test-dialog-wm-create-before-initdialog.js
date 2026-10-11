@@ -39,6 +39,7 @@ const extraWat = String.raw`
   (func (export "test_dialog_cbt_ret_thunk") (result i32) (global.get $dialog_cbt_ret_thunk))
   (func (export "test_createwnd_ret_thunk") (result i32) (global.get $createwnd_ret_thunk))
   (func (export "test_dialog_cbt_saved_hwnd") (result i32) (global.get $dialog_cbt_saved_hwnd))
+  (func (export "test_wnd_scratch") (result i32) (call $wnd_scratch))
 `;
 
 (async () => {
@@ -56,8 +57,10 @@ const extraWat = String.raw`
   assert.strictEqual(e.get_eip() >>> 0, wndproc, 'the subclassed dialog WNDPROC runs first');
   let esp = e.get_esp() >>> 0;
   assert.deepStrictEqual(
-    [r32(esp), r32(esp + 4), r32(esp + 8), r32(esp + 12), r32(esp + 16) - (e.get_image_base() >>> 0)],
-    [e.test_dialog_cbt_ret_thunk() >>> 0, hwnd, 0x0001, 0, 0x100],
+    [r32(esp), r32(esp + 4), r32(esp + 8), r32(esp + 12), r32(esp + 16)],
+    // The CREATESTRUCT is the window scratch block, not image_base+0x100: that
+    // is inside the PE header of an EXE whose header starts low (Rayman 2).
+    [e.test_dialog_cbt_ret_thunk() >>> 0, hwnd, 0x0001, 0, e.test_wnd_scratch() >>> 0],
     'it receives WM_CREATE with the CBT CREATESTRUCT and returns to CACA0028');
   assert.deepStrictEqual([r32(esp + 20), r32(esp + 24), r32(esp + 28), r32(esp + 32), r32(esp + 36)],
     [0x54524344, hwnd, ret, dlgproc, lparam], 'the dialog state is kept under the DCRT marker');

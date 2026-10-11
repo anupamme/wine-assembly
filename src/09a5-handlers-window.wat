@@ -21,6 +21,19 @@
       (i32.ge_u (local.get $v) (i32.const 0xbfff0000))
       (i32.le_u (local.get $v) (i32.const 0xc0010000))))
 
+  ;; Guest scratch for the CREATESTRUCT (+0x00) and CBT_CREATEWND (+0x40) that
+  ;; CreateWindowEx and CreateDialog hand to guest callbacks. It used to be
+  ;; image_base+0x100, "in the DOS header": an EXE whose PE header starts low
+  ;; keeps its data directories there, and Rayman 2 (e_lfanew 0xB0) lost its
+  ;; export directory to the class-name pointer, so its sound DLL's
+  ;; GetProcAddress on the EXE failed. One block per instance, so a guest
+  ;; thread creating a window never rewrites another thread's CREATESTRUCT.
+  (global $wnd_scratch_block (mut i32) (i32.const 0))
+  (func $wnd_scratch (result i32)
+    (if (i32.eqz (global.get $wnd_scratch_block))
+      (then (global.set $wnd_scratch_block (call $heap_alloc (i32.const 0x50)))))
+    (global.get $wnd_scratch_block))
+
   ;; 67: CreateWindowExA
   (func $handle_CreateWindowExA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $tmp i32) (local $v i32) (local $i i32) (local $menu_id i32) (local $parent_hwnd i32) (local $hwnd i32)
@@ -572,26 +585,25 @@
     ;; Save state for continuation thunk
     (global.set $createwnd_saved_hwnd (local.get $hwnd))
     (global.set $createwnd_saved_ret (call $gl32 (i32.load offset=16 (global.get $reg_base))))
-    ;; Build CREATESTRUCT at scratch address image_base+0x100 (in DOS header area,
-    ;; safe to overwrite). BEFORE cleaning frame — need stack args at esp+24..esp+48.
+    ;; Build CREATESTRUCT at wnd_scratch+0x00 (see $wnd_scratch). BEFORE cleaning frame — need stack args at esp+24..esp+48.
     ;; CREATESTRUCT: lpCreateParams(+0), hInstance(+4), hMenu(+8), hwndParent(+12),
     ;;   cy(+16), cx(+20), y(+24), x(+28), style(+32), lpszName(+36), lpszClass(+40), dwExStyle(+44)
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x100)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 48)))) ;; lpCreateParams
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x104)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 44)))) ;; hInstance
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x108)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 40)))) ;; hMenu
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x10c)) (local.get $parent_hwnd))                               ;; hwndParent
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x110)) (local.get $win_cy))                                      ;; cy
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x114)) (local.get $win_cx))                                      ;; cx
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x118)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))) ;; y
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x11c)) (local.get $arg4))                                       ;; x
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x120)) (local.get $arg3))                                       ;; style
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x124))
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x00)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 48)))) ;; lpCreateParams
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x04)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 44)))) ;; hInstance
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x08)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 40)))) ;; hMenu
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x0c)) (local.get $parent_hwnd))                               ;; hwndParent
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x10)) (local.get $win_cy))                                      ;; cy
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x14)) (local.get $win_cx))                                      ;; cx
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x18)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))) ;; y
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x1c)) (local.get $arg4))                                       ;; x
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x20)) (local.get $arg3))                                       ;; style
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x24))
       (select (global.get $createwnd_wide_name) (local.get $arg2)
         (i32.ne (global.get $createwnd_wide_name) (i32.const 0))))                                                           ;; lpszName
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x128))
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x28))
       (select (global.get $createwnd_wide_class) (local.get $arg1)
         (i32.ne (global.get $createwnd_wide_class) (i32.const 0))))                                                          ;; lpszClass
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x12c)) (local.get $arg0))                                       ;; dwExStyle
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x2c)) (local.get $arg0))                                       ;; dwExStyle
     ;; Built-in system classes (e.g. calc.exe's hidden top-level EDIT pump
     ;; window) have WAT-native wndprocs, not guest x86 callbacks. Win98 USER
     ;; calls the system class proc directly during CreateWindowEx; do the same
@@ -603,7 +615,7 @@
           (local.get $hwnd)
           (i32.const 0x0001)
           (i32.const 0)
-          (i32.add (global.get $image_base) (i32.const 0x100))))
+          (i32.add (call $wnd_scratch) (i32.const 0x00))))
         (i32.store offset=0 (global.get $reg_base) (local.get $hwnd))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 52)))
         (return)))
@@ -618,12 +630,12 @@
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $hook_active_node))
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x31544243)) ;; "CBT1"
-    ;; Build CBT_CREATEWND at image_base+0x140 = { lpcs=&CREATESTRUCT, hwndInsertAfter=0 }
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x140)) (i32.add (global.get $image_base) (i32.const 0x100)))  ;; lpcs
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x144)) (i32.const 0))         ;; hwndInsertAfter = HWND_TOP
+    ;; Build CBT_CREATEWND at wnd_scratch+0x40 = { lpcs=&CREATESTRUCT, hwndInsertAfter=0 }
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x40)) (i32.add (call $wnd_scratch) (i32.const 0x00)))  ;; lpcs
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x44)) (i32.const 0))         ;; hwndInsertAfter = HWND_TOP
     ;; Push hook args (stdcall, 12 bytes): lParam, wParam, nCode
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x140)))     ;; lParam = &CBT_CREATEWND
+    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x40)))     ;; lParam = &CBT_CREATEWND
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $hwnd))  ;; wParam = hwnd
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -645,7 +657,7 @@
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_saved_ret))
     ;; Push WndProc args: lParam, wParam, msg, hwnd
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x100)))             ;; lParam = &CREATESTRUCT
+    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x00)))             ;; lParam = &CREATESTRUCT
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))                    ;; wParam = 0
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -670,27 +682,27 @@
       (i32.shl (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32))) (i32.const 16))))
     (if (call $wnd_is_effectively_visible (local.get $hwnd))
       (then (call $paint_flag_set_inv (local.get $hwnd))))
-    ;; Build CREATESTRUCT at image_base+0x100 for this child. Must run BEFORE
+    ;; Build CREATESTRUCT at wnd_scratch+0x00 for this child. Must run BEFORE
     ;; frame cleanup — needs [esp+24..esp+48]. MFC SDI passes a CCreateContext*
     ;; as lpParam (arg 12) so CView::OnCreate can call CDocument::AddView.
     ;; Without this, lParam would be delivered as 0 and the view never attaches
     ;; to the document.
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x100)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 48)))) ;; lpCreateParams
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x104)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 44)))) ;; hInstance
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x108)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 40)))) ;; hMenu
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x10c)) (local.get $parent_hwnd))                               ;; hwndParent
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x110)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32)))) ;; cy (nHeight)
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x114)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))) ;; cx (nWidth)
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x118)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))) ;; y
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x11c)) (local.get $arg4))                                       ;; x
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x120)) (local.get $arg3))                                       ;; style
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x124))
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x00)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 48)))) ;; lpCreateParams
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x04)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 44)))) ;; hInstance
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x08)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 40)))) ;; hMenu
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x0c)) (local.get $parent_hwnd))                               ;; hwndParent
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x10)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32)))) ;; cy (nHeight)
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x14)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))) ;; cx (nWidth)
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x18)) (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))) ;; y
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x1c)) (local.get $arg4))                                       ;; x
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x20)) (local.get $arg3))                                       ;; style
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x24))
       (select (global.get $createwnd_wide_name) (local.get $arg2)
         (i32.ne (global.get $createwnd_wide_name) (i32.const 0))))                                                           ;; lpszName
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x128))
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x28))
       (select (global.get $createwnd_wide_class) (local.get $arg1)
         (i32.ne (global.get $createwnd_wide_class) (i32.const 0))))                                                          ;; lpszClass
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x12c)) (local.get $arg0))                                       ;; dwExStyle
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x2c)) (local.get $arg0))                                       ;; dwExStyle
     ;; Built-in WAT-native child controls are not app-dispatched windows.
     ;; Initialize them synchronously with the real CREATESTRUCT and suppress
     ;; the queued child WM_CREATE; otherwise apps can populate the control
@@ -701,7 +713,7 @@
         (global.set $pending_child_create (i32.const 0))
         (drop (call $wat_wndproc_dispatch
           (local.get $hwnd) (i32.const 0x0001) (i32.const 0)
-          (i32.add (global.get $image_base) (i32.const 0x100))))))
+          (i32.add (call $wnd_scratch) (i32.const 0x00))))))
     ;; COMCTL32's CreateToolbarEx queries GetWindowLong(hwnd, 0)
     ;; immediately after CreateWindowExA returns. Let the registered toolbar
     ;; wndproc run WM_NCCREATE/WM_CREATE synchronously so it can install that
@@ -733,7 +745,7 @@
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_saved_ret))
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-            (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x100)))
+            (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x00)))
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -759,10 +771,10 @@
     ;; Save state for CACA0026 continuation, clean CreateWindowExA frame (52 bytes).
     (global.set $child_cbt_saved_hwnd (local.get $hwnd))
     (global.set $child_cbt_saved_ret (call $gl32 (i32.load offset=16 (global.get $reg_base))))
-    ;; Build CBT_CREATEWND at image_base+0x140 = { lpcs=&CREATESTRUCT, hwndInsertAfter=0 }
+    ;; Build CBT_CREATEWND at wnd_scratch+0x40 = { lpcs=&CREATESTRUCT, hwndInsertAfter=0 }
     ;; CREATESTRUCT was already populated above.
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x140)) (i32.add (global.get $image_base) (i32.const 0x100)))
-    (call $gs32 (i32.add (global.get $image_base) (i32.const 0x144)) (i32.const 0))
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x40)) (i32.add (call $wnd_scratch) (i32.const 0x00)))
+    (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x44)) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 52)))
     ;; Preserve an outer hook dispatch across re-entrant child creation.
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -771,7 +783,7 @@
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x31544243)) ;; "CBT1"
     ;; Push stdcall hook args: lParam, wParam, nCode
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x140)))  ;; lParam = &CBT_CREATEWND
+    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x40)))  ;; lParam = &CBT_CREATEWND
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $hwnd))                               ;; wParam = child hwnd
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -823,7 +835,7 @@
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_saved_ret))
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-            (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x100)))
+            (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x00)))
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))
             (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -1087,28 +1099,28 @@
         (global.set $dialog_cbt_saved_proc (local.get $arg3))
         (global.set $dialog_cbt_saved_lparam (local.get $arg4))
         (local.set $dlg_rec (call $dlg_record_for_hwnd (local.get $hwnd)))
-        ;; Build a CREATESTRUCT at image_base+0x100 and CBT_CREATEWND at
-        ;; image_base+0x140, matching the CreateWindowEx CBT path.
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x100)) (local.get $arg4)) ;; lpCreateParams
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x104)) (local.get $arg0)) ;; hInstance
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x108)) (i32.const 0))     ;; hMenu
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x10c)) (local.get $arg2)) ;; hwndParent
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x110))
+        ;; Build a CREATESTRUCT at wnd_scratch+0x00 and CBT_CREATEWND at
+        ;; wnd_scratch+0x40, matching the CreateWindowEx CBT path.
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x00)) (local.get $arg4)) ;; lpCreateParams
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x04)) (local.get $arg0)) ;; hInstance
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x08)) (i32.const 0))     ;; hMenu
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x0c)) (local.get $arg2)) ;; hwndParent
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x10))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 18))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x114))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x14))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 16))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x118))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x18))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 14))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x11c))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x1c))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 12))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x120)) (call $wnd_get_style (local.get $hwnd)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x124))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x20)) (call $wnd_get_style (local.get $hwnd)))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x24))
           (select (i32.load (i32.add (local.get $dlg_rec) (i32.const 20))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x128)) (i32.const 0))     ;; lpszClass
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x12c))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x28)) (i32.const 0))     ;; lpszClass
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x2c))
           (select (i32.load (i32.add (local.get $dlg_rec) (i32.const 8))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x140)) (i32.add (global.get $image_base) (i32.const 0x100)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x144)) (i32.const 0))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x40)) (i32.add (call $wnd_scratch) (i32.const 0x00)))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x44)) (i32.const 0))
         ;; Pop CreateDialogParamA frame (ret + 5 args = 24 bytes), then
         ;; call the hook. CACA0028 resumes into WM_INITDIALOG or returns.
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
@@ -1118,7 +1130,7 @@
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x31544243)) ;; "CBT1"
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x140)))
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x40)))
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $hwnd))
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -2003,11 +2015,11 @@
     (call $gs32 (local.get $msg_ptr) (local.get $tmp))
     (call $gs32 (i32.add (local.get $msg_ptr) (i32.const 4)) (i32.const 0x0001)) ;; WM_CREATE
     (call $gs32 (i32.add (local.get $msg_ptr) (i32.const 8)) (i32.const 0))
-    ;; lParam = &CREATESTRUCT (built at image_base+0x100 during CreateWindowExA).
+    ;; lParam = &CREATESTRUCT (built at wnd_scratch+0x00 during CreateWindowExA).
     ;; MFC's CView::OnCreate reads lpcs->lpCreateParams as a CCreateContext* to
     ;; call CDocument::AddView; delivering lParam=0 breaks SDI doc/view attach.
     (call $gs32 (i32.add (local.get $msg_ptr) (i32.const 12))
-                (i32.add (global.get $image_base) (i32.const 0x100)))
+                (i32.add (call $wnd_scratch) (i32.const 0x00)))
     (i32.store offset=0 (global.get $reg_base) (i32.const 1))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20))) (return)))
     ;; Deliver child WM_SIZE after child WM_CREATE

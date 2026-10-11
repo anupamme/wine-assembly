@@ -2231,27 +2231,27 @@
     (if (global.get $cbt_hook_proc)
       (then
         (local.set $dlg_rec (call $dlg_record_for_hwnd (local.get $hwnd)))
-        ;; CREATESTRUCT at image_base+0x100, CBT_CREATEWND at image_base+0x140.
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x100)) (local.get $init_param)) ;; lpCreateParams
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x104)) (local.get $arg0))      ;; hInstance
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x108)) (i32.const 0))          ;; hMenu
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x10c)) (local.get $arg2))      ;; hwndParent
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x110))
+        ;; CREATESTRUCT at wnd_scratch+0x00, CBT_CREATEWND at wnd_scratch+0x40.
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x00)) (local.get $init_param)) ;; lpCreateParams
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x04)) (local.get $arg0))      ;; hInstance
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x08)) (i32.const 0))          ;; hMenu
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x0c)) (local.get $arg2))      ;; hwndParent
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x10))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 18))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x114))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x14))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 16))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x118))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x18))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 14))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x11c))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x1c))
           (select (i32.load16_s (i32.add (local.get $dlg_rec) (i32.const 12))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x120)) (call $wnd_get_style (local.get $hwnd)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x124))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x20)) (call $wnd_get_style (local.get $hwnd)))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x24))
           (select (i32.load (i32.add (local.get $dlg_rec) (i32.const 20))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x128)) (i32.const 0))          ;; lpszClass
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x12c))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x28)) (i32.const 0))          ;; lpszClass
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x2c))
           (select (i32.load (i32.add (local.get $dlg_rec) (i32.const 8))) (i32.const 0) (local.get $dlg_rec)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x140)) (i32.add (global.get $image_base) (i32.const 0x100)))
-        (call $gs32 (i32.add (global.get $image_base) (i32.const 0x144)) (i32.const 0))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x40)) (i32.add (call $wnd_scratch) (i32.const 0x00)))
+        (call $gs32 (i32.add (call $wnd_scratch) (i32.const 0x44)) (i32.const 0))
         ;; Private words under the hook's own stdcall frame: the DLGPROC to
         ;; resume into, the outer hook-dispatch node, and the marker that tells
         ;; CACA0028 this was the modal path. Keeping the DLGPROC on the stack
@@ -2265,7 +2265,7 @@
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x4D544243)) ;; "CBTM"
         ;; CBTProc(nCode=HCBT_CREATEWND, wParam=hwnd, lParam=&CBT_CREATEWND)
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (global.get $image_base) (i32.const 0x140)))
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.add (call $wnd_scratch) (i32.const 0x40)))
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $hwnd))
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
