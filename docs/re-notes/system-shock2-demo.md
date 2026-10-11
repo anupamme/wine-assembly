@@ -133,3 +133,21 @@ indexed-texture regression exercises real attached depth writes/comparisons,
 but both surface-capability fields were zero. The scoped fix reports the
 implemented Z-buffer bit at legacy offset 132 and DX6+ offset 364, for driver
 and HEL caps, only when each entire field fits the caller's structure.
+
+Fix `d964cd8ba` passes the full remote build, GetCaps size-boundary/complex
+surface regression and existing attached reversed-depth rendering test. The
+new caps assertions fail against the original implementation. In
+`scratch/runs/20261011T1541Z-ss2-zcaps/`, `zcaps-after.png` shows the first-person
+training corridor. Numeric VK87 down at batch 2210, up at 2360 visibly walks
+from that corridor (`walk-before.png`) to the blue doors (`walk-after.png`).
+The repeated `screen` run confirms the final composited canvas at batch 2600.
+The first movement attempt incorrectly used string `w` (parsed as NaN); it
+is excluded from input evidence. A later `walk-final.png` automatically
+selected raw surface slot 36 and is also excluded; use the explicit canvas
+capture. Module SHA-256:
+`f40d88da669cfe16f66da8d97ef40474388043f53619d4d9a1a470ad8b08bda4`.
+
+This establishes ordinary CLI player movement, not browser/FPS/audio or
+release readiness. Registration with the proven subdirectory layout and a
+browser check remain. The remote source is the recorded 3cf809538 base plus
+the Turok paint fix and this caps fix, not the latest unrelated main changes.

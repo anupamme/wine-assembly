@@ -97,3 +97,14 @@ no final `d3d-enter.png`. Diagnose the callback/return path and card selection
 before claiming a D3D launch. No gameplay, browser, FPS or audio qualification.
 All commands and before/after evidence remain in the run directory; no licence
 approval was answered and no public deployment was performed.
+
+The 15:47Z replay on bx_3uhkes9x, including the SS2 depth-capability fix,
+still reaches exactly the data-EIP/unaligned-ESP crash. A bounded API trace
+(`scratch/runs/20261011T1547Z-turok-properties/`) records video_d3d file
+seek/read/write activity and CloseHandle immediately before it. This replay
+loaded video_d3d at a different base: original `0x1000f439` is now runtime
+`0x0117f439`. Preserve original module addresses when comparing runs.
+The fresh fork lacks native comctl32.dll, unlike the prior controlled run;
+both exhibit the same final crash, but this is not a new DLL equivalence test.
+Next locate the first transfer into the EXE string area after configuration
+save; no specific API or stack-cleanup fault is established yet.
