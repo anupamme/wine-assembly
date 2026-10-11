@@ -21,7 +21,7 @@ const FPS_IDS = [
   'ut2003_demo', 'delta_force_demo', 'diehard_nakatomi_demo', 'avp_alien_demo',
   'avp_marine_demo', 'drakan_demo', 'anachronox_demo', 'morrowind', 'descent3_demo',
   'forsaken_demo', 'outwars_trial', 'die_by_the_sword_demo', 'asghan_demo',
-  'crusaders_mm_demo', 'hellbender_trial', 'freespace_demo',
+  'crusaders_mm_demo', 'hellbender_trial', 'freespace_demo', 'sof_demo',
 ];
 
 const isVk = v => Number.isInteger(v) && v > 0 && v < 0x100;

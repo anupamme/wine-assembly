@@ -117,6 +117,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Kingpin Demo (Quake II engine GL, loopback timeouts during a slow level load) | [kingpin-demo.md](kingpin-demo.md) |
 | Hexen II Demo (GL build vs bundled 3Dfx MiniGL, WinDirect software build, slow meshing) | [hexen2-demo.md](hexen2-demo.md) |
 | SiN Demo (Quake II engine GL, long scripted intro before control) | [sin-demo.md](sin-demo.md) |
+| Soldier of Fortune Demo (Quake II engine GL; a DLL imports from the EXE; runtime traces only) | [soldier-of-fortune-demo.md](soldier-of-fortune-demo.md) |
 | Command & Conquer: Red Alert (Win95 demo) | [red-alert-95-demo.md](red-alert-95-demo.md) |
 | Die by the Sword (demo) | [die-by-the-sword-demo.md](die-by-the-sword-demo.md) |
 | Dark Colony (magazine demo) | [dark-colony-demo.md](dark-colony-demo.md) |

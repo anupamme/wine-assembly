@@ -1313,6 +1313,49 @@
       }
     },
     {
+      "id": "soldier-of-fortune-demo",
+      "name": "Soldier of Fortune Demo",
+      "kind": "game",
+      "version": "Soldier of Fortune demo (Raven Software / Activision, January 2000), Quake II engine, OpenGL (ref_gl.dll)",
+      "executables": [
+        "installed/SoF.exe"
+      ],
+      "sourcePage": "https://archive.org/details/SoldierOfFortuneDemo",
+      "license": "proprietary commercial demo; the setup's License.txt (in _user1.cab) is Activision's software licence: one copy for personal use only, no copying, distribution or transfer, no reverse engineering, decompiling or disassembly. Keep it a local ignored fixture, never deploy it, and investigate with runtime traces only",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/SoldierOfFortuneDemo/sof.exe",
+          "sha1": "ebb946d7a7e2ba489ba909f9e609c40a314d2395",
+          "type": "file",
+          "destination": "sources/sof.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/sof.exe",
+          "into": "setup"
+        },
+        {
+          "type": "is5Extract",
+          "cab": "setup/data1.cab",
+          "into": "installed"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/SoF.exe"
+      },
+      "cli": {
+        "maxBatches": 14000,
+        "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
