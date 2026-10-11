@@ -30,3 +30,18 @@ node test/run.js --app=anno1602_demo --quiet-api --control=8187 --frozen \
    there. **Right-click is back/cancel** (it deselects), not "move".
 
 Evidence: `scratch/runs/20261006T1340Z-anno1602_demo-gameplay-w6`.
+
+## Black screen in the browser under lazy loading (fixed ef8bf49c0, 2026-10-11)
+
+The game reads `haeuser.cod`, `figuren.cod` and every `gaddata\*.gad` one
+byte at a time with **fgetc** (hundreds of thousands of calls at startup). In
+the browser those files stream lazily. The first byte parked, and getc's retry
+ran as `fgetc(NULL)`: getc used its own FILE* slot as the byte buffer and the
+park left it zeroed. Every file then looked empty, and the main-menu loop ran
+over an all-zero primary (`--trace=dx`: `nzBytes=0` on every present). The
+CLI's provider is synchronous, so the CLI never parks and never showed it.
+Whether a browser run hit it depended on chunk residency, so it came and went
+between builds. Diagnosis tools that worked: web-input-probe `--trace=dx`
+(present non-zero bytes per DIB) and `--trace-api=fopen,fgetc,fclose` (the
+argument to the retried call). Evidence:
+`scratch/runs/20261011T1730Z-anno1602-lazy-fgetc-claude1863`.
