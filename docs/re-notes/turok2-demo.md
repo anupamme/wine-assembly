@@ -42,3 +42,21 @@ ordinary Video settings for its bundled Direct3D renderer, and the precise
 semantics of the requested Glide3 feature if that route is retained.
 `loading.log` and `loading-receipt.json` preserve the failure; no final PNG was
 written after the trap. No approval input was sent.
+
+## Ordinary Video settings route (2026-10-11)
+
+On current main, click Options at `(320,328)`, then Video at `(320,254)`.
+The Options screen renders correctly, but Video opens a blank white dialog;
+no renderer selector is visible. Restoring the original shared comctl32.dll
+(SHA-256 `28a41e6a35c4509924a32a99841a815cf49e1d3ee6912ec26a823e45472edfa4`)
+does not change that visible result. Do not report Direct3D selected or guess
+coordinates for invisible controls. The next step is the Video dialog's
+initialization/painting, or genuine Glide3 enable support.
+
+Reviewed images and receipts are in
+`scratch/runs/20261011T1436Z-new-game-continuation/`:
+`turok2-options.png`, `turok2-video.png`, and
+`turok2-video-common-controls.png`. Runs are CLI-only, not browser validation.
+The fork omitted the build, stdole2.tlb and some Node dependencies; the final
+image runs follow a full build, restored TLB, and a clean dependency install.
+Earlier no-image attempts are retained as harness failures, not game evidence.

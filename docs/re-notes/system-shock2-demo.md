@@ -30,3 +30,18 @@ Reproduction uses `test/run.js --exe=<shock/shock2.exe> --vfs-include='**'
 --no-build --quiet-api --batch-size=100000 --max-seconds=60
 --max-batches=1000000 --png=<output.png>` on the remote build.
 The next step is a bounded startup API/fixture investigation on current main.
+
+## Bounded API/file trace (2026-10-11)
+
+`scratch/runs/20261011T1436Z-new-game-continuation/ss2.log` reproduces the
+same NULL call with API/file tracing enabled. DirectDraw creation/interface
+queries and mode enumeration occur, then DirectInput and sound initialization;
+there is no recorded SetDisplayMode before the stop. GetDeviceCaps(BITSPIXEL)
+returns 32. The trace reports missing `D:\shock\snd.crf`, `C:\english`,
+`menus.cfg` and optional `user.cfg`, but their causal relationship to the stop
+is not established. Do not substitute a missing-file theory for a demonstrated
+failure chain. That trace run had no working image renderer, so it is API
+evidence only; the earlier NULL result was also reproduced with rendering.
+
+The test box is now bx_drmnxa44, with the same current-main module hash.
+No guest modifications, approval responses or emulator patches were made.
