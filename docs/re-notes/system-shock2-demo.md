@@ -45,3 +45,48 @@ evidence only; the earlier NULL result was also reproduced with rendering.
 
 The test box is now bx_drmnxa44, with the same current-main module hash.
 No guest modifications, approval responses or emulator patches were made.
+
+## Resource root isolated (2026-10-11 15:13Z)
+
+The NULL call is downstream of resource creation, not yet evidence of a
+missing COM DLL: `0x58ca50` calls helper `0x58cc40`, which asks the resource
+manager for an image, returns NULL, and the caller invokes vtable slot +12
+without checking. The requested strings include `iface\\` and `fontpal`;
+the supplied `iface.crf` ZIP does contain `fontpal.pcx`.
+
+A controlled layout A/B using identical game bytes and the same emulator
+module isolates a usable launch configuration. The original drive-root mount
+with cwd `C:\` reproduces the NULL stop. Mounting every extracted file under
+`C:\shock\` and setting `--cwd=C:\shock` opens the CRF archives and reaches
+the main menu. Preserve relative subdirectories, including cutscenes. No CFG
+or executable changes, missing-API stubs, or extra DLLs were needed. This
+does not establish whether the drive-root failure is a guest limitation or an
+emulator path-semantics defect; the supported launch should use a subdirectory.
+
+Evidence is `scratch/runs/20261011T1513Z-ss2-resource/`: `root.json` and
+`subdirectory.json` contain complete commands, logs contain the A/B outcomes,
+and `subdirectory.png` is a reviewed menu. Ordinary mouse hover/down/up at
+`(480,50)` selects New Game; `new-game.png` shows the difficulty/Start Game
+screen. These runs use the prior main base plus the Turok native paint fix,
+WASM SHA-256 `f7b5a629258a4c7fadc39e1278aa18e95ba69eda4f527631f6782d4079aafac5`.
+They are CLI captures, not browser/gameplay qualification. The original
+missing `D:\shock\snd.crf` probe alone did not explain the NULL.
+
+The ordinary route continues: Start Game `(375,296)` opens **Welcome to UNN**;
+Continue `(490,435)` opens the key reference; Continue at the same position
+then loads resources and displays **Your video hardware is not supported by
+System Shock 2.** The tested schedules hover/down/up at batches 150/155/160,
+250/255/260, and 330/335/340 respectively, after New Game at 100/105/110.
+`start-game.png`, `continue.png`, and `continue2.png` are reviewed evidence.
+The reference cards contain illustrated gameplay, but these are static game
+instructions and must not be classified as a playable scene.
+
+The graphics trace reaches IDirect3DDevice3 creation, render/texture-stage
+setup and repeated ValidateDevice calls before releasing the device and
+showing the error. The failure is therefore later than initial DD enumeration;
+the exact failed condition is not established. Next trace the guest's video
+initialization return path rather than guessing new capability flags. The
+unfiltered API trace is 255,701,275 bytes and stays on the boat; the local run
+retains a graphics-only excerpt, the final 60 KB, the command receipt and the
+original trace SHA-256/length. No screenshot of actual gameplay, FPS result,
+audio validation, browser validation or release-ready claim yet.
