@@ -20,6 +20,20 @@ assert.strictEqual(keyboardMessageLParam(0x26, { code: 'ArrowUp' }, true, true),
   0xC1480001, 'keyup sets previous-state, transition, scan, and extended bits');
 assert.strictEqual(keyboardMessageLParam(0x0D, null, false, false),
   0x001C0001, 'numeric-only CLI callers retain an Enter scan-code fallback');
+// A touch-overlay button sends a bare VK. Kingpin/SiN/Hexen II strafe on , and
+// . and Quake II-engine MapKey drops a scan code of 0, so every VK a layout
+// can name must carry the scan code its DOM key would.
+for (const [vk, code] of [
+  [0xBC, 'Comma'], [0xBE, 'Period'], [0xBF, 'Slash'], [0xBA, 'Semicolon'],
+  [0xDE, 'Quote'], [0xDB, 'BracketLeft'], [0xDD, 'BracketRight'], [0xDC, 'Backslash'],
+  [0xC0, 'Backquote'], [0xBD, 'Minus'], [0xBB, 'Equal'],
+  [0x60, 'Numpad0'], [0x62, 'Numpad2'], [0x64, 'Numpad4'], [0x65, 'Numpad5'],
+  [0x66, 'Numpad6'], [0x68, 'Numpad8'], [0x69, 'Numpad9'],
+]) {
+  assert.strictEqual(keyboardMessageLParam(vk, null, false, false),
+    keyboardMessageLParam(vk, { code }, false, false),
+    `bare VK 0x${vk.toString(16)} carries ${code}'s scan code`);
+}
 
 class RendererProbe {
   constructor() {
