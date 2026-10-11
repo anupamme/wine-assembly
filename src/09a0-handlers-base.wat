@@ -3882,7 +3882,12 @@
   ;; operations onto the VFS. SZDD decompression can be added separately if a
   ;; caller needs it.
   (func $handle_LZOpenFileA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $handle i32) (local $of_wa i32) (local $access i32) (local $creation i32)
+    (local $handle i32) (local $of_wa i32) (local $access i32) (local $creation i32) (local $hf i32)
+    ;; The open a parked call left behind; its fill is done by now.
+    (if (global.get $lz_open_parked)
+      (then
+        (drop (call $host_fs_close_handle (global.get $lz_open_parked)))
+        (global.set $lz_open_parked (i32.const 0))))
     ;; OF_READ=0, OF_WRITE=1, OF_READWRITE=2, OF_CREATE=0x1000.
     (local.set $access (i32.const 0x80000000))
     (if (i32.eq (i32.and (local.get $arg2) (i32.const 3)) (i32.const 1))
@@ -3901,7 +3906,19 @@
     ;; A read-only open goes through LZInit, so an SZDD file reads expanded.
     (if (i32.and (i32.ne (local.get $handle) (i32.const -1))
           (i32.eqz (i32.and (local.get $arg2) (i32.const 0x1003))))
-      (then (local.set $handle (call $lz_init (local.get $handle)))))
+      (then
+        (local.set $hf (local.get $handle))
+        (local.set $handle (call $lz_init (local.get $handle)))
+        ;; A lazily mounted file whose bytes are not here yet: run the whole
+        ;; call again once the host has them. The pending read belongs to this
+        ;; handle and closing it would cancel the fill, so it stays open until
+        ;; the retry, which closes it (see the top of this function).
+        (if (i32.eq (local.get $handle) (global.get $LZ_PARK))
+          (then
+            (global.set $lz_open_parked (local.get $hf))
+            (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+            (call $io_block (i32.const 16))
+            (return)))))
     (if (local.get $arg1)
       (then
         (local.set $of_wa (call $g2w (local.get $arg1)))
@@ -3920,6 +3937,10 @@
   ;; expanded size, read position. Daytona USA Deluxe ships 72 of its
   ;; Resource\ files this way and reads them all through LZInit/LZRead.
   (global $LZ_MAX_STATES i32 (i32.const 16))
+  ;; $lz_init's answer when a read hit a lazily mounted file's missing bytes
+  ;; (host error 997): not an LZERROR_* code, the caller parks and retries.
+  (global $LZ_PARK i32 (i32.const -997))
+  (global $lz_open_parked (mut i32) (i32.const 0))
   (global $LZ_MIN_HANDLE i32 (i32.const 0x400))
   (global $lz_states_g (mut i32) (i32.const 0))
 
@@ -4007,7 +4028,14 @@
     (local.set $nread (i32.add (local.get $hdr) (i32.const 16)))
     (drop (call $host_fs_set_file_pointer (local.get $hf) (i32.const 0) (i32.const 0)))
     (call $gs32 (local.get $nread) (i32.const 0))
-    (drop (call $host_fs_read_file (local.get $hf) (local.get $hdr) (i32.const 14) (local.get $nread)))
+    ;; A header read that has to wait for the bytes must not be taken for
+    ;; "not SZDD": the file would then read back compressed.
+    (if (i32.and
+          (i32.eqz (call $host_fs_read_file (local.get $hf) (local.get $hdr) (i32.const 14) (local.get $nread)))
+          (i32.eq (call $host_fs_read_pending) (i32.const 1)))
+      (then
+        (call $heap_free (local.get $hdr))
+        (return (global.get $LZ_PARK))))
     (if (i32.or
           (i32.ne (call $gl32 (local.get $nread)) (i32.const 14))
           (i32.or
@@ -4059,7 +4087,8 @@
         (call $heap_free (local.get $comp))
         (call $heap_free (local.get $ring))
         (call $heap_free (local.get $out))
-        (return (i32.const -3))))
+        (return (select (global.get $LZ_PARK) (i32.const -3)
+          (i32.eq (call $host_fs_read_pending) (i32.const 1))))))
     (local.set $got (call $gl32 (i32.add (local.get $comp) (local.get $comp_len))))
     (drop (call $lz_expand_szdd (local.get $comp) (local.get $got)
       (local.get $out) (local.get $out_size) (local.get $ring)))
@@ -4073,8 +4102,12 @@
 
   ;; LZInit(hfSource)
   (func $handle_LZInit (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (i32.store offset=0 (global.get $reg_base) (call $lz_init (local.get $arg0)))
-    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))
+    (local $r i32)
+    (local.set $r (call $lz_init (local.get $arg0)))
+    (i32.store offset=0 (global.get $reg_base) (local.get $r))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+    (if (i32.eq (local.get $r) (global.get $LZ_PARK))
+      (then (call $io_block (i32.const 8)))))
 
   (func $handle_LZRead (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $bytes_ga i32) (local $bytes_wa i32)
@@ -4103,11 +4136,19 @@
     (local.set $bytes_ga (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (local.set $bytes_wa (call $g2w (local.get $bytes_ga)))
     (i32.store (local.get $bytes_wa) (i32.const 0))
+    ;; A plain file read like ReadFile, including its lazy-mount park: the
+    ;; Trespasser demo opens its level, data\DEMO.SCN, with LZOpenFile and
+    ;; checks a 0x30-byte header with LZRead. Streamed in the browser, the read
+    ;; used to fail outright and the game said "Scene File Invalid."
     (if (call $host_fs_read_file
           (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $bytes_ga))
       (then (i32.store offset=0 (global.get $reg_base) (i32.load (local.get $bytes_wa))))
-      (else (i32.store offset=0 (global.get $reg_base) (i32.const -1))))
+      (else
+        (i32.store offset=0 (global.get $reg_base) (i32.const -1))
+        (local.set $i (i32.eq (call $host_fs_read_pending) (i32.const 1)))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+    (if (local.get $i)
+      (then (call $io_block (i32.const 16))))
   )
 
   (func $handle_LZSeek (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
