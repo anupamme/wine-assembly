@@ -101,6 +101,14 @@
           (then (return (call $wnd_send_message (local.get $owner)
                               (local.get $msg) (local.get $wParam) (local.get $lParam)))))
         (return (i32.const 0))))
+    ;; WM_MOUSEACTIVATE (0x0021): MA_NOACTIVATE. This shell is USER's
+    ;; ComboLBox, which never takes activation (Wine listbox.c answers the
+    ;; same for LBS_COMBOBOX); the inner list's own query reaches here through
+    ;; the parent-first default. Activating the popup deactivated the owner
+    ;; frame instead, and MFC answers that by closing its combo dropdowns:
+    ;; Paint's font-size list shut under the press on its own scrollbar.
+    (if (i32.eq (local.get $msg) (i32.const 0x0021))
+      (then (return (i32.const 3))))
     ;; WM_CAPTURECHANGED (0x0215): popup lost capture → close as cancel.
     (if (i32.eq (local.get $msg) (i32.const 0x0215))
       (then
