@@ -151,3 +151,24 @@ This establishes ordinary CLI player movement, not browser/FPS/audio or
 release readiness. Registration with the proven subdirectory layout and a
 browser check remain. The remote source is the recorded 3cf809538 base plus
 the Turok paint fix and this caps fix, not the latest unrelated main changes.
+
+## Registered launch (2026-10-11)
+
+Candidate `system-shock2-demo` uses the pinned CAB installer above, preserving
+its `shock/` tree under `installed/shock`. Browser inventory root `installed`
+maps the directory into the guest; app `system_shock2_demo` explicitly sets
+`exeGuestPath=c:\shock\shock2.exe` and `workingDirectory=c:\shock`.
+It is localOnly; registration grants no redistribution or deployment rights.
+
+The fresh fetch attempt stalled and was stopped. The retained original CAB
+was re-hashed against the pinned SHA-1, extracted with 7z, then the normal
+`fetch-candidate-corpus --prepare` recipe generated the inventory. This
+validates extraction/preparation, not a successful fresh network download.
+The real emulator handler reports the route available with no missing paths.
+
+Run `scratch/runs/20261011T1554Z-ss2-registration/` records the normal
+`--app=system_shock2_demo` route without manual mounts/cwd overrides: it
+reaches the corridor and W movement, with the final canvas reviewed.
+`browser-menu.png` shows the actual registered emulator-handler route in
+Chrome 152 with default Threads and file policy reaching the menu. No browser
+gameplay/FPS/audio qualification follows from that menu capture alone.

@@ -3,6 +3,24 @@
   "assetRoot": "test/binaries/candidates",
   "candidates": [
     {
+      "id": "system-shock2-demo",
+      "name": "System Shock 2 Demo",
+      "kind": "game",
+      "version": "1999 Looking Glass/Irrational Windows demo, SHOCK2.EXE CAB",
+      "executables": ["installed/shock/shock2.exe"],
+      "sourcePage": "https://archive.org/details/SystemShock2Demo",
+      "license": "Proprietary promotional demo; no redistribution grant established. Local ignored compatibility fixture only; do not deploy or ship.",
+      "localOnly": true,
+      "packages": [{
+        "url": "https://archive.org/download/SystemShock2Demo/SHOCK2.EXE",
+        "sha1": "efd1e87f5aa0fb9c810893ade9269a8dde9103ba",
+        "type": "archive"
+      }],
+      "postExtract": [{"type": "copyTree", "from": "shock", "into": "installed/shock"}],
+      "browser": {"fileRoot": "installed", "exe": "installed/shock/shock2.exe"},
+      "cli": {"maxBatches": 4000, "batchSize": 100000, "vfsInclude": ["**/*"]}
+    },
+    {
       "id": "dungeons-of-dredmor-release",
       "name": "Dungeons of Dredmor (archived Steam release)",
       "kind": "game",
