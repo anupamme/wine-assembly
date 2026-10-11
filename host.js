@@ -565,7 +565,12 @@ class WineAssembly {
   // from after it made every WM_TIMER that much late). Runnable guest threads
   // bound it, as in _parkedSleepMs; input cancels it through _wakeStep. The
   // step tail consumes _workerMsgParkUntil. Arm p gates it for an A/B.
-  _workerParkMain(park, sliceDoneAt) {
+  // wakeOnSignal (the spin parks): a guest thread's SetEvent, ReleaseSemaphore
+  // or ReleaseMutex ends the park as well, because what a spinning main thread
+  // polls for is often that thread's work. Blitz's frame loop spins on
+  // PeekMessage until its winmm timer callback bumps a counter and SetEvents;
+  // parked until input or a WM_TIMER, Jardinains ran at ~30fps against 62.
+  _workerParkMain(park, sliceDoneAt, wakeOnSignal = false) {
     const tm = this.threadManager;
     if (tm && tm.hasActiveThreads && tm.hasActiveThreads()) {
       // Free-running threads do not need the step unless one is idle or
@@ -575,10 +580,14 @@ class WineAssembly {
         ? tm.freeRunParkBound(WineAssembly.MAX_PARK_SLEEP_MS)
         : tm.parkedThreadDelay ? tm.parkedThreadDelay(WineAssembly.MAX_PARK_SLEEP_MS) : 0);
       if (park > 0 && !tm.onRunnable) tm.onRunnable = () => this._wakeStep();
+      if (park > 0 && !tm.onSignal) tm.onSignal = () => {
+        if (this._workerParkSignalWakes) this._wakeStep();
+      };
     }
     if (park > 0 && this._schedArm('p')) {
       this._workerMsgParkUntil = sliceDoneAt +
         Math.min(WineAssembly.MAX_PARK_SLEEP_MS, park);
+      this._workerMsgParkSignalWakes = !!wakeOnSignal;
     }
   }
   // The live key-down table as 8 words, bit vKey — what host-window's
@@ -5647,7 +5656,7 @@ class WineAssembly {
             park = Number.isFinite(r.timerDue) && r.timerDue >= 0
               ? Math.max(1, r.timerDue) : WineAssembly.MAX_PARK_SLEEP_MS;
           }
-          self._workerParkMain(park, perfSliceDoneAt);
+          self._workerParkMain(park, perfSliceDoneAt, true);
         } else if (r.yield === 6) {
           // modal_dialog: the single-threaded loop does nothing special here
           // either — the WAT side drives the dialog — so neither does this.
@@ -5689,9 +5698,13 @@ class WineAssembly {
       // park can never outlive the step that decided it.
       const msgParkUntil = self._workerMsgParkUntil || 0;
       self._workerMsgParkUntil = 0;
+      const parkSignalWakes = !!self._workerMsgParkSignalWakes;
+      self._workerMsgParkSignalWakes = false;
+      self._workerParkSignalWakes = false;
       if (self.running && msgParkUntil > 0) {
         const left = Math.round(msgParkUntil - WineAssembly._wallNow());
         if (left > 0) {
+          self._workerParkSignalWakes = parkSignalWakes;
           self._scheduleStep(step, left);
           return;
         }

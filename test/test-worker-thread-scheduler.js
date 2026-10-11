@@ -193,6 +193,30 @@ function makeManager(backend, extraOpts) {
     check(true, 'free-run host parking respects event signals, finite deadlines and runnable siblings');
   }
 
+  // A sibling's signal tells the host (onSignal), which may end a step parked
+  // on the main thread's behalf: Jardinains' main thread spins on PeekMessage
+  // until its winmm timer thread SetEvents. One call per microtask burst, and
+  // none outside free-run, where the drive loop polls every step anyway.
+  {
+    const tm = makeManager(makeBackend([[]]));
+    const event = tm.createEvent(false, false);
+    let signals = 0;
+    tm.onSignal = () => { signals++; };
+    tm.setEvent(event);
+    await Promise.resolve();
+    assert.strictEqual(signals, 0, 'no signal wake outside free-run');
+    tm.workerFreeRun = true;
+    tm.setEvent(event);
+    tm.setEvent(event);
+    await Promise.resolve();
+    assert.strictEqual(signals, 1, 'a burst of signals wakes the host once');
+    tm.setEvent(event);
+    await Promise.resolve();
+    assert.strictEqual(signals, 2, 'each later signal wakes it again');
+    tm.workerFreeRun = false;
+    check(true, 'free-run signals reach the host through onSignal');
+  }
+
   // I/O selection belongs to the yielding thread in both scheduling modes.
   for (const workerMode of [true, false]) {
     const { VirtualFS } = require('../lib/filesystem');
