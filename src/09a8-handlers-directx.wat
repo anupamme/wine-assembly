@@ -130,6 +130,8 @@
   ;; several live instances and must not see surfaces belonging to another.
   (global $DX_SURF_OWNER i32 (region.addr $DX_SURF_OWNER 0))
   (global $DX_SURF_OWNER_SIZE i32 (region.size $DX_SURF_OWNER))
+  (global $DX_SURF_CREATOR i32 (region.addr $DX_SURF_CREATOR 0))
+  (global $DX_SURF_CREATOR_SIZE i32 (region.size $DX_SURF_CREATOR))
   ;; Per-object auxiliary records. For DirectDraw surfaces these hold CPU-write
   ;; epochs and reversible-copy provenance:
   ;; 4096 entries x 32 bytes in 0x07F36000..0x07F55FFF:
@@ -754,6 +756,12 @@
     (i32.add (global.get $DX_SURF_OWNER)
       (i32.shl (call $dx_slot_of (local.get $entry_wa)) (i32.const 2))))
 
+  ;; The DirectDraw interface pointer CreateSurface was called through (not
+  ;; just its object): GetDDInterface hands back that same interface version.
+  (func $dx_surf_creator_ptr (param $entry_wa i32) (result i32)
+    (i32.add (global.get $DX_SURF_CREATOR)
+      (i32.shl (call $dx_slot_of (local.get $entry_wa)) (i32.const 2))))
+
   (func $dx_surf_fmt_default (param $bpp i32) (result i32)
     (if (i32.eq (local.get $bpp) (i32.const 16)) (then (return (i32.const 1))))
     (if (i32.eq (local.get $bpp) (i32.const 32)) (then (return (i32.const 6))))
@@ -1236,7 +1244,8 @@
         (call $dx_cursor_reset (local.get $entry_wa))
         (call $zero_memory (call $dx_surf_state_ptr (local.get $entry_wa)) (i32.const 32))
         (call $dx_surf_fmt_set (local.get $entry_wa) (i32.const 0))
-        (i32.store (call $dx_surf_owner_ptr (local.get $entry_wa)) (i32.const 0)))))
+        (i32.store (call $dx_surf_owner_ptr (local.get $entry_wa)) (i32.const 0))
+        (i32.store (call $dx_surf_creator_ptr (local.get $entry_wa)) (i32.const 0)))))
 
   ;; Notify backing-page observers without changing the cursor restore epoch.
   (func $dx_surf_note_write (param $entry_wa i32)
@@ -1445,6 +1454,7 @@
     ;; Zero the DX_OBJECTS entry type (marks it logically freed; wrapper stays).
     (i32.store (local.get $entry_wa) (i32.const 0))
     (i32.store (call $dx_surf_owner_ptr (local.get $entry_wa)) (i32.const 0))
+    (i32.store (call $dx_surf_creator_ptr (local.get $entry_wa)) (i32.const 0))
     ;; Kind 22 lets the browser stop considering this slot immediately. A
     ;; later recycled allocation publishes kind 21 again.
     (if (i32.eq (local.get $type) (i32.const 2)) ;; DDSurface only
@@ -2547,6 +2557,8 @@
         (i32.store (call $dx_surf_meta_ptr (local.get $entry)) (local.get $caps))
         (call $dx_surf_billed_set (local.get $entry) (i32.const 0))
         (i32.store (call $dx_surf_owner_ptr (local.get $entry)) (local.get $owner))
+        (i32.store (call $dx_surf_creator_ptr (local.get $entry))
+          (i32.load (call $dx_surf_creator_ptr (call $dx_from_this (local.get $parent_obj)))))
         (store.field DxObject width (local.get $entry) (local.get $w))
         (store.field DxObject height (local.get $entry) (local.get $h))
         (store.field DxObject bpp (local.get $entry) (local.get $bpp))
@@ -2735,6 +2747,7 @@
     (call $dx_surf_billed_set (local.get $entry) (local.get $vidmem_bytes))
     (i32.store (call $dx_surf_owner_ptr (local.get $entry))
       (i32.add (call $dx_slot_of (call $dx_from_this (local.get $arg0))) (i32.const 1)))
+    (i32.store (call $dx_surf_creator_ptr (local.get $entry)) (local.get $arg0))
     ;; Fill entry
     (store.field DxObject width (local.get $entry) (local.get $w))
     (store.field DxObject height (local.get $entry) (local.get $h))
@@ -2792,6 +2805,7 @@
           (call $zero_memory (call $dx_surf_meta_ptr (local.get $back_entry)) (i32.const 16))
           (i32.store (call $dx_surf_owner_ptr (local.get $back_entry))
             (i32.add (call $dx_slot_of (call $dx_from_this (local.get $arg0))) (i32.const 1)))
+          (i32.store (call $dx_surf_creator_ptr (local.get $back_entry)) (local.get $arg0))
           ;; The attached back buffer inherits the primary chain's allocation
           ;; and rendering caps.  Only its FRONT/PRIMARY identity changes.
           ;; SDK samples query this exact object and reject a hardware device
@@ -6520,9 +6534,29 @@
 
   ;; IDirectDrawSurface2 extensions — slots 36-38 beyond IDirectDrawSurface's 36.
   ;; flip3dtl QI's the RT surface for IID_IDirectDrawSurface2 and calls slot 36.
+  ;; It returns the DirectDraw interface the surface was created through,
+  ;; AddRef'd, as Windows does: Tachyon's hw_d3d.dll creates its surfaces on an
+  ;; IDirectDraw4 and calls slot 27 (GetDeviceIdentifier) on the result, which
+  ;; on the v1 interface ran off the table and the renderer gave up.
   (func $handle_IDirectDrawSurface2_GetDDInterface (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (if (local.get $arg1)
-      (then (call $gs32 (local.get $arg1) (global.get $dx_ddraw_this))))
+    (local $entry i32) (local $dd i32) (local $dd_entry i32)
+    (if (i32.eqz (local.get $arg1))
+      (then
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x80070057)) ;; DDERR_INVALIDPARAMS
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
+        (return)))
+    (local.set $entry (call $dx_from_this (local.get $arg0)))
+    (if (local.get $entry)
+      (then (local.set $dd (i32.load (call $dx_surf_creator_ptr (local.get $entry))))))
+    (if (local.get $dd)
+      (then (local.set $dd_entry (call $dx_from_this (local.get $dd)))))
+    ;; A surface made by another path, or one whose DirectDraw object is gone.
+    (if (i32.or (i32.eqz (local.get $dd_entry))
+                (i32.ne (i32.load (local.get $dd_entry)) (i32.const 1)))
+      (then (local.set $dd (global.get $dx_ddraw_this))))
+    (call $gs32 (local.get $arg1) (local.get $dd))
+    (if (local.get $dd)
+      (then (drop (call $dx_com_addref (local.get $dd)))))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12))))
   (func $handle_IDirectDrawSurface2_PageLock (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)

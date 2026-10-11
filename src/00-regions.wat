@@ -772,6 +772,9 @@
   (region.declare $DX_SURF_OWNER (size 0x00008000) (align 0x00001000)
     (stride 0x4 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_owner_ptr"))
+  (region.declare $DX_SURF_CREATOR (size 0x00008000) (align 0x00001000)
+    (stride 0x4 (count $DX_MAX))
+    (owner "09a8-handlers-directx.wat:$dx_surf_creator_ptr"))
   ;; Working space for one GL triangle on its way to the rasterizer: the
   ;; modelview-projection product, the vertex being transformed, three 32-byte
   ;; screen records, three 48-byte clip records and the up-to-four records
