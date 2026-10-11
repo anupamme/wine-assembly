@@ -281,3 +281,25 @@ the driver DLL or force the guest selection as a substitute for that fix.
 Same WASM SHA256c065eb4dbbf71f7672bdbc9a6c07a907aa9420a044eea79c4baacc6da2b5dcbc;
 Chromium152, Threads, missing test/binaries/tlbs/stdole2.tlb (recorded
 environment difference). Capture and raw records are retained in the run.
+
+## Worker dialog combo hit testing fixed
+
+Run20261011T1751Z-turok-combo-state confirms combo HWND0x10023/id0x48a
+has listbox0x10024 with both items. The browser sends the arrow click to
+groupbox0x10022: wnd_child_from_point_deep explicitly skipped dialog combos,
+assuming the synchronous dialog router would handle them. Worker mode queues
+that deep target instead, so the surrounding group box consumed the click.
+
+The deep hit test now includes dialog combos and skips group-box frames.
+The expanded deep-zorder regression fails on the old source (group returned
+instead of combo), passes with the fix, and checks the closed field extent.
+Full remote build, WordPad combo, renderer dialog-caption and mouse-drag-mask
+tests pass. No guest EXE, settings or driver records are patched.
+
+Run20261011T1755Z-turok-hit-fixed reviews ordinary browser clicks opening the
+dropdown and selecting Wine Assembly DirectDraw (Direct3D). The guest title
+also changes to T2-Direct3D6. The later scripted route remains in Video after
+the properties step: no browser gameplay or driver-error-cleared claim.
+Next explicitly capture the Properties Return/Video OK sequence before
+entering Single Player. Module SHA256:
+0d8387d822799c57e7876f3773b569cf89b23a5534824930d8f3b5a781cd2565.

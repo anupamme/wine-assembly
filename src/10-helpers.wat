@@ -5829,19 +5829,16 @@
         (then
           (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
           (br $scan)))
-      ;; A static and the colour grid are click-transparent wherever they sit,
-      ;; so they never take a generic client click. A combobox is different: it
-      ;; is skipped here because the DIALOG router delivers its clicks -- and
-      ;; that router only exists when the parent is a dialog. WordPad's font and
-      ;; size combos live on a toolbar, so skipping them there meant the click
-      ;; landed on the toolbar and the list could never drop down.
+      ;; Static decorations, colour grids and group-box frames are transparent.
+      ;; Dialog combos must remain eligible: guest-worker input queues the
+      ;; selected HWND instead of invoking the synchronous dialog router.
+      ;; Skipping the combo there routed Turok's selector click to its frame.
       (local.set $cls (call $ctrl_table_get_class (local.get $ch)))
       (if (i32.or
             (i32.or (i32.eq (local.get $cls) (i32.const 3))
                     (i32.eq (local.get $cls) (i32.const 6)))
-            (i32.and (i32.eq (local.get $cls) (i32.const 5))
-              (i32.eq (call $wnd_table_get (local.get $parent))
-                      (global.get $WNDPROC_DIALOG))))
+            (i32.and (i32.eq (local.get $cls) (i32.const 1))
+              (i32.eq (i32.and (local.get $style) (i32.const 15)) (i32.const 7))))
         (then
           (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
           (br $scan)))

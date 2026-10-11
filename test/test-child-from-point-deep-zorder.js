@@ -20,6 +20,10 @@ const WS_VISIBLE = 0x10000000;
 
 (async () => {
   const { exports: e } = await bootRenderHarness({ extraWat: `
+    (func (export "test_dialog") (param $h i32)
+      (call $wnd_table_set (local.get $h) (global.get $WNDPROC_DIALOG)))
+    (func (export "test_class") (param $h i32) (param $c i32)
+      (call $ctrl_table_set (call $wnd_table_find (local.get $h)) (local.get $c) (i32.const 0)))
     (func (export "test_make_window")
         (param $hwnd i32) (param $parent i32) (param $style i32)
         (param $x i32) (param $y i32) (param $w i32) (param $h i32)
@@ -53,6 +57,18 @@ const WS_VISIBLE = 0x10000000;
     'a click on bare city window stays on the city window');
   assert.strictEqual(e.wnd_child_from_point_deep(main, 10, 470) >>> 0, 0,
     'a point under no child is no hit');
+
+  const dlg=0x10010, combo=0x10011, group=0x10012;
+  e.test_make_window(dlg,0,WS_VISIBLE,0,0,400,300);
+  e.test_dialog(dlg);
+  e.test_make_window(combo,dlg,V|3,20,30,200,100);
+  e.test_class(combo,5);
+  e.test_make_window(group,dlg,V|7,10,10,250,150);
+  e.test_class(group,1);
+  assert.strictEqual(e.wnd_child_from_point_deep(dlg,210,35)>>>0,combo,
+    'dialog selector reaches combo through overlapping group box');
+  assert.strictEqual(e.wnd_child_from_point_deep(dlg,210,90)>>>0,0,
+    'closed combo does not claim its hidden dropdown or surrounding group');
 
   console.log('PASS  deep child hit test takes the topmost overlapping sibling');
 })().catch(error => {
