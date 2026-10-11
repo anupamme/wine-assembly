@@ -180,3 +180,18 @@ exactly that route without W gives SHA256-identical before/after/final PNGs
 transition and health/weapon changes therefore do not prove player input.
 Next inspect actual configured keys and possible scripted/demo playback.
 Registration/playability remain unqualified; the modal crash fix is separate.
+
+## Actual input route (16:35Z)
+
+keyboard.dft has6-byte TKKBRD magic and4-byte version, then dword action
+indices. Scan17(W)=40,72/200(Up)=10,80/208(Down)=11. Up-arrow through
+di-keydown VK38 interrupts the automatic level sequence and opens a Start
+Game/Enter Cheat/Cheats/Options menu. Held Up selects Enter Cheat; a short
+press then a later click at(320,80) instead reaches Options. The route is
+not yet solved, and neither capture qualifies player-controlled gameplay.
+
+Correction to board shorthand: ordinary handleKeyDown ALSO updates
+_asyncKeys/pokeKeyDownState; the earlier W trial was not WM-only. The changed
+key binding, timing and menu state must be isolated. Run1634Z retains reviewed
+menu captures and exact input schedules. Next use the visible menu state to
+select Start Game via ordinary keyboard, then gameplay input controls.

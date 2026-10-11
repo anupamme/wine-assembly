@@ -32,3 +32,24 @@ and Oni.c:936. No explanatory error text is supplied. Next map the failing
 template/level load return and its file/mapping inputs; no cause proven.
 Evidence: scratch/runs/20261011T1627Z-oni-startup (commands and guest logs).
 The build is own branch6823f45d3/base3cf809538, not latest main GL changes.
+
+## Filename-case lead (16:35Z)
+
+The exact error at0x42211f is "This level is not valid" (string52b01c).
+It tests level-valid byte564ad8[level]. The parser421030 splits at underscore
+and period, then compares the suffix byte-for-byte with "Final" at52acc8
+(4210c1..4210f7); mismatch clears the flag at421146. Actual ZIP entries are
+level0_Final.dat etc., whereas traced FindFirst/CreateFile names are lowercase.
+lib/filesystem.js findFirstFile enumerates normalized map keys, losing original
+case. Next controlled enumeration-case probe, then general case-preservation
+across mounts/create/move/copy/persistence if confirmed. No guest patch.
+
+Controlled confirmation: run20261011T1637Z-oni-case-probe wraps only
+FindFirst/Next returned names with actual names read from the extracted tree.
+No EXE/data bytes change. The30000-batch replay no longer reports invalid
+level; it loads resources and reaches the reviewed Bungie intro. Remaining
+guest logs contain missing particle-class warnings, not the earlier error.
+This is a diagnostic wrapper, not a production fix. Next preserve original
+case as VFS metadata while retaining normalized lookup keys, including eager,
+lazy/provider mounts, create/copy/move and serialization. Test general mixed-
+case enumeration and rerun Oni without the wrapper on a fresh remote build.
