@@ -1140,6 +1140,11 @@ class WineAssembly {
     // guard page raise an access violation into the guest's own SEH, as on
     // Win98, instead of answering 0 (set_fault_unmapped mode 4; Dark Reign).
     this.nullPageFaults = false;
+    // `reservedPageFaults: true`: a touch of a MEM_RESERVE'd page that was never
+    // committed runs the guest's exception filters synchronously, as Windows
+    // raises an access violation there (set_fault_unmapped mode 5; Serious
+    // Sam's CTStream commits stream pages from its filter). Takes precedence.
+    this.reservedPageFaults = false;
     // The micro-op tier is on by default too; `uop: false` on an app, the
     // debug toolbar box or ?no-uop turns it off.
     this.uop = true;
@@ -2914,8 +2919,8 @@ class WineAssembly {
     if (this.instance.exports.set_x87_affine_fusion) {
       this.instance.exports.set_x87_affine_fusion(x87Fusion);
     }
-    if (this.nullPageFaults && this.instance.exports.set_fault_unmapped) {
-      this.instance.exports.set_fault_unmapped(4);
+    if ((this.reservedPageFaults || this.nullPageFaults) && this.instance.exports.set_fault_unmapped) {
+      this.instance.exports.set_fault_unmapped(this.reservedPageFaults ? 5 : 4);
     }
     // The micro-op tier (07d/07e). Not decode-time: a hot head is compiled on
     // its 256th entry whenever the tier is on, and turning it off flushes every
@@ -2991,8 +2996,8 @@ class WineAssembly {
       if (this.instance.exports.set_x87_affine_fusion) {
         await this.guestWorker.callExport('set_x87_affine_fusion', x87Fusion);
       }
-      if (this.nullPageFaults && this.instance.exports.set_fault_unmapped) {
-        await this.guestWorker.callExport('set_fault_unmapped', 4);
+      if ((this.reservedPageFaults || this.nullPageFaults) && this.instance.exports.set_fault_unmapped) {
+        await this.guestWorker.callExport('set_fault_unmapped', this.reservedPageFaults ? 5 : 4);
       }
       if (this.instance.exports.set_uop) {
         await this.guestWorker.callExport('set_uop', uop);
@@ -3091,7 +3096,7 @@ class WineAssembly {
       // the cooperative one and says so.
       workerBackend: this.guestWorker || null,
       // Spawned guest threads take the app's NULL-guard-page rule too.
-      faultUnmapped: this.nullPageFaults ? 4 : 0,
+      faultUnmapped: this.reservedPageFaults ? 5 : this.nullPageFaults ? 4 : 0,
       threadsRequested: !!(typeof window !== 'undefined' && window.WINE_THREADS),
       // So a trapped thread's EIP prints as a module and an offset. In worker
       // mode a DLL's load address depends on load order, so the raw number is
