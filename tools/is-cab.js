@@ -71,10 +71,14 @@ function readTable(set) {
     let p, fd;
     if (major <= 5) {
       p = fileTable + u32(h, fileTable + (dirCount + i) * 4);
+      // unshield's version-5 descriptor: the two sizes end at 0x12, then
+      // 0x14 bytes of attributes/dates, so data_offset is at 0x26 and the MD5
+      // follows it. (0x22 read a timestamp as the offset: every file in the
+      // Soldier of Fortune demo's data1.cab failed to inflate.)
       fd = {
         name_offset: u32(h, p), directory_index: u32(h, p + 4), flags: h.readUInt16LE(p + 8),
         expanded_size: u32(h, p + 0x0a), compressed_size: u32(h, p + 0x0e),
-        data_offset: u32(h, p + 0x22), md5: h.subarray(p + 0x26, p + 0x36), volume: 0,
+        data_offset: u32(h, p + 0x26), md5: h.subarray(p + 0x2a, p + 0x3a), volume: 0,
       };
     } else {
       p = fileTable + fileTable2 + i * 0x57;
@@ -87,6 +91,7 @@ function readTable(set) {
       };
     }
     fd.index = i;
+    fd.major = major;
     fd.name = cstr(h, fileTable + fd.name_offset);
     fd.dir = dirs[fd.directory_index] || '';
     files.push(fd);
@@ -94,8 +99,17 @@ function readTable(set) {
   return { version, major, dirs, files };
 }
 
-// Volume header at 0x14 of each dataN.cab (version 6 layout).
-function volumeHeader(buf) {
+// Volume header at 0x14 of each dataN.cab. Version 5 writes 32-bit fields:
+// data_offset, unknown, first/last file index, then offset, expanded and
+// compressed size of the first and of the last file.
+function volumeHeader(buf, major) {
+  if (major <= 5) {
+    return {
+      data_offset: u32(buf, 0x14), first_file_index: u32(buf, 0x1c), last_file_index: u32(buf, 0x20),
+      first_file_offset: u32(buf, 0x24), first_file_size_compressed: u32(buf, 0x2c),
+      last_file_offset: u32(buf, 0x30), last_file_size_compressed: u32(buf, 0x38),
+    };
+  }
   return {
     data_offset: u32(buf, 0x14), first_file_index: u32(buf, 0x1c), last_file_index: u32(buf, 0x20),
     first_file_offset: u64(buf, 0x24), first_file_size_compressed: u64(buf, 0x34),
@@ -118,7 +132,7 @@ function readCompressed(set, fd, cache) {
   let need = fd.compressed_size;
   let pos = fd.data_offset;
   while (need > 0) {
-    const vh = volumeHeader(buf);
+    const vh = volumeHeader(buf, fd.major);
     let avail = buf.length - pos;
     // The volume header records how much of a split last file this volume holds.
     if (fd.index === vh.last_file_index && vh.last_file_size_compressed && pos === vh.last_file_offset)
@@ -131,7 +145,7 @@ function readCompressed(set, fd, cache) {
       n++;
       buf = vol(n);
       if (!buf) throw new Error(`${fd.name} continues into missing volume ${n}`);
-      const next = volumeHeader(buf);
+      const next = volumeHeader(buf, fd.major);
       pos = next.first_file_offset || next.data_offset;
     }
   }
