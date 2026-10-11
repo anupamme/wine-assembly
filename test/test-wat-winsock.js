@@ -641,7 +641,7 @@ async function main() {
   });
 
   check('raw ICMP ingress fans out full IPv4 datagrams with address filtering and bounded queues', () => {
-    wat.test_vsock_reset();
+    wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
     const local=0x7f000001, remote=0x0a000009;
     const any=wat.test_raw_seed(0,0,3),bound=wat.test_raw_seed(local,remote,3);
     const wrongLocal=wat.test_raw_seed(0x7f000002,0,3),wrongPeer=wat.test_raw_seed(0,0x0a000008,3),udp=wat.test_raw_seed(0,0,2);
@@ -659,6 +659,27 @@ async function main() {
       assert.strictEqual(wat.test_raw_ready(i),0);
     }
     for(const i of [wrongLocal,wrongPeer,udp])assert.strictEqual(wat.test_raw_ready(i),0);
+    const {LoopbackSegment,describeFrame}=require('../lib/vlan-wire');
+    const segment=new LoopbackSegment(),sender=segment.attach(),receiver=segment.attach();
+    const frame=Buffer.alloc(28+packet.length);
+    frame.writeUInt32LE(0x314e4c56,0);frame.writeUInt32LE(9,4);frame.writeUInt32LE(remote,8);
+    frame.writeUInt32LE(local,16);frame.writeUInt32LE(packet.length,24);packet.copy(frame,28);
+    assert(describeFrame(frame).startsWith('ICMP '));hostContext.vlanWire=receiver;
+    try {
+      sender.send(frame);wat.vlan_pump();assert.strictEqual(receiver.pending,0);
+      for(const i of [any,bound]){assert.strictEqual(wat.test_raw_take(i,out),41);assert.deepStrictEqual(Buffer.from(new Uint8Array(memory.buffer,wa(out)+12,29)),packet);}
+      for(const [offset,value]of [[8,remote+1],[16,0x7f000002],[12,7],[20,7]]){
+        const bad=Buffer.from(frame);bad.writeUInt32LE(value,offset);sender.send(bad);
+      }
+      sender.send(Buffer.from(frame.subarray(0,30)));wat.vlan_pump();
+      assert.strictEqual(receiver.pending,0,'invalid frames do not block the room');
+      assert.strictEqual(wat.test_raw_ready(any),0,'outer identity mismatch must not reach raw queues');
+      for(let i=0;i<514;i++)sender.send(frame);
+      assert.strictEqual(receiver.pending,512,'raw traffic has datagram queue bounds');
+      assert.strictEqual(receiver.droppedFrames,2);
+      wat.vlan_pump();wat.vlan_pump();assert.strictEqual(receiver.pending,0,'full raw receive queue never stalls wire');
+      for(const i of [any,bound]){let count=0;while(wat.test_raw_take(i,out))count++;assert.strictEqual(count,32);}
+    } finally {delete hostContext.vlanWire;}
     for(let i=0;i<32;i++)assert.strictEqual(receive(),2);
     assert.strictEqual(receive(),0,'full datagram queues drop rather than overwrite');
     assert.strictEqual(wat.test_raw_take(any,out),41);assert.strictEqual(receive(),1,'one full receiver does not prevent delivery to another');

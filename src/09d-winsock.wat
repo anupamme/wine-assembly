@@ -729,7 +729,8 @@
   ;;   +16 dst_ip         +20 dst_port           +24 payload length
   ;;
   ;; Types: 1 SYN (open), 2 SYNACK (accepted), 3 DATA, 4 FIN (orderly write
-  ;; close), 5 RST (refused or aborted), 6 DGRAM, 7 GONE, and 8 WINDOW.
+  ;; close), 5 RST (refused or aborted), 6 DGRAM, 7 GONE, 8 WINDOW,
+  ;; and 9 ICMP (complete IPv4 packet, both port fields zero).
   ;;
   ;; GONE is never sent by a guest. The host puts it into its own inbox when
   ;; the link to a room address closes (Wire.peerGone in lib/vlan-wire.js):
@@ -1078,7 +1079,7 @@
   ;; byte stream may reorder nothing and lose nothing.
   (func $vsock_deliver (param $type i32) (param $sip i32) (param $sport i32)
                        (param $dip i32) (param $dport i32) (param $plen i32) (result i32)
-    (local $idx i32) (local $rec i32) (local $fl i32)
+    (local $idx i32) (local $rec i32) (local $fl i32) (local $packet i32)
     ;; GONE comes from this process's own host, never from the segment, so it
     ;; carries no destination to check.
     (if (i32.eq (local.get $type) (i32.const 7))
@@ -1089,6 +1090,20 @@
           (i32.ne (local.get $type) (i32.const 6))
           (i32.eqz (call $vsock_is_local_addr (local.get $dip))))
       (then (return (i32.const 1))))
+    (if (i32.eq (local.get $type) (i32.const 9)) (then
+      ;; Datagram delivery always consumes the wire record, including malformed
+      ;; packets or full socket queues. Never hold a stream behind raw traffic.
+      (if (i32.lt_u (local.get $plen) (i32.const 28)) (then (return (i32.const 1))))
+      (if (i32.or (local.get $sport) (local.get $dport)) (then (return (i32.const 1))))
+      (local.set $packet (i32.add (call $vsock_frame_wa) (global.get $VLN_HDR)))
+      ;; The room authenticates the outer source; do not let a packet claim a
+      ;; different source/destination inside its IPv4 header.
+      (if (i32.ne (call $bswap32 (i32.load offset=12 (local.get $packet))) (local.get $sip))
+        (then (return (i32.const 1))))
+      (if (i32.ne (call $bswap32 (i32.load offset=16 (local.get $packet))) (local.get $dip))
+        (then (return (i32.const 1))))
+      (drop (call $vsock_raw_ingress (local.get $packet) (local.get $plen)))
+      (return (i32.const 1))))
     (if (i32.eq (local.get $type) (i32.const 6))
       (then
         (if (i32.and

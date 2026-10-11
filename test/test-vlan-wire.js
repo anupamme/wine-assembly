@@ -524,7 +524,9 @@ async function main() {
     settle(host, peer);
     const a6 = host.wat.test_call_accept(s6, 0, 0) | 0;
     assert.notStrictEqual(a6, INVALID_SOCKET);
-    // a6 stays blocking: nothing is buffered, so recv must park.
+    // Accepted sockets inherit the nonblocking listener mode. Explicitly
+    // switch this socket to blocking before asserting that recv parks.
+    assert.strictEqual(host.wat.test_call_ioctlsocket(a6, 0x8004667e | 0, host.buf([0,0,0,0])) | 0, 0);
     host.wat.test_call_recv(a6, host.buf(8), 8, 0);
     assert.strictEqual(host.wat.get_yield_reason() | 0, 8, 'net_wait');
     host.wat.clear_yield();
@@ -573,7 +575,8 @@ async function main() {
     settle(host, peer);
     const a9 = host.wat.test_call_accept(s9, 0, 0) | 0;
     assert.notStrictEqual(a9, INVALID_SOCKET);
-    // a9 stays blocking: with no GONE this recv would park for ever.
+    // Request blocking mode explicitly; accept inherits the listener mode.
+    assert.strictEqual(host.wat.test_call_ioctlsocket(a9, 0x8004667e | 0, host.buf([0,0,0,0])) | 0, 0);
     host.wat.test_call_recv(a9, host.buf(8), 8, 0);
     assert.strictEqual(host.wat.get_yield_reason() | 0, 8, 'parked before the link closes');
     host.wat.clear_yield();

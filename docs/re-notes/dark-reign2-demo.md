@@ -384,3 +384,24 @@ This still uses internal seeded records in tests: public raw socket allocation,
 wire routing, send/recv entry points and overlapped operation state are not
 enabled. No new game replay or gameplay claim.
 Evidence: scratch/runs/20261011T2339Z-dark-reign2-icmp-ingress/.
+
+## Room wire ingress (2026-10-11 23:46Z)
+
+VLN1 type9 carries a complete IPv4 ICMP packet with zero port fields. The room
+pump checks that inner IPv4 source/destination match the outer frame identity
+before passing it to the raw receive queues. Bad packets and full raw queues
+are consumed without holding up later wire frames. The host wire classifies
+type9 as a datagram (512-frame queue bound/drop policy) and names it ICMP in
+traces. Existing TCP/UDP framing is unchanged.
+
+Winsock tests exercise actual loopback wire endpoints and the WAT pump, including
+payload preservation, identity mismatch, nonzero ports, truncation, 514-frame
+queue saturation and receiver saturation. The broader wire suite exposed an
+old test assumption, reproduced on the parent: accepted sockets inherit the
+nonblocking listener mode. That blocking-recv test now explicitly switches its
+accepted socket to blocking before asserting net_wait.
+
+This is still only receive transport: raw creation/send/recv public handlers,
+echo response routing and overlapped state remain pending. No ordinary game
+replay or gameplay screenshot. Evidence:
+scratch/runs/20261011T2346Z-dark-reign2-icmp-wire/.
