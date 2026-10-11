@@ -4562,30 +4562,38 @@
         (i32.ne (call $dx_from_this (local.get $arg0)) (i32.const 0))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))
 
-  ;; GetDeviceIdentifier(this, LPDDDEVICEIDENTIFIER, flags). The DX6
-  ;; structure is 560 bytes: two MAX_PATH ANSI strings, driver version,
-  ;; four PCI ids, and a GUID. GTA2 calls this immediately after QI'ing
-  ;; IID_IDirectDraw4 and only requires a stable software-device identity.
+  ;; GetDeviceIdentifier(this, LPDDDEVICEIDENTIFIER, flags). ddraw.h sizes
+  ;; both strings MAX_DDDEVICEID_STRING (512), not MAX_PATH: szDriver[512] at
+  ;; +0, szDescription[512] at +512, then liDriverVersion, four PCI ids and a
+  ;; GUID -- 1064 bytes. IDirectDraw7 shares the slot with
+  ;; DDDEVICEIDENTIFIER2, which appends dwWHQLLevel (1068). GTA2 only needs a
+  ;; stable identity; Expendable's launcher lists szDescription as the
+  ;; DirectDraw driver name and keeps Play disabled while that list holds no
+  ;; readable entry -- with the description at +260 it read an empty string.
   (func $handle_IDirectDraw4_GetDeviceIdentifier (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $wa i32)
+    (local $wa i32) (local $size i32)
     (if (i32.eqz (local.get $arg1)) (then
       (i32.store offset=0 (global.get $reg_base) (i32.const 0x80070057)) ;; E_INVALIDARG
       (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
       (return)))
-    (local.set $wa (call $g2w (local.get $arg1)))
-    (call $zero_memory (local.get $wa) (i32.const 560))
+    (local.set $size (i32.const 1064))
+    (if (i32.and (i32.ne (local.get $arg0) (i32.const 0))
+                 (i32.eq (call $gl32 (local.get $arg0)) (global.get $DX_VTBL_DDRAW7)))
+      (then (local.set $size (i32.const 1068))))           ;; + dwWHQLLevel (0: not certified)
+    (local.set $wa (call $guest_span_in (local.get $arg1) (local.get $size)))
+    (call $zero_memory (local.get $wa) (local.get $size))
     ;; szDriver = "wine-assembly"
     (i32.store offset=0 (local.get $wa) (i32.const 0x656e6977))
     (i32.store offset=4 (local.get $wa) (i32.const 0x7373612d))
     (i32.store offset=8 (local.get $wa) (i32.const 0x6c626d65))
     (i32.store offset=12 (local.get $wa) (i32.const 0x00000079))
     ;; szDescription = "Wine Assembly DirectDraw"
-    (i32.store offset=260 (local.get $wa) (i32.const 0x656e6957))
-    (i32.store offset=264 (local.get $wa) (i32.const 0x73734120))
-    (i32.store offset=268 (local.get $wa) (i32.const 0x6c626d65))
-    (i32.store offset=272 (local.get $wa) (i32.const 0x69442079))
-    (i32.store offset=276 (local.get $wa) (i32.const 0x74636572))
-    (i32.store offset=280 (local.get $wa) (i32.const 0x77617244))
+    (i32.store offset=512 (local.get $wa) (i32.const 0x656e6957))
+    (i32.store offset=516 (local.get $wa) (i32.const 0x73734120))
+    (i32.store offset=520 (local.get $wa) (i32.const 0x6c626d65))
+    (i32.store offset=524 (local.get $wa) (i32.const 0x69442079))
+    (i32.store offset=528 (local.get $wa) (i32.const 0x74636572))
+    (i32.store offset=532 (local.get $wa) (i32.const 0x77617244))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
 
