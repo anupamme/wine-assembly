@@ -38,6 +38,30 @@ const { bootRenderHarness } = require('./render-helper');
   e.guest_free(fresh);
   for (const s of keep) e.guest_free(s);
   console.log('PASS  large heap blocks own an arena reused across alloc/free cycles (12 x 48 MB with live small blocks between)');
+
+  // The threshold is the Windows heap's own (VirtualMemoryThreshold, 508 KB),
+  // not 1 MB. Battlezone's demo repaints its 640x480 8-bit ad screen every idle
+  // pass: a 4 KB read buffer, a 1072-byte BITMAPINFO it never frees, and a
+  // 921,608-byte pixel buffer, then frees the buffer and the pixels. Under a
+  // 1 MB threshold the leaked BITMAPINFO was carved from the previous pass's
+  // freed pixel block, which was then too short for the next one, so every pass
+  // took a fresh 900 KB; about 335 passes in, the menu background could not be
+  // allocated and drew grey.
+  const PIXELS = 921608, leaked = [];
+  let first = 0;
+  for (let i = 0; i < 1200; i++) {
+    const io = e.guest_alloc(4096) >>> 0;
+    const bmi = e.guest_alloc(1072) >>> 0;
+    const px = e.guest_alloc(PIXELS) >>> 0;
+    assert(io && bmi && px, `ad repaint ${i}: all three allocations succeed`);
+    if (!first) first = px;
+    assert.strictEqual(px, first, `ad repaint ${i} reuses the freed pixel block`);
+    e.guest_free(io);
+    e.guest_free(px);
+    leaked.push(bmi);
+  }
+  for (const s of leaked) e.guest_free(s);
+  console.log('PASS  a 900 KB block freed between leaking small allocations is reused (Battlezone ad screen, 1200 passes)');
 })().catch(error => {
   console.error(error && error.stack || error);
   process.exit(1);

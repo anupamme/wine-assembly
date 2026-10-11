@@ -41,7 +41,7 @@ const assert=require('assert'),fs=require('fs'),{compileSrcWasm}=require('./comp
  // remains current, and must not be published as a duplicate free block.
  {const {a}=await boot(false);assert(a.guest_alloc(8));assert(a.guest_alloc((a.get_heap_end()>>>0)-(a.get_heap_ptr()>>>0)-32-4));
   const tail=a.get_heap_ptr()>>>0,oldEnd=a.get_heap_end()>>>0;
-  // >= HEAP_LARGE (1 MB): its own sparse arena, not the sparse bump arena.
+  // >= HEAP_LARGE (508 KB): its own sparse arena, not the sparse bump arena.
   const large=a.guest_alloc(8*1024*1024)>>>0;assert(large);assert(large<tail||large>=oldEnd,'large block lands outside the low arena');
   assert.strictEqual(a.get_heap_ptr()>>>0,tail);assert.strictEqual(a.get_heap_end()>>>0,oldEnd);
   assert.strictEqual(a.get_free_list(),0,'current low tail not duplicated on free list');

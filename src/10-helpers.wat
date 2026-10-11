@@ -2252,11 +2252,18 @@
   ;; between, and spent the whole 316 MB backing pool on six of them while
   ;; holding under 3 MB live; every later pack load failed.
   ;;
+  ;; The threshold is the Windows heap's VirtualMemoryThreshold (0xFE00
+  ;; paragraphs, 508 KB), not a round 1 MB: Battlezone's demo repaints its
+  ;; 640x480 ad screen from a 921,608-byte buffer every idle pass while leaking
+  ;; a 1072-byte BITMAPINFO, and below 1 MB each leak was carved from the last
+  ;; freed buffer, so every pass took a fresh 900 KB until the menu background
+  ;; could not be allocated.
+  ;;
   ;; The arena is registered fully allocated and retired (+8 == +4), so no
   ;; instance bump-allocates from it and nothing else is ever placed in it.
   ;; Returns the block header's guest address, or 0 to fall back to the normal
   ;; path.
-  (global $HEAP_LARGE i32 (i32.const 0x00100000))
+  (global $HEAP_LARGE i32 (i32.const 0x0007F000))
   ;; Freed large blocks, linked through +4 like $free_list. Per instance, and
   ;; read only here, so a small request can never carve one up.
   (global $heap_large_free (mut i32) (i32.const 0))
