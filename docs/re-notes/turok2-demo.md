@@ -221,3 +221,17 @@ commands, logs and before/input/control screenshots. This establishes CLI
 player movement, unlike the earlier attract captures. The key release6700
 was not reached; no claim of release behavior. Next register the extraction/
 data-directory layout and verify the browser route; FPS/audio/mobile unknown.
+
+## Reproducible candidate registration
+
+Candidate `turok2-demo`, app `turok2_demo`. Existing `is5Extract` reads the
+downloaded data1.cab and reproduces the original executable SHA256 above.
+Its33 entries include12 empty ancillary files omitted by the earlier is-cab
+extraction; no files are patched. Explicit copyFile steps populate the11
+required data resources. Fresh fetch/hash/extraction succeeds on bx_kmxkny92;
+`--app=turok2_demo` then reproduces the reviewed New Game level at6614 batches.
+Evidence run20261011T1711Z-turok-registration. The ordinary Video settings
+must still select Direct3D; default Glide3 remains unsupported. App catalog
+test passes. The broader dropdown-manifest test is blocked by the unrelated
+missing `test/binaries/win98-games-a-d/Black and White 2-DX9-D3D/installed/.wine-assembly-browser.json`
+on the remote test tree. Browser gameplay, FPS, audio and mobile remain open.

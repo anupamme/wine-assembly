@@ -3,6 +3,37 @@
   "assetRoot": "test/binaries/candidates",
   "candidates": [
     {
+      "id": "turok2-demo",
+      "name": "Turok 2 Demo",
+      "kind": "game",
+      "version": "1999 Windows promotional demo",
+      "executables": ["game/Turok2Demo.exe"],
+      "sourcePage": "https://archive.org/details/turok2demo",
+      "license": "Proprietary promotional demo; no redistribution grant established. Local ignored compatibility fixture only; do not deploy or ship.",
+      "localOnly": true,
+      "packages": [{
+        "url": "https://archive.org/download/turok2demo/turok2demo.exe",
+        "sha1": "d985ae568ad2f5dfc50f7592681ba10201278020",
+        "type": "archive"
+      }],
+      "postExtract": [
+        {"type": "is5Extract", "cab": "data1.cab", "into": "game"},
+        {"type": "copyFile", "from": "game/Turok2Demo.lss", "into": "game/data/Turok2Demo.lss"},
+        {"type": "copyFile", "from": "game/Rok Match Demo.lsm", "into": "game/data/Rok Match Demo.lsm"},
+        {"type": "copyFile", "from": "game/Textures.dat", "into": "game/data/Textures.dat"},
+        {"type": "copyFile", "from": "game/demo.mnu", "into": "game/data/demo.mnu"},
+        {"type": "copyFile", "from": "game/fontbmp.bmf", "into": "game/data/fontbmp.bmf"},
+        {"type": "copyFile", "from": "game/keyboard.dft", "into": "game/data/keyboard.dft"},
+        {"type": "copyFile", "from": "game/mouse.dft", "into": "game/data/mouse.dft"},
+        {"type": "copyFile", "from": "game/t2snd.11c", "into": "game/data/t2snd.11c"},
+        {"type": "copyFile", "from": "game/t2snd.BPC", "into": "game/data/t2snd.BPC"},
+        {"type": "copyFile", "from": "game/t2snd.spc", "into": "game/data/t2snd.spc"},
+        {"type": "copyFile", "from": "game/t2spchDemo.11k", "into": "game/data/t2spchDemo.11k"}
+      ],
+      "browser": {"fileRoot": "game", "exe": "game/Turok2Demo.exe"},
+      "cli": {"maxBatches": 7000, "batchSize": 100000, "vfsInclude": ["**/*"]}
+    },
+    {
       "id": "system-shock2-demo",
       "name": "System Shock 2 Demo",
       "kind": "game",
