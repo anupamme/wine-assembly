@@ -61,9 +61,10 @@ const renderer = {
 };
 const runningApps = [{ name: 'starcraft_shareware', mobileTouch: 'direct',
   touchControls: { edgeInset: 8 }, wine: { running: true } }];
+const timers = new Map(); let timerId = 0;
 const browserInput = require('../lib/browser-input');
 browserInput.wireCanvasInput(canvas, renderer, {
-  runningApps, setTimeout: () => 77, clearTimeout() {},
+  runningApps, setTimeout: fn => {timers.set(++timerId, fn);return timerId;}, clearTimeout: id => timers.delete(id),
 });
 
 const touchStart = canvasListeners.get('touchstart');
@@ -149,3 +150,21 @@ assert.strictEqual(mr.touchWantsImmediatePress(80,100),false,'game client stays 
 bar=false;assert.strictEqual(mr.touchWantsImmediatePress(80,50),false,'no menu means no override');
 menuOpen=true;assert.strictEqual(mr.touchWantsImmediatePress(80,100),true,'open menu receives direct touch');
 assert.strictEqual(mr.touchWantsImmediatePress(-1,100),false,'outside presentation remains outside');
+
+// Opted-in taps remain pressed across a guest poll, then pair exactly once.
+runningApps[0].touchControls = {trackpadTapHoldMs:100};
+events.length=0;tap(30,250,150);
+assert.deepStrictEqual(events.filter(e=>e[0]==='down'||e[0]==='up'),[['down',20,30,0]]);
+assert.strictEqual(timers.size,1);[...timers.values()][0]();
+assert.deepStrictEqual(events.filter(e=>e[0]==='down'||e[0]==='up'),[['down',20,30,0],['up',20,30,0]]);
+assert.strictEqual(timers.size,0);
+
+// Clear tap-drag history through an aim-only gesture, then verify blur cleanup.
+runningApps[0].touchControls={aimOnly:true};tap(31,250,150);
+runningApps[0].touchControls={trackpadTapHoldMs:100};events.length=0;tap(32,250,150);
+assert.strictEqual(timers.size,1);
+for(const fn of listeners.get('blur')||[])fn();
+assert.strictEqual(timers.size,0,'blur cancels deferred release');
+assert.deepStrictEqual(events.filter(e=>e[0]==='down'||e[0]==='up'),[['down',20,30,0],['up',20,30,0]]);
+for(const fn of listeners.get('blur')||[])fn();
+assert.strictEqual(events.filter(e=>e[0]==='up').length,1,'cleanup is idempotent');

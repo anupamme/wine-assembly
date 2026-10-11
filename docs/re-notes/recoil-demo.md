@@ -248,3 +248,19 @@ not activate it (run20261011T2029Z-recoil-touch-gameplay); held Fire does.
 The remaining issue is the short trackpad click pulse, not cursor movement.
 This route verifies Chrome touch emulation, not WebKit or a physical phone.
 FPS and audibility remain unmeasured.
+
+## Short trackpad tap fixed
+
+Recoil opts into touchControls.trackpadTapHoldMs=100. A trackpad tap now
+keeps mouse-down for100ms so frame-polled input can observe it; other apps
+retain their existing immediate tap. Requested holds are capped at500ms.
+Pending release is paired once and cleared on blur, hidden document, or
+new touch/mouse input. Native direct controls retain their existing path.
+
+Reviewed run20261011T2043Z-recoil-tap-hold opens the name/difficulty screen
+with an ordinary trackpad tap, where baseline2029Z only highlighted New Game.
+Regression fails the previous source and passes fixed, including deferred
+release and idempotent blur cleanup. Full touch gameplay was verified in
+2033Z using held Fire; it was not repeated with this timing patch. The boat
+expired after evidence collection. Next validate the full ordinary-tap route
+and measure FPS/audio; physical phone/WebKit remain unverified.
