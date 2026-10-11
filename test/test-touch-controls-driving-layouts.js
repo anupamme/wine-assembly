@@ -9,7 +9,8 @@
 // defaults, cited beside the layout; this test cannot check that a key is
 // RIGHT, but it refuses layouts that are wrong for any driving game: no way
 // to steer, no gas or brake, a button bound to nothing, a held menu key, a
-// row too crowded for a 390 px portrait screen, or no way back to the menu.
+// row too crowded for a 390 px portrait screen, a one-shot key a state-polling
+// game could miss, or no way back to the menu.
 // It also pins the three games whose keys are not the arrows.
 
 const assert = require('assert');
@@ -56,7 +57,9 @@ for (const id of DRIVE_IDS) {
     const mouse = Number.isInteger(b.mouseButton);
     assert.ok(mouse ? [0, 1, 2].includes(b.mouseButton) : isVk(b.vk), `${label}: bound to a key or mouse button`);
     if (b.pos === 'tl') {
-      assert.strictEqual(b.hold, false, `${label}: a top-left menu key is a one-shot`);
+      // Held, not one-shot: these games poll key state, and a down+up in one
+      // tick can fall between two polls.
+      assert.notStrictEqual(b.hold, false, `${label}: a top-left menu key is held while touched`);
       continue;
     }
     assert.strictEqual(b.pos, 'br', `${label}: driving buttons sit at the bottom right`);
