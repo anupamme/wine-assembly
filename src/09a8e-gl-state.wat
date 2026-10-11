@@ -311,7 +311,11 @@
       (local.set $z (f32.const 0))
       (if (i32.gt_u (global.get $gl_vp_size) (i32.const 2)) (then
         (local.set $z (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 2))) (global.get $gl_vp_type)))))
-      (call $gl_append_vertex (local.get $x) (local.get $y) (local.get $z)))))
+      ;; A 4-component position array carries w; fewer components mean w = 1.
+      (call $gl_append_vertex4 (local.get $x) (local.get $y) (local.get $z)
+        (if (result f32) (i32.gt_u (global.get $gl_vp_size) (i32.const 3))
+          (then (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 3))) (global.get $gl_vp_type)))
+          (else (f32.const 1)))))))
 
   (func $gl_state_intercept (param $op i32) (param $stack i32) (result i32)
     (local $a i32) (local $unit i32) (local $i i32) (local $count i32) (local $p i32) (local $b i32)
@@ -398,6 +402,18 @@
     (if (i32.eq (local.get $op) (i32.const 97)) (then
       (call $gl_append_vertex (f32.convert_i32_s (i32.load offset=4 (local.get $stack)))
         (f32.convert_i32_s (i32.load offset=8 (local.get $stack))) (f32.const 0)) (return (i32.const 1))))
+    ;; 118 glVertex4f(x, y, z, w) / 119 glVertex4fv(v): a projective vertex
+    ;; keeps its w in the packed record; the rasterizers divide by clip w.
+    (if (i32.eq (local.get $op) (i32.const 118)) (then
+      (call $gl_append_vertex4 (f32.load offset=4 (local.get $stack))
+        (f32.load offset=8 (local.get $stack)) (f32.load offset=12 (local.get $stack))
+        (f32.load offset=16 (local.get $stack)))
+      (return (i32.const 1))))
+    (if (i32.eq (local.get $op) (i32.const 119)) (then
+      (local.set $p (call $g2w (i32.load offset=4 (local.get $stack))))
+      (call $gl_append_vertex4 (f32.load (local.get $p)) (f32.load offset=4 (local.get $p))
+        (f32.load offset=8 (local.get $p)) (f32.load offset=12 (local.get $p)))
+      (return (i32.const 1))))
     (if (i32.eq (local.get $op) (i32.const 76)) (then
       (local.set $a (call $heap_alloc (i32.const 52)))
       (if (i32.eqz (local.get $a)) (then (unreachable)))

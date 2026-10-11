@@ -447,17 +447,17 @@ if (TRACE_GL_RAW) {
     let tail = '';
     if (capture && capture.pointerOffset && capture.pointerLength) {
       tail = ` ptr=${capture.pointerLength}B`;
-      if (capture.pointerLength % 56 === 0) {
-        const v = new Float32Array(capture.buffer, capture.pointerOffset, 14);
-        tail += ` verts=${capture.pointerLength / 56} v0=(${Array.from(v.slice(0, 3), x => +x.toPrecision(4))})`
+      if (capture.pointerLength % 60 === 0) {
+        const v = new Float32Array(capture.buffer, capture.pointerOffset, 15);
+        tail += ` verts=${capture.pointerLength / 60} v0=(${Array.from(v.slice(0, 3), x => +x.toPrecision(4))})`
           + ` rgba=(${Array.from(v.slice(3, 7), x => +x.toPrecision(3))})`;
         if (TRACE_GL_VERTS) {
           // --trace-gl-verts: every vertex of the packed draw, object-space
           // x,y,z and unit-0 u,v, for finding the one triangle that is wrong.
           const all = new Float32Array(capture.buffer, capture.pointerOffset, capture.pointerLength / 4);
           const rows = [];
-          for (let i = 0; i + 14 <= all.length; i += 14) {
-            rows.push(`  [gl]   v${i / 14} xyz=(${Array.from(all.slice(i, i + 3), x => +x.toPrecision(6))})`
+          for (let i = 0; i + 15 <= all.length; i += 15) {
+            rows.push(`  [gl]   v${i / 15} xyz=(${Array.from(all.slice(i, i + 3), x => +x.toPrecision(6))}) w=${+all[i + 14].toPrecision(4)}`
               + ` uv=(${+all[i + 7].toPrecision(4)},${+all[i + 8].toPrecision(4)})`);
           }
           tail += '\n' + rows.join('\n');

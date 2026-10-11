@@ -2,7 +2,7 @@
 'use strict';
 
 // src/09a8g-gl-raster.wat -- the first thing that RASTERIZES a GL draw in WAT
-// with no JS in the path. It transforms the 56-byte GL vertices of a packed
+// with no JS in the path. It transforms the 60-byte GL vertices of a packed
 // draw record, projects them, and hands the triangle to the D3DIM rasterizer
 // writing into a DxObject surface.
 //
@@ -41,7 +41,7 @@ const { bootRenderHarness } = require('./render-helper');
 const { CALL_INDEX } = require('../lib/gl-compat.js');
 
 const MODELVIEW = 0x1700, PROJECTION = 0x1701;
-const VERT_BYTES = 56, VERT_FLOATS = 14;
+const VERT_BYTES = 60, VERT_FLOATS = 15;  // w is the 15th float
 const VP = 64; // viewport is VP x VP, so a surface of the same size
 
 async function main() {
@@ -81,12 +81,13 @@ async function main() {
   const verts = toWasm(e.guest_alloc(VERT_BYTES * 3));
   const stack = toWasm(e.guest_alloc(64));
 
-  // One 14-float GL vertex: x,y,z, r,g,b,a, s0,t0, nx,ny,nz, s1,t1
+  // One 15-float GL vertex: x,y,z, r,g,b,a, s0,t0, nx,ny,nz, s1,t1, w
   // (src/09a8c-gl-encoder.wat:134, mirrored as VERTEX_FLOATS in
   // lib/gl-command-stream.js).
   const putVertex = (i, x, y, z, r, g, b, a, s = 0, t = 0) => {
     const f = new Float32Array(memory.buffer, verts + i * VERT_BYTES, VERT_FLOATS);
     f.fill(0);
+    f[14] = 1;
     f[0] = x; f[1] = y; f[2] = z;
     f[3] = r; f[4] = g; f[5] = b; f[6] = a;
     f[7] = s; f[8] = t;

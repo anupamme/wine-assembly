@@ -357,8 +357,10 @@ const stats = {
 
     _appendVertex(opcode, stackWa) {
       if (!this.immediate) return false;
-      let x, y, z;
-      if (opcode === 29) {
+      let x, y, z, w = 1;
+      if (opcode === 118) {
+        x = this._f32(stackWa, 0); y = this._f32(stackWa, 1); z = this._f32(stackWa, 2); w = this._f32(stackWa, 3);
+      } else if (opcode === 29) {
         x = this._f32(stackWa, 0); y = this._f32(stackWa, 1); z = 0;
       } else if (opcode === 30) {
         x = this._f32(stackWa, 0); y = this._f32(stackWa, 1); z = this._f32(stackWa, 2);
@@ -369,11 +371,12 @@ const stats = {
         x = view.getFloat32(wa, true);
         y = view.getFloat32(wa + 4, true);
         z = view.getFloat32(wa + 8, true);
+        if (opcode === 119) w = view.getFloat32(wa + 12, true);
       }
-      return this._appendResolvedVertex(x, y, z);
+      return this._appendResolvedVertex(x, y, z, w);
     }
 
-    _appendResolvedVertex(x, y, z) {
+    _appendResolvedVertex(x, y, z, w = 1) {
       if (!this.immediate) return false;
       const state = this._state();
       this._reserveImmediate(VERTEX_FLOATS);
@@ -389,6 +392,7 @@ const stats = {
       this.immediateVertices[offset++] = state.normal[2];
       this.immediateVertices[offset++] = state.texCoord1[0];
       this.immediateVertices[offset++] = state.texCoord1[1];
+      this.immediateVertices[offset++] = w;
       this.immediate.length = offset;
       return true;
     }
@@ -447,7 +451,8 @@ const stats = {
       }
       if (!state.clientEnabled.has(GL.VERTEX_ARRAY) || !state.vertexPointer) return;
       const vertex = this._readArray(state.vertexPointer, index, state.vertexPointer.size, false);
-      if (vertex) this._appendResolvedVertex(vertex[0] || 0, vertex[1] || 0, vertex[2] || 0);
+      if (vertex) this._appendResolvedVertex(vertex[0] || 0, vertex[1] || 0, vertex[2] || 0,
+        state.vertexPointer.size > 3 ? (vertex[3] === undefined ? 1 : vertex[3]) : 1);
     }
 
     // glDrawArrays is glArrayElement over first .. first+count-1 (the Descent
@@ -753,7 +758,7 @@ const stats = {
         this.immediate = { mode: u32At(memoryView, stackWa, 0), length: 0 };
         return 0;
       }
-      if (opcode >= 29 && opcode <= 31) {
+      if ((opcode >= 29 && opcode <= 31) || opcode === 118 || opcode === 119) {
         this._appendVertex(opcode, stackWa);
         return 0;
       }

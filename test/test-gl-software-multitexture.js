@@ -19,7 +19,7 @@ const { bootRenderHarness } = require('./render-helper');
 const { CALL_INDEX } = require('../lib/gl-compat.js');
 
 const MODELVIEW = 0x1700, PROJECTION = 0x1701;
-const VERT_BYTES = 56, VERT_FLOATS = 14;
+const VERT_BYTES = 60, VERT_FLOATS = 15;  // w is the 15th float
 const VP = 32;
 const GL_TEXTURE_2D = 0x0DE1, TEXTURE0 = 0x84C0, TEXTURE1 = 0x84C1;
 const PINK = 0xFFFF8080, DARK_BLUE = 0xFF000080, BLUE = 0xFF0000FF;
@@ -68,6 +68,7 @@ async function main() {
       pts.forEach(([x, y], i) => {
         const f = new Float32Array(memory.buffer, verts + i * VERT_BYTES, VERT_FLOATS);
         f.fill(0);
+        f[14] = 1;
         // position, white colour, unit 0 st, normal, unit 1 st
         f.set([x, y, 0, 1, 1, 1, 1, 0.5, 0.5, 0, 0, 1, (x + 1) / 2, 0.5]);
         if (unit1Coords) f.set(unit1Coords, 12);

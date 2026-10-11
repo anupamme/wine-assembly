@@ -3733,6 +3733,8 @@
     (if (i32.eq (local.get $id) (i32.const 4338)) (then (return (i32.const 1)))) ;; glMultiTexCoord2fvARB
     (if (i32.eq (local.get $id) (i32.const 4344)) (then (return (i32.const 1)))) ;; glMultMatrixf
     (if (i32.eq (local.get $id) (i32.const 4442)) (then (return (i32.const 1)))) ;; glTexParameterfv
+    (if (i32.eq (local.get $id) (i32.const 4460)) (then (return (i32.const 1)))) ;; glVertex4f
+    (if (i32.eq (local.get $id) (i32.const 4461)) (then (return (i32.const 1)))) ;; glVertex4fv
     (if (i32.eq (local.get $id) (i32.const 4466)) (then (return (i32.const 1)))) ;; wglGetCurrentContext
     (if (i32.eq (local.get $id) (i32.const 4467)) (then (return (i32.const 1)))) ;; wglGetCurrentDC
     (i32.const 0))
@@ -21882,10 +21884,10 @@
       (call $handle_gl_unimplemented (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
       (return)
     ) ;; 4460: glVertex4f
-      (call $handle_glVertex4f (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
+      (call $handle_gpu_api (i32.const 118) (i32.const 4) (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
       (return)
     ) ;; 4461: glVertex4fv
-      (call $handle_glVertex4fv (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
+      (call $handle_gpu_api (i32.const 119) (i32.const 1) (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
       (return)
     ) ;; 4462: glVertex4i
       (call $handle_gl_unimplemented (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))

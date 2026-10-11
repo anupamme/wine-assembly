@@ -51,7 +51,7 @@ function makeBackend({ honoursDepthRange }) {
 
 // Force one draw so _applyUniforms runs and publishes uProjection.
 function drawOnce(gl) {
-  gl.enqueuePacked(4, new Float32Array(14 * 3));
+  gl.enqueuePacked(4, new Float32Array(require('../lib/gl-command-stream').VERTEX_FLOATS * 3));
   gl.flushPendingDraw();
 }
 

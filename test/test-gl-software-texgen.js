@@ -21,7 +21,7 @@ const { bootRenderHarness } = require('./render-helper');
 const { CALL_INDEX } = require('../lib/gl-compat.js');
 
 const MODELVIEW = 0x1700, PROJECTION = 0x1701;
-const VERT_BYTES = 56, VERT_FLOATS = 14;
+const VERT_BYTES = 60, VERT_FLOATS = 15;  // w is the 15th float
 const VP = 32;
 const GL_TEXTURE_2D = 0x0DE1, GEN_S = 0x0C60, GEN_T = 0x0C61;
 const GL_S = 0x2000, GL_T = 0x2001, GEN_MODE = 0x2500;
@@ -63,6 +63,7 @@ async function main() {
       pts.forEach(([x, y], i) => {
         const f = new Float32Array(memory.buffer, verts + i * VERT_BYTES, VERT_FLOATS);
         f.fill(0);
+        f[14] = 1;
         f.set([x, y, -0.5, 1, 1, 1, 1, 0.9, 0.5, ...n]);
       });
       e.gl_sw_emit_triangles(verts, 3);

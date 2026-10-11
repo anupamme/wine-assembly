@@ -149,10 +149,16 @@
     (global.set $gl_stream_command_count (i32.add (global.get $gl_stream_command_count) (i32.const 1)))
     (i32.const 1))
 
+  ;; One immediate-mode vertex: position (x, y, z, w) plus the current colour,
+  ;; texcoords and normal -- 15 floats, w last so every older field keeps its
+  ;; offset (lib/gl-command-stream.js VERTEX_FLOATS).
   (func $gl_append_vertex (param $x f32) (param $y f32) (param $z f32)
+    (call $gl_append_vertex4 (local.get $x) (local.get $y) (local.get $z) (f32.const 1)))
+
+  (func $gl_append_vertex4 (param $x f32) (param $y f32) (param $z f32) (param $w f32)
     (local $p i32) (local $guest i32) (local $needed i32) (local $cap i32)
     (if (i32.lt_s (global.get $gl_immediate_mode) (i32.const 0)) (then (return)))
-    (local.set $needed (i32.shl (i32.add (global.get $gl_immediate_floats) (i32.const 14)) (i32.const 2)))
+    (local.set $needed (i32.shl (i32.add (global.get $gl_immediate_floats) (i32.const 15)) (i32.const 2)))
     (if (i32.gt_u (local.get $needed) (global.get $gl_immediate_capacity)) (then
       (local.set $cap (global.get $gl_immediate_capacity))
       (loop $grow (if (i32.lt_u (local.get $cap) (local.get $needed)) (then
@@ -182,14 +188,15 @@
     (f32.store (call $g2w (i32.add (local.get $p) (i32.const 44))) (global.get $gl_normal_z))
     (f32.store (call $g2w (i32.add (local.get $p) (i32.const 48))) (global.get $gl_tex1_s))
     (f32.store (call $g2w (i32.add (local.get $p) (i32.const 52))) (global.get $gl_tex1_t))
-    (global.set $gl_immediate_floats (i32.add (global.get $gl_immediate_floats) (i32.const 14))))
+    (f32.store (call $g2w (i32.add (local.get $p) (i32.const 56))) (local.get $w))
+    (global.set $gl_immediate_floats (i32.add (global.get $gl_immediate_floats) (i32.const 15))))
 
   (func $gl_copy_vertex (param $dst i32) (param $index i32) (param $color_index i32)
     (local $src i32) (local $csrc i32) (local $i i32) (local $from i32)
     (local.set $src (i32.add (global.get $gl_immediate_guest)
-      (i32.mul (local.get $index) (i32.const 56))))
+      (i32.mul (local.get $index) (i32.const 60))))
     (local.set $csrc (i32.add (global.get $gl_immediate_guest)
-      (i32.add (i32.mul (local.get $color_index) (i32.const 56)) (i32.const 12))))
+      (i32.add (i32.mul (local.get $color_index) (i32.const 60)) (i32.const 12))))
     (loop $words
       (local.set $from (i32.add (local.get $src) (i32.shl (local.get $i) (i32.const 2))))
       (if (i32.and (i32.ge_s (local.get $color_index) (i32.const 0))
@@ -199,7 +206,7 @@
       (i32.store (i32.add (local.get $dst) (i32.shl (local.get $i) (i32.const 2)))
         (i32.load (call $g2w (local.get $from))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
-      (br_if $words (i32.lt_u (local.get $i) (i32.const 14)))))
+      (br_if $words (i32.lt_u (local.get $i) (i32.const 15)))))
 
   (func $gl_pixel_components (param $format i32) (result i32)
     (if (result i32) (i32.or (i32.eq (local.get $format) (i32.const 0x1906))
@@ -264,7 +271,7 @@
   (func $gl_packed_finish (param $start i32) (param $vertices i32)
     (local $bytes i32)
     (if (i32.eqz (local.get $vertices)) (then (return)))
-    (local.set $bytes (i32.mul (local.get $vertices) (i32.const 56)))
+    (local.set $bytes (i32.mul (local.get $vertices) (i32.const 60)))
     (i32.store (local.get $start) (i32.add (local.get $bytes) (i32.const 32)))
     (i32.store offset=20 (local.get $start) (local.get $bytes))
     (global.set $gl_stream_used_bytes (i32.add (global.get $gl_stream_used_bytes)
@@ -281,7 +288,7 @@
     (local $i i32) (local $start i32) (local $n i32) (local $need i32) (local $q i32)
     (local $flat i32) (local $prov i32) (local $a i32) (local $b i32) (local $c i32)
     (local $out_count i32) (local $group i32) (local $max_chunk i32) (local $first_chunk i32)
-    (local.set $count (i32.div_u (global.get $gl_immediate_floats) (i32.const 14)))
+    (local.set $count (i32.div_u (global.get $gl_immediate_floats) (i32.const 15)))
     (local.set $mode (global.get $gl_immediate_mode))
     (global.set $gl_immediate_mode (i32.const -1))
     (global.set $gl_immediate_floats (i32.const 0))
@@ -325,12 +332,12 @@
       (select (i32.const 2) (i32.const 1) (i32.eq (local.get $out_mode) (i32.const 1)))
       (i32.eq (local.get $out_mode) (i32.const 4))))
     (local.set $max_chunk (i32.mul
-      (i32.div_u (i32.div_u (i32.sub (i32.const 0x00200000) (i32.const 32)) (i32.const 56))
+      (i32.div_u (i32.div_u (i32.sub (i32.const 0x00200000) (i32.const 32)) (i32.const 60))
         (local.get $group)) (local.get $group)))
     (local.set $first_chunk (select (local.get $out_count) (local.get $max_chunk)
       (i32.lt_u (local.get $out_count) (local.get $max_chunk))))
     (if (i32.gt_u (i32.add (global.get $gl_stream_used_bytes)
-          (i32.add (i32.const 32) (i32.mul (local.get $first_chunk) (i32.const 56))))
+          (i32.add (i32.const 32) (i32.mul (local.get $first_chunk) (i32.const 60))))
         (i32.const 0x00200000)) (then (drop (call $gl_wat_stream_flush))))
     (local.set $start (call $gl_packed_begin (local.get $out_mode)))
 
@@ -430,22 +437,22 @@
             (else (local.set $q (i32.const 1))))))
 
         (if (i32.gt_u (i32.add (i32.add (global.get $gl_stream_used_bytes) (i32.const 32))
-              (i32.mul (i32.add (local.get $n) (local.get $need)) (i32.const 56)))
+              (i32.mul (i32.add (local.get $n) (local.get $need)) (i32.const 60)))
             (i32.const 0x00200000)) (then
           (call $gl_packed_finish (local.get $start) (local.get $n))
           (drop (call $gl_wat_stream_flush))
           (local.set $start (call $gl_packed_begin (local.get $out_mode)))
           (local.set $n (i32.const 0))))
         (call $gl_copy_vertex (i32.add (local.get $start)
-          (i32.add (i32.const 32) (i32.mul (local.get $n) (i32.const 56)))) (local.get $a) (local.get $prov))
+          (i32.add (i32.const 32) (i32.mul (local.get $n) (i32.const 60)))) (local.get $a) (local.get $prov))
         (local.set $n (i32.add (local.get $n) (i32.const 1)))
         (if (i32.gt_u (local.get $need) (i32.const 1)) (then
           (call $gl_copy_vertex (i32.add (local.get $start)
-            (i32.add (i32.const 32) (i32.mul (local.get $n) (i32.const 56)))) (local.get $b) (local.get $prov))
+            (i32.add (i32.const 32) (i32.mul (local.get $n) (i32.const 60)))) (local.get $b) (local.get $prov))
           (local.set $n (i32.add (local.get $n) (i32.const 1)))))
         (if (i32.gt_u (local.get $need) (i32.const 2)) (then
           (call $gl_copy_vertex (i32.add (local.get $start)
-            (i32.add (i32.const 32) (i32.mul (local.get $n) (i32.const 56)))) (local.get $c) (local.get $prov))
+            (i32.add (i32.const 32) (i32.mul (local.get $n) (i32.const 60)))) (local.get $c) (local.get $prov))
           (local.set $n (i32.add (local.get $n) (i32.const 1)))))
         (br $emit)))
     (call $gl_packed_finish (local.get $start) (local.get $n))

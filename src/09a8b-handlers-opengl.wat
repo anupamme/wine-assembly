@@ -228,31 +228,6 @@
       (then (call $crash_unimplemented (local.get $name_ptr))))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24))))
-  ;; glVertex4f(x, y, z, w). MDK2's demo draws with w = 1.0, which is exactly
-  ;; glVertex3f(x, y, z): delegate to its encoder opcode (30, as in
-  ;; $gl_wat_encode_call) -- x, y and z sit where glVertex3f reads them -- and
-  ;; pop the fourth argument too. A projective vertex (w != 1) changes
-  ;; perspective-correct interpolation, which the packed vertex does not carry,
-  ;; so it fails fast instead of being divided through.
-  (func $handle_glVertex4f (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $esp i32)
-    (if (i32.ne (local.get $arg3) (i32.const 0x3f800000)) ;; 1.0f
-      (then (call $crash_unimplemented (local.get $name_ptr))))
-    (local.set $esp (i32.load offset=16 (global.get $reg_base)))
-    (call $handle_gpu_api (i32.const 30) (i32.const 3)
-      (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
-    (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $esp) (i32.const 20))))
-
-  ;; glVertex4fv(v). The same frame as glVertex3fv(v), which reads v[0..2]:
-  ;; with v[3] = 1.0 it is exactly that call (opcode 31), else it fails fast
-  ;; for the reason glVertex4f does.
-  (func $handle_glVertex4fv (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (if (i32.or (i32.eqz (local.get $arg0))
-          (i32.ne (call $gl32 (i32.add (local.get $arg0) (i32.const 12))) (i32.const 0x3f800000)))
-      (then (call $crash_unimplemented (local.get $name_ptr))))
-    (call $handle_gpu_api (i32.const 31) (i32.const 1)
-      (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3) (local.get $arg4) (local.get $name_ptr)))
-
   ;; wglRealizeLayerPalette(hdc, iLayerPlane, bRealize) -> BOOL
   (func $handle_wglRealizeLayerPalette (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (if (call $wgl_layer_plane_exists (local.get $arg0) (local.get $arg1))

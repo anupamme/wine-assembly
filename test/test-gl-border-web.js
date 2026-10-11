@@ -23,7 +23,7 @@ const guard=setTimeout(()=>{if(browser)browser.process().kill('SIGKILL');process
    f.texParameter(G.TEXTURE_WRAP_S,G.CLAMP);f.texParameter(G.TEXTURE_WRAP_T,G.CLAMP);f.texBorderColor([1,0,0,0]);
    function draw(label,u,v,expected,vRange=0){
     const vertices=[];
-    for(const[x,y]of[[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]])vertices.push(x,y,0,1,1,1,1,u,vRange?(y+1)*vRange/2:v,0,0,1,u,vRange?(y+1)*vRange/2:v);
+    for(const[x,y]of[[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]])vertices.push(x,y,0,1,1,1,1,u,vRange?(y+1)*vRange/2:v,0,0,1,u,vRange?(y+1)*vRange/2:v,1);
     f.enqueuePacked(G.TRIANGLES,new Float32Array(vertices));f.flushPendingDraw();
     const pixel=new Uint8Array(4);g.readPixels(32,32,1,1,g.RGBA,g.UNSIGNED_BYTE,pixel);const error=g.getError();
     results.push({version,label,pixel:Array.from(pixel),expected,error});

@@ -49,9 +49,9 @@ async function bitmapPixels(){
   e.gl_mtx_observe(CALL_INDEX.glViewport,stack);
   e.gl_mtx_set_mode(0x1700);e.gl_mtx_load_identity();
   e.gl_mtx_set_mode(0x1701);e.gl_mtx_load_identity();
-  const vertices=wa(alloc(3*56));
+  const vertices=wa(alloc(3*60));
   for(const [i,x,y]of[[0,-1,-1],[1,1,-1],[2,-1,1]]){
-    const f=new Float32Array(memory.buffer,vertices+i*56,14);f.fill(0);
+    const f=new Float32Array(memory.buffer,vertices+i*60,15);f.fill(0);f[14]=1;
     f[0]=x;f[1]=y;f[3]=1;f[6]=1;
   }
   pixels.fill(0);e.gl_sw_emit_triangles(vertices,3);

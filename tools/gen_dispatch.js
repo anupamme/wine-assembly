@@ -296,6 +296,8 @@ const gpuApis = new Map([
   ['glIsTexture', 1],
   // ...and draws its lightmap texture coordinates through the vector form.
   ['glMultiTexCoord2fvARB', 2],
+  // MDK2 draws projective vertices; w rides in the packed vertex.
+  ['glVertex4f', 4], ['glVertex4fv', 1],
 ]);
 const gpuApiOrder = [...gpuApis.keys()];
 

@@ -23,7 +23,7 @@ const { bootRenderHarness } = require('./render-helper');
 const { CALL_INDEX } = require('../lib/gl-compat.js');
 
 const MODELVIEW = 0x1700, PROJECTION = 0x1701;
-const VERT_BYTES = 56, VERT_FLOATS = 14;
+const VERT_BYTES = 60, VERT_FLOATS = 15;  // w is the 15th float
 const VP = 64;
 const GL_POINTS = 0, GL_LINES = 1;
 
@@ -37,6 +37,7 @@ async function main() {
   const putVertex = (i, [x, y, z = 0], [r, g, b, a]) => {
     const f = new Float32Array(memory.buffer, verts + i * VERT_BYTES, VERT_FLOATS);
     f.fill(0);
+    f[14] = 1;
     f.set([x, y, z, r, g, b, a]);
   };
   const draw = (mode, pts, colours) => {

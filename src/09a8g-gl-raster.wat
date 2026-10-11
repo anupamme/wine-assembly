@@ -879,7 +879,7 @@
     ;; have not already excluded.
     (i32.trunc_sat_f32_s (f32.add (f32.mul (local.get $f) (f32.const 255)) (f32.const 0.5))))
 
-  ;; The 56-byte GL vertex at $v carries r,g,b,a as f32 at +12..+24. The
+  ;; The 60-byte GL vertex at $v carries r,g,b,a as f32 at +12..+24. The
   ;; rasterizer wants one D3DCOLOR.
   (func $gl_sw_color (param $v i32) (result i32)
     (i32.or
@@ -1660,7 +1660,7 @@
       (f32.mul (f32.load offset=4 (local.get $a)) (f32.load offset=4 (local.get $b))))
       (f32.mul (f32.load offset=8 (local.get $a)) (f32.load offset=8 (local.get $b)))))
 
-  ;; The lit colour of the 56-byte GL vertex $v (position +0, colour +12,
+  ;; The lit colour of the 60-byte GL vertex $v (position +0, colour +12,
   ;; normal +36) as four f32 at $dst. Scratch at +0x430: eye normal, eye
   ;; position, light vector, half vector, 16 bytes each.
   (func $gl_sw_light_vertex (param $v i32) (param $dst i32)
@@ -1701,10 +1701,12 @@
     ;; Eye position, only for positional lights.
     (call $gl_mtx_set4 (i32.add (local.get $t) (i32.const 64))
       (f32.load (local.get $v)) (f32.load offset=4 (local.get $v))
-      (f32.load offset=8 (local.get $v)) (f32.const 1))
+      (f32.load offset=8 (local.get $v)) (f32.load offset=56 (local.get $v)))
     (call $gl_mtx_transform4 (i32.add (local.get $t) (i32.const 16))
       (call $gl_mtx_stack_top (local.get $b) (i32.const 0))
       (i32.add (local.get $t) (i32.const 64)))
+    ;; A projective vertex's eye point is xyz / w (w = 0 stays a direction).
+    (call $gl_sw_dehomogenize (i32.add (local.get $t) (i32.const 16)))
     ;; emission + material ambient * light model ambient
     (local.set $k (i32.const 0))
     (loop $init
@@ -1800,7 +1802,7 @@
     (call $gl_sw_normalize3 (local.get $t))
     (call $gl_mtx_set4 (i32.add (local.get $t) (i32.const 32))
       (f32.load (local.get $v)) (f32.load offset=4 (local.get $v))
-      (f32.load offset=8 (local.get $v)) (f32.const 1))
+      (f32.load offset=8 (local.get $v)) (f32.load offset=56 (local.get $v)))
     (call $gl_mtx_transform4 (i32.add (local.get $t) (i32.const 16))
       (call $gl_mtx_stack_top (global.get $gl_sw_light_block) (i32.const 0))
       (i32.add (local.get $t) (i32.const 32)))
@@ -1819,6 +1821,16 @@
       (then
         (f32.store offset=16 (local.get $clip) (f32.add (f32.div (local.get $rx) (local.get $m)) (f32.const 0.5)))
         (f32.store offset=20 (local.get $clip) (f32.add (f32.div (local.get $ry) (local.get $m)) (f32.const 0.5))))))
+
+  ;; xyz /= w in place for a homogeneous eye point; w = 1 and w = 0 are kept.
+  (func $gl_sw_dehomogenize (param $p i32)
+    (local $w f32)
+    (local.set $w (f32.load offset=12 (local.get $p)))
+    (if (i32.or (f32.eq (local.get $w) (f32.const 1)) (f32.eq (local.get $w) (f32.const 0))) (then (return)))
+    (f32.store (local.get $p) (f32.div (f32.load (local.get $p)) (local.get $w)))
+    (f32.store offset=4 (local.get $p) (f32.div (f32.load offset=4 (local.get $p)) (local.get $w)))
+    (f32.store offset=8 (local.get $p) (f32.div (f32.load offset=8 (local.get $p)) (local.get $w)))
+    (f32.store offset=12 (local.get $p) (f32.const 1)))
 
   ;; ---- texture matrix -------------------------------------------------------
   ;; Top of texture unit 0's stack while a draw is consumed, or 0 for identity.
@@ -1858,17 +1870,19 @@
       (f32.mul (f32.load offset=20 (local.get $m)) (local.get $t)))
       (f32.load offset=52 (local.get $m))) (local.get $q))))
 
-  ;; One 56-byte GL vertex at $src into clip record $k: transformed, texture
+  ;; One 60-byte GL vertex at $src into clip record $k: transformed, texture
   ;; matrix applied, lit or its colour copied. Returns 1 when it is on the
   ;; inside of the near plane, | 2 when on the inside of the far one.
   (func $gl_sw_xform_vertex (param $mvp i32) (param $src i32) (param $k i32) (result i32)
     (local $clip i32) (local $tmp i32) (local $bits i32)
     (local.set $tmp (i32.add (global.get $gl_sw_scratch) (i32.const 64)))
+    ;; (x, y, z, w): w is 1 except for projective vertices (glVertex4f/4fv),
+    ;; and the clip and divide below are already homogeneous.
     (call $gl_mtx_set4 (local.get $tmp)
       (f32.load (local.get $src))
       (f32.load offset=4 (local.get $src))
       (f32.load offset=8 (local.get $src))
-      (f32.const 1))
+      (f32.load offset=56 (local.get $src)))
     (local.set $clip (call $gl_sw_clip_at (local.get $k)))
     (call $gl_mtx_transform4 (local.get $clip) (local.get $mvp) (local.get $tmp))
     (f32.store offset=16 (local.get $clip) (f32.load offset=28 (local.get $src)))
@@ -1896,7 +1910,7 @@
     (local.get $bits))
 
   ;; ---- triangles ----------------------------------------------------------
-  ;; One triangle: three 56-byte GL vertices starting at $v0. Transformed to
+  ;; One triangle: three 60-byte GL vertices starting at $v0. Transformed to
   ;; clip space, clipped against the near plane, and fanned out to $gl_sw_emit.
   ;; Without the clip, a triangle with a vertex behind the eye had to be
   ;; dropped whole (dividing by a negative w mirrors it about the origin), and
@@ -1908,7 +1922,7 @@
     (local.set $k (i32.const 0))
     (loop $lp
       (local.set $bits (call $gl_sw_xform_vertex (local.get $mvp)
-        (i32.add (local.get $v0) (i32.mul (local.get $k) (i32.const 56))) (local.get $k)))
+        (i32.add (local.get $v0) (i32.mul (local.get $k) (i32.const 60))) (local.get $k)))
       (if (i32.and (local.get $bits) (i32.const 1))
         (then (local.set $inside (i32.or (local.get $inside)
           (i32.shl (i32.const 1) (local.get $k))))))
@@ -2548,7 +2562,7 @@
     (if (i32.gt_s (local.get $lo) (local.get $hi)) (then (return (i32.const 1))))
     (i32.or (local.get $lo) (i32.shl (local.get $hi) (i32.const 16))))
 
-  ;; One line: two 56-byte GL vertices at $v0. Clipped against the near and
+  ;; One line: two 60-byte GL vertices at $v0. Clipped against the near and
   ;; far planes parametrically, projected, and walked along its major axis
   ;; with the last pixel left off -- GL's diamond-exit rule in the form that
   ;; matters, so a strip the encoder expanded into pairs does not draw each
@@ -2565,7 +2579,7 @@
     (local $xmajor i32) (local $col i32)
     (drop (call $gl_sw_xform_vertex (local.get $mvp) (local.get $v0) (i32.const 0)))
     (drop (call $gl_sw_xform_vertex (local.get $mvp)
-      (i32.add (local.get $v0) (i32.const 56)) (i32.const 1)))
+      (i32.add (local.get $v0) (i32.const 60)) (i32.const 1)))
     ;; GL_FLAT: a line's provoking vertex is its second.
     (if (i32.eq (global.get $gl_shade_model) (i32.const 0x1D00))
       (then (call $memcpy (i32.add (call $gl_sw_clip_at (i32.const 0)) (i32.const 24))
@@ -2790,7 +2804,7 @@
     (local.set $i (i32.const 0))
     (block $done (loop $lp
       (br_if $done (i32.gt_u (i32.add (local.get $i) (local.get $step)) (local.get $vertices)))
-      (local.set $v (i32.add (local.get $base) (i32.mul (local.get $i) (i32.const 56))))
+      (local.set $v (i32.add (local.get $base) (i32.mul (local.get $i) (i32.const 60))))
       (if (i32.eq (local.get $step) (i32.const 3))
         (then (call $gl_sw_triangle (local.get $mvp) (local.get $vp) (local.get $v)))
         (else (if (i32.eq (local.get $step) (i32.const 2))
@@ -2973,7 +2987,7 @@
     (i32.store offset=4 (local.get $d) (i32.const 1040))
     (i32.store offset=8 (local.get $d) (local.get $start))
     (i32.store offset=12 (local.get $d)
-      (i32.add (i32.mul (local.get $vertices) (i32.const 56)) (i32.const 32)))
+      (i32.add (i32.mul (local.get $vertices) (i32.const 60)) (i32.const 32)))
     (if (i32.eqz (call $host_gpu_gl_call (i32.const 0x20005) (local.get $d) (i32.const 0)))
       (then
         (global.set $gl_sw_worker_ok (i32.const 2))
@@ -3049,7 +3063,7 @@
     (local.set $step (select (i32.const 1)
       (select (i32.const 2) (i32.const 3) (i32.eq (local.get $mode) (i32.const 1)))
       (i32.eqz (local.get $mode))))
-    (local.set $n (i32.div_u (i32.load offset=20 (local.get $rec)) (i32.const 56)))
+    (local.set $n (i32.div_u (i32.load offset=20 (local.get $rec)) (i32.const 60)))
     (call $gl_sw_draw (local.get $rec) (local.get $n) (local.get $step))
     (i32.const 1))
 
@@ -3121,7 +3135,7 @@
                     (global.get $gl_sw_default_h)))
       (else (i32.const 0))))
 
-  ;; Push $vertices 56-byte GL vertices through the REAL packed-draw funnel.
+  ;; Push $vertices 60-byte GL vertices through the REAL packed-draw funnel.
   ;; A test that called $gl_sw_consume directly would exercise a private copy
   ;; of the lowering and prove nothing about the hook; this goes through
   ;; $gl_packed_begin/$gl_packed_finish, which is where production draws
@@ -3132,7 +3146,7 @@
     (if (i32.eqz (local.get $vertices)) (then (return)))
     (local.set $start (call $gl_packed_begin (i32.const 4)))
     (call $memcpy (i32.add (local.get $start) (i32.const 32))
-      (local.get $src) (i32.mul (local.get $vertices) (i32.const 56)))
+      (local.get $src) (i32.mul (local.get $vertices) (i32.const 60)))
     (call $gl_packed_finish (local.get $start) (local.get $vertices)))
   ;; The same for any packed mode: 0 points, 1 lines, 4 triangles.
   (func $gl_sw_export_emit_packed (export "gl_sw_emit_packed")
@@ -3141,7 +3155,7 @@
     (if (i32.eqz (local.get $vertices)) (then (return)))
     (local.set $start (call $gl_packed_begin (local.get $mode)))
     (call $memcpy (i32.add (local.get $start) (i32.const 32))
-      (local.get $src) (i32.mul (local.get $vertices) (i32.const 56)))
+      (local.get $src) (i32.mul (local.get $vertices) (i32.const 60)))
     (call $gl_packed_finish (local.get $start) (local.get $vertices)))
 
   ;; Feed one GL call to the state observer, exactly as the encoder does, so a
