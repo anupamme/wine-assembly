@@ -682,6 +682,46 @@
       }
     },
     {
+      "id": "rollcage-demo",
+      "name": "Rollcage Demo",
+      "kind": "game",
+      "version": "1999 Psygnosis/Attention to Detail PC demo CD (Direct3D and Glide builds, setup.ins 1999-01-26)",
+      "executables": [
+        "installed/rollcage/DIRECT3D/ROLLCAGE.EXE"
+      ],
+      "sourcePage": "https://archive.org/details/RollcageDemo",
+      "license": "proprietary Psygnosis promotional demo with NO licence or redistribution grant: README.TXT says only '(c) 1999 Psygnosis Ltd/Attention To Detail ... All rights reserved'; the InstallShield setup names a license.txt that is on neither the disc nor DATA1.CAB; local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/RollcageDemo/RollcageDemo.zip",
+          "sha1": "3e95613233ac21d2543d999c5f86fb5d98ea8f45",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "DISK1/ROLLCAGE",
+          "into": "installed/rollcage"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/rollcage/DIRECT3D/ROLLCAGE.EXE"
+      },
+      "cli": {
+        "maxBatches": 1500,
+        "batchSize": 200000,
+        "dlls": [
+          "installed/rollcage/DIRECT3D/QMIXER.DLL"
+        ],
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "midtown-madness-trial",
       "name": "Midtown Madness Trial",
       "kind": "game",
