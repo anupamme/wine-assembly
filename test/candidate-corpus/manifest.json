@@ -3,6 +3,22 @@
   "assetRoot": "test/binaries/candidates",
   "candidates": [
     {
+      "id": "avp2-demo",
+      "name": "Aliens versus Predator 2 single-player demo",
+      "kind": "game",
+      "version": "Original Windows single-player demo installer",
+      "executables": [
+        "AVP2.exe",
+        "lithtech.exe"
+      ],
+      "sourcePage": null,
+      "license": "Proprietary demo; local compatibility fixture only, no redistribution grant recorded",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Original installer: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe, 165836576 bytes, SHA256 e335063b508f5b4bc8c8235787d839567f16ce13eb63b74a96ccb5a839d3fbe3. Extract the complete AVP2_Demo_Files payload into test/binaries/candidates/avp2-demo. Run original AVP2.exe to generate avp2cmds.txt and launch lithtech.exe -cmdfile avp2cmds.txt. See docs/re-notes/avp2-demo.md. Installed files remain on the temporary test box; the local corpus directory is absent.",
+      "notes": "Reviewed original Marine mission movement and texture repair: runs/20261011T0836Z-avp2-bltfast-gameplay. The capture used retained source plus the BltFast repair, subsequently merged as6613fe863; it is not a new current-main run. Logical FPS and audio remain unverified. No registered dashboard launch route or public desktop release yet. AVP1 Alien/Marine demos are different titles."
+    },
+    {
       "id": "turok2-demo",
       "name": "Turok 2 Demo",
       "kind": "game",
