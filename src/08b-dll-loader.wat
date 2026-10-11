@@ -19,6 +19,52 @@
   ;; hands the guest as HMODULE, and the row its module path belongs on).
   (global $last_loaded_dll_index (mut i32) (i32.const -1))
   (func (export "get_last_loaded_dll_index") (result i32) (global.get $last_loaded_dll_index))
+  ;; The guest path string the host is loading, set under the loader lock just
+  ;; before load_dll and written into the row before it is published.
+  (global $next_dll_path (mut i32) (i32.const 0))
+  (func (export "set_next_dll_path") (param $path_g i32) (global.set $next_dll_path (local.get $path_g)))
+  (global $DLL_FLAG_INITIALIZED i32 (i32.const 4))
+  (func (export "get_dll_flags_table") (result i32) (global.get $DLL_FLAGS_TABLE))
+  ;; DLL_PROCESS_ATTACH of the module at $module has returned: set the bit and
+  ;; wake any thread waiting to use it (the host waits on the flags word).
+  (func (export "mark_dll_initialized") (param $module i32)
+    (call $mark_dll_row_initialized (call $dll_index_from_module (local.get $module))))
+  (func $mark_dll_row_initialized (param $index i32)
+    (local $cell i32)
+    (if (i32.lt_s (local.get $index) (i32.const 0)) (then (return)))
+    (local.set $cell (i32.add (global.get $DLL_FLAGS_TABLE) (i32.shl (local.get $index) (i32.const 2))))
+    (drop (i32.atomic.rmw.or (local.get $cell) (global.get $DLL_FLAG_INITIALIZED)))
+    (drop (memory.atomic.notify (local.get $cell) (i32.const -1))))
+  ;; Row of a published module whose recorded path is $path_g's string (case-
+  ;; insensitive, '/' read as '\'), or -1. The path only: two different DLLs
+  ;; can share an export-directory name (CMR3's codecs both call themselves
+  ;; DEFFILE.dll), which is why $find_loaded_dll is not used here. Run under
+  ;; the loader lock, so a row cannot be published between this and the load.
+  (func (export "find_loaded_dll_path") (param $path_g i32) (result i32)
+    (local $i i32) (local $count i32) (local $row_g i32)
+    (local.set $count (i32.atomic.load (global.get $DLL_SHARED)))
+    (block $none (loop $scan
+      (br_if $none (i32.ge_u (local.get $i) (local.get $count)))
+      (local.set $row_g (i32.load (i32.add (global.get $DLL_PATH_TABLE) (i32.shl (local.get $i) (i32.const 2)))))
+      (if (i32.and (i32.ne (local.get $row_g) (i32.const 0))
+            (call $dll_path_equal (call $g2w (local.get $row_g)) (call $g2w (local.get $path_g))))
+        (then (return (local.get $i))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br $scan)))
+    (i32.const -1))
+  (func $dll_path_equal (param $a i32) (param $b i32) (result i32)
+    (local $i i32) (local $ca i32) (local $cb i32)
+    (block $done (loop $cmp
+      (local.set $ca (call $tolower (i32.load8_u (i32.add (local.get $a) (local.get $i)))))
+      (local.set $cb (call $tolower (i32.load8_u (i32.add (local.get $b) (local.get $i)))))
+      (if (i32.eq (local.get $ca) (i32.const 47)) (then (local.set $ca (i32.const 92))))
+      (if (i32.eq (local.get $cb) (i32.const 47)) (then (local.set $cb (i32.const 92))))
+      (if (i32.ne (local.get $ca) (local.get $cb)) (then (return (i32.const 0))))
+      (br_if $done (i32.eqz (local.get $ca)))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br_if $done (i32.ge_u (local.get $i) (i32.const 260)))
+      (br $cmp)))
+    (i32.const 1))
   (func $load_dll (export "load_dll") (param $size i32) (param $load_addr i32) (result i32)
     (local $pe_off i32) (local $num_sections i32) (local $opt_hdr_size i32)
     (local $section_off i32) (local $i i32) (local $vaddr i32) (local $vsize i32)
@@ -237,9 +283,25 @@
     (local.set $rsrc_ptr (i32.add (global.get $DLL_RSRC_TABLE) (i32.mul (local.get $dll_idx) (i32.const 8))))
     (i32.store (local.get $rsrc_ptr)                         (local.get $rsrc_rva_d))
     (i32.store (i32.add (local.get $rsrc_ptr) (i32.const 4)) (local.get $rsrc_size_d))
+    ;; bit 0: static TLS. bit 2 ($DLL_FLAG_INITIALIZED): DLL_PROCESS_ATTACH has
+    ;; finished -- at once for an image with no entry point, else when the host
+    ;; marks it (mark_dll_initialized). bits 16-31: the thread running that
+    ;; DllMain, which a second loader of the same module must not wait for.
     (i32.store
       (i32.add (global.get $DLL_FLAGS_TABLE) (i32.shl (local.get $dll_idx) (i32.const 2)))
-      (i32.ne (local.get $tls_rva) (i32.const 0)))
+      (i32.or
+        (i32.ne (local.get $tls_rva) (i32.const 0))
+        (if (result i32) (i32.eqz (local.get $entry_rva))
+          (then (global.get $DLL_FLAG_INITIALIZED))
+          (else (i32.shl (i32.and (global.get $current_thread_id) (i32.const 0xFFFF)) (i32.const 16))))))
+    ;; The module path the host named, recorded before the row is published so
+    ;; a concurrent loader of the same file finds this row instead of mapping a
+    ;; second copy (find_loaded_dll_path).
+    (if (global.get $next_dll_path)
+      (then
+        (i32.store (i32.add (global.get $DLL_PATH_TABLE) (i32.shl (local.get $dll_idx) (i32.const 2)))
+          (global.get $next_dll_path))
+        (global.set $next_dll_path (i32.const 0))))
 
     ;; Parse export directory
     (if (i32.ne (local.get $export_rva) (i32.const 0))
@@ -307,11 +369,20 @@
   ;; an arena already reaches into the range, so the caller places the image
   ;; again. A range wholly below the watermark is a fixed placement the heap
   ;; never covered, as before, and needs no claim.
+  ;;
+  ;; That exemption is only for an address the caller fixed. One this instance
+  ;; just took from $next_dll_addr was at or above the watermark when picked,
+  ;; so a cursor past it now is an arena another thread reserved since -- and a
+  ;; small image can lie wholly below that new cursor, inside the arena.
   (func $dll_claim_low (param $addr i32) (param $end i32) (result i32)
-    (local $cursor i32)
+    (local $cursor i32) (local $picked i32)
+    (local.set $picked (i32.and (i32.ne (global.get $dll_pick_addr) (i32.const 0))
+      (i32.eq (local.get $addr) (global.get $dll_pick_addr))))
+    (global.set $dll_pick_addr (i32.const 0))
     (block $done (loop $retry
       (local.set $cursor (i32.atomic.load (global.get $HEAP_SHARED)))
-      (if (i32.le_u (local.get $end) (local.get $cursor)) (then (return (i32.const 1))))
+      (if (i32.and (i32.eqz (local.get $picked)) (i32.le_u (local.get $end) (local.get $cursor)))
+        (then (return (i32.const 1))))
       (if (i32.gt_u (local.get $cursor)
             (i32.and (i32.add (local.get $addr) (i32.const 0xFFF)) (i32.const 0xFFFFF000)))
         (then
@@ -1147,6 +1218,8 @@
   ;; Named as well as exported: WAT-side callers load DLLs too. The WinHelp
   ;; engine loads a help file's own DLL when a registered macro is called,
   ;; without a round trip through the host.
+  ;; The last address $next_dll_addr handed this instance (0 once claimed).
+  (global $dll_pick_addr (mut i32) (i32.const 0))
   (func $next_dll_addr (export "get_next_dll_addr") (result i32)
     (local $addr i32) (local $after_dll i32) (local $mark i32)
     (if (i32.atomic.load (global.get $DLL_SHARED))
@@ -1166,9 +1239,12 @@
     ;; reserved arena, which is what has to be cleared — one instance's
     ;; $heap_ptr would say nothing about the others'.
     (local.set $mark (call $heap_low_watermark))
-    (if (result i32) (i32.gt_u (local.get $mark) (local.get $after_dll))
-      (then (i32.and (i32.add (local.get $mark) (i32.const 0xFFF)) (i32.const 0xFFFFF000)))
-      (else (local.get $after_dll))))
+    (if (i32.gt_u (local.get $mark) (local.get $after_dll))
+      (then (local.set $after_dll
+        (i32.and (i32.add (local.get $mark) (i32.const 0xFFF)) (i32.const 0xFFFFF000)))))
+    ;; $dll_claim_low treats this address as picked, not fixed.
+    (global.set $dll_pick_addr (local.get $after_dll))
+    (local.get $after_dll))
 
   (func (export "get_exe_size_of_image") (result i32) (global.get $exe_size_of_image))
   (func (export "get_exe_stack_reserve") (result i32) (global.get $exe_stack_reserve))

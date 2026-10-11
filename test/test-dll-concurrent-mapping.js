@@ -62,6 +62,9 @@ if (!isMainThread) {
         },
       };
       const mapped = loadDll(wrapped, memory.buffer, new Uint8Array(fixture), name);
+      // load_dll now writes the path row itself, before publishing; the row it
+      // took is this instance's own last_loaded_dll_index.
+      if (pathIndex < 0 && e.set_next_dll_path) pathIndex = e.get_last_loaded_dll_index();
       return { loadAddr: mapped.loadAddr >>> 0, payload: read(mapped.loadAddr + 0x1180) >>> 0, pathIndex };
     };
     parentPort.postMessage({ ready: true });

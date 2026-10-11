@@ -2031,6 +2031,10 @@
           (local.get $size))
         (local.set $load_addr (call $next_dll_addr))
         (drop (call $load_dll (local.get $size) (local.get $load_addr)))
+        ;; Help DLLs are entered only through their routines, never DllMain,
+        ;; so the row is as initialized as it will get: say so, or a later
+        ;; LoadLibrary of the same file would wait for an attach that never comes.
+        (call $mark_dll_row_initialized (global.get $last_loaded_dll_index))
         (call $heap_free (local.get $read_ga))
         (call $heap_free (local.get $bytes_ga))
         (local.set $dll_index (call $find_loaded_dll (local.get $dll_ga)))
