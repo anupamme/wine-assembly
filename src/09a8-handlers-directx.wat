@@ -95,7 +95,10 @@
   ;; why 4096 filled at 4094 and asserted in the guest's d3dSprite.cpp:85.
   ;; Two rounds plus what the game holds besides fits here; $DX_VIDMEM_TOTAL
   ;; is the other half of this and the two move together.
-  (global $DX_MAX i32 (i32.const 8192))
+  ;; 16384 since Slave Zero: its demo level creates ~8200 texture surfaces
+  ;; (mostly 2x2 and other tiny ones) that all stay live, filled all 8192 slots
+  ;; and its renderer died in the CreateSurface error path.
+  (global $DX_MAX i32 (i32.const 16384))
   ;; D3DIM matrix handle table (Immediate Mode): 256 slots × 64 bytes.
   ;; Handle value = slot_idx + 1 (0 is invalid). Allocation state is kept in
   ;; a separate byte table because SetMatrix may legitimately store an all-zero
@@ -184,7 +187,7 @@
   ;; back carrying the 6-slot texture vtable, and its next Lock (slot 25) read
   ;; past the end of that vtable into the next heap block's thunks and
   ;; dispatched IFont_get_Charset.
-  (global $COM_WRAPPERS_AUX_MAX i32 (i32.const 8192))
+  (global $COM_WRAPPERS_AUX_MAX i32 (i32.const 16384))
   ;; The aux-wrapper cursor lives at $COM_AUX_NEXT_SHARED, not in a global: a
   ;; mutable global is per-instance, and every guest thread is its own instance
   ;; over this one memory, so two threads would hand out the same aux slot. Same
@@ -2565,6 +2568,17 @@
         ;; Keep the small guard without charging sixteen unused rows per level.
         (local.set $dib_guest (call $dx_surface_storage_alloc
           (i32.add (local.get $size) (i32.const 64)) (local.get $storage_flags)))
+        ;; Levels are textures, never scanned out: when the DIB arena is full
+        ;; they take heap storage like level 0 does in CreateSurface. Slave
+        ;; Zero asks for exactly dwMipMapCount levels and Locks every one it
+        ;; walks to without checking the HRESULT, so a truncated chain is a
+        ;; NULL it calls through.
+        (if (i32.and (i32.eqz (local.get $dib_guest))
+                     (i32.eqz (i32.and (local.get $storage_flags) (i32.const 0x400))))
+          (then
+            (local.set $storage_flags (i32.const 0x400))
+            (local.set $dib_guest (call $dx_surface_storage_alloc
+              (i32.add (local.get $size) (i32.const 64)) (local.get $storage_flags)))))
         ;; An exhausted arena truncates the chain rather than failing the
         ;; texture — a short chain is what a card with less memory reports.
         (br_if $done (i32.eqz (local.get $dib_guest)))
@@ -2723,7 +2737,27 @@
               (if (result i32) (i32.and (local.get $caps) (i32.const 0x204))
                 (then (i32.mul (local.get $pitch) (i32.const 16)))
                 (else (i32.const 0)))
-              (i32.const 64))) (local.get $flags)))))
+              (i32.const 64))) (local.get $flags)))
+        ;; A full DIB arena is not out of video memory for a plain texture.
+        ;; Every arena surface costs whole 4K pages, so a level that keeps
+        ;; thousands of tiny textures live (Slave Zero: ~10000, mostly 2x2)
+        ;; fills all 63 MB and then failed CreateSurface, which the card it
+        ;; was written for never did. A texture that is not a primary, back
+        ;; buffer or 3D render target is never scanned out, so it does not
+        ;; need the arena's display-bitmap tracking: give it heap storage, as
+        ;; SYSTEMMEMORY surfaces already have. Apps that fit in the arena
+        ;; are unaffected; flag 0x400 also keeps it off the vidmem bill.
+        (if (i32.and
+              (i32.eqz (local.get $dib_guest))
+              (i32.and
+                (i32.ne (i32.and (local.get $caps) (i32.const 0x1000)) (i32.const 0)) ;; DDSCAPS_TEXTURE
+                (i32.and
+                  (i32.eqz (i32.and (local.get $caps) (i32.const 0x2204))) ;; 3DDEVICE|PRIMARY|BACKBUFFER
+                  (i32.eqz (i32.and (local.get $flags) (i32.const 0x400))))))
+          (then
+            (local.set $flags (i32.or (local.get $flags) (i32.const 0x400)))
+            (local.set $dib_guest (call $dx_surface_storage_alloc
+              (i32.add (local.get $dib_size) (i32.const 64)) (local.get $flags)))))))
     ;; An exhausted heap returns 0, and g2w(0) is the base of the guest image --
     ;; zeroing a 640x480 surface from there wipes the first 300KB of the PE's
     ;; own code, so the app dies executing zeros a long way from the real cause.

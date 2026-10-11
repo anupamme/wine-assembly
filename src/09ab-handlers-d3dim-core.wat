@@ -804,7 +804,7 @@
   ;; table and are now unused.)
   (global $D3DIM_EB_CACHE_PTRS i32 (region.addr $D3DIM_EB_CACHE_PTRS 0))
   (global $D3DIM_EB_CACHE_PTRS_SIZE i32 (region.size $D3DIM_EB_CACHE_PTRS))
-  (global $D3DIM_EB_CACHE_MAX  i32 (i32.const 8192)) ;; = $DX_MAX
+  (global $D3DIM_EB_CACHE_MAX  i32 (i32.const 16384)) ;; = $DX_MAX
   (global $D3DIM_EB_CACHE_HEADER i32 (i32.const 32))
   ;; D3D7 state blocks: 32 entries × [snapshot_guest, dev_slot, reserved].
   (global $D3DIM_STATEBLOCKS i32 (region.addr $D3DIM_AUX 0x00000840))

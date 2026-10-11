@@ -2552,7 +2552,7 @@ async function main() {
       wa = g2w(thisGuest);
       slot = dv.getUint32(wa + 4, true);
     } catch (_) { return null; }
-    if (slot >= 8192) return null; // $DX_MAX in src/09a8-handlers-directx.wat
+    if (slot >= 16384) return null; // $DX_MAX in src/09a8-handlers-directx.wat
     const entry = RegionMap.BASE.DX_OBJECTS + slot * 32;
     const type = dv.getUint32(entry, true);
     if (!type) return null;
@@ -11893,7 +11893,7 @@ if (VERBOSE) {
     const mem = new Uint8Array(memory.buffer);
     const dv = new DataView(memory.buffer);
     const DX_BASE = RegionMap.BASE.DX_OBJECTS;
-    const DX_SLOTS = 8192; // matches $DX_MAX in src/09a8-handlers-directx.wat
+    const DX_SLOTS = 16384; // matches $DX_MAX in src/09a8-handlers-directx.wat
     const DX_SURF_PAL = RegionMap.BASE.DX_SURF_PAL; // per-surface palette data addr
     let paletteWa = 0;
     for (let slot = 0; slot < DX_SLOTS; slot++) {
@@ -12293,7 +12293,7 @@ if (VERBOSE) {
     const mem = new Uint8Array(memory.buffer);
     const dv = new DataView(memory.buffer);
     const DX_BASE = RegionMap.BASE.DX_OBJECTS;
-    const DX_SLOTS = 8192; // matches $DX_MAX in src/09a8-handlers-directx.wat
+    const DX_SLOTS = 16384; // matches $DX_MAX in src/09a8-handlers-directx.wat
     const manifest = [];
     // Read the primary palette WASM addr by scanning palette-type entries in
     // the live DX table. Palette slots have type=3 and store their palette

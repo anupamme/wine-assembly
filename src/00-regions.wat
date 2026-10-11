@@ -663,9 +663,9 @@
     (owner "04-cache.wat:$code_page_mark"))
   (region.declare $SYNC_TABLE (size 0x00010000) (align 0x00001000)
     (owner "01-header.wat:$SYNC_TABLE"))
-  (region.declare $D3DIM_VIEWPORT_LIGHT_HEAD (size 0x00008000) (align 0x00001000)
+  (region.declare $D3DIM_VIEWPORT_LIGHT_HEAD (size 0x00010000) (align 0x00001000)
     (owner "09aa-handlers-d3dim.wat:$D3DIM_VIEWPORT_LIGHT_HEAD"))
-  (region.declare $D3DIM_VIEWPORT_DATA (size 0x00008000) (align 0x00001000)
+  (region.declare $D3DIM_VIEWPORT_DATA (size 0x00010000) (align 0x00001000)
     (owner "09ab-handlers-d3dim-core.wat:$D3DIM_VIEWPORT_DATA"))
   (region.declare $HIT_COUNT_BASE (size 0x00000100) (align 0x00001000)
     (owner "01-header.wat:$HIT_COUNT_BASE"))
@@ -712,7 +712,7 @@
   ;; $dx_vidmem_used its KEY back on release instead of its size, and the
   ;; difference never returned. Creation metadata belongs in the creation
   ;; metadata table, where nothing else writes it.
-  (region.declare $DX_SURF_META (size 0x00020000) (align 0x00001000)
+  (region.declare $DX_SURF_META (size 0x00040000) (align 0x00001000)
     (stride 0x10 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_meta_ptr"))
   ;; The decoder's op-start list, PER GUEST THREAD: 8KB (2048 words) for each
@@ -749,13 +749,13 @@
   (region.declare $PAGE_OVFL_MEMO (size 0x00001000) (align 0x00001000)
     (stride 0x4 (count 1024))
     (owner "04-cache.wat:$PAGE_OVFL_MEMO"))
-  (region.declare $DX_SURF_PAL (size 0x00008000) (align 0x00001000)
+  (region.declare $DX_SURF_PAL (size 0x00010000) (align 0x00001000)
     (stride 0x4 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_pal_set"))
-  (region.declare $DX_SURF_STATE (size 0x00040000) (align 0x00001000)
+  (region.declare $DX_SURF_STATE (size 0x00080000) (align 0x00001000)
     (stride 0x20 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_state_ptr"))
-  (region.declare $DX_CURSOR_SAVE (size 0x00010000) (align 0x00001000)
+  (region.declare $DX_CURSOR_SAVE (size 0x00020000) (align 0x00001000)
     (stride 0x8 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_cursor_state_ptr"))
   ;; Harness-only. The worker-thread tests rendezvous here and the GDI region
@@ -765,18 +765,18 @@
   ;; table, and both are free only until something moves.
   (region.declare $TEST_SCRATCH (size 0x00000100) (align 0x00001000)
     (owner "test/test-wat-window-tables.js:$TEST_SCRATCH"))
-  (region.declare $DX_OBJECTS (size 0x00040000) (align 0x00001000)
+  (region.declare $DX_OBJECTS (size 0x00080000) (align 0x00001000)
     (stride $DX_ENTRY_SIZE (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_alloc"))
-  (region.declare $COM_WRAPPERS (size 0x00010000) (align 0x00001000)
+  (region.declare $COM_WRAPPERS (size 0x00020000) (align 0x00001000)
     (owner "09a8-handlers-directx.wat:$dx_alloc_locked"))
-  (region.declare $DX_SURF_FMT (size 0x00008000) (align 0x00001000)
+  (region.declare $DX_SURF_FMT (size 0x00010000) (align 0x00001000)
     (stride 0x4 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_fmt_ptr"))
-  (region.declare $DX_SURF_OWNER (size 0x00008000) (align 0x00001000)
+  (region.declare $DX_SURF_OWNER (size 0x00010000) (align 0x00001000)
     (stride 0x4 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_owner_ptr"))
-  (region.declare $DX_SURF_CREATOR (size 0x00008000) (align 0x00001000)
+  (region.declare $DX_SURF_CREATOR (size 0x00010000) (align 0x00001000)
     (stride 0x4 (count $DX_MAX))
     (owner "09a8-handlers-directx.wat:$dx_surf_creator_ptr"))
   ;; Working space for one GL triangle on its way to the rasterizer: the
@@ -830,7 +830,7 @@
   ;; the cache is keyed by the buffer's object slot, which surfaces and
   ;; textures share. 512 entries inside $D3DIM_AUX refused every buffer
   ;; created after ~512 DirectX objects (Forsaken's level load).
-  (region.declare $D3DIM_EB_CACHE_PTRS (size 0x00008000) (align 0x00001000)
+  (region.declare $D3DIM_EB_CACHE_PTRS (size 0x00010000) (align 0x00001000)
     (stride 0x4 (count $D3DIM_EB_CACHE_MAX))
     (owner "09ab-handlers-d3dim-core.wat:$D3DIM_EB_CACHE_PTRS"))
   (region.declare $D3D9_DEPTH_SERIAL (size 0x4) (align 0x4)
@@ -847,10 +847,10 @@
   ;; stored at +0 — and a law over a headered table would have to lie about
   ;; either the stride or the count. test/test-wat-memory-map.js states both
   ;; relations as inequalities for that reason; that is where they belong.
-  (region.declare $COM_WRAPPERS_AUX (size 0x00010004) (align 0x00001000)
+  (region.declare $COM_WRAPPERS_AUX (size 0x00020004) (align 0x00001000)
     (owner "09a8-handlers-directx.wat:$dx_get_wrapper_for_vtbl_locked"))
   ;; One interface reference count per COM_WRAPPERS_AUX wrapper, by index.
-  (region.declare $COM_AUX_REFS (size 0x00008000) (align 0x00001000)
+  (region.declare $COM_AUX_REFS (size 0x00010000) (align 0x00001000)
     (owner "09a8-handlers-directx.wat:$dx_aux_ref_add"))
   (region.declare $DX_VTBL_REGISTRY (size 0x00000138)
     (owner "09a8-handlers-directx.wat:$dx_vtable_registry_reset"))
