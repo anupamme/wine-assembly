@@ -90,3 +90,29 @@ unfiltered API trace is 255,701,275 bytes and stays on the boat; the local run
 retains a graphics-only excerpt, the final 60 KB, the command receipt and the
 original trace SHA-256/length. No screenshot of actual gameplay, FPS result,
 audio validation, browser validation or release-ready claim yet.
+
+## Video rejection branch isolated (2026-10-11 15:34Z)
+
+Single-address traces preserve the ordinary input route. A comma-separated
+`--trace-at` list forces batch size 1 in this harness and invalidates these
+input timings; the failed multi-address attempt is not guest evidence.
+
+`outer-return.log` captures `0x5d909d` with EAX=1, confirming the renderer's
+initialization helper succeeds. `video-return.log` captures `0x43bb85` returning
+1 on the menu transitions and 0 at batch 1073. The decisive capture is
+`surface-return.log`: `0x43b2fe` receives EAX=0 from `prev_eip=0x43b551`.
+Disassembly shows that exact return follows this rejection in `0x43b470`:
+the descriptor at `[ESI+0x20]` has bit 0 clear while the requested flag at
+`0x662768` is nonzero. The game releases its renderer via `0x5d74b0`, returns
+zero, and ultimately displays the unsupported-video message.
+
+This narrows the failure beyond device creation/ValidateDevice: initialization
+`0x5d7440` succeeds, but a requested descriptor feature does not survive it.
+The feature's meaning and the code clearing bit 0 are still unproven. Next
+trace the descriptor through `0x5d8880` and its renderer setup callees; identify
+the actual capability/validation condition before changing emulator behavior.
+Do not force the guest bit or treat all capabilities as supported.
+
+All named logs, command receipts and disassembly excerpts are in the existing
+1513Z run directory. The `mode-result` trace did not hit its requested address
+and establishes no mode-enumeration failure. No new gameplay or FPS evidence.
