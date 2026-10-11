@@ -103,3 +103,21 @@ The next implementation must preserve the
 copy selected latched events and their error slots, clear the record and reset
 the optional event atomically; on failure retain both the record and event.
 Keep shared-thread state and notification cancellation/reuse in the tests.
+
+## Process-wide Winsock startup prerequisite
+
+The event-path audit found WSAStartup's reference count in a mutable WASM
+global, private to each guest-thread instance. A second instance's WSACleanup
+therefore returned WSANOTINITIALISED despite two successful main-thread startups.
+The count now lives in a declared shared LOCK_TABLE cell. Startup increments
+atomically; cleanup uses compare-and-swap to reject zero without underflow and
+only the caller releasing the final reference tears down sockets. The existing
+network-pump and blocking-cancel initialization checks read the same shared cell.
+
+A two-instance/shared-memory regression fails on the old source and passes
+with the fix: one cleanup preserves a socket, final cleanup closes it, excess
+cleanup fails, and startup on the other instance works afterward. All52 Winsock
+checks and the full build pass. Memory-map ownership aliases were added for
+the new shared cell. Evidence: scratch/runs/20261011T2155Z-winsock-process-startup/.
+This is an initialization prerequisite; WSAEnumNetworkEvents/WSAEventSelect and
+the event-object entrypoints remain unimplemented, and gameplay is not qualified.

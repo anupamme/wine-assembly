@@ -44,6 +44,14 @@ const GAME_PORT = 8035;
 async function main() {
   const root = path.join(__dirname, '..');
   const wasm = compileSrcWasm((file, source) => file === '13-exports.wat' ? source + String.raw`
+    (func (export "test_wsa_startup") (param $data i32) (result i32)
+      (call $handle_WSAStartup (i32.const 0x0202) (local.get $data)
+        (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+      (i32.load (global.get $reg_base)))
+    (func (export "test_wsa_cleanup") (result i32)
+      (call $handle_WSACleanup (i32.const 0) (i32.const 0)
+        (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+      (i32.load (global.get $reg_base)))
     (func (export "test_wsa_is_blocking_lookup") (result i32)
       (call $lookup_api_id "WSAIsBlocking"))
     (func (export "test_wsaconnect") (param $sp i32) (param $s i32) (param $addr i32)
@@ -87,6 +95,8 @@ async function main() {
     com_create_instance: () => 0x80004002,
   });
   const { instance } = await WebAssembly.instantiate(wasm, imports);
+  // Guest threads instantiate the same module over process-shared memory.
+  const sibling = (await WebAssembly.instantiate(wasm, imports)).instance.exports;
   const wat = instance.exports;
   const bytes = new Uint8Array(memory.buffer);
   const imageBase = wat.get_image_base() >>> 0;
@@ -209,6 +219,27 @@ async function main() {
   // ---- byte order and address helpers --------------------------------
 
   wat.test_vsock_reset();
+
+  check('Winsock startup references belong to the process across instances', () => {
+    const data=alloc(400);
+    assert.strictEqual(wat.test_wsa_startup(data)|0,0);
+    assert.strictEqual(wat.test_wsa_startup(data)|0,0);
+    const socket=wat.test_call_socket(AF_INET,SOCK_STREAM,0)|0;
+    assert(socket>0);
+    assert.strictEqual(sibling.test_wsa_cleanup()|0,0,
+      'another guest thread can release a process startup reference');
+    const mode=buf(4);
+    assert.strictEqual(wat.test_call_ioctlsocket(socket,FIONBIO,mode)|0,0,
+      'one remaining process reference keeps sockets alive');
+    assert.strictEqual(wat.test_wsa_cleanup()|0,0);
+    assert.strictEqual(wat.test_call_closesocket(socket)|0,SOCKET_ERROR,
+      'only the last matching cleanup tears down sockets');
+    assert.strictEqual(sibling.test_wsa_cleanup()|0,SOCKET_ERROR);
+    assert.strictEqual(sibling.test_call_WSAGetLastError()|0,10093);
+    assert.strictEqual(sibling.test_wsa_startup(data)|0,0);
+    assert.strictEqual(wat.test_wsa_cleanup()|0,0,
+      'startup on the other instance works after the zero-count error');
+  });
 
   check('WSAConnect is registered with seven arguments', () => {
     const api = require('../src/api_table.json').find(api => api.name === 'WSAConnect');

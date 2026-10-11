@@ -149,7 +149,7 @@
   ;; The ephemeral-port cursor is at $VSOCK_NEXT_PORT_SHARED — process-wide, not
   ;; per instance. See $vsock_alloc_port.
   (global $wsa_last_error (mut i32) (i32.const 0))
-  (global $wsa_started (mut i32) (i32.const 0))
+  ;; Startup references live at $WSA_STARTED_SHARED, not in an instance global.
   ;; Win16 DDEML shares the virtual-LAN wire reader with Winsock. Keeping an
   ;; explicit user count lets ordinary GUI message pumps avoid a host wire
   ;; poll when neither subsystem can consume a frame.
@@ -1206,7 +1206,7 @@
   ;; Drain the wire into this process's sockets. Safe to call on every
   ;; socket entry point: an empty wire costs one host call.
   (func $vsock_pump
-    (if (i32.and (i32.eqz (global.get $wsa_started))
+    (if (i32.and (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED)))
           (i32.and (i32.eqz (global.get $win16_dde_users))
                    (i32.eqz (call $dpn_pumps_here))))
       (then (return)))
@@ -3309,21 +3309,28 @@
     (i32.store (i32.add (local.get $wa) (i32.const 396)) (i32.const 0))
                                                                ;; lpVendorInfo
     (call $guest_span_writeback (local.get $arg1) (local.get $wa) (i32.const 400))
-    (global.set $wsa_started (i32.add (global.get $wsa_started) (i32.const 1)))
+    (drop (i32.atomic.rmw.add (global.get $WSA_STARTED_SHARED) (i32.const 1)))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)))
 
   ;; WSACleanup() — the last matching call tears the room switch down.
   (func $handle_WSACleanup (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
                            (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $i i32)
+    (local $i i32) (local $count i32) (local $seen i32)
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (if (i32.eqz (global.get $wsa_started))
-      (then
-        (call $vsock_set_error (i32.const 10093))          ;; WSANOTINITIALISED
-        (i32.store offset=0 (global.get $reg_base) (i32.const -1))
+    ;; CAS makes excess cleanups fail without underflow and lets only the
+    ;; caller releasing the last process reference tear down the sockets.
+    (local.set $count (i32.atomic.load (global.get $WSA_STARTED_SHARED)))
+    (block $released (loop $retry
+      (if (i32.eqz (local.get $count)) (then
+        (call $vsock_set_error (i32.const 10093))
+        (i32.store (global.get $reg_base) (i32.const -1))
         (return)))
-    (global.set $wsa_started (i32.sub (global.get $wsa_started) (i32.const 1)))
-    (if (i32.eqz (global.get $wsa_started))
+      (local.set $seen (i32.atomic.rmw.cmpxchg (global.get $WSA_STARTED_SHARED)
+        (local.get $count) (i32.sub (local.get $count) (i32.const 1))))
+      (br_if $released (i32.eq (local.get $seen) (local.get $count)))
+      (local.set $count (local.get $seen))
+      (br $retry)))
+    (if (i32.eq (local.get $count) (i32.const 1))
       (then
         (local.set $i (i32.const 0))
         (block $done (loop $scan
@@ -3354,7 +3361,7 @@
                                       (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $vsock_set_error
-      (select (i32.const 10022) (i32.const 10093) (global.get $wsa_started))) ;; WSAEINVAL / WSANOTINITIALISED
+      (select (i32.const 10022) (i32.const 10093) (i32.atomic.load (global.get $WSA_STARTED_SHARED)))) ;; WSAEINVAL / WSANOTINITIALISED
     (i32.store offset=0 (global.get $reg_base) (i32.const -1)))
 
   (func $handle_WSASetLastError (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)

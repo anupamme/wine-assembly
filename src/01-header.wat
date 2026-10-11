@@ -2521,6 +2521,8 @@
   ;; reason: a registration made on one guest thread's instance has to be seen
   ;; by whichever instance pumps the wire and posts the event. 0 = not made yet.
   (global $VSOCK_ASYNC_SHARED i32 (region.addr $LOCK_TABLE 0x00000104))
+  ;; WSAStartup references are process-owned, including calls from workers.
+  (global $WSA_STARTED_SHARED i32 (region.addr $LOCK_TABLE 0x00000108))
   ;; The next free thunk index, process-wide. $num_thunks is BOTH the count and
   ;; the next free index, and it is a per-instance global — so two instances that
   ;; both call GetProcAddress hand out the same thunk address, and the guest then
