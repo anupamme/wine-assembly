@@ -53,6 +53,15 @@ async function main() {
         (local.get $f) (local.get $p) (local.get $n) (i32.const 0) (i32.const 0) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsarecv") (param $s i32) (param $b i32) (param $c i32) (param $n i32) (param $f i32) (param $over i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $gs32 (i32.const 0x00300018) (local.get $over))
+      (call $gs32 (i32.const 0x0030001c) (i32.const 0))
+      (global.set $yield_reason (i32.const 0))
+      (call $dispatch_api_table (call $lookup_api_id "WSARecv")
+        (local.get $s) (local.get $b) (local.get $c) (local.get $n) (local.get $f) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     (func (export "test_wsa_startup") (param $data i32) (result i32)
       (call $handle_WSAStartup (i32.const 0x0202) (local.get $data)
         (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
@@ -462,6 +471,35 @@ async function main() {
     assert.strictEqual(run(0,0xfffffffc,out,2000),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
     assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsa_protocols(0,0,out,0))),-1);
     assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+  });
+
+  check('WSARecv scatters stream data, parks whole call frame and validates before consume', () => {
+    wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
+    const {cli,acc}=connectedPair(),a=buf(2),b=buf(5),desc=buf(16),n=buf(4),f=buf(4);
+    const dv=new DataView(memory.buffer),set=(p,v)=>dv.setUint32(wa(p),v,true),get=p=>dv.getUint32(wa(p),true);
+    set(desc,2);set(desc+4,a);set(desc+8,5);set(desc+12,b);set(f,0);set(n,0x1234);
+    const receive=(over=0)=>wat.test_wsarecv(acc,desc,2,n,f,over), result=r=>Number(BigInt.asIntN(32,r));
+    let r=receive();assert.strictEqual(result(r),-1);assert.strictEqual(Number(r>>32n),0x300020);assert.strictEqual(wat.test_call_WSAGetLastError(),10035);assert.strictEqual(get(n),0x1234);
+    setNonblocking(acc,false);r=receive();assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(r>>32n),0x300000,'park restores full WSARecv frame');assert.strictEqual(get(n),0x1234);
+    assert.strictEqual(wat.test_call_send(cli,buf([1,2,3,4,5]),5,0),5);
+    set(desc+12,0);r=receive();assert.strictEqual(result(r),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+    set(desc+12,b);r=receive();assert.strictEqual(result(r),0);assert.strictEqual(Number(r>>32n),0x300020);assert.strictEqual(get(n),5);assert.deepStrictEqual(readBuf(a,2),[1,2]);assert.deepStrictEqual(readBuf(b,3),[3,4,5]);assert.strictEqual(get(f),0);
+    wat.test_call_shutdown(cli,SD_SEND);r=receive();assert.strictEqual(result(r),0);assert.strictEqual(get(n),0);
+    set(f,2);assert.throws(()=>receive(),WebAssembly.RuntimeError,'unimplemented PEEK must not consume');set(f,0);
+    assert.throws(()=>receive(1),WebAssembly.RuntimeError,'overlapped must not falsely complete');
+  });
+  check('WSARecv preserves datagram boundaries and scatters truncated prefix', () => {
+    const frames=[];hostContext.vlanWire={send:frame=>{frames.push(frame);return true;},peek:()=>frames[0],commit:()=>frames.shift()};
+    wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
+    const s=wat.test_call_socket(AF_INET,SOCK_DGRAM,17),c=wat.test_call_socket(AF_INET,SOCK_DGRAM,17),addr=sockaddr(ROOM_HOST,GAME_PORT);
+    assert.strictEqual(wat.test_call_bind(s,addr,16),0);setNonblocking(s,true);
+    const a=buf(2),b=buf(2),d=buf(16),n=buf(4),f=buf(4),dv=new DataView(memory.buffer),set=(p,v)=>dv.setUint32(wa(p),v,true);
+    set(d,2);set(d+4,a);set(d+8,2);set(d+12,b);set(f,0);
+    assert.strictEqual(wat.test_call_sendto(c,buf([9,8,7,6,5]),5,0,addr,16),5);
+    assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsarecv(s,d,2,n,f,0))),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10040);assert.deepStrictEqual(readBuf(a,2),[9,8]);assert.deepStrictEqual(readBuf(b,2),[7,6]);
+    assert.strictEqual(wat.test_call_sendto(c,buf([4,3,2]),3,0,addr,16),3);
+    assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsarecv(s,d,2,n,f,0))),0);assert.strictEqual(dv.getUint32(wa(n),true),3);assert.deepStrictEqual(readBuf(a,2),[4,3]);assert.strictEqual(readBuf(b,1)[0],2);
+    delete hostContext.vlanWire;
   });
 
   check('network event APIs report real TCP read, write and close readiness', () => {

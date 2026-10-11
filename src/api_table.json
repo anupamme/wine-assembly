@@ -38747,5 +38747,12 @@
     "nargs": 3,
     "convention": "stdcall",
     "hash": 994237972
+  },
+  {
+    "id": 4551,
+    "name": "WSARecv",
+    "nargs": 7,
+    "convention": "stdcall",
+    "hash": 3419542478
   }
 ]

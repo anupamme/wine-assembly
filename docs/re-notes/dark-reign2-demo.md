@@ -261,3 +261,22 @@ and exact module hash: scratch/runs/20261011T2246Z-dark-reign2-protocol-enum/.
 Still no menu, controlled gameplay, FPS or audio qualification. Next implement
 real WSARecv scatter/gather, including correct blocking/overlapped semantics;
 do not disguise an unimplemented mode with success.
+
+## Non-overlapped WSARecv (2026-10-11 22:55Z)
+
+WSARecv now implements flags-zero, non-overlapped stream and datagram receive:
+validated scatter buffers, partial stream reads, datagram boundaries/truncated
+prefixes, nonblocking errors, EOF and whole-frame blocking retry. The shared
+recv core takes the caller's unwind size, so a parked seven-argument WSARecv
+restores 32 bytes rather than recv's 20. Temporary buffers are released before
+parking. Completion-routine/overlapped and nonzero flag modes remain explicit
+unimplemented traps, not successful queued operations. This is scoped support,
+not complete overlapped Winsock. [API contract](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsarecv).
+
+62/62 Winsock checks and full build PASS (1,775,476-byte WASM). A deliberate
+20-byte unwind mutant fails the new full-frame assertion. Reviewed ordinary
+replay now fails the next export lookup: WSASend, win32_socket.cpp:1811.
+The game has not yet exercised the receive API itself. Evidence and exact
+module hash: scratch/runs/20261011T2255Z-dark-reign2-wsarecv/.
+No menu/gameplay/FPS/audio claim. New boat bx_gyugsep2 retains fixtures until
+23:51Z; stdole2.tlb needed copying again after the fork and is now restored.
