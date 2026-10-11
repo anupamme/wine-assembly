@@ -67,3 +67,25 @@ Hover over a button and its tooltip names it:
 | 363 | Undo | View Messages | Cycle trouble spots | (fourth button) |
 
 Evidence: `scratch/runs/20261011T0730Z-pharaoh-w6/`.
+
+## Browser route (800x600) and drag-to-build (claude:w4, 2026-10-11)
+
+The browser runs the demo at **800x600**, while the CLI defaults to 640x480
+(`--screen=800x600` matches the browser). At 800x600 the menu art is 640x480
+centred at (80,60), and the city sidebar is in its 800x600 layout. The 640x480
+table above does not apply there. Guest coordinates at 800x600:
+
+| Action | Point |
+|---|---|
+| title "Click to Start" | (400,360) |
+| Play Demo, then Predynastic Period | (400,172) |
+| name | Enter |
+| briefing "To the city" arrow | (606,497) |
+| Build Housing / Build Roads (sidebar column 1, rows 1/2) | (625,305) / (625,350) |
+
+Drag-to-build works in the browser in both cooperative and Threads mode: the
+road preview shows its cost while the button is held, a road and a housing
+block get built, and huts fill (Pop 50 after 60 s). The earlier report that it
+built nothing came from a probe pressing (659,283), which is not the Roads
+button at 800x600. With that point neither the CLI nor the browser shows a
+preview. Evidence: `scratch/runs/20261011T1225Z-pharaoh-drag-800-w4`.
