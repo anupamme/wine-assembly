@@ -881,6 +881,38 @@ test('SearchPath finds an installed DLL in the Win98 system directory', () => {
   );
 });
 
+test('SearchPath splits a semicolon-separated lpPath and searches it first', () => {
+  // Evolva: SearchPathA("C:\evolva;c:\evolva\Textures", "flare64.dds") found
+  // nothing while the list was joined as one directory, and the game drew white.
+  const memory = new ArrayBuffer(0x1000);
+  const bytes = new Uint8Array(memory);
+  const writeA = (addr, value) => {
+    for (let i = 0; i < value.length; i++) bytes[addr + i] = value.charCodeAt(i);
+    bytes[addr + value.length] = 0;
+  };
+  const readA = (addr) => {
+    let s = '';
+    while (bytes[addr]) s += String.fromCharCode(bytes[addr++]);
+    return s.toLowerCase();
+  };
+  const vfs = makeVFS({
+    'c:\\evolva\\textures\\flare64.dds': 64,
+    'c:\\evolva\\sounds\\click.wav': 32,
+    'c:\\windows\\click.wav': 16,
+  });
+  const imports = createFilesystemImports({ vfs, getMemory: () => memory });
+  writeA(0x100, 'C:\\evolva;c:\\evolva\\Textures');
+  writeA(0x180, 'flare64.dds');
+  const want = 'c:\\evolva\\textures\\flare64.dds';
+  assert.strictEqual(imports.fs_search_path(0x100, 0x180, 0, 260, 0x200, 0, 0), want.length);
+  assert.strictEqual(readA(0x200), want);
+  // Listed directories win over the Windows directory fallback.
+  writeA(0x100, ' c:\\evolva\\Sounds\\ ;;c:\\evolva');
+  writeA(0x180, 'click.wav');
+  imports.fs_search_path(0x100, 0x180, 0, 260, 0x200, 0, 0);
+  assert.strictEqual(readA(0x200), 'c:\\evolva\\sounds\\click.wav');
+});
+
 // --- AbeDemo specific scenario ---
 
 test('AbeDemo: wildcard scan after loading exe sibling files', () => {
