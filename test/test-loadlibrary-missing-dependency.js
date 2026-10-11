@@ -119,4 +119,28 @@ r = walk(trirend, null, {});
 assert.deepStrictEqual(r, { deps: [], asked: [] },
   'without the api_name_known export every unregistered dependency stays on the stubs');
 
-console.log('PASS LoadLibrary fails on a missing vendor dependency; emulated, ordinal-only and installed dependencies still load');
+// The running EXE counts as loaded. Soldier of Fortune's defsnd.dll imports
+// 20 functions from SoF.exe; with only DLL_TABLE in loadedModuleNames() the
+// walk mapped a second copy of the EXE as a DLL and ran its entry point as
+// DllMain, which crashed the game at boot.
+{
+  const { loadedModuleNames } = require('../lib/dll-loader');
+  const IMAGE_BASE = 0x400000, EXPORT_RVA = 0x2000, NAME_RVA = 0x2100;
+  const mem = new ArrayBuffer(0x4000);
+  const at = guest => guest - IMAGE_BASE;
+  new DataView(mem).setUint32(at(IMAGE_BASE + EXPORT_RVA) + 12, NAME_RVA, true);
+  new Uint8Array(mem).set([...'SoF.exe\0'].map(c => c.charCodeAt(0)), at(IMAGE_BASE + NAME_RVA));
+  const fakeExports = {
+    get_dll_count: () => 0, get_dll_table: () => 0, get_image_base: () => IMAGE_BASE,
+    get_exe_export_rva: () => EXPORT_RVA, guest_to_wasm: at,
+  };
+  const loaded = loadedModuleNames(fakeExports, mem);
+  assert(loaded.has('sof.exe'), 'the EXE is named by its export directory');
+  const defsnd = makePe([{ dll: 'SoF.exe', names: ['Sys_Error'] }]);
+  const steps = loadLibraryDependencies(defsnd, 'defsnd.dll', loaded, () => false);
+  const first = steps.next();
+  assert.strictEqual(first.done, true, 'nothing is looked up for the EXE');
+  assert.deepStrictEqual(first.value, [], 'and no second copy of it is mapped');
+}
+
+console.log('PASS LoadLibrary fails on a missing vendor dependency; emulated, ordinal-only and installed dependencies still load; the EXE is never mapped again as a dependency');
