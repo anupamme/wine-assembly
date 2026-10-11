@@ -35,6 +35,51 @@
     (local.set $cell (i32.add (global.get $DLL_FLAGS_TABLE) (i32.shl (local.get $index) (i32.const 2))))
     (drop (i32.atomic.rmw.or (local.get $cell) (global.get $DLL_FLAG_INITIALIZED)))
     (drop (memory.atomic.notify (local.get $cell) (i32.const -1))))
+  ;; 1 while row $index is still in another thread's DLL_PROCESS_ATTACH, so a
+  ;; LoadLibrary that found it must park and retry rather than hand out a
+  ;; module whose initializer has not run (Windows holds such a caller on the
+  ;; loader lock). Never for the initializing thread itself -- a DllMain that
+  ;; loads its own module gets it at once -- and bounded by wall time: a host
+  ;; path that maps a module and then fails before its DllMain never marks it,
+  ;; and a guest parked on that row would never run again.
+  (global $dll_init_wait_row (mut i32) (i32.const -1))
+  (global $dll_init_wait_since (mut i32) (i32.const 0))
+  (func $dll_row_init_pending (param $index i32) (result i32)
+    (local $flags i32) (local $owner i32) (local $now i32)
+    (local.set $flags (i32.atomic.load (i32.add (global.get $DLL_FLAGS_TABLE)
+      (i32.shl (local.get $index) (i32.const 2)))))
+    (local.set $owner (i32.shr_u (local.get $flags) (i32.const 16)))
+    (if (i32.or (i32.ne (i32.and (local.get $flags) (global.get $DLL_FLAG_INITIALIZED)) (i32.const 0))
+          (i32.or (i32.eqz (local.get $owner))
+            (i32.eq (local.get $owner) (i32.and (global.get $current_thread_id) (i32.const 0xFFFF)))))
+      (then (global.set $dll_init_wait_row (i32.const -1)) (return (i32.const 0))))
+    (local.set $now (call $host_real_time_ms))
+    (if (i32.ne (global.get $dll_init_wait_row) (local.get $index))
+      (then
+        (global.set $dll_init_wait_row (local.get $index))
+        (global.set $dll_init_wait_since (local.get $now))
+        (return (i32.const 1))))
+    (if (i32.ge_u (i32.and (i32.sub (local.get $now) (global.get $dll_init_wait_since)) (i32.const 0x7FFFFFFF))
+          (i32.const 5000))
+      (then (global.set $dll_init_wait_row (i32.const -1)) (return (i32.const 0))))
+    (i32.const 1))
+  ;; Test harness: one guest LoadLibraryA of the name at $name_g. Bit 0: it
+  ;; parked to retry (yield 9, frame intact, EIP back on the thunk); otherwise
+  ;; the result is in EAX (get_eax). The frame and yield are restored after.
+  (func (export "test_loadlibrary_once") (param $name_g i32) (result i32)
+    (local $saved_esp i32) (local $bits i32)
+    (local.set $saved_esp (i32.load offset=16 (global.get $reg_base)))
+    (call $handle_LoadLibraryA (local.get $name_g)
+      (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+    (if (i32.and (i32.eq (global.get $yield_reason) (i32.const 9))
+          (i32.and (i32.ne (global.get $handler_set_eip) (i32.const 0))
+            (i32.eq (i32.load offset=16 (global.get $reg_base)) (local.get $saved_esp))))
+      (then (local.set $bits (i32.const 1))))
+    (i32.store offset=16 (global.get $reg_base) (local.get $saved_esp))
+    (global.set $yield_reason (i32.const 0))
+    (global.set $yield_flag (i32.const 0))
+    (global.set $handler_set_eip (i32.const 0))
+    (local.get $bits))
   ;; Row of a published module whose recorded path is $path_g's string (case-
   ;; insensitive, '/' read as '\'), or -1. The path only: two different DLLs
   ;; can share an export-directory name (CMR3's codecs both call themselves

@@ -14,6 +14,9 @@
 // B must get A's HMODULE, without a DllMain of its own, and only once A's
 // initializer is done; A must get it at once (no waiting on itself); one row
 // is published. A different path with the same bytes is a different module.
+// The guest's own LoadLibraryA finds the mapped module in WAT without asking
+// the host: B's must park (yield 9, frame intact) until A's initializer is
+// done, and A's, from inside that initializer, must not.
 const fs = require('fs'), path = require('path');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const root = path.resolve(__dirname, '..');
@@ -33,6 +36,15 @@ if (!isMainThread) {
     const instance = await WebAssembly.instantiate(workerData.module, imports), e = instance.exports; ctx.exports = e;
     e.set_current_thread_id(workerData.id === 'a' ? 2 : 3);
     const fixture = new Uint8Array(workerData.fixture);
+    // A guest LoadLibraryA("x.dll") through the handler, once: 'parked' when
+    // it yielded to retry, else the HMODULE it returned.
+    const guestLoad = name => {
+      if (!e.test_loadlibrary_once) return { missing: true };
+      const g = e.guest_alloc(name.length + 1) >>> 0;
+      for (let i = 0; i < name.length; i++) e.guest_write8(g + i, name.charCodeAt(i));
+      e.guest_write8(g + name.length, 0);
+      return e.test_loadlibrary_once(g) & 1 ? { parked: true } : { parked: false, eax: e.get_eax() >>> 0 };
+    };
     parentPort.postMessage({ ready: true });
     parentPort.once('message', () => {
       try {
@@ -45,6 +57,8 @@ if (!isMainThread) {
           const t0 = Date.now();
           const again = loadDll(e, memory.buffer, fixture, 'C:/DEMO/X.DLL');
           out.again = { loadAddr: again.loadAddr >>> 0, existing: !!again.existing, ms: Date.now() - t0 };
+          // ...and so does the guest's own LoadLibraryA from inside it.
+          out.guestSelf = guestLoad('x.dll');
           Atomics.wait(ctl, 3, 0, INIT_MS);            // the rest of the initializer
           Atomics.store(ctl, A_MARKED, 1);
           // What callDllMain does on return (absent before the fix: the control
@@ -57,7 +71,12 @@ if (!isMainThread) {
           while (Atomics.load(ctl, A_MAPPED) === 0) {
             if (Atomics.wait(ctl, A_MAPPED, 0, 10000) === 'timed-out') throw Error('A never mapped');
           }
+          // The guest's LoadLibraryA finds the module mapped: it must park while
+          // A's initializer runs, not return it.
+          out.guestDuring = guestLoad('x.dll');
+          out.guestDuringBeforeInit = Atomics.load(ctl, A_MARKED) === 0;
           const got = loadDll(e, memory.buffer, fixture, 'c:\\demo\\x.dll');
+          out.guestAfter = guestLoad('X.DLL');
           out.got = { loadAddr: got.loadAddr >>> 0, dllMain: got.dllMain >>> 0, existing: !!got.existing,
             afterInit: Atomics.load(ctl, A_MARKED) === 1 };
         }
@@ -121,6 +140,11 @@ if (!isMainThread) {
     assert.equal(b.got.afterInit, true, 'B returns only after A\'s DLL_PROCESS_ATTACH finished');
     assert.equal(a.again.loadAddr, a.first.loadAddr, 'A asking again from inside its DllMain gets the same module');
     assert.ok(a.again.ms < INIT_MS / 2, `and does not wait for itself (${a.again.ms} ms)`);
+    // The guest-side LoadLibraryA (the handler's loaded-module fast path).
+    assert.ok(b.guestDuringBeforeInit, 'B\'s guest LoadLibraryA ran inside A\'s initializer');
+    assert.deepEqual(b.guestDuring, { parked: true }, 'B\'s LoadLibraryA parks while A\'s DllMain runs');
+    assert.deepEqual(b.guestAfter, { parked: false, eax: a.first.loadAddr }, 'and returns A\'s module after it');
+    assert.deepEqual(a.guestSelf, { parked: false, eax: a.first.loadAddr }, 'A\'s own LoadLibraryA from its DllMain does not park');
     assert.notEqual(a.other.loadAddr, a.first.loadAddr, 'a different path is a different module');
     assert.equal(a.other.existing, false);
     assert.equal(a.dllCount, 2, 'x.dll mapped once, y.dll once');

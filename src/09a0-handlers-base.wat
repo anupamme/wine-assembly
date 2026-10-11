@@ -1668,6 +1668,11 @@
       (then (i32.store offset=0 (global.get $reg_base) (i32.const 0)) (global.set $last_error (i32.const 126))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))) (return)))
     (local.set $tmp (call $find_loaded_dll (local.get $arg0)))
+    ;; Another thread is still in this module's DLL_PROCESS_ATTACH: park on
+    ;; the thunk (the critical-section contract, yield 9) and look again.
+    (if (i32.and (i32.ge_s (local.get $tmp) (i32.const 0))
+          (call $dll_row_init_pending (local.get $tmp)))
+      (then (call $spin_park (i32.const 9)) (return)))
     (if (i32.ge_s (local.get $tmp) (i32.const 0))
       (then
         (i32.store offset=0 (global.get $reg_base) (i32.load (i32.add (global.get $DLL_TABLE) (i32.mul (local.get $tmp) (i32.const 32)))))
@@ -1773,6 +1778,11 @@
         (call $handle_LoadLibraryA
           (local.get $name) (local.get $hfile) (local.get $flags)
           (i32.const 0) (i32.const 0) (i32.const 0))))
+    ;; Parked on the thunk (module still initializing on another thread): the
+    ;; frame stays whole for the retry.
+    (if (i32.and (i32.eq (global.get $yield_reason) (i32.const 9))
+          (i32.eq (global.get $eip) (global.get $current_thunk_eip)))
+      (then (return)))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))
 
   (func $handle_LoadLibraryExA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
