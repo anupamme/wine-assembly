@@ -157,6 +157,23 @@
                     (local.get $wParam) (local.get $lParam)))))
         (return (i32.const 0))))
 
+    ;; The browser's idle host shadow (Threads: the guest's main thread runs in
+    ;; a Worker) has no guest thread, so it must never enter guest code: its
+    ;; registers, stack and decoded-code cache are not the owning thread's.
+    ;; Running a wndproc here ran Solitaire's on that state when the
+    ;; single-app maximizer sent SC_MAXIMIZE, which reached DialogBoxParamA
+    ;; with the main window's handle and replaced its renderer record with an
+    ;; empty dialog: the phone showed the desktop and nothing else
+    ;; (THREADS-PHONE-SOL-BLANK-20261011). Post to the owner's queue instead,
+    ;; as the comment on this function promises; the owning thread runs the
+    ;; procedure from its own message pump.
+    (if (global.get $host_shadow)
+      (then
+        (global.set $wnd_send_completed (i32.const 0))
+        (drop (call $post_queue_push (local.get $hwnd) (local.get $msg)
+                (local.get $wParam) (local.get $lParam)))
+        (return (i32.const 0))))
+
     ;; x86 wndproc — synchronous dispatch via recursive $run.
     ;; Save full guest register context: this is invoked between message-pump
     ;; iterations (often via JS test driver or WAT control-side $wnd_send_message
