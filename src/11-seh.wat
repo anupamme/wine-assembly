@@ -394,6 +394,7 @@
     (local $pg_desc i32) (local $pg_chunk_cap i32) (local $pg_desc_cap i32)
     (local $ctx i32) (local $rec i32) (local $sp i32) (local $frame i32)
     (local $handler i32) (local $rounds i32) (local $ok i32) (local $guard i32)
+    (local $io_fills i32)
     (if (i32.or (global.get $fault_sync_active)
                 (i32.eqz (global.get $sync_msg_ret_thunk)))
       (then (return (i32.const 0))))
@@ -487,9 +488,30 @@
           (global.set $ip (local.get $old_ip))
           (call $sync_depth_enter)
           (local.set $rounds (i32.const 0))
+          (local.set $io_fills (i32.const 0))
           (block $ran (loop $run_more
             (call $run (i32.const 1000000))
             (br_if $ran (i32.eqz (global.get $eip)))
+            ;; The filter parked a ReadFile on a lazily loaded file (io_wait).
+            ;; A yield here only returns to this loop, so no host turn would
+            ;; ever fetch the bytes: the 64 rounds went by in an instant, the
+            ;; filter was abandoned after committing the page but before
+            ;; filling it, and Serious Sam with its main thread in a browser
+            ;; Worker read the sentinel and ended at EIP 0x351. A guest Worker
+            ;; may block, so have the host fill the read now and re-enter the
+            ;; same ReadFile (EIP is still on its thunk). Its own budget: a
+            ;; stream filter can read many chunks.
+            (if (i32.and (i32.eq (global.get $yield_reason) (i32.const 12))
+                         (i32.and (i32.ne (global.get $guest_can_block) (i32.const 0))
+                                  (i32.lt_u (local.get $io_fills) (i32.const 4096))))
+              (then
+                (if (call $host_io_fill_sync (global.get $current_thread_id))
+                  (then
+                    (local.set $io_fills (i32.add (local.get $io_fills) (i32.const 1)))
+                    (global.set $yield_reason (i32.const 0))
+                    (global.set $yield_flag (i32.const 0))
+                    (global.set $steps (i32.const 0))
+                    (br $run_more)))))
             (local.set $rounds (i32.add (local.get $rounds) (i32.const 1)))
             (br_if $ran (i32.ge_u (local.get $rounds) (i32.const 64)))
             (br $run_more)))

@@ -49,6 +49,13 @@
   ;; Returns the number of thread slices actually run (0 = nobody to run, or
   ;; we are already inside a worker and must not re-enter one).
   (import "host" "cs_pump" (func $host_cs_pump (result i32)))
+  ;; Fill the lazy-file read this thread parked on (io_wait, yield 12) and
+  ;; return 1 once the bytes are in the shared cache, for a nested run that
+  ;; cannot yield to the host (11-seh $seh_fault_sync). Only a guest Worker
+  ;; ($guest_can_block) calls it: there the brokered call parks just this
+  ;; thread while the page fetches. 0 = cannot fill synchronously here.
+  ;; Argument: the thread key VFS pending reads use ($current_thread_id).
+  (import "host" "io_fill_sync" (func $host_io_fill_sync (param i32) (result i32)))
   (import "host" "resolve_ordinal" (func $host_resolve_ordinal (param i32 i32) (result i32)))
   ;; resolve_ordinal(dll_name_ptr, ordinal) → api_id (-1 if unknown)
   ;; GUI host imports — call into JS canvas renderer
@@ -3198,6 +3205,12 @@
   ;; $handle_EnterCriticalSection). Per-instance on purpose: the count is about
   ;; this thread's own progress.
   (global $cs_wait_spins (mut i32) (i32.const 0))
+  ;; 1 on an instance running in a guest Worker (lib/guest-worker.js), which may
+  ;; block in a brokered host call without stalling anybody else's imports --
+  ;; the page or the CLI's main serves those. Never set on the page's or the
+  ;; CLI's own instance, which must not block. Per-instance and deliberately not
+  ;; propagated at spawn: every guest Worker sets it on its own instance.
+  (global $guest_can_block (mut i32) (i32.const 0))
   (global $cs_steals (mut i32) (i32.const 0))
   (global $cs_waits (mut i32) (i32.const 0))
   (global $cs_bad_leaves (mut i32) (i32.const 0))

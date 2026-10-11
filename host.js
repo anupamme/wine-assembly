@@ -2652,6 +2652,20 @@ class WineAssembly {
         : self.threadManager.waitMultiple(n, ha, wa, t, win32ThreadId());
     };
     h.cs_pump = () => self.threadManager ? self.threadManager.pumpThreadsOnce() : 0;
+    // A guest Worker's nested run (11-seh $seh_fault_sync) parked a ReadFile
+    // on a lazy file and cannot yield back to us. The WAT only asks from a
+    // guest Worker, whose brokered call stays parked until this Promise
+    // settles (lib/guest-rpc.js respond), so fill the read and answer 1; the
+    // nested run then re-enters the same ReadFile for the cache hit.
+    h.io_fill_sync = (threadKey) => {
+      const vfs = self._helpCtx && self._helpCtx.vfs;
+      const pending = vfs && vfs.getPendingRead(threadKey | 0);
+      if (!pending) return 1;
+      return Promise.resolve(self._fillParkedRead(vfs, pending)).then(() => 1, (e) => {
+        self.logToUI(`[io] ${pending.path}: ${e && e.message}`);
+        return 0;
+      });
+    };
     h.create_semaphore = (initial, max, nameWa, wide) => {
       if (!self.threadManager) return 0;
       const name = readSyncName(nameWa, wide);

@@ -1,6 +1,6 @@
 {
   "generated_from": "src/main.watx include closure",
-  "count": 267,
+  "count": 268,
   "sigs": {
     "log": {
       "params": [
@@ -135,6 +135,14 @@
     },
     "cs_pump": {
       "params": [],
+      "results": [
+        "i32"
+      ]
+    },
+    "io_fill_sync": {
+      "params": [
+        "i32"
+      ],
       "results": [
         "i32"
       ]

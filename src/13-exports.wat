@@ -473,6 +473,7 @@
   (func (export "get_cs_wait_addr") (result i32) (global.get $cs_wait_addr))
   (func (export "get_cs_wait_owner") (result i32) (global.get $cs_wait_owner))
   (func (export "set_cs_steal_after") (param i32) (global.set $cs_steal_after (local.get 0)))
+  (func (export "set_guest_can_block") (param i32) (global.set $guest_can_block (local.get 0)))
   ;; The registry itself, so a run can print WHICH sections are held and by whom
   ;; at exit rather than only that somebody is waiting. It lives in shared memory
   ;; and holds WASM addresses, so any instance — or the host, reading directly —
