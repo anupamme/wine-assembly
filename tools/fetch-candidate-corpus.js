@@ -240,10 +240,18 @@ function runPostExtract(candidate, destination) {
       const cab = path.join(destination, step.cab);
       const into = path.join(destination, step.into);
       fs.mkdirSync(into, { recursive: true });
-      const result = spawnSync('unshield', ['-d', into, '-g', step.group, 'x', cab], {
+      let result = spawnSync('unshield', ['-d', into, '-g', step.group, 'x', cab], {
         encoding: 'utf8',
         maxBuffer: 16 * 1024 * 1024,
       });
+      // No unshield on this host (the ops box has none): tools/is5-extract.js
+      // reads InstallShield 5 cabs and its --group writes unshield's layout,
+      // so the manifest's later copy steps find the same paths.
+      if (result.error && result.error.code === 'ENOENT') {
+        result = spawnSync(process.execPath, [
+          path.join(ROOT, 'tools', 'is5-extract.js'), cab, `--group=${step.group}`, `--out=${into}`,
+        ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+      }
       if (result.status !== 0) {
         const unavailable = result.error && result.error.code === 'ENOENT';
         const detail = `${result.stdout || ''}\n${result.stderr || ''}`.trim().split('\n').slice(-8).join('\n');

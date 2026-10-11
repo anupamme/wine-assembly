@@ -110,6 +110,41 @@ function readCatalog(headerBuf) {
   return files;
 }
 
+// File groups, as unshield reads them for major version 5: 71 list heads at
+// cab descriptor + 0x3e, each a chain of { name_offset, descriptor_offset,
+// next_offset }; a descriptor holds its name offset and, 0x48 bytes on, the
+// first and last file index. Offsets are relative to the cab descriptor.
+function readGroups(headerBuf) {
+  const cd = readCommon(headerBuf, 'header').cabDescriptorOffset;
+  const groups = [];
+  const seen = new Set();
+  for (let i = 0; i < 71; i++) {
+    let next = headerBuf.readUInt32LE(cd + 0x3e + i * 4);
+    while (next && !seen.has(next) && cd + next + 12 <= headerBuf.length) {
+      seen.add(next);
+      const descriptor = headerBuf.readUInt32LE(cd + next + 4);
+      const p = cd + descriptor;
+      groups.push({
+        name: cString(headerBuf, cd + headerBuf.readUInt32LE(p)),
+        first: headerBuf.readUInt32LE(p + 4 + 0x48),
+        last: headerBuf.readUInt32LE(p + 8 + 0x48),
+      });
+      next = headerBuf.readUInt32LE(cd + next + 8);
+    }
+  }
+  return groups;
+}
+
+// unshield -g GROUP writes <out>/<group>/<directory>/<file>, with the group
+// and directory path's spaces and <>[] turned into '_' (file names keep
+// theirs). Candidate manifests are written against that layout, so the
+// --group extraction reproduces it and can stand in for unshield.
+function unshieldPath(out, group, dir, name) {
+  const rel = [group, ...dir.split(/[\\/]/).filter(Boolean)].join('/')
+    .replace(/[ <>[\]]/g, '_').replace(/[^\x20-\x7e]/g, '_');
+  return path.join(out, ...rel.split('/'), name);
+}
+
 // The compressed bytes of one file, joined across a volume boundary.
 function compressedBytes(file, volumes) {
   const v = volumes.findIndex(vol => file.index >= vol.firstIndex && file.index <= vol.lastIndex);
@@ -151,23 +186,38 @@ function main() {
   const args = process.argv.slice(2);
   const cab = args.find(a => !a.startsWith('--'));
   if (!cab) {
-    console.error('usage: is5-extract.js data1.cab [--list] [--out=DIR]');
+    console.error('usage: is5-extract.js data1.cab [--list | --list-groups] [--group=NAME] [--out=DIR]');
     process.exit(2);
   }
   const outArg = args.find(a => a.startsWith('--out='));
+  const groupArg = args.find(a => a.startsWith('--group='));
   const hdr = path.join(path.dirname(cab), path.basename(cab).replace(/\.cab$/i, '.hdr'));
-  const files = readCatalog(fs.readFileSync(fs.existsSync(hdr) ? hdr : cab));
+  const headerBuf = fs.readFileSync(fs.existsSync(hdr) ? hdr : cab);
+  const files = readCatalog(headerBuf);
+  if (args.includes('--list-groups')) {
+    for (const g of readGroups(headerBuf)) console.log(`${g.first}-${g.last}  ${g.name}`);
+    return;
+  }
   if (args.includes('--list')) {
     for (const f of files) console.log(`${String(f.expanded).padStart(10)}  ${f.dir ? f.dir + '\\' : ''}${f.name}`);
     return;
   }
   const out = outArg ? outArg.slice(6) : '.';
+  let selected = files;
+  let place = f => path.join(out, ...f.dir.split(/[\\/]/).filter(Boolean), f.name);
+  if (groupArg) {
+    const name = groupArg.slice(8);
+    const group = readGroups(headerBuf).find(g => g.name === name);
+    if (!group) throw new Error(`no file group named "${name}"`);
+    selected = files.filter(f => f.index >= group.first && f.index <= group.last);
+    place = f => unshieldPath(out, group.name, f.dir, f.name);
+  }
   const volumes = readVolumes(cab);
   let count = 0, bytes = 0;
-  for (const f of files) {
+  for (const f of selected) {
     if ((f.flags & FILE_INVALID) || !f.name) continue;
     const data = extractFile(f, volumes);
-    const dest = path.join(out, ...f.dir.split(/[\\/]/).filter(Boolean), f.name);
+    const dest = place(f);
     if (!path.resolve(dest).startsWith(path.resolve(out) + path.sep)) throw new Error(`${f.name}: path escapes --out`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, data);
@@ -178,4 +228,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { readCatalog, readVolumes, extractFile, inflateChunks };
+module.exports = { readCatalog, readGroups, readVolumes, extractFile, inflateChunks, unshieldPath };
