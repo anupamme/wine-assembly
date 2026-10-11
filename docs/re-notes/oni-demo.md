@@ -53,3 +53,18 @@ This is a diagnostic wrapper, not a production fix. Next preserve original
 case as VFS metadata while retaining normalized lookup keys, including eager,
 lazy/provider mounts, create/copy/move and serialization. Test general mixed-
 case enumeration and rerun Oni without the wrapper on a fresh remote build.
+
+## General filename fix (16:48Z)
+
+File entries now retain their basename spelling independently of normalized
+lookup keys. CLI and browser manifest mounts preserve it for eager/lazy/provider
+files; create, truncate, copy, move (including case-only rename), child merge,
+localStorage and overlay hydration retain the metadata. Old entries without
+metadata still enumerate their normalized basename. Directory case and other
+mount paths that already discard spelling are outside this change.
+
+Fresh remote build on bx_kmxkny92 passed, as did all 15 test-vfs*.js files.
+The new mixed-case regression fails against the old filesystem implementation.
+Unmodified Oni/data, without the diagnostic wrapper, now reaches the reviewed
+Bungie intro at 30000 batches: run20261011T1648Z-oni-case-fixed. This verifies
+the startup fix, not gameplay, FPS, audio or browser/mobile compatibility.

@@ -5570,7 +5570,7 @@ async function main() {
         if (!/^[a-z]:/.test(vfsPath)) vfsPath = 'c:\\' + vfsPath.replace(/^\\+/, '');
         if (ctx.vfs.files.has(vfsPath)) continue;
         ctx.vfs.ensureParentDirs(vfsPath);
-        ctx.vfs.setLazyFile(vfsPath, { attrs: 0x20, size,
+        ctx.vfs.setLazyFile(vfsPath.slice(0, vfsPath.lastIndexOf('\\') + 1) + String(raw).replace(/^.*[\\/]/, ''), { attrs: 0x20, size,
           load: () => new Uint8Array(fs.readFileSync(hostPath)) });
       }
     }
@@ -5626,7 +5626,7 @@ async function main() {
       let vfsPath = String(rawPath).toLowerCase().replace(/\//g, '\\');
       if (!/^[a-z]:/.test(vfsPath)) vfsPath = 'c:\\' + vfsPath.replace(/^\\+/, '');
       ctx.vfs.ensureParentDirs(vfsPath);
-      return ctx.vfs.setLazyFile(vfsPath, {
+      return ctx.vfs.setLazyFile(vfsPath.slice(0, vfsPath.lastIndexOf('\\') + 1) + String(rawPath).replace(/^.*[\\/]/, ''), {
         attrs: 0x20,
         size,
         load: () => new Uint8Array(fs.readFileSync(hostPath)),
@@ -5747,7 +5747,7 @@ async function main() {
             let vfsPath = String(p).toLowerCase().replace(/\//g, '\\');
             if (!/^[a-z]:/.test(vfsPath)) vfsPath = 'c:\\' + vfsPath.replace(/^\\+/, '');
             ctx.vfs.ensureParentDirs(vfsPath);
-            ctx.vfs.setProviderFile(vfsPath, { provider: cache });
+            ctx.vfs.setProviderFile(vfsPath.slice(0, vfsPath.lastIndexOf('\\') + 1) + String(p).replace(/^.*[\\/]/, ''), { provider: cache });
           }
           // Thousands of these in one tree: one summary line, not one per file.
           if (!lazyManifestStats) {
@@ -5784,7 +5784,7 @@ async function main() {
             let vfsPath = String(p).toLowerCase().replace(/\//g, '\\');
             if (!/^[a-z]:/.test(vfsPath)) vfsPath = 'c:\\' + vfsPath.replace(/^\\+/, '');
             ctx.vfs.ensureParentDirs(vfsPath);
-            ctx.vfs.setProviderFile(vfsPath, { provider: cache });
+            ctx.vfs.setProviderFile(vfsPath.slice(0, vfsPath.lastIndexOf('\\') + 1) + String(p).replace(/^.*[\\/]/, ''), { provider: cache });
           }
           noteLazy(cache, size);
           // Per-file lines only where they say something a total cannot (a

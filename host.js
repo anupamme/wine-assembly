@@ -4108,15 +4108,16 @@ class WineAssembly {
           // Also register the drive root and every parent directory so CD
           // scans can chdir to D:\ and GetFileAttributes(dir) sees directories.
           vfs.ensureParentDirs(vfsPath);
-          if (asset.provider) vfs.setProviderFile(vfsPath, { provider: asset.provider });
-          else vfs.files.set(vfsPath, { data, attrs: 0x20, decodedImage });
+          const name = String(rawPath).replace(/^.*[\\/]/, '');
+          if (asset.provider) vfs.setProviderFile(vfsPath.slice(0, vfsPath.lastIndexOf('\\') + 1) + name, { provider: asset.provider });
+          else vfs.files.set(vfsPath, { data, attrs: 0x20, decodedImage, name });
         };
         if (explicitPaths && explicitPaths.length) {
           for (const p of explicitPaths) addFile(p);
         } else if (explicit) {
           addFile(explicit);
         } else {
-          addFile('c:\\' + url.replace(/^.*[\\\/]/, '').toLowerCase());
+          addFile('c:\\' + url.replace(/^.*[\\\/]/, ''));
         }
         // A font an app ships was put in the Windows font directory by its
         // installer on a real machine, and that is the only reason an app

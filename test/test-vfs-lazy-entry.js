@@ -56,7 +56,7 @@ const NORM = 'c:\\game\\media.dat';
 
 function eagerVfs() {
   const vfs = new VirtualFS();
-  vfs.files.set(NORM, { data: new Uint8Array(BYTES), attrs: 0x20 });
+  vfs.files.set(NORM, { data: new Uint8Array(BYTES), attrs: 0x20, name: 'MEDIA.DAT' });
   vfs.ensureParentDirs(NORM);
   return vfs;
 }
@@ -90,6 +90,34 @@ function readAll(vfs, step) {
 }
 
 console.log('Lazy VFS entry tests:');
+
+test('mixed-case names survive lazy enumeration, lookup, truncation, copy and rename', () => {
+  const vfs = new VirtualFS();
+  let loads = 0;
+  vfs.ensureParentDirs('c:\\Game\\level0_Final.dat');
+  vfs.setLazyFile('c:\\Game\\level0_Final.dat', { size: 1, load: () => { loads++; return new Uint8Array([42]); } });
+  const name = pattern => vfs.findFirstFile(pattern).entry.name;
+  assert.strictEqual(name('C:\\GAME\\*.DAT'), 'level0_Final.dat');
+  assert.strictEqual(loads, 0);
+  const h = vfs.createFile('C:\\GAME\\LEVEL0_FINAL.DAT', 0x80000000, 3);
+  assert(h);
+  const bytes = new Uint8Array(1);
+  assert(vfs.readFile(h, bytes, 1).ok);
+  assert.strictEqual(bytes[0], 42);
+  vfs.closeHandle(h);
+  assert(vfs.copyFile('c:\\game\\level0_final.dat', 'c:\\game\\Copy_Final.dat', true));
+  assert.strictEqual(name('c:\\game\\copy*'), 'Copy_Final.dat');
+  assert(vfs.moveFile('c:\\game\\copy_final.dat', 'c:\\game\\COPY_Final.dat'));
+  assert.strictEqual(name('c:\\game\\copy*'), 'COPY_Final.dat');
+  const truncated = vfs.createFile('c:\\game\\COPY_FINAL.DAT', 0x40000000, 2);
+  assert(truncated);
+  vfs.closeHandle(truncated);
+  assert.strictEqual(name('c:\\game\\copy*'), 'COPY_Final.dat');
+  const created = vfs.createFile('c:\\game\\New_Final.dat', 0x40000000, 1);
+  assert(created);
+  vfs.closeHandle(created);
+  assert.strictEqual(name('c:\\game\\new*'), 'New_Final.dat');
+});
 
 test('mounting through a provider does not materialize the file', () => {
   const vfs = lazyVfs();

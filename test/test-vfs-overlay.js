@@ -488,7 +488,7 @@ test('the Node store round-trips a tree byte-exactly across processes', async ()
   const payloads = {
     'C:\\app\\app.exe': Buffer.alloc(3 * 1024 * 1024, 0xAB), // past the 2MB localStorage cap
     'C:\\app\\config.ini': Buffer.from('[Setup]\r\nDir=C:\\app\r\n', 'latin1'),
-    'C:\\app\\data\\level.dat': Buffer.from([0, 1, 2, 253, 254, 255]),
+    'C:\\app\\data\\level_Final.dat': Buffer.from([0, 1, 2, 253, 254, 255]),
   };
 
   const first = new VirtualFS();
@@ -509,6 +509,7 @@ test('the Node store round-trips a tree byte-exactly across processes', async ()
   const replay = VfsOverlay.attach(second, { store: nodeDirStore(dir) });
   const hydrated = await replay.hydrate();
   assert.strictEqual(hydrated.files, 3, JSON.stringify(replay.errors));
+  assert.strictEqual(second.findFirstFile('c:\\app\\data\\*.DAT').entry.name, 'level_Final.dat');
   assert.strictEqual(replay.errors.length, 0, JSON.stringify(replay.errors));
   for (const [guestPath, buffer] of Object.entries(payloads)) {
     const entry = second.files.get(second._resolvePath(guestPath));
