@@ -27,6 +27,17 @@ const extraWat = String.raw`
     (global.get $createwnd_size_thunk))
   (func (export "test_get_enum_child_thunk") (result i32)
     (global.get $enum_child_thunk))
+
+  ;; Continuations a guest thread calls through: EnumZBufferFormats (Rayman 2's
+  ;; renderer enumerates from its game thread), qsort and LineDDA.
+  (func (export "test_get_late_thunks") (param $i i32) (result i32)
+    (if (result i32) (i32.eq (local.get $i) (i32.const 0)) (then (global.get $d3d_enum_zbuf_thunk))
+      (else (if (result i32) (i32.eq (local.get $i) (i32.const 1)) (then (global.get $qsort_thunk))
+        (else (global.get $line_dda_ret_thunk))))))
+  (func (export "test_clear_late_thunks")
+    (global.set $d3d_enum_zbuf_thunk (i32.const 0))
+    (global.set $qsort_thunk (i32.const 0))
+    (global.set $line_dda_ret_thunk (i32.const 0)))
 `;
 
 (async () => {
@@ -58,6 +69,31 @@ const extraWat = String.raw`
     'worker thunk sync restores CACA0031 as the WM_SIZE continuation');
   assert.strictEqual(wat.test_get_enum_child_thunk() >>> 0, enumChild,
     'worker thunk sync restores CACA002B as the EnumChildWindows continuation');
+  const late = [0, 1, 2].map(i => wat.test_get_late_thunks(i) >>> 0);
+  assert(late.every(Boolean), 'main instance has the EnumZBufferFormats, qsort and LineDDA continuations');
+  wat.test_clear_late_thunks();
+  wat.sync_thunk_state(wat.get_thunk_end(), wat.get_num_thunks());
+  assert.deepStrictEqual([0, 1, 2].map(i => wat.test_get_late_thunks(i) >>> 0), late,
+    'worker thunk sync restores CACA000D (EnumZBufferFormats), CACA002D (qsort) and CACA0012 (LineDDA)');
+
+  // Every continuation the PE loader allocates must be rebuilt on a guest
+  // thread, or a callback returns to address 0 there. Read both tables from
+  // source so a new thunk cannot be added to one and forgotten in the other.
+  {
+    const src = name => fs.readFileSync(path.join(__dirname, '..', 'src', name), 'utf8');
+    const loader = new Map();
+    for (const m of src('08-pe-loader.wat').matchAll(
+      /\(global\.set \$([a-z0-9_]+) \(i32\.add[\s\S]{0,400}?\(i32\.const (0xCACA[0-9A-F]{4})\)\)/g)) {
+      loader.set(m[2], m[1]);
+    }
+    const synced = new Set();
+    for (const m of src('13-exports.wat').matchAll(
+      /\(i32\.eq \(local\.get \$marker\) \(i32\.const (0xCACA[0-9A-F]{4})\)\)/g)) synced.add(m[1]);
+    assert(loader.size >= 30, 'loader thunk allocations parsed (' + loader.size + ')');
+    const missing = [...loader].filter(([marker]) => !synced.has(marker)).map(([m, g]) => m + ' ' + g);
+    assert.deepStrictEqual(missing, [], 'every loader-allocated thunk is rebuilt by the thread sync');
+  }
+
   // The producer allocates during the consumer's first API call. Its next
   // indirect CALL happens in the SAME run(), with no host thunk-state sync.
   const name = wat.guest_alloc(32);

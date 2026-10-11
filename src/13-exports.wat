@@ -1509,6 +1509,15 @@
         (then (global.set $bsearch_thunk (local.get $guest))))
       (if (i32.eq (local.get $marker) (i32.const 0xCACA000F))
         (then (global.set $d3d_enum_tex_thunk (local.get $guest))))
+      ;; These three were missing, so on a guest thread the callback returned
+      ;; to address 0: Rayman 2's renderer calls EnumZBufferFormats from its
+      ;; game thread (test-thread-thunk-sync checks the table is complete).
+      (if (i32.eq (local.get $marker) (i32.const 0xCACA000D))
+        (then (global.set $d3d_enum_zbuf_thunk (local.get $guest))))
+      (if (i32.eq (local.get $marker) (i32.const 0xCACA002D))
+        (then (global.set $qsort_thunk (local.get $guest))))
+      (if (i32.eq (local.get $marker) (i32.const 0xCACA0012))
+        (then (global.set $line_dda_ret_thunk (local.get $guest))))
       (if (i32.eq (local.get $marker) (i32.const 0xCACA0011))
         (then (global.set $font_enum_ret_thunk (local.get $guest))))
       (if (i32.eq (local.get $marker) (i32.const 0xCACA0022))
