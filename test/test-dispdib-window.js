@@ -20,6 +20,9 @@ const WM_COPYDATA = 0x004A;
 const DISPDIB_SETMODE = 0x400;
 const DISPDIB_START = 0x403;
 const DISPDIB_STOP = 0x404;
+const DISPDIB_CLOSE = 0x402;
+// Every send answers a dispdib.h DISPLAYDIB_* code.
+const NOERROR = 0, INVALIDDIB = 2;
 
 // $DISPDIB_STATE: hwnd, running, width, height, bpp, palette, available.
 const ST_HWND = 0, ST_RUNNING = 4, ST_WIDTH = 8, ST_HEIGHT = 12;
@@ -105,8 +108,8 @@ async function main() {
 
   const hwnd = 0x00010009;
   assert.strictEqual(state(ST_AVAILABLE), 0, 'no mode is set before anyone asks for one');
-  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), 1,
-    'the mode message is accepted');
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), NOERROR,
+    'the mode message is accepted with DISPLAYDIB_NOERROR, which Monster Truck Madness 2 tests for');
   assert.strictEqual(state(ST_HWND), hwnd, 'the display window is remembered');
   assert.strictEqual(state(ST_WIDTH), 320, 'biWidth is read from the header');
   assert.strictEqual(state(ST_HEIGHT), 200, 'and biHeight');
@@ -118,27 +121,31 @@ async function main() {
   // A header with no palette behind it is still a valid mode; what must not
   // happen is reading 256 RGBQUADs the caller did not send.
   e.guest_write32(cds + 4, 0x28);
-  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), 1,
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), NOERROR,
     'a bare BITMAPINFOHEADER is accepted');
   assert.strictEqual(state(ST_PALETTE), 0, 'and reports no palette with it');
 
   // Short or absent data is a malformed send, not a mode change.
   e.guest_write32(cds + 4, 8);
-  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), 0,
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), INVALIDDIB,
     'a cbData too small to hold a header is refused');
   e.guest_write32(cds + 4, 0x428);
   e.guest_write32(cds + 8, 0);
-  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), 0,
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, WM_COPYDATA, 0, cds), INVALIDDIB,
     'and so is a null lpData');
 
   // --- start / stop ---------------------------------------------------------
   assert.strictEqual(state(ST_RUNNING), 0, 'the display does not start by itself');
-  assert.strictEqual(e.test_dispdib_wndproc(hwnd, DISPDIB_START, 0, 0), 1,
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, DISPDIB_START, 0, 0), NOERROR,
     '0x403 starts the full-screen display');
   assert.strictEqual(state(ST_RUNNING), 1, 'and the state says so');
-  assert.strictEqual(e.test_dispdib_wndproc(hwnd, DISPDIB_STOP, 0, 0), 1,
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, DISPDIB_STOP, 0, 0), NOERROR,
     '0x404 stops it again');
   assert.strictEqual(state(ST_RUNNING), 0, 'and takes the state back down');
+  e.test_dispdib_wndproc(hwnd, DISPDIB_START, 0, 0);
+  assert.strictEqual(e.test_dispdib_wndproc(hwnd, DISPDIB_CLOSE, 0, 0), NOERROR,
+    '0x402 (DDM_CLOSE) leaves the display, which Monster Truck Madness 2 sends on exit');
+  assert.strictEqual(state(ST_RUNNING), 0, 'and stops it');
 
   // An ordinary window message is not part of the protocol and must fall
   // through rather than trap: the window still gets WM_PAINT, WM_DESTROY and

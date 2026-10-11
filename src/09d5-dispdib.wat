@@ -15,6 +15,11 @@
   ;; and 0x404 (stop). How a frame of pixels arrives is deliberately NOT
   ;; guessed here: every other private message traps by name, so the first run
   ;; that needs one says which it is instead of silently drawing nothing.
+  ;;
+  ;; Every send answers a dispdib.h DISPLAYDIB_* code, so 0 (NOERROR) is
+  ;; success. Monster Truck Madness 2 (Monsterx.exe 0x5439a0 / 0x4200db) tests
+  ;; both the WM_COPYDATA mode send and 0x403 with `test eax,eax / jnz` into
+  ;; "Unable to start DisplayDIB Mode!", and sends 0x402 (DDM_CLOSE) on exit.
   ;; ---------------------------------------------------------------------
 
   (data (region.addr $DISPDIB_STRINGS 0x00) "DisplayDibWindow\00")
@@ -46,8 +51,9 @@
     (local $bits i32) (local $cb i32) (local $bpp i32)
     (local.set $cb (call $gl32 (i32.add (local.get $cds) (i32.const 4))))
     (local.set $bits (call $gl32 (i32.add (local.get $cds) (i32.const 8))))
-    (if (i32.eqz (local.get $bits)) (then (return (i32.const 0))))
-    (if (i32.lt_u (local.get $cb) (i32.const 0x28)) (then (return (i32.const 0))))
+    ;; DISPLAYDIB_INVALIDDIB (2) for a send with no header in it.
+    (if (i32.eqz (local.get $bits)) (then (return (i32.const 2))))
+    (if (i32.lt_u (local.get $cb) (i32.const 0x28)) (then (return (i32.const 2))))
     (local.set $bpp (call $gl16 (i32.add (local.get $bits) (i32.const 14))))
     (i32.store offset=8 (global.get $DISPDIB_STATE)
       (call $gl32 (i32.add (local.get $bits) (i32.const 4))))
@@ -58,7 +64,7 @@
     (i32.store offset=20 (global.get $DISPDIB_STATE)
       (i32.gt_u (local.get $cb) (i32.const 0x28)))
     (i32.store offset=24 (global.get $DISPDIB_STATE) (i32.const 1))
-    (i32.const 1))
+    (i32.const 0))
 
   (func $dispdib_wndproc (param $hwnd i32) (param $msg i32) (param $wParam i32) (param $lParam i32) (result i32)
     (call $dispdib_attach (local.get $hwnd))
@@ -71,15 +77,17 @@
         (call $crash_unimplemented
           (region.addr $DISPDIB_STRINGS 0x30))
         (return (i32.const 0))))
-    ;; 0x403 start / 0x404 stop the full-screen display.
+    ;; 0x403 start / 0x404 stop the full-screen display; 0x402 (DDM_CLOSE)
+    ;; leaves it, which stops it too.
     (if (i32.eq (local.get $msg) (i32.const 0x403))
       (then
         (i32.store offset=4 (global.get $DISPDIB_STATE) (i32.const 1))
-        (return (i32.const 1))))
-    (if (i32.eq (local.get $msg) (i32.const 0x404))
+        (return (i32.const 0))))
+    (if (i32.or (i32.eq (local.get $msg) (i32.const 0x404))
+                (i32.eq (local.get $msg) (i32.const 0x402)))
       (then
         (i32.store offset=4 (global.get $DISPDIB_STATE) (i32.const 0))
-        (return (i32.const 1))))
+        (return (i32.const 0))))
     ;; Anything else in the private range is a piece of the protocol we have
     ;; not seen yet. Trapping names it; returning 0 would leave a program
     ;; drawing into a driver that quietly discards every frame.
