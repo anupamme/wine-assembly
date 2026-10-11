@@ -1499,9 +1499,38 @@ console.log('PASS  touch controls hold, pair and release guest keys');
   area = TouchControls.getBoardArea();
   assert.strictEqual(area.x * 844, 204, 'landscape rails already clear the notch');
   assert.strictEqual(area.h, 1);
+
+  // The right column stacks bottom-up: 18px padding, the keyboard pill's row
+  // (40), then each button row, 12px apart. quake2_demo's Jump/Crouch + Fire
+  // is 18+40+12+58+12+76 = 216px, and a shooter's third row (Use/Weapon) makes
+  // it 286px. The fixed 204px portrait band left the top row on the bottom of
+  // the picture -- Daikatana's and Kingpin's HUD at 390x844.
+  TouchControls.el._rect = { left: 0, top: 0, width: 390, height: 844 };
+  global.window.innerWidth = 390;
+  global.window.visualViewport.height = 844;
+  global.window.getComputedStyle = () => ({ getPropertyValue: () => '0px' });
+  const pad = { pos: 'bl', style: 'cross', hold: true, vks: { up: 0x26, down: 0x28, left: 0x41, right: 0x44 } };
+  const twoRows = [
+    { vk: 0x43, label: 'Crouch', pos: 'br' }, { vk: 0x20, label: 'Jump', pos: 'br' },
+    { mouseButton: 0, label: 'Fire', pos: 'br', row: 1, width: 152, height: 76 },
+  ];
+  TouchControls.setLayout({ screenAnchored: true, dpad: pad, buttons: twoRows });
+  area = TouchControls.getBoardArea();
+  assert.strictEqual(Math.round((area.y + area.h) * 844), 844 - 216,
+    'the band covers the whole two-row column, pill row included (quake2_demo)');
+  TouchControls.setLayout({ screenAnchored: true, dpad: pad, buttons: [...twoRows,
+    { vk: 0x0D, label: 'Use', pos: 'br', row: 2 }, { vk: 0x51, label: 'Weapon', pos: 'br', row: 2 }] });
+  area = TouchControls.getBoardArea();
+  assert.strictEqual(Math.round((area.y + area.h) * 844), 844 - 286,
+    'a third button row reserves its full height, so the picture ends above it');
+  // A pad alone (186px with padding) still gets the 204px minimum.
+  TouchControls.setLayout({ screenAnchored: true, dpad: pad, buttons: [] });
+  area = TouchControls.getBoardArea();
+  assert.strictEqual(Math.round((area.y + area.h) * 844), 844 - 204,
+    'a short stack keeps the 204px minimum band');
   TouchControls.destroy();
   global.window = previous;
-  console.log('PASS board area: status/notch insets, no double inset, keyboard freeze, landscape rails');
+  console.log('PASS board area: status/notch insets, no double inset, keyboard freeze, landscape rails, tall clusters');
 }
 
 // Landscape gutter centring. A portrait-shaped game letterboxed on a landscape
