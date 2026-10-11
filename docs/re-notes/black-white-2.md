@@ -8713,3 +8713,31 @@ So a set `[0x18ed55c]` disables every mouse-bound action, which would explain a 
 - with `--count` on `0x60ee43` / `0x60ee6b` (zoom applied) and `0x60ee38` (dispatcher refused).
 
 If the flag clears in free play and the wheel then moves `[0x19a30e0]` and the view, the camera works and was only script-locked.
+
+### Answer (bx_yv8w7tcv, runs/20261011T1840Z-bw2-lock-flag-boat): the intro owns the camera
+
+We read the game live: a gate census every 60 s through `eval`, plus short bursts of `exports.set_count` hit counters.
+
+**[0x18ed55c] is not the lock.** It is set only in the front end (120-420 s) and is 0 from 483 s on, including in-world during the intro.
+
+**During the Land3 intro** (~2200-2500 s), every input stage works:
+- the poll's wheel case `0x9b0a28` fires;
+- `0x60ed90` runs every frame;
+- the dispatcher accepts (`0x60ee55`);
+- `[0x19a30e0]` follows `di-wheel` exactly (0 → -240 → 960).
+
+But nothing reads the value:
+- the camera-controller virtual method **`0x519390`** (vtable slot `0xc4630c`; its zoom read-and-clear is at `0x5195d9`) has **0 entries**;
+- so does the other reader at `0x511e66`.
+
+A script camera owns the view.
+
+**After the intro**, from the "Click on the Gold Scroll" objective at ~4200 s:
+- `0x519390` runs every frame. It passes both early gates: `0x663740() == 0`, and the vcall `[+0x3b8]` returns non-zero; the early exit `0x51a132` stays at 0.
+- It consumed the parked 960.
+- `di-wheel` visibly zooms (w00 → w02).
+- Middle and left drags also move the view (s02/s03, t01 → t02).
+
+So the camera works with our DirectInput mouse. The earlier "camera never moves" runs tested inside the intro, and some ran before 009c8ff11, when the wheel did not exist.
+
+Cursor note: the game cursor (`0x1d733e8+0xc4/+0xc8`) reads (311,345) while the hand is drawn at about (258,295) in the 640x480 capture, a scale of about 1.2 for the 800x600 back buffer.
