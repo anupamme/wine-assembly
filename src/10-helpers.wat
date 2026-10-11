@@ -4497,32 +4497,38 @@
     (i32.or (i32.eqz (local.get $owner))
             (i32.eq (local.get $owner) (global.get $current_thread_id))))
 
-  ;; $paint_flag_first() → hwnd of first dirty slot (0 if none), no clear.
+  ;; $paint_flag_first() → first dirty hierarchy, lowest dirty sibling first.
+  ;; Returns 0 if none; does not clear the flag.
   (func $paint_flag_first (result i32)
-    (local $i i32)
-    (if (i32.eqz (call $paint_dirty_count)) (then (return (i32.const 0))))
-    (block $done (loop $scan
-      (br_if $done (i32.ge_u (local.get $i) (global.get $MAX_WINDOWS)))
-      (if (call $paint_flag_mine (local.get $i))
-        (then (return (i32.load (call $wnd_record_addr (local.get $i))))))
-      (local.set $i (i32.add (local.get $i) (i32.const 1)))
-      (br $scan)))
-    (i32.const 0))
-
-  ;; $paint_flag_take() → hwnd of first dirty slot (0 if none), clears it.
-  (func $paint_flag_take (result i32)
-    (local $i i32) (local $hwnd i32)
+    (local $i i32) (local $hwnd i32) (local $best i32) (local $parent i32)
     (if (i32.eqz (call $paint_dirty_count)) (then (return (i32.const 0))))
     (block $done (loop $scan
       (br_if $done (i32.ge_u (local.get $i) (global.get $MAX_WINDOWS)))
       (if (call $paint_flag_mine (local.get $i))
         (then
-          (call $paint_flag_store (local.get $i) (i32.const 0))
           (local.set $hwnd (i32.load (call $wnd_record_addr (local.get $i))))
-          (return (local.get $hwnd))))
+          (if (i32.eqz (local.get $best))
+            (then
+              (local.set $best (local.get $hwnd))
+              (local.set $parent (call $wnd_get_parent (local.get $hwnd))))
+            (else
+              ;; Preserve the first dirty hierarchy's priority, but paint its
+              ;; siblings back-to-front on the shared surface (modal pump).
+              (if (i32.and
+                    (i32.eq (call $wnd_get_parent (local.get $hwnd)) (local.get $parent))
+                    (i32.lt_s (call $wnd_z_get (local.get $hwnd))
+                      (call $wnd_z_get (local.get $best))))
+                (then (local.set $best (local.get $hwnd))))))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $scan)))
-    (i32.const 0))
+    (local.get $best))
+
+  ;; $paint_flag_take() → next dirty hwnd (0 if none), clears its flag.
+  (func $paint_flag_take (result i32)
+    (local $hwnd i32)
+    (local.set $hwnd (call $paint_flag_first))
+    (if (local.get $hwnd) (then (call $paint_flag_clear_hwnd (local.get $hwnd))))
+    (local.get $hwnd))
 
   ;; $paint_flag_any() → 1 if any slot dirty, else 0.
   (func $paint_flag_any (result i32)
@@ -4703,6 +4709,30 @@
   ;; to the parent's fallback WndProc. Keeping this inside WAT prevents JS
   ;; from owning control paint policy and ensures native controls validate
   ;; even though they paint through host GDI primitives without BeginPaint.
+  ;; A pending native background must paint before a higher sibling. Guest
+  ;; subclasses keep their existing message-delivery path; this only orders
+  ;; the controls consumed synchronously by the native drain below.
+  (func $paint_has_lower_native_sibling (param $hwnd i32) (result i32)
+    (local $slot i32) (local $sib i32) (local $parent i32)
+    (local.set $parent (call $wnd_get_parent (local.get $hwnd)))
+    (block $done (loop $scan
+      (local.set $slot (call $wnd_next_child_slot (local.get $parent) (local.get $slot)))
+      (br_if $done (i32.lt_s (local.get $slot) (i32.const 0)))
+      (if (call $paint_flag_mine (local.get $slot))
+        (then
+          (local.set $sib (call $wnd_slot_hwnd (local.get $slot)))
+          (if (i32.and
+                (i32.and
+                  (i32.lt_s (call $wnd_z_get (local.get $sib)) (call $wnd_z_get (local.get $hwnd)))
+                  (call $wnd_is_effectively_visible (local.get $sib)))
+                (i32.and
+                  (i32.ne (call $ctrl_table_get_class (local.get $sib)) (i32.const 0))
+                  (i32.eqz (call $ctrl_is_subclassed (local.get $sib)))))
+            (then (return (i32.const 1))))))
+      (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
+      (br $scan)))
+    (i32.const 0))
+
   (func $paint_drain_native_control_paints (result i32)
     (local $i i32) (local $hwnd i32) (local $n i32) (local $guard i32) (local $progress i32)
     (local $native_status i32)
@@ -4739,7 +4769,9 @@
               (then
                 (if (i32.or
                       (call $wnd_has_pending_ancestor_erase (local.get $hwnd))
-                      (call $wnd_has_pending_ancestor_paint (local.get $hwnd)))
+                      (i32.or
+                        (call $wnd_has_pending_ancestor_paint (local.get $hwnd))
+                        (call $paint_has_lower_native_sibling (local.get $hwnd))))
                   (then
                     (call $ctrl_paint_trace_emit (local.get $hwnd)
                       (call $ctrl_table_get_class (local.get $hwnd)) (i32.const 1))
@@ -4781,14 +4813,43 @@
       (br $again)))
     (local.get $n))
 
+  ;; Shared-surface exposure paints siblings back-to-front. Slot/creation
+  ;; order is not z-order: dialog templates append each item at HWND_BOTTOM,
+  ;; and a later bitmap background must not cover earlier controls.
+  (func $paint_next_child_slot (param $parent i32) (param $after i32) (result i32)
+    (local $slot i32) (local $rank i32) (local $after_rank i32)
+    (local $best i32) (local $best_rank i32)
+    (local.set $best (i32.const -1))
+    (if (i32.ge_s (local.get $after) (i32.const 0))
+      (then (local.set $after_rank
+        (i32.load (call $wnd_z_addr_for_slot (local.get $after))))))
+    (block $done (loop $scan
+      (local.set $slot (call $wnd_next_child_slot (local.get $parent) (local.get $slot)))
+      (br_if $done (i32.lt_s (local.get $slot) (i32.const 0)))
+      (local.set $rank (i32.load (call $wnd_z_addr_for_slot (local.get $slot))))
+      (if (i32.and
+            (i32.or (i32.lt_s (local.get $after) (i32.const 0))
+              (i32.or (i32.gt_s (local.get $rank) (local.get $after_rank))
+                (i32.and (i32.eq (local.get $rank) (local.get $after_rank))
+                  (i32.gt_s (local.get $slot) (local.get $after)))))
+            (i32.or (i32.lt_s (local.get $best) (i32.const 0))
+              (i32.lt_s (local.get $rank) (local.get $best_rank))))
+        (then
+          (local.set $best (local.get $slot))
+          (local.set $best_rank (local.get $rank))))
+      (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
+      (br $scan)))
+    (local.get $best))
+
   ;; Paint visible WAT-native controls below a shown parent immediately.
   ;; This models the Win98 visible-region pass that exposes child controls
   ;; when a dialog/page is shown. It is intentionally WAT-only: JS still only
   ;; supplies canvases and primitive GDI operations.
   (func $paint_flush_visible_native_children (param $parent i32) (result i32)
     (local $slot i32) (local $ch i32) (local $style i32) (local $n i32)
+    (local.set $slot (i32.const -1))
     (block $done (loop $scan
-      (local.set $slot (call $wnd_next_child_slot (local.get $parent) (local.get $slot)))
+      (local.set $slot (call $paint_next_child_slot (local.get $parent) (local.get $slot)))
       (br_if $done (i32.eq (local.get $slot) (i32.const -1)))
       (local.set $ch (call $wnd_slot_hwnd (local.get $slot)))
       (local.set $style (call $wnd_get_style (local.get $ch)))
@@ -4807,7 +4868,6 @@
               (if (call $wnd_has_pending_ancestor_erase (local.get $ch))
                 (then
                   (call $paint_flag_set_inv (local.get $ch))
-                  (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
                   (br $scan)))
               (call $update_invalidate_full (local.get $ch))
               (drop (call $control_wndproc_dispatch
@@ -4824,7 +4884,6 @@
               (local.set $n (i32.add
                 (local.get $n)
                 (call $paint_flush_visible_native_children (local.get $ch))))))))
-      (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
       (br $scan)))
     (local.get $n))
 
@@ -4846,8 +4905,9 @@
     (if (i32.eqz (i32.and (call $wnd_get_style (local.get $parent))
                           (i32.const 0x10000000)))  ;; WS_VISIBLE
       (then (return (i32.const 0))))
+    (local.set $slot (i32.const -1))
     (block $done (loop $scan
-      (local.set $slot (call $wnd_next_child_slot (local.get $parent) (local.get $slot)))
+      (local.set $slot (call $paint_next_child_slot (local.get $parent) (local.get $slot)))
       (br_if $done (i32.eq (local.get $slot) (i32.const -1)))
       (local.set $ch (call $wnd_slot_hwnd (local.get $slot)))
       (local.set $style (call $wnd_get_style (local.get $ch)))
@@ -4878,7 +4938,6 @@
               (local.set $n (i32.add
                 (local.get $n)
                 (call $paint_flush_shown_native_children (local.get $ch))))))))
-      (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
       (br $scan)))
     (local.get $n))
 

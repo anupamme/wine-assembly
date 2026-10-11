@@ -60,3 +60,40 @@ Reviewed images and receipts are in
 The fork omitted the build, stdole2.tlb and some Node dependencies; the final
 image runs follow a full build, restored TLB, and a clean dependency install.
 Earlier no-image attempts are retained as harness failures, not game evidence.
+
+## Video dialog paint order and Direct3D continuation
+
+Run `20261011T1455Z-turok-dialog` isolates the blank dialog: template 131
+creates the ordinary controls, then SS_BITMAP control 1082 (HWND 0x10030,
+301x232). Its z rank is correctly below the other controls, but creation-slot
+paint order draws it last over them. A diagnostic repaint of the foreground
+controls restores them without changing any guest code or resources.
+
+The fix orders immediate child exposure, the native queued repaint drain, and
+modal sibling paint selection back-to-front. Changing immediate exposure alone
+is insufficient: the queued pass covers the dialog again. The extended
+`test-static-bitmap-control.js` asserts pixels for immediate, queued native and
+modal painting, explicit z-order changes, and hidden siblings. Original source
+fails; the exposure-only intermediate fails the queued case. The final patch
+passes that test, parent/child order, nested-child painting, child clip policies
+(49,152 points), and the full build on bx_drmnxa44. The module is based on
+main `3cf809538`; patched WASM SHA-256 is
+`f7b5a629258a4c7fadc39e1278aa18e95ba69eda4f527631f6782d4079aafac5`.
+
+Reviewed `video-fixed.png` shows the restored settings. Ordinary clicks open
+the selector at `(435,170)` and select **Wine Assembly DirectDraw (Direct3D)**
+at `(300,207)` (`driver-list.png`, `d3d-selected.png`). Clicking Video's OK
+at `(211,350)` opens **Direct3D Properties**, not gameplay. Its video-card
+field says `Unknown card -- Select from list below`, with 640x480/16-bit
+defaults (`d3d-launch.png`). A click at `(444,120)` does not visibly open that
+second selector; the trace targets groupbox 0x10033. Cause unconfirmed.
+
+Ordinary Return in Direct3D Properties advances guest execution and then
+traps at batch 217 with EIP `0x0052bec0` in the EXE's string/data area,
+ESP `0x074ff2c5`; the preceding batch is in video_d3d at runtime `0x0130b439`
+(original `0x1000f439`). This is a new continuation failure, not the old Glide
+grEnable trap. `d3d-enter.log` and its receipt preserve it; the crash writes
+no final `d3d-enter.png`. Diagnose the callback/return path and card selection
+before claiming a D3D launch. No gameplay, browser, FPS or audio qualification.
+All commands and before/after evidence remain in the run directory; no licence
+approval was answered and no public deployment was performed.
