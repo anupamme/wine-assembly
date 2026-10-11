@@ -270,3 +270,14 @@ browser dependencies and the registered fixture directory. Rehydrated npm
 dependencies, full build and candidate PREP succeeded remotely; browser is
 now Chromium152, distinct from the original155 evidence. No runtime fix is
 claimed by this investigation update.
+
+Run20261011T1744Z-turok-driver-table narrows this further: after opening Video,
+count is2 and both complete names are present in guest records (Glide and
+Wine Assembly DirectDraw (Direct3D)), while selection is-1 and the combo is
+visibly blank. Enumeration is therefore not the immediate failure in this
+run. Next inspect GetDlgItem(0x48a), CB_ADDSTRING delivery, combo userdata and
+its inner listbox lifetime across the worker/modal boundary. Do not change
+the driver DLL or force the guest selection as a substitute for that fix.
+Same WASM SHA256c065eb4dbbf71f7672bdbc9a6c07a907aa9420a044eea79c4baacc6da2b5dcbc;
+Chromium152, Threads, missing test/binaries/tlbs/stdole2.tlb (recorded
+environment difference). Capture and raw records are retained in the run.
