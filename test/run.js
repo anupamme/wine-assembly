@@ -623,7 +623,8 @@ if (CONTROL_FROZEN_START && REAL_TICKS) {
 // before any input lands, while --real-ticks gives a 16-bit app that runs
 // 5000 batches in a third of a second about three timer ticks in total, so
 // nothing ever moves. Turn it down to drive a timer-paced game headlessly.
-const TICK_MS_PER_BATCH = Math.max(0, parseFloat(getArg('tick-ms-per-batch', '200')) || 0);
+// TICK_MS_PER_BATCH itself is defined after APP_ENTRY: an app can register its
+// own default (`cliTickMsPerBatch`).
 const CLOCK_ORIGIN = Date.now();
 // --dx-lock-pause-ms=N: charge N milliseconds of GUEST time to every Lock of a
 // PRIMARY DirectDraw surface and to every Flip. Off (0) by default.
@@ -1142,6 +1143,18 @@ const APP_ENTRY = (() => {
 // guest's exception filters synchronously (Serious Sam's stream buffers).
 const FAULT_NULL_MODE = FAULT_NULL || (APP_ENTRY && APP_ENTRY.reservedPageFaults === true ? 5
   : APP_ENTRY && APP_ENTRY.nullPageFaults === true ? 4 : 0);
+// The batch clock (see --tick-ms-per-batch above). An app registered with
+// `cliTickMsPerBatch` gets that default; the flag still wins. A batch is a
+// fixed block budget, so for a CPU-bound renderer 200 ms/batch reads as a
+// machine that takes minutes per frame. The Plus! 98 D3DRM savers react to
+// that as they would on such a machine: every scene's display timer has run
+// out by the first Flip, so the switcher rebuilds the D3DRM device after each
+// frame and a capture finds a freshly cleared target (scr_scifi: 6 devices,
+// 5 Flips in 120000 batches at 200 or 20 ms/batch; 3 devices, 2120 Flips at 2).
+// The browser runs on the real clock and never reads this.
+const TICK_MS_PER_BATCH = Math.max(0, parseFloat(getArg('tick-ms-per-batch',
+  String(APP_ENTRY && Number.isFinite(APP_ENTRY.cliTickMsPerBatch)
+    ? APP_ENTRY.cliTickMsPerBatch : 200))) || 0);
 // An app's registry `wallClock` date pins the calendar origin like
 // --wall-clock-ms does; the flag wins. With neither, the CLI pins it to
 // DEFAULT_CALENDAR_MS, so two runs of one command see the same calendar: a

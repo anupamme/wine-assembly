@@ -441,7 +441,7 @@ table still stands where the probe reached the same point.
 | dx_flip3dtl, dx_globe, dx_viewer, dx_boids, dx_tunnel, dx_twist | renders | renders | samples animate per presented frame, so final frames differ by arm |
 | scr_jazz, scr_rockroll, scr_fallingl, scr_geometry | renders | renders | |
 | scr_architec | white at 35 s; renders at 60k batches (series) | same | a long first load, not a fault |
-| scr_scifi, scr_oasaver | **uniform frame** through 2.9M batches (120 s) on the default CLI clock | same | render with the 10-06 flags `--tick-ms-per-batch=2 --dx-surfaces` (scifi 237,900-byte frame): D3DRM-SCR-DEFAULT-CLOCK-UNIFORM-20261011 |
+| scr_scifi, scr_oasaver | **uniform frame** through 2.9M batches (120 s) on the default CLI clock | same | render with the 10-06 flags `--tick-ms-per-batch=2 --dx-surfaces` (scifi 237,900-byte frame): D3DRM-SCR-DEFAULT-CLOCK-UNIFORM-20261011. **Resolved:** a clock artifact (scene timers expire before the first Flip, so the device is rebuilt every frame); the seven savers now register `cliTickMsPerBatch: 2`, see `re-notes/plus98-dx-screensavers.md` |
 | tomb_raider_2_demo, tomb_raider_3_demo | in-level after Enter on the setup dialog | same; identical frames at batches 60k/120k | |
 | gta2_demo, darkstone_demo, cmr2_demo, colin_mcrae_rally_demo, avp_alien_demo, avp_marine_demo, blood2_demo, mw3, diablo2_demo | menu | menu | |
 | drakan_demo, mcm, midtown_madness_trial | menu after Enter on the start-up message box | same | midtown: vehicle menu; mcm: profile name entry |

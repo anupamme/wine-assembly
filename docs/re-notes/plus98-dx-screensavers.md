@@ -23,6 +23,18 @@ node test/run.js --app=scr_rockroll --quiet-api --no-close --max-batches=120000 
   --tick-ms-per-batch=2 --dx-surfaces --png=out.png
 ```
 
+**The registry now sets this** (2026-10-11, D3DRM-SCR-DEFAULT-CLOCK-UNIFORM):
+all seven entries carry `cliTickMsPerBatch: 2`, which `test/run.js --app=`
+uses unless `--tick-ms-per-batch` is given, so a plain probe no longer
+photographs the cleared target. Re-measured on main `dcbdf0521`, 120000
+batches with `--trace-api=IDirect3D2_CreateDevice,IDirectDrawSurface_Flip`:
+scr_scifi 6 devices / 5 Flips at 200 and at 20 ms/batch, 3 devices / 2120
+Flips at 2; scr_oasaver 5/2 at 200, 5/44 at 20, 4/224 at 2. Organic Art
+(oasaver) still spends most batches loading its next scene even at 2 ms, so
+its captures are uniform except mid-scene (b180k rendered, b130k/b220k
+loading): capture a series. Evidence
+`scratch/runs/20261011T0640Z-scr-default-clock-w4/`.
+
 **Use `--tick-ms-per-batch=2` (or 1-5).** At the default 200 ms/batch one
 software-rasterized frame costs minutes of guest time, every form's display
 timer has expired by the time it flips, and Organic Art tears the whole D3DRM
