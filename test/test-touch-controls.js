@@ -82,7 +82,10 @@ global.document = {
   addEventListener: (...args) => body.addEventListener(...args),
   removeEventListener: (...args) => body.removeEventListener(...args),
 };
-global.window = Object.assign(makeEl('window'), { innerHeight: 844 });
+// The minimum key hold defers releases on a timer. The cases below assert
+// message order synchronously, so they run with it off; the last case turns
+// it back on and checks the hold itself.
+global.window = Object.assign(makeEl('window'), { innerHeight: 844, __waMinKeyHoldMs: 0 });
 global.location = { search: '' };
 
 const touchEvent = (changed, active = changed) => ({
@@ -1693,3 +1696,59 @@ console.log('PASS  touch controls hold, pair and release guest keys');
     'a dialog or menu restores the complete native window');
   console.log('PASS Rodent phone Fit preserves the HUD and full portrait window');
 }
+
+// A tap is held long enough for a polling game to see it. Dethkarz reads
+// Enter through GetDeviceState and ignored overlay taps whose keydown and
+// keyup came in one JS turn; it advanced on 300 ms holds (WebKit, Threads).
+(async () => {
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const seen = [];
+  TouchControls.destroy();
+  TouchControls.install({ document: global.document, renderer: {
+    handleKeyDown: vk => seen.push(['down', vk]),
+    handleKeyUp: vk => seen.push(['up', vk]),
+  } });
+  TouchControls.setLayout(LAYOUT);
+  const all = [];
+  (function walk(node) { for (const child of node.children) { all.push(child); walk(child); } })(TouchControls.el);
+  const tap = all.find(el => el.className === 'tc-btn' && el.textContent === 'F2');
+  const hold = all.find(el => el.className === 'tc-btn' && el.textContent === 'Z');
+  global.window.__waMinKeyHoldMs = 60;
+  try {
+    tap.dispatch('touchstart', touchEvent([touch(900, 0, 0)]));
+    tap.dispatch('touchend', touchEvent([touch(900, 0, 0)]));
+    assert.deepStrictEqual(seen, [['down', 0x71]], 'a tap-mode key is still down after its touch ends');
+    await sleep(25);
+    assert.deepStrictEqual(seen, [['down', 0x71]], 'and still down inside the minimum hold');
+    await sleep(70);
+    assert.deepStrictEqual(seen, [['down', 0x71], ['up', 0x71]], 'it comes up once the minimum hold has passed');
+
+    seen.length = 0;
+    tap.dispatch('touchstart', touchEvent([touch(901, 0, 0)]));
+    tap.dispatch('touchstart', touchEvent([touch(902, 0, 0)]));
+    assert.deepStrictEqual(seen, [['down', 0x71], ['up', 0x71], ['down', 0x71]],
+      'a second press delivers the pending release first, keeping down/up/down');
+    await sleep(90);
+    assert.deepStrictEqual(seen.length, 4, 'the second press is released after its own hold');
+
+    seen.length = 0;
+    hold.dispatch('touchstart', touchEvent([touch(903, 0, 0)]));
+    await sleep(80);
+    hold.dispatch('touchend', touchEvent([touch(903, 0, 0)]));
+    assert.deepStrictEqual(seen, [['down', 0x5A], ['up', 0x5A]],
+      'a press already longer than the hold is released at once');
+
+    seen.length = 0;
+    hold.dispatch('touchstart', touchEvent([touch(904, 0, 0)]));
+    hold.dispatch('touchend', touchEvent([touch(904, 0, 0)]));
+    TouchControls.releaseAll();
+    assert.deepStrictEqual(seen, [['down', 0x5A], ['up', 0x5A]],
+      'releaseAll delivers a deferred release now, so no key outlives the layout');
+    await sleep(90);
+    assert.strictEqual(seen.length, 2, 'and its timer does not release the key a second time');
+  } finally {
+    global.window.__waMinKeyHoldMs = 0;
+    TouchControls.destroy();
+  }
+  console.log('PASS a touch key stays down for the minimum hold');
+})().catch(e => { console.error(e); process.exit(1); });
