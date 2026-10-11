@@ -62,6 +62,22 @@ async function main() {
         (local.get $s) (local.get $b) (local.get $c) (local.get $n) (local.get $f) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_send_core_frame") (param $s i32) (param $p i32) (param $n i32) (param $frame i32) (result i64)
+      (local $r i32)
+      (global.set $yield_reason (i32.const 0))
+      (i32.store offset=16 (global.get $reg_base) (i32.add (i32.const 0x300000) (local.get $frame)))
+      (local.set $r (call $vsock_send_core (local.get $s) (local.get $p) (local.get $n) (local.get $frame)))
+      (i64.or (i64.extend_i32_u (local.get $r))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsasend") (param $s i32) (param $b i32) (param $c i32) (param $n i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $gs32 (i32.const 0x00300018) (i32.const 0))
+      (call $gs32 (i32.const 0x0030001c) (i32.const 0))
+      (global.set $yield_reason (i32.const 0))
+      (call $dispatch_api_table (call $lookup_api_id "WSASend")
+        (local.get $s) (local.get $b) (local.get $c) (local.get $n) (i32.const 0) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     (func (export "test_wsa_startup") (param $data i32) (result i32)
       (call $handle_WSAStartup (i32.const 0x0202) (local.get $data)
         (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
@@ -500,6 +516,47 @@ async function main() {
     assert.strictEqual(wat.test_call_sendto(c,buf([4,3,2]),3,0,addr,16),3);
     assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsarecv(s,d,2,n,f,0))),0);assert.strictEqual(dv.getUint32(wa(n),true),3);assert.deepStrictEqual(readBuf(a,2),[4,3]);assert.strictEqual(readBuf(b,1)[0],2);
     delete hostContext.vlanWire;
+  });
+
+  check('stream send primitive restores both caller frames without duplicating bytes', () => {
+    for(const frame of [20,32]){
+      wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
+      const {cli,acc}=connectedPair(),data=buf(100000),one=buf([0x79]),out=buf(100000);
+      const filled=wat.test_call_send(cli,data,100000,0);assert(filled>0&&filled<100000);
+      setNonblocking(cli,false);
+      let r=wat.test_send_core_frame(cli,one,1,frame);assert.strictEqual(Number(BigInt.asIntN(32,r)),-2);assert.strictEqual(Number(r>>32n),0x300000);assert.strictEqual(wat.get_yield_reason(),8);
+      assert.strictEqual(wat.test_call_recv(acc,out,filled,0),filled);
+      r=wat.test_send_core_frame(cli,one,1,frame);assert.strictEqual(Number(BigInt.asIntN(32,r)),1);assert.strictEqual(Number(r>>32n),0x300000+frame);
+      assert.strictEqual(wat.test_call_recv(acc,out,2,0),1);assert.strictEqual(readBuf(out,1)[0],0x79);
+      assert.strictEqual(wat.test_call_recv(acc,out,2,0),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10035);
+    }
+  });
+
+  check('WSASend blocking gather resumes every byte once and nonblocking returns a prefix', () => {
+    for(const blocking of [false,true]) {
+      wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
+      const {cli,acc}=connectedPair();setNonblocking(cli,!blocking);
+      const first=Array.from({length:37001},(_,i)=>i%251),second=Array.from({length:63007},(_,i)=>(i+17)%251),expected=first.concat(second);
+      const a=buf(first),b=buf(second),d=buf(16),n=buf(4),out=buf(110000),dv=new DataView(memory.buffer),set=(p,v)=>dv.setUint32(wa(p),v,true);
+      set(d,first.length);set(d+4,a);set(d+8,second.length);set(d+12,b);set(n,0x1234);
+      const collected=[];let completed=false,parks=0;
+      for(let i=0;i<20;i++) {
+        const r=wat.test_wsasend(cli,d,2,n);
+        if(wat.get_yield_reason()===8){parks++;assert.strictEqual(Number(r>>32n),0x300000);assert.strictEqual(dv.getUint32(wa(n),true),0x1234,'no premature completion');}
+        else {assert.strictEqual(Number(BigInt.asIntN(32,r)),0);assert.strictEqual(Number(r>>32n),0x300020);completed=true;}
+        const got=wat.test_call_recv(acc,out,110000,0);assert(got>0);collected.push(...readBuf(out,got));
+        if(completed)break;
+      }
+      assert(completed);assert.deepStrictEqual(collected,expected.slice(0,collected.length));assert.strictEqual(dv.getUint32(wa(n),true),collected.length);
+      if(blocking){assert(parks>0);assert.strictEqual(collected.length,expected.length);}else{assert.strictEqual(parks,0);assert(collected.length<expected.length);}
+      assert.strictEqual(wat.test_call_recv(acc,out,110000,0),-1);
+      // A new call at the same stack address starts at byte zero.
+      set(d,3);set(d+8,0);assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsasend(cli,d,2,n))),0);
+      assert.strictEqual(wat.test_call_recv(acc,out,110000,0),3);assert.deepStrictEqual(readBuf(out,3),first.slice(0,3));
+      // An invalid later buffer must not send a valid prefix first.
+      set(d+8,2);set(d+12,0);assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsasend(cli,d,2,n))),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+      assert.strictEqual(wat.test_call_recv(acc,out,110000,0),-1);
+    }
   });
 
   check('network event APIs report real TCP read, write and close readiness', () => {

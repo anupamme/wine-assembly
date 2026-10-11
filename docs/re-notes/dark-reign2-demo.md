@@ -280,3 +280,22 @@ The game has not yet exercised the receive API itself. Evidence and exact
 module hash: scratch/runs/20261011T2255Z-dark-reign2-wsarecv/.
 No menu/gameplay/FPS/audio claim. New boat bx_gyugsep2 retains fixtures until
 23:51Z; stdole2.tlb needed copying again after the fork and is now restored.
+
+## Non-overlapped TCP WSASend (2026-10-11 23:03Z)
+
+Flags-zero TCP WSASend gathers validated WSABUFs. Nonblocking sockets report
+the accepted prefix. Blocking sockets retain scalar progress in the calling
+thread's WASM instance across parking and return success only once all buffers
+are consumed; temporary heap storage is released before every yield. No changes
+to the caller's WSABUF descriptors. The shared stream primitive accepts the
+caller's unwind size (20 for send,32 for WSASend). Flags, overlapped/completion
+and connected-datagram modes remain fail-fast. [API contract](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasend).
+
+64/64 Winsock checks and full build PASS. The new test sends 100,008 distinct
+bytes across two buffers and repeated park/drain/retry cycles, checks exact
+ordering/no duplicates, partial nonblocking results, call reuse and validation
+before transmission. A progress-reset mutant fails completion. Reviewed ordinary
+replay clears WSASend export lookup and now stops at missing WSASocket,
+win32_socket.cpp:1817. It has not exercised the new send API itself yet.
+Evidence, module hash and capture: scratch/runs/20261011T2303Z-dark-reign2-wsasend/.
+No gameplay/FPS/audio qualification. Next WSASocket protocol-info/creation semantics.

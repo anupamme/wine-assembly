@@ -38754,5 +38754,12 @@
     "nargs": 7,
     "convention": "stdcall",
     "hash": 3419542478
+  },
+  {
+    "id": 4552,
+    "name": "WSASend",
+    "nargs": 7,
+    "convention": "stdcall",
+    "hash": 1618775544
   }
 ]
