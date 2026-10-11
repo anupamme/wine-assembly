@@ -9,7 +9,7 @@
 // for (any imported name is a known API) and ordinal-only imports still pass.
 
 const assert = require('assert');
-const { importsByDll } = require('../lib/dll-loader');
+const { importsByDll, isWindowsSystemDll } = require('../lib/dll-loader');
 const { loadLibraryDependencies } = require('../lib/process-boot');
 
 // A minimal PE32 image: one section at RVA 0x1000 holding the import table.
@@ -100,6 +100,20 @@ assert.strictEqual(r.deps.length, 1);
 assert.strictEqual(r.deps[0].fileName, 'redline.dll');
 assert.strictEqual(r.deps[0].fatal, false, 'an installed vendor dependency loads normally');
 assert(r.deps[0].bytes instanceof Uint8Array);
+
+// A Windows system DLL is present on every install even when no name imported
+// from it is emulated: Daikatana's world.dll imports StackWalk/Sym* from
+// imagehlp.dll, and refusing it failed every new game.
+const world = makePe([
+  { dll: 'KERNEL32.dll', names: ['GetTickCount'] },
+  { dll: 'IMAGEHLP.dll', names: ['StackWalk', 'SymInitialize'] },
+]);
+r = walk(world, apiKnown, {});
+assert.deepStrictEqual(r, { deps: [], asked: [] },
+  'an unemulated Windows system DLL binds to the stubs instead of failing the load');
+assert.strictEqual(isWindowsSystemDll('IMAGEHLP.dll'), true);
+assert.strictEqual(isWindowsSystemDll('winspool.drv'), true);
+assert.strictEqual(isWindowsSystemDll('redline.dll'), false);
 
 r = walk(trirend, null, {});
 assert.deepStrictEqual(r, { deps: [], asked: [] },
