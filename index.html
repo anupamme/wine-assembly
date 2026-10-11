@@ -1302,10 +1302,14 @@
       display: flex;
       position: fixed;
       top: env(safe-area-inset-top);
-      left: 0;
+      /* Clear of the touch overlay's top-corner buttons too (Esc/Enter/Opts):
+         the strip sits above the overlay, so a tap on a button under it never
+         reached the game. lib/touch-controls.js publishes how far each top
+         corner reaches; both are 0px when no overlay is up. */
+      left: var(--tc-top-left-reserve, 0px);
       /* Clear of the exit chip (30px at right:4px). A strip that covers the
          only way out of full screen is worse than no strip. */
-      right: calc(40px + env(safe-area-inset-right));
+      right: max(calc(40px + env(safe-area-inset-right)), var(--tc-top-right-reserve, 0px));
       /* 44px is Apple's minimum touch target, and this was 44. It has to be
          hit on the first try by someone who has not been told it is there,
          with a moving thumb, and 44 was reported as "quite thin" on the
@@ -1330,8 +1334,8 @@
       animation: gutter-nudge 1.6s ease-in-out infinite;
     }
     body.windowed-phone.scroll-collapse #scroll-collapse-gutter {
-      left: 0;
-      right: 0;
+      left: var(--tc-top-left-reserve, 0px);
+      right: var(--tc-top-right-reserve, 0px);
       box-sizing: border-box;
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);

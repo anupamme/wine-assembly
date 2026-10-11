@@ -66,6 +66,10 @@ function makeEl(tag) {
       for (const fn of (el._handlers.get(type) || []).slice()) fn(event);
     },
     get firstChild() { return el.children[0] || null; },
+    contains(node) {
+      for (let n = node; n; n = n.parentNode) if (n === el) return true;
+      return false;
+    },
   };
   return el;
 }
@@ -1695,6 +1699,42 @@ console.log('PASS  touch controls hold, pair and release guest keys');
   assert.strictEqual(renderer._fitModeSource(windowRect, false), windowRect,
     'a dialog or menu restores the complete native window');
   console.log('PASS Rodent phone Fit preserves the HUD and full portrait window');
+}
+
+// The page's scroll-collapse gutter sits above the overlay across the top of
+// the screen; the overlay tells it how far its top corners reach so a tap on
+// Esc/Enter lands on the button, not the gutter.
+{
+  const props = {};
+  global.document.documentElement = { style: { setProperty: (k, v) => { props[k] = v; } } };
+  const previousWidth = global.window.innerWidth;
+  global.window.innerWidth = 844;
+  TouchControls.destroy();
+  TouchControls.install({ document: global.document, renderer: { handleKeyDown() {}, handleKeyUp() {} } });
+  TouchControls.setLayout({ buttons: [
+    { vk: 0x1B, label: 'Esc', pos: 'tl', hold: false },
+    { vk: 0x0D, label: 'Enter', pos: 'tl', hold: false },
+    { vk: 0x71, label: 'F2', pos: 'tr' },
+    { vk: 0x5A, label: 'Z', pos: 'bl' },
+  ] });
+  const all = [];
+  (function walk(node) { for (const child of node.children) { all.push(child); walk(child); } })(TouchControls.el);
+  const btn = label => all.find(el => el.className === 'tc-btn' && el.textContent === label);
+  btn('Esc')._rect = { left: 8, top: 8, right: 72, bottom: 64, width: 64, height: 56 };
+  btn('Enter')._rect = { left: 80, top: 8, right: 153, bottom: 64, width: 73, height: 56 };
+  btn('F2')._rect = { left: 700, top: 8, right: 760, bottom: 64, width: 60, height: 56 };
+  btn('Z')._rect = { left: 8, top: 300, right: 80, bottom: 372, width: 72, height: 72 };
+  TouchControls.layoutZones();
+  assert.strictEqual(props['--tc-top-left-reserve'], '157px',
+    'the gutter starts right of the last top-left button (Enter ends at 153, +4)');
+  assert.strictEqual(props['--tc-top-right-reserve'], '148px',
+    'and ends left of the top-right button (844 - 700, +4); bottom corners reserve nothing');
+  TouchControls.destroy();
+  assert.strictEqual(props['--tc-top-left-reserve'], '0px', 'a torn-down overlay releases the top band');
+  assert.strictEqual(props['--tc-top-right-reserve'], '0px', 'on both sides');
+  delete global.document.documentElement;
+  global.window.innerWidth = previousWidth;
+  console.log('PASS the scroll-collapse gutter is told to clear the top-corner buttons');
 }
 
 // A tap is held long enough for a polling game to see it. Dethkarz reads
