@@ -165,6 +165,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Serious Sam: The First Encounter (demo) | [serious-sam.md](serious-sam.md) |
 | Outwars (trial) | [outwars-trial.md](outwars-trial.md) |
 | Pharaoh (demo) | [pharaoh-demo.md](pharaoh-demo.md) |
+| Homeworld (demo) | [homeworld-demo.md](homeworld-demo.md) |
 | SimCity 2000 Win95 Demo | [simcity-2000-demo.md](simcity-2000-demo.md) |
 | SkiFree (Entertainment Pack) | [skifree.md](skifree.md) |
 | Snood 2.2W | [snood.md](snood.md) |

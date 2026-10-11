@@ -1509,6 +1509,33 @@
       }
     },
     {
+      "id": "homeworld-demo",
+      "name": "Homeworld Demo",
+      "kind": "installer",
+      "version": "Homeworld Downloadable Version (DLD_05.1), Relic/Sierra 1999",
+      "executables": [
+        "HWDemo.exe"
+      ],
+      "sourcePage": "https://archive.org/details/HomeworldDemo",
+      "license": "Sierra On-Line demo EULA (eula.txt, shown by the installer): a limited licence to install and use one copy for personal use; s.3A forbids copying, reproduction, reverse engineering and disassembly, s.3B(i) forbids transferring reproductions. Kept localOnly; not a deployment input. Investigate with API traces only (no disassembly).",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/HomeworldDemo/HWDemo.exe",
+          "sha1": "27fd4faf192b06c8520e8b25284711f6a5824e87",
+          "type": "file",
+          "destination": "HWDemo.exe"
+        }
+      ],
+      "postExtract": [
+        { "type": "installHomeworldDemo", "installer": "HWDemo.exe", "into": "installed" }
+      ],
+      "cli": {
+        "maxBatches": 100,
+        "batchSize": 10000
+      }
+    },
+    {
       "id": "heroes-3-demo-installer",
       "name": "Heroes of Might and Magic III demo",
       "kind": "installer",
