@@ -197,3 +197,22 @@ Capture filenames describe intended checkpoints; reviewed contents show
 the selector still open. Next trace native-dialog touch/button dispatch,
 including hit coordinates and down/up pairing. No root cause yet; phone
 gameplay/steering/FPS/audio remain unverified. The desktop route is unaffected.
+
+## Native control touch fix
+
+Run2012Z traces the failed OK touch to the old radio cursor266,288 and
+HWND10005. A physical mouse at the same screen point reaches420,323 and
+HWND10006, closing the selector. Applying existing main05cac1070 (Drakan
+modal-touch guard) still fails this selector in run2015Z.
+
+The touch bridge now checks its existing native-control hit predicate before
+choosing trackpad/aim-only behavior. A native button receives the finger
+position and a held down/up pair. Game surfaces retain relative input.
+Reviewed run20261011T2017Z-recoil-native-control closes the graphics selector
+with the same touch. Regression fails old source at20,30 versus405,225,
+passes fixed for relative and aim-only profiles, and preserves non-control
+tap semantics. Edge-release and web-touch-input checks pass. The separate
+web-touch-cursor script skipped because its Chrome detector found none;
+the Puppeteer real-page replay above ran Chrome152 successfully.
+
+This fixes the phone selector; touch-only gameplay is still pending.

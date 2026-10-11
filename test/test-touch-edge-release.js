@@ -106,3 +106,29 @@ assert.deepStrictEqual(events.at(-1), ['up', 0, 180, 0],
   'without touchControls.edgeInset the bridge must not move the cursor');
 
 console.log('PASS  touch release near the screen edge parks the cursor inside edgeInset');
+
+// Native controls stay directly tappable even for relative/aim-only games.
+for (const aimOnly of [false, true]) {
+  runningApps[0].mobileTouch = 'trackpad';
+  runningApps[0].touchControls = { aimOnly };
+  renderer.touchWantsImmediatePress = (x, y) => x >= 400 && y >= 200;
+  renderer._mouseX = 20; renderer._mouseY = 30;
+  events.length = 0;
+  tap(10 + Number(aimOnly), 450, 250);
+  assert.deepStrictEqual(events.filter(e => e[0] === 'down' || e[0] === 'up'),
+    [['down', toGuest(450), toGuest(250), 0], ['up', toGuest(450), toGuest(250), 0]],
+    'native button must receive paired input at the finger, independent of aim mode');
+}
+console.log('PASS native controls override relative touch mode');
+
+// A game-surface tap keeps trackpad/aim-only semantics.
+renderer.touchWantsImmediatePress = () => false;
+for (const aimOnly of [false, true]) {
+  runningApps[0].touchControls = { aimOnly };
+  renderer._mouseX = 20; renderer._mouseY = 30;
+  events.length = 0;
+  tap(20 + Number(aimOnly), 250, 150);
+  assert.deepStrictEqual(events.filter(e => e[0] === 'down' || e[0] === 'up'),
+    aimOnly ? [] : [['down', 20, 30, 0], ['up', 20, 30, 0]],
+    'game surface retains relative tap or aim-only semantics');
+}
