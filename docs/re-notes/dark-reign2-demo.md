@@ -81,3 +81,25 @@ and final game log are recorded in
 latched network-event/error reporting and event reset semantics together;
 do not add a silent empty-events stub to get past the lookup. No menu or
 gameplay is qualified yet.
+
+## Notification lifetime prerequisite
+
+The event API audit found that `closesocket` freed the socket slot but left
+its process-shared WSAAsyncSelect registration behind. A new TCP socket using
+that index could post FD_READ to the previous owner's window after a partial
+receive. The regression exercises close, slot reuse, a new TCP connection,
+send and partial receive: the control posts an unwanted message; the fix
+clears the registration before publishing the slot as free. A subsequent new
+registration still announces the buffered data correctly. No notification table
+is allocated merely to close a socket.
+
+The full build and all 51 Winsock checks pass on boat `bx_k7xdfrq9`.
+Evidence: `scratch/runs/20261011T2124Z-winsock-notification-lifetime/`.
+This is a general notification-lifetime fix, not the missing event API itself;
+Dark Reign 2 remains at the previously reviewed WSAEnumNetworkEvents blocker.
+
+The next implementation must preserve the
+[WSAEnumNetworkEvents contract](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsaenumnetworkevents):
+copy selected latched events and their error slots, clear the record and reset
+the optional event atomically; on failure retain both the record and event.
+Keep shared-thread state and notification cancellation/reuse in the tests.

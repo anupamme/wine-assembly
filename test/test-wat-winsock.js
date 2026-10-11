@@ -904,6 +904,30 @@ async function main() {
     wat.set_post_queue_count(0);
   });
 
+  check('closing a socket cancels notification ownership before slot reuse', () => {
+    wat.test_vsock_reset();
+    const { srv, cli, acc } = connectedPair();
+    const hwnd = wat.test_make_window() | 0;
+    assert.strictEqual(wat.test_call_WSAAsyncSelect(acc, hwnd, 0x502, 0x01) | 0, 0);
+    assert.strictEqual(wat.test_call_closesocket(acc) | 0, 0);
+    const replacement = wat.test_call_socket(AF_INET, SOCK_STREAM, 0) | 0;
+    assert.strictEqual(replacement, acc, 'exercise the same recycled slot');
+    setNonblocking(replacement, true);
+    assert.strictEqual(wat.test_call_connect(replacement, sockaddr(ROOM_HOST, GAME_PORT), 16) | 0, 0);
+    const sender = wat.test_call_accept(srv, 0, 0) | 0;
+    assert(sender > 0);
+    wat.set_post_queue_count(0);
+    const payload = buf(Buffer.from('new owner'));
+    assert.strictEqual(wat.test_call_send(sender, payload, 9, 0) | 0, 9);
+    assert.strictEqual(wat.test_call_recv(replacement, buf(1), 1, 0) | 0, 1);
+    assert.strictEqual(wat.get_post_queue_count() | 0, 0,
+      'the new socket must not notify the closed socket window');
+    assert.strictEqual(wat.test_call_WSAAsyncSelect(replacement, hwnd, 0x503, 0x01) | 0, 0);
+    assert.strictEqual(wat.get_post_queue_count() | 0, 1, 'a new registration still reports pending data');
+    assert.strictEqual(wat.post_queue_peek(0, 1) | 0, 0x503);
+    wat.set_post_queue_count(0);
+  });
+
   check('the socket table is bounded and recovers after close', () => {
     wat.test_vsock_reset();
     const open = [];

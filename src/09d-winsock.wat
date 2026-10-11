@@ -610,7 +610,7 @@
   ;; Release a record and notify its peer. graceful=0 delivers a reset.
   (func $vsock_destroy (param $idx i32) (param $graceful i32)
     (local $rec i32) (local $peer i32) (local $prec i32) (local $buf i32)
-    (local $i i32) (local $child i32)
+    (local $i i32) (local $child i32) (local $async_base i32)
     (local.set $rec (call $vsock_rec (local.get $idx)))
     (if (i32.eqz (load.field VSock state (local.get $rec))) (then (return)))
     ;; A listener drops every connection still waiting in its backlog.
@@ -656,6 +656,15 @@
                   (else (i32.const 5)))))))))  ;; read-closed + reset
     (local.set $buf (load.field VSock rx_buf (local.get $rec)))
     (if (local.get $buf) (then (call $heap_free (local.get $buf))))
+    ;; Notification ownership ends with this socket, not with its recycled
+    ;; table index. Clear before publishing the slot as free; do not allocate
+    ;; an async table merely to close a socket that never used notifications.
+    (local.set $async_base (i32.atomic.load (global.get $VSOCK_ASYNC_SHARED)))
+    (if (local.get $async_base)
+      (then (memory.fill
+        (call $g2w (i32.add (local.get $async_base)
+          (i32.mul (local.get $idx) (global.get $VSOCK_ASYNC_REC))))
+        (i32.const 0) (global.get $VSOCK_ASYNC_REC))))
     (store.field VSock state (local.get $rec) (i32.const 0))
     (store.field VSock rx_buf (local.get $rec) (i32.const 0))
     (store.field VSock peer (local.get $rec) (i32.const -1)))
