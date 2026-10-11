@@ -125,3 +125,19 @@ before the final configuration save. It does not establish which nested pump,
 callback or cleanup operation introduced it. Next inspect this nested
 DialogBoxIndirectParamA frame and its return, with a focused regression;
 do not patch the guest return address or compensate with an arbitrary ESP bump.
+
+### Pump-frame trace (16:14Z)
+
+Run1547Z now also contains pump-frame.log/json. Tracing runtime modal thunk
+0x07500878 changes batch scheduling; do not compare its batch numbers directly
+with the uninstrumented route. At batch212 ESP is 0x074fee9c and the saved
+modal return/pump words are intact. At batch213, after guest original EXE
+0x00497e73, ESP is 0x074fee8c (16 bytes lower) and four callback argument
+words precede the saved frame. Static disassembly at 0x00497e73 shows pop
+edi/esi/ebx, add esp,0x174, then plain ret at 0x00497e7e, not ret16.
+Next identify why that guest callback reaches the modal continuation and who
+owns argument cleanup; do not normalize all DLGPROC returns or bump ESP.
+owner-callback-full.log/json is a separate diagnostic control: tracing
+0x004bf420 records only earlier callbacks, not a new hit at modal completion.
+Thus the older prev_eip field alone does not prove a teardown callback ran
+immediately before the faulty return. No emulator fix is claimed here.
