@@ -56,6 +56,11 @@ async function main() {
     (func (export "test_raw_ingress") (param $p i32) (param $n i32) (result i32)
       (call $vsock_raw_ingress (call $g2w (local.get $p)) (local.get $n)))
     (func (export "test_raw_ready") (param $i i32) (result i32) (call $vsock_read_ready (local.get $i)))
+    (func (export "test_raw_handle") (param $i i32) (result i32) (call $vsock_handle (local.get $i)))
+    (func (export "test_raw_recv") (param $i i32) (param $p i32) (param $n i32)
+        (param $from i32) (param $fromlen i32) (result i32)
+      (call $vsock_recvfrom_core (call $vsock_handle (local.get $i))
+        (local.get $p) (local.get $n) (local.get $from) (local.get $fromlen) (i32.const 28)))
     (func (export "test_raw_wrap") (param $i i32)
       (drop (call $vsock_alloc_ring (local.get $i)))
       (store.field VSock rx_head (call $vsock_rec (local.get $i)) (i32.const 65530)))
@@ -659,6 +664,34 @@ async function main() {
       assert.strictEqual(wat.test_raw_ready(i),0);
     }
     for(const i of [wrongLocal,wrongPeer,udp])assert.strictEqual(wat.test_raw_ready(i),0);
+    // Core receive keeps the IP header but hides our private queue prefix.
+    // Public raw allocation remains disabled until send/overlapped are ready.
+    const from=buf(16),fromlen=buf(4),available=buf(4),nonblock=buf([1,0,0,0]);
+    const putlen=n=>new DataView(memory.buffer).setInt32(wa(fromlen),n,true);
+    receive();receive();
+    const queued=()=>{assert.strictEqual(wat.test_call_ioctlsocket(wat.test_raw_handle(any),FIONREAD,available),0);
+      return new DataView(memory.buffer).getUint32(wa(available),true);};
+    assert.strictEqual(queued(),58,'count packet bytes without queue headers');
+    putlen(16);
+    for(const [dst,n,addr,addrlen,error] of [[out,-1,from,fromlen,10022],
+      [0,29,from,fromlen,10014],[out,29,from,0,10014],[out,29,0xffffffff,fromlen,10014]]){
+      assert.strictEqual(wat.test_raw_recv(any,dst,n,addr,addrlen),-1);
+      assert.strictEqual(wat.test_call_WSAGetLastError(),error);assert.strictEqual(queued(),58);
+    }
+    putlen(8);assert.strictEqual(wat.test_raw_recv(any,out,100,from,fromlen),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10014);assert.strictEqual(queued(),58);
+    putlen(16);assert.strictEqual(wat.test_raw_recv(any,out,100,from,fromlen),29);
+    assert.deepStrictEqual(Buffer.from(readBuf(out,29)),packet);
+    const address=Buffer.from(readBuf(from,16));assert.strictEqual(address.readUInt16LE(0),2);
+    assert.strictEqual(address.readUInt16BE(2),0);assert.strictEqual(address.readUInt32BE(4),remote);
+    assert.strictEqual(queued(),29);
+    assert.strictEqual(wat.test_raw_recv(any,out,7,0,0),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10040);
+    assert.deepStrictEqual(Buffer.from(readBuf(out,7)),packet.subarray(0,7));assert.strictEqual(queued(),0);
+    wat.test_call_ioctlsocket(wat.test_raw_handle(any),FIONBIO,nonblock);
+    assert.strictEqual(wat.test_raw_recv(any,out,100,0,0),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10035);
+    while(wat.test_raw_take(bound,out)){} // drain the other fanout recipient
     const {LoopbackSegment,describeFrame}=require('../lib/vlan-wire');
     const segment=new LoopbackSegment(),sender=segment.attach(),receiver=segment.attach();
     const frame=Buffer.alloc(28+packet.length);

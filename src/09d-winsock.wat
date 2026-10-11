@@ -2222,8 +2222,25 @@
     (if (i32.lt_s (local.get $idx) (i32.const 0))
       (then (call $vsock_set_error (i32.const 10038)) (return (i32.const -1))))
     (local.set $rec (call $vsock_rec (local.get $idx)))
-    (if (i32.ne (load.field VSock type (local.get $rec)) (i32.const 2))
+    (if (i32.and
+          (i32.ne (load.field VSock type (local.get $rec)) (i32.const 2))
+          (i32.ne (load.field VSock type (local.get $rec)) (i32.const 3)))
       (then (call $vsock_set_error (i32.const 10044)) (return (i32.const -1))))
+    ;; Raw receive exposes the complete IPv4 packet. Validate before taking
+    ;; its record so a bad caller buffer cannot consume an otherwise good packet.
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (if (i32.lt_s (local.get $len) (i32.const 0)) (then
+        (call $vsock_set_error (i32.const 10022)) (return (i32.const -1))))
+      (if (i32.eqz (call $vsock_catalog_span_valid (local.get $buf) (local.get $len))) (then
+        (call $vsock_set_error (i32.const 10014)) (return (i32.const -1))))
+      (if (local.get $from) (then
+        (if (i32.eqz (call $vsock_catalog_span_valid (local.get $from_len) (i32.const 4))) (then
+          (call $vsock_set_error (i32.const 10014)) (return (i32.const -1))))
+        (if (i32.or (i32.lt_s (call $gl32 (local.get $from_len)) (i32.const 16))
+              (i32.eqz (call $vsock_catalog_span_valid (local.get $from) (i32.const 16)))) (then
+          (call $vsock_set_error (i32.const 10014)) (return (i32.const -1))))))
+      (if (i32.and (load.field VSock flags (local.get $rec)) (i32.const 1)) (then
+        (call $vsock_set_error (i32.const 10058)) (return (i32.const -1))))))
     (call $vsock_read_reenable (local.get $idx))
     (call $vsock_pump)
     (if (load.field VSock rx_len (local.get $rec))
@@ -2642,7 +2659,9 @@
         ;; A datagram socket reports every queued payload byte, not the
         ;; first datagram's size and not the record headers.
         (i32.store (call $g2w (local.get $arg2))
-          (if (result i32) (i32.eq (load.field VSock type (local.get $rec)) (i32.const 2))
+          (if (result i32) (i32.or
+              (i32.eq (load.field VSock type (local.get $rec)) (i32.const 2))
+              (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)))
             (then (call $vsock_dgram_walk (local.get $idx) (i32.const 1)))
             (else (load.field VSock rx_len (local.get $rec)))))
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))

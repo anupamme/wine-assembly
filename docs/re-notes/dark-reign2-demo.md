@@ -405,3 +405,18 @@ This is still only receive transport: raw creation/send/recv public handlers,
 echo response routing and overlapped state remain pending. No ordinary game
 replay or gameplay screenshot. Evidence:
 scratch/runs/20261011T2346Z-dark-reign2-icmp-wire/.
+
+### Raw receive core (2026-10-11)
+
+The datagram receive core now accepts internal raw ICMP records and returns the
+whole IPv4 packet, with source address and port zero. It validates the receive
+buffer and optional sockaddr before consuming a packet. A short buffer receives
+the prefix, discards the remainder of that one packet and reports WSAEMSGSIZE;
+invalid pointers or negative lengths preserve the queue. FIONREAD excludes the
+private record headers and sums queued IP packet bytes.
+
+This is tested using seeded internal raw records, not public socket creation.
+Raw creation, send routing, recv/WSARecv stream-path delegation, receive flags
+and overlapped state remain unfinished; the ordinary game still stops at the
+unsupported raw socket dialog. No new gameplay capture is implied. Evidence:
+scratch/runs/20261011T2357Z-dark-reign2-raw-receive/.
