@@ -38691,5 +38691,19 @@
     "nargs": 0,
     "convention": "stdcall",
     "hash": 3245002554
+  },
+  {
+    "id": 4543,
+    "name": "WSASetEvent",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 2771504150
+  },
+  {
+    "id": 4544,
+    "name": "WSAResetEvent",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 3455686295
   }
 ]

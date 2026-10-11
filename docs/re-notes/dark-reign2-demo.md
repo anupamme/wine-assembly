@@ -136,3 +136,27 @@ and zero-argument stdcall stack cleanup. The old-source control fails API
 lookup; the implementation passes all 53 Winsock checks. Evidence:
 scratch/runs/20261011T2204Z-winsock-create-event/. This does not yet implement
 WSAEventSelect/WSAEnumNetworkEvents or qualify Dark Reign 2 gameplay.
+
+## Event signaling and reset
+
+WSASetEvent/WSAResetEvent use the same host events as WSACreateEvent, preserving
+manual-reset behavior and the scheduler wakeup used by Win32 SetEvent. Both
+require process startup, return FALSE with WSA_INVALID_HANDLE (6) for invalid
+or stale objects, and reject the private high-bit ReleaseMutex tag. The host
+fallback and ThreadManager previously returned success for invalid events;
+they now reject missing and wrong-type handles. Valid mutex release behavior
+through its own API is unchanged. Contracts:
+[WSASetEvent](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasetevent),
+[WSAResetEvent](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsaresetevent).
+
+Evidence: scratch/runs/20261011T2212Z-winsock-event-change/. Old controls fail
+missing API lookup and invalid-event acceptance. The new Winsock test exercises
+startup/error/stack cleanup, manual reset, wrong-type and stale handles; the
+ThreadManager regression checks the scheduler provider directly.
+
+Next: WSAEventSelect/WSAEnumNetworkEvents must latch requested socket events and
+reset atomically with their recorded errors. Do not hold a WAT spinlock across
+a host call: a worker RPC can wait for main while main spins on that lock.
+WSACloseEvent also needs strict event-handle validation: generic fs_close_handle
+currently accepts unknown non-file handles and cannot provide that contract
+by itself. Dark Reign 2 has not been rerun or qualified from these changes.

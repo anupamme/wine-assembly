@@ -41,6 +41,25 @@ assert.strictEqual(idView.getUint32(threadIdWa, true), 2,
 assert.notStrictEqual(idHandle, idView.getUint32(threadIdWa, true),
   'thread HANDLE and thread id remain distinct Win32 namespaces');
 
+// Event APIs must reject stale and non-event handles without changing state.
+{
+  const events = makeThreadManager();
+  const event = events.createEvent(true, false);
+  const semaphore = events.createSemaphore(0, 2);
+  for (const invalid of [0, 0x12345678, semaphore]) {
+    assert.strictEqual(events.setEvent(invalid), 0, 'SetEvent rejects invalid object');
+    assert.strictEqual(events.resetEvent(invalid), 0, 'ResetEvent rejects invalid object');
+  }
+  assert.strictEqual(events.setEvent(event), 1);
+  assert.strictEqual(events.waitSingle(event, 0), 0);
+  assert.strictEqual(events.waitSingle(event, 0), 0, 'manual reset stays signaled');
+  assert.strictEqual(events.resetEvent(event), 1);
+  assert.strictEqual(events.waitSingle(event, 0), 258);
+  assert.strictEqual(events.closeSyncHandle(event), true);
+  assert.strictEqual(events.setEvent(event), 0, 'closed handle cannot be signaled');
+  assert.strictEqual(events.resetEvent(event), 0, 'closed handle cannot be reset');
+}
+
 const tm = makeThreadManager();
 const handles = [];
 

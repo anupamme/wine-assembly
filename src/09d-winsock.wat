@@ -3329,6 +3329,43 @@
       (then (call $vsock_set_error (i32.const 8)))) ;; WSA_NOT_ENOUGH_MEMORY
     (i32.store (global.get $reg_base) (local.get $event)))
 
+  ;; WSASetEvent(hEvent): use the common process event object and Winsock errors.
+  (func $handle_WSASetEvent (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+                            (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $ok i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+    (if (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED)))
+      (then
+        (call $vsock_set_error (i32.const 10093))
+        (i32.store (global.get $reg_base) (i32.const 0))
+        (return)))
+    ;; Bit31 is private ReleaseMutex metadata on the shared SetEvent import,
+    ;; never part of a live event handle. Do not let a guest event call unlock it.
+    (if (i32.ge_s (local.get $arg0) (i32.const 0))
+      (then (local.set $ok (call $host_set_event (local.get $arg0)))))
+    (if (i32.eqz (local.get $ok))
+      (then (call $vsock_set_error (i32.const 6)))) ;; WSA_INVALID_HANDLE
+    (i32.store (global.get $reg_base) (local.get $ok))
+    (if (local.get $ok) (then (global.set $yield_flag (i32.const 1)))))
+
+  ;; WSAResetEvent(hEvent): use the common process event object and Winsock errors.
+  (func $handle_WSAResetEvent (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+                            (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $ok i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+    (if (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED)))
+      (then
+        (call $vsock_set_error (i32.const 10093))
+        (i32.store (global.get $reg_base) (i32.const 0))
+        (return)))
+    ;; Bit31 is private ReleaseMutex metadata on the shared SetEvent import,
+    ;; never part of a live event handle. Do not let a guest event call unlock it.
+    (if (i32.ge_s (local.get $arg0) (i32.const 0))
+      (then (local.set $ok (call $host_reset_event (local.get $arg0)))))
+    (if (i32.eqz (local.get $ok))
+      (then (call $vsock_set_error (i32.const 6)))) ;; WSA_INVALID_HANDLE
+    (i32.store (global.get $reg_base) (local.get $ok)))
+
   ;; WSACleanup() — the last matching call tears the room switch down.
   (func $handle_WSACleanup (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
                            (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)

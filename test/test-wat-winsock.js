@@ -79,6 +79,17 @@ async function main() {
         (i32.const 0) (i32.const 0) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsa_event_change") (param $reset i32) (param $event i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (global.set $yield_flag (i32.const 0))
+      (call $dispatch_api_table
+        (if (result i32) (local.get $reset)
+          (then (call $lookup_api_id "WSAResetEvent"))
+          (else (call $lookup_api_id "WSASetEvent")))
+        (local.get $event) (i32.const 0) (i32.const 0)
+        (i32.const 0) (i32.const 0) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     ;; A live HWND, so WSAAsyncSelect's posts route to this thread's queue.
     (func (export "test_make_window") (result i32)
       (local $hwnd i32)
@@ -88,7 +99,8 @@ async function main() {
       (local.get $hwnd))
   ` : source);
   const memory = new WebAssembly.Memory({ initial: 8192, maximum: 8192, shared: true });
-  const imports = createHostImports({ getMemory: () => memory.buffer, renderer: null, resourceJson: {} });
+  const hostContext = { getMemory: () => memory.buffer, renderer: null, resourceJson: {} };
+  const imports = createHostImports(hostContext);
   const realCreateEvent = imports.host.create_event;
   let failCreateEvent = false;
   const eventCalls = [];
@@ -279,6 +291,44 @@ async function main() {
       assert.strictEqual(wat.test_call_WSAGetLastError(), 8, 'WSA_NOT_ENOUGH_MEMORY');
     } finally { failCreateEvent = false; }
     assert.strictEqual(wat.test_wsa_cleanup(), 0);
+  });
+
+  check('WSA event changes enforce startup, handle lifetime and event state', () => {
+    for (const name of ['WSASetEvent','WSAResetEvent']) {
+      const api = require('../src/api_table.json').find(a => a.name === name);
+      assert(api, name + ' must resolve');
+      assert.strictEqual(api.nargs, 1);
+    }
+    const change = (reset, handle) => {
+      const result = wat.test_wsa_event_change(reset, handle);
+      assert.strictEqual(Number(result >> 32n), 0x00300008);
+      return Number(result & 0xffffffffn);
+    };
+    for (const reset of [0, 1]) {
+      assert.strictEqual(change(reset, 0), 0);
+      assert.strictEqual(wat.test_call_WSAGetLastError(), 10093);
+    }
+    wat.test_wsa_startup(alloc(400));
+    const event = Number(wat.test_wsa_create_event() & 0xffffffffn);
+    const mutex = imports.host.create_event(0, 1, 0, 2);
+    for (const bad of [0, 0x12345678, mutex, (mutex | 0x80000000) >>> 0]) {
+      for (const reset of [0, 1]) {
+        assert.strictEqual(change(reset, bad), 0, 'invalid/non-event handle');
+        assert.strictEqual(wat.test_call_WSAGetLastError(), 6, 'WSA_INVALID_HANDLE');
+      }
+    }
+    assert.strictEqual(change(0, event), 1);
+    assert.strictEqual(imports.host.wait_single(event, 0), 0);
+    assert.strictEqual(imports.host.wait_single(event, 0), 0);
+    assert.strictEqual(change(1, event), 1);
+    assert.strictEqual(imports.host.wait_single(event, 0), 258);
+    assert.strictEqual(hostContext.closeSyncHandle(event), true);
+    for (const reset of [0,1]) {
+      assert.strictEqual(change(reset, event), 0);
+      assert.strictEqual(wat.test_call_WSAGetLastError(), 6);
+    }
+    assert.strictEqual(hostContext.closeSyncHandle(mutex), true);
+    wat.test_wsa_cleanup();
   });
 
   check('WSAConnect is registered with seven arguments', () => {
