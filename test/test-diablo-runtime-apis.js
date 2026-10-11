@@ -91,12 +91,14 @@ const extraWat = String.raw`
   const metricOut = 0x1200;
   assert.strictEqual(wat.test_diablo_acm_metric(50, metricOut), 0,
     'ACM_METRIC_MAX_SIZE_FORMAT succeeds');
-  assert.strictEqual(wat.guest_read32(metricOut), 18,
-    'ACM_METRIC_MAX_SIZE_FORMAT includes the WAVEFORMATEX cbSize word');
+  // The largest format is MS-ADPCM's: WAVEFORMATEX (18 with cbSize) plus 32
+  // bytes of codec extension. Diablo allocates a format buffer from this.
+  assert.strictEqual(wat.guest_read32(metricOut), 50,
+    'ACM_METRIC_MAX_SIZE_FORMAT includes cbSize and the MS-ADPCM extension');
   assert.strictEqual(wat.test_diablo_acm_metric(20, metricOut), 0,
     'ACM_METRIC_COUNT_LOCAL_DRIVERS succeeds');
-  assert.strictEqual(wat.guest_read32(metricOut), 1,
-    'the built-in PCM converter is exposed as one local ACM driver');
+  assert.strictEqual(wat.guest_read32(metricOut), 3,
+    'the PCM converter and the MS-ADPCM and IMA ADPCM codecs are local drivers');
 
   const begin = 0x1300, end = 0x1304, otherBegin = 0x1310, otherEnd = 0x1314;
   for (const p of [begin, end, otherBegin, otherEnd]) wat.guest_write32(p, 0);

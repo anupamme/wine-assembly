@@ -31273,8 +31273,7 @@
         "type": "DWORD"
       }
     ],
-    "ret": "MMRESULT",
-    "handler": "acm_stream_header_op"
+    "ret": "MMRESULT"
   },
   {
     "id": 3697,
@@ -31296,8 +31295,7 @@
         "type": "DWORD"
       }
     ],
-    "ret": "MMRESULT",
-    "handler": "acm_stream_header_op"
+    "ret": "MMRESULT"
   },
   {
     "id": 3698,
@@ -31319,8 +31317,7 @@
         "type": "DWORD"
       }
     ],
-    "ret": "MMRESULT",
-    "handler": "acm_stream_header_op"
+    "ret": "MMRESULT"
   },
   {
     "id": 3699,
@@ -38514,5 +38511,45 @@
       }
     ],
     "ret": "int"
+  },
+  {
+    "id": 4524,
+    "name": "acmDriverOpen",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 1872202158,
+    "args": [
+      {
+        "name": "phad",
+        "type": "LPVOID"
+      },
+      {
+        "name": "hadid",
+        "type": "HANDLE"
+      },
+      {
+        "name": "fdwOpen",
+        "type": "DWORD"
+      }
+    ],
+    "ret": "MMRESULT"
+  },
+  {
+    "id": 4525,
+    "name": "acmDriverClose",
+    "nargs": 2,
+    "convention": "stdcall",
+    "hash": 829166234,
+    "args": [
+      {
+        "name": "had",
+        "type": "HANDLE"
+      },
+      {
+        "name": "fdwClose",
+        "type": "DWORD"
+      }
+    ],
+    "ret": "MMRESULT"
   }
 ]

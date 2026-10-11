@@ -28,16 +28,18 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4))))
 
   ;; acmMetrics(hao, uMetric, pMetric) reports Audio Compression Manager
-  ;; inventory and sizing information.  The emulator exposes one built-in
-  ;; PCM converter and no installable codecs or filters.  In particular,
-  ;; ACM_METRIC_MAX_SIZE_FORMAT (50) must include the cbSize word: callers use
-  ;; this result to allocate a WAVEFORMATEX before enumerating formats.
+  ;; inventory and sizing information.  The emulator exposes the built-in PCM
+  ;; converter and the two ADPCM codecs a stock Win98 installs (MS-ADPCM,
+  ;; IMA ADPCM; decode only), and no filters.  ACM_METRIC_MAX_SIZE_FORMAT (50)
+  ;; must include the cbSize word and the codec extension: the largest format
+  ;; is MS-ADPCM's, 18 + 32 bytes (samples per block, coefficient count and
+  ;; seven coefficient pairs). Callers allocate a WAVEFORMATEX from it.
   (func $acm_metrics (param $hao i32) (param $metric i32) (param $out i32) (result i32)
     (local $value i32)
     (if (i32.eqz (local.get $out))
       (then (return (i32.const 11))))                       ;; MMSYSERR_INVALPARAM
     (if (i32.eq (local.get $metric) (i32.const 50))
-      (then (call $gs32 (local.get $out) (i32.const 18))    ;; sizeof WAVEFORMATEX
+      (then (call $gs32 (local.get $out) (i32.const 50))    ;; MS-ADPCM WAVEFORMATEX
             (return (i32.const 0))))
     (if (i32.eq (local.get $metric) (i32.const 51))
       (then (call $gs32 (local.get $out) (i32.const 0))     ;; no ACM filters
@@ -45,7 +47,12 @@
     (if (i32.or
           (i32.eq (local.get $metric) (i32.const 1))        ;; COUNT_DRIVERS
           (i32.eq (local.get $metric) (i32.const 20)))      ;; COUNT_LOCAL_DRIVERS
-      (then (call $gs32 (local.get $out) (i32.const 1))
+      (then (call $gs32 (local.get $out) (i32.const 3))
+            (return (i32.const 0))))
+    (if (i32.or
+          (i32.eq (local.get $metric) (i32.const 2))        ;; COUNT_CODECS
+          (i32.eq (local.get $metric) (i32.const 21)))      ;; COUNT_LOCAL_CODECS
+      (then (call $gs32 (local.get $out) (i32.const 2))
             (return (i32.const 0))))
     (if (i32.or
           (i32.eq (local.get $metric) (i32.const 3))        ;; COUNT_CONVERTERS
@@ -88,35 +95,63 @@
   ;; The A and W entry points differ only in whether the name at the end of the
   ;; struct is written as ASCII or as UTF-16, so both call this. XP's Sound
   ;; Recorder is the W caller; Win98's is the A caller.
+  ;; Three tags, in index order: PCM (the converter), MS-ADPCM and IMA ADPCM
+  ;; (the two codecs, decode only). The ADPCM tags list no standard formats
+  ;; because acmFormatDetails describes PCM only.
   (func $acm_format_tag_details (param $paftd i32) (param $fdw i32) (param $wide i32) (result i32)
-    (local $wa i32) (local $query i32)
+    (local $wa i32) (local $query i32) (local $index i32) (local $tag i32) (local $len i32)
     (if (i32.eqz (local.get $paftd))
       (then (return (i32.const 0x00000057))))     ;; MMSYSERR_INVALPARAM
     (local.set $wa (call $g2w (local.get $paftd)))
     (local.set $query (i32.and (local.get $fdw) (i32.const 0x0000000F)))
-    ;; INDEX asks for the n-th tag and PCM is the only one; FORMATTAG asks for
-    ;; a named tag and PCM (1) is the only one we have.
-    (if (i32.eqz
-          (i32.or
-            (i32.and (i32.eqz (local.get $query))
-                     (i32.eqz (i32.load offset=4 (local.get $wa))))
-            (i32.and (i32.eq (local.get $query) (i32.const 1))
-                     (i32.eq (i32.load offset=8 (local.get $wa)) (i32.const 1)))))
+    (local.set $index (i32.const -1))
+    (if (i32.eqz (local.get $query))              ;; ACM_FORMATTAGDETAILSF_INDEX
+      (then (local.set $index (i32.load offset=4 (local.get $wa)))))
+    (if (i32.eq (local.get $query) (i32.const 1)) ;; ACM_FORMATTAGDETAILSF_FORMATTAG
+      (then
+        (local.set $tag (i32.load offset=8 (local.get $wa)))
+        (if (i32.eq (local.get $tag) (i32.const 1)) (then (local.set $index (i32.const 0))))
+        (if (i32.eq (local.get $tag) (i32.const 2)) (then (local.set $index (i32.const 1))))
+        (if (i32.eq (local.get $tag) (i32.const 0x11)) (then (local.set $index (i32.const 2))))))
+    (if (i32.gt_u (local.get $index) (i32.const 2))
       (then (return (i32.const 512))))            ;; ACMERR_NOTPOSSIBLE
     ;; Keep the caller's cbStruct — it declares the size it allocated. The
     ;; name field is 48 chars, so a wide one runs to +24+96.
     (call $zero_memory (i32.add (local.get $wa) (i32.const 4))
       (select (i32.const 116) (i32.const 68) (local.get $wide)))
-    (i32.store offset=8  (local.get $wa) (i32.const 1))    ;; WAVE_FORMAT_PCM
-    (i32.store offset=12 (local.get $wa) (i32.const 16))   ;; PCM WAVEFORMATEX
-    (i32.store offset=16 (local.get $wa) (i32.const 0x04)) ;; SUPPORTF_CONVERTER
-    ;; 4 sample rates x 8/16 bit x mono/stereo, the set waveOutGetDevCaps
-    ;; below reports as supported.
-    (i32.store offset=20 (local.get $wa) (i32.const 16))
-    (i32.store offset=24 (local.get $wa) (i32.const 0x004D4350))  ;; "PCM\0"
+    (i32.store offset=4 (local.get $wa) (local.get $index))
+    (if (i32.eqz (local.get $index))
+      (then
+        (i32.store offset=8  (local.get $wa) (i32.const 1))    ;; WAVE_FORMAT_PCM
+        (i32.store offset=12 (local.get $wa) (i32.const 16))   ;; PCM WAVEFORMATEX
+        (i32.store offset=16 (local.get $wa) (i32.const 0x04)) ;; SUPPORTF_CONVERTER
+        ;; 4 sample rates x 8/16 bit x mono/stereo, the set waveOutGetDevCaps
+        ;; below reports as supported.
+        (i32.store offset=20 (local.get $wa) (i32.const 16))
+        (i32.store offset=24 (local.get $wa) (i32.const 0x004D4350))  ;; "PCM\0"
+        (local.set $len (i32.const 3))))
+    (if (i32.eq (local.get $index) (i32.const 1))
+      (then
+        (i32.store offset=8  (local.get $wa) (i32.const 2))    ;; WAVE_FORMAT_ADPCM
+        (i32.store offset=12 (local.get $wa) (i32.const 50))   ;; with 7 coefficient pairs
+        (i32.store offset=16 (local.get $wa) (i32.const 0x01)) ;; SUPPORTF_CODEC
+        (i32.store offset=24 (local.get $wa) (i32.const 0x7263694D))  ;; "Micr"
+        (i32.store offset=28 (local.get $wa) (i32.const 0x666F736F))  ;; "osof"
+        (i32.store offset=32 (local.get $wa) (i32.const 0x44412074))  ;; "t AD"
+        (i32.store offset=36 (local.get $wa) (i32.const 0x004D4350))  ;; "PCM\0"
+        (local.set $len (i32.const 15))))
+    (if (i32.eq (local.get $index) (i32.const 2))
+      (then
+        (i32.store offset=8  (local.get $wa) (i32.const 0x11)) ;; WAVE_FORMAT_IMA_ADPCM
+        (i32.store offset=12 (local.get $wa) (i32.const 20))   ;; + wSamplesPerBlock
+        (i32.store offset=16 (local.get $wa) (i32.const 0x01)) ;; SUPPORTF_CODEC
+        (i32.store offset=24 (local.get $wa) (i32.const 0x20414D49))  ;; "IMA "
+        (i32.store offset=28 (local.get $wa) (i32.const 0x43504441))  ;; "ADPC"
+        (i32.store offset=32 (local.get $wa) (i32.const 0x0000004D))  ;; "M\0"
+        (local.set $len (i32.const 9))))
     (if (local.get $wide)
       (then (call $acm_widen_in_place
-              (i32.add (local.get $paftd) (i32.const 24)) (i32.const 3))))
+              (i32.add (local.get $paftd) (i32.const 24)) (local.get $len))))
     (i32.const 0))                                 ;; MMSYSERR_NOERROR
 
   (func $handle_acmFormatTagDetailsA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
@@ -316,6 +351,28 @@
       (then (return (i32.const 11))))
     (local.set $sw (call $g2w (local.get $src)))
     (local.set $dw (call $g2w (local.get $dst)))
+    ;; An ADPCM source: the codecs decode to 16-bit PCM at the source's rate
+    ;; and channel count, and nothing else (they do not resample or remix).
+    ;; Every field the caller pins must agree with that.
+    (if (call $acm_adpcm_samples_per_block (local.get $src))
+      (then
+        (local.set $ch (i32.load16_u offset=2 (local.get $sw)))
+        (local.set $rate (i32.load offset=4 (local.get $sw)))
+        (if (i32.or
+              (i32.or
+                (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x10000)) (i32.const 0))
+                         (i32.ne (i32.load16_u (local.get $dw)) (i32.const 1)))
+                (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x20000)) (i32.const 0))
+                         (i32.ne (i32.load16_u offset=2 (local.get $dw)) (local.get $ch))))
+              (i32.or
+                (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x40000)) (i32.const 0))
+                         (i32.ne (i32.load offset=4 (local.get $dw)) (local.get $rate)))
+                (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x80000)) (i32.const 0))
+                         (i32.ne (i32.load16_u offset=14 (local.get $dw)) (i32.const 16)))))
+          (then (return (i32.const 512))))                  ;; ACMERR_NOTPOSSIBLE
+        (call $acm_write_pcm16_format (local.get $dst) (local.get $cb)
+          (local.get $ch) (local.get $rate))
+        (return (i32.const 0))))
     (if (i32.ne (i32.load16_u (local.get $sw)) (i32.const 1))
       (then (return (i32.const 512))))                      ;; ACMERR_NOTPOSSIBLE
     (if (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x10000)) (i32.const 0))
@@ -355,21 +412,55 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))  ;; 5 args stdcall
   )
 
-  ;; The one ACM driver acmMetrics counts: the built-in PCM converter, under
-  ;; a fixed HACMDRIVERID. No installable codec exists, so an app looking for
-  ;; one by name (Tomb Raider III wants "MS-ADPCM") finds only this and goes
-  ;; on without it, as on a machine where that codec was never installed.
+  ;; The three ACM drivers acmMetrics counts, under fixed HACMDRIVERIDs: the
+  ;; built-in PCM converter, and the MS-ADPCM and IMA ADPCM codecs a stock
+  ;; Win98 installs (decode to PCM only; see the stream table below). Tomb
+  ;; Raider III looks the MS-ADPCM codec up by its short name.
   (func $acm_pcm_driver_id (result i32) (i32.const 0x0ACD0001))
+  (func $acm_driver_id (param $index i32) (result i32)
+    (i32.add (i32.const 0x0ACD0001) (local.get $index)))
+  ;; fdwSupport of driver $index: CONVERTER (0x2) for PCM, CODEC (0x1) else.
+  (func $acm_driver_support (param $index i32) (result i32)
+    (select (i32.const 0x2) (i32.const 0x1) (i32.eqz (local.get $index))))
 
   ;; acmDriverEnum(fnCallback, dwInstance, fdwEnum) calls
-  ;; fnCallback(hadid, dwInstance, fdwSupport) once per driver. With one
-  ;; driver the callback's continue/stop answer changes nothing, so this
-  ;; makes the single call and lets the CACA0007 continuation return
-  ;; MMSYSERR_NOERROR (0) to the caller. NOLOCAL (0x40000000) and DISABLED
-  ;; (0x80000000) are the only flags; the PCM converter is global and enabled,
-  ;; so neither one removes it.
+  ;; fnCallback(hadid, dwInstance, fdwSupport) per driver until the callback
+  ;; returns FALSE, then returns MMSYSERR_NOERROR. The iterator lives on the
+  ;; guest stack (tagged like DirectSoundEnumerate's, so the CACA0007
+  ;; continuation finds it): +0 tag 'ACME', +4 caller return, +8 callback,
+  ;; +12 dwInstance, +16 index of the driver just reported. NOLOCAL
+  ;; (0x40000000) and DISABLED (0x80000000) are the only flags; every driver
+  ;; here is global and enabled, so neither one removes any.
+  (func $acm_driver_enum_invoke (param $frame i32)
+    (local $sp i32) (local $index i32)
+    (local.set $index (call $gl32 (i32.add (local.get $frame) (i32.const 16))))
+    (local.set $sp (i32.sub (local.get $frame) (i32.const 16)))
+    (call $gs32 (local.get $sp) (global.get $ddenum_ret_thunk))
+    (call $gs32 (i32.add (local.get $sp) (i32.const 4)) (call $acm_driver_id (local.get $index)))
+    (call $gs32 (i32.add (local.get $sp) (i32.const 8))
+      (call $gl32 (i32.add (local.get $frame) (i32.const 12))))
+    (call $gs32 (i32.add (local.get $sp) (i32.const 12)) (call $acm_driver_support (local.get $index)))
+    (i32.store offset=16 (global.get $reg_base) (local.get $sp))
+    (global.set $eip (call $gl32 (i32.add (local.get $frame) (i32.const 8))))
+    (global.set $steps (i32.const 0)))
+
+  (func $acm_driver_enum_continue
+    (local $frame i32) (local $next i32)
+    (local.set $frame (i32.load offset=16 (global.get $reg_base)))
+    (local.set $next (i32.add (call $gl32 (i32.add (local.get $frame) (i32.const 16))) (i32.const 1)))
+    (if (i32.and (i32.ne (i32.load (global.get $reg_base)) (i32.const 0))
+                 (i32.lt_u (local.get $next) (i32.const 3)))
+      (then
+        (call $gs32 (i32.add (local.get $frame) (i32.const 16)) (local.get $next))
+        (call $acm_driver_enum_invoke (local.get $frame))
+        (return)))
+    ;; Return to the caller past the iterator and the 3-argument stdcall frame.
+    (global.set $eip (call $gl32 (i32.add (local.get $frame) (i32.const 4))))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $frame) (i32.const 36)))
+    (i32.store (global.get $reg_base) (i32.const 0)))
+
   (func $handle_acmDriverEnum (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $ret_addr i32) (local $result i32)
+    (local $frame i32) (local $result i32)
     (local.set $result (i32.const 0))
     (if (i32.eqz (local.get $arg0))
       (then (local.set $result (i32.const 11))))                          ;; MMSYSERR_INVALPARAM
@@ -380,21 +471,15 @@
         (i32.store offset=0 (global.get $reg_base) (local.get $result))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
         (return)))
-    ;; Drop the stdcall frame, keeping the caller's return address for the
-    ;; continuation, then build the callback frame on top of it.
-    (local.set $ret_addr (call $gl32 (i32.load offset=16 (global.get $reg_base))))
-    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $ret_addr))
-    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x2))   ;; fdwSupport = SUPPORTF_CONVERTER
-    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg1))  ;; dwInstance
-    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (call $acm_pcm_driver_id))
-    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $ddenum_ret_thunk))
-    (global.set $eip (local.get $arg0))
-    (global.set $steps (i32.const 0)))
+    ;; The iterator sits just below the caller's frame (ESP -> return address).
+    (local.set $frame (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+    (call $gs32 (local.get $frame) (i32.const 0x454D4341))               ;; 'ACME'
+    (call $gs32 (i32.add (local.get $frame) (i32.const 4))
+      (call $gl32 (i32.load offset=16 (global.get $reg_base))))
+    (call $gs32 (i32.add (local.get $frame) (i32.const 8)) (local.get $arg0))
+    (call $gs32 (i32.add (local.get $frame) (i32.const 12)) (local.get $arg1))
+    (call $gs32 (i32.add (local.get $frame) (i32.const 16)) (i32.const 0))
+    (call $acm_driver_enum_invoke (local.get $frame)))
 
   ;; One dword of ACMDRIVERDETAILS, written only if it lies inside the
   ;; caller's cbStruct: a short struct is valid and gets just its prefix.
@@ -410,9 +495,10 @@
   ;; and is kept; everything else up to it is rewritten. The guest address
   ;; is written field by field, so the struct may straddle pages.
   (func $acm_driver_details (param $hadid i32) (param $padd i32) (param $fdw i32) (result i32)
-    (local $cb i32) (local $i i32)
+    (local $cb i32) (local $i i32) (local $index i32)
     (if (local.get $fdw) (then (return (i32.const 10))))                   ;; MMSYSERR_INVALFLAG
-    (if (i32.ne (local.get $hadid) (call $acm_pcm_driver_id))
+    (local.set $index (i32.sub (local.get $hadid) (call $acm_pcm_driver_id)))
+    (if (i32.gt_u (local.get $index) (i32.const 2))
       (then (return (i32.const 5))))                                       ;; MMSYSERR_INVALHANDLE
     (if (i32.eqz (local.get $padd)) (then (return (i32.const 11))))        ;; MMSYSERR_INVALPARAM
     (local.set $cb (call $gl32 (local.get $padd)))
@@ -425,11 +511,43 @@
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $zero)))
     (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 4) (i32.const 0x63647561))  ;; 'audc'
-    ;; wMid MM_MICROSOFT (1), wPid MM_MSFT_ACM_PCM (38)
-    (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 12) (i32.const 0x00260001))
     (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 16) (i32.const 0x03320000)) ;; ACM 3.50
     (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 20) (i32.const 0x03320000))
-    (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 24) (i32.const 0x2))        ;; SUPPORTF_CONVERTER
+    (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 24)
+      (call $acm_driver_support (local.get $index)))
+    (if (local.get $index)
+      (then
+        ;; wMid MM_MICROSOFT (1), wPid MM_MSFT_ACM_MSADPCM (33) / _IMAADPCM (34);
+        ;; each codec knows PCM and its own tag.
+        (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 12)
+          (i32.or (i32.const 1) (i32.shl (i32.add (i32.const 32) (local.get $index)) (i32.const 16))))
+        (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 28) (i32.const 2))
+        (if (i32.eq (local.get $index) (i32.const 1))
+          (then
+            ;; "MS-ADPCM" / "Microsoft ADPCM CODEC"
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 40) (i32.const 0x412D534D))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 44) (i32.const 0x4D435044))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 72) (i32.const 0x7263694D))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 76) (i32.const 0x666F736F))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 80) (i32.const 0x44412074))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 84) (i32.const 0x204D4350))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 88) (i32.const 0x45444F43))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 92) (i32.const 0x00000043)))
+          (else
+            ;; "MS-IMA ADPCM" / "Microsoft IMA ADPCM CODEC"
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 40) (i32.const 0x492D534D))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 44) (i32.const 0x4120414D))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 48) (i32.const 0x4D435044))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 72) (i32.const 0x7263694D))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 76) (i32.const 0x666F736F))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 80) (i32.const 0x4D492074))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 84) (i32.const 0x44412041))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 88) (i32.const 0x204D4350))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 92) (i32.const 0x45444F43))
+            (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 96) (i32.const 0x00000043))))
+        (return (i32.const 0))))
+    ;; wMid MM_MICROSOFT (1), wPid MM_MSFT_ACM_PCM (38)
+    (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 12) (i32.const 0x00260001))
     (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 28) (i32.const 1))          ;; PCM tag only
     ;; "MS-PCM"
     (call $acm_dd_put32 (local.get $padd) (local.get $cb) (i32.const 40) (i32.const 0x502D534D))
@@ -450,55 +568,698 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0x040007CE))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4))))
 
+  ;; acmDriverOpen(phad, hadid, fdwOpen) / acmDriverClose(had, fdwClose).
+  ;; An open driver handle (HACMDRIVER) names one of the three drivers:
+  ;; 0x0ACE0001 + index, parallel to the HACMDRIVERIDs. Opening one costs no
+  ;; state here (each codec is a stateless function of its stream), so Close
+  ;; only validates. Tomb Raider III opens the MS-ADPCM codec it found by name
+  ;; and passes the handle to acmStreamOpen.
+  (func $acm_open_driver_index (param $had i32) (result i32)
+    (i32.sub (local.get $had) (i32.const 0x0ACE0001)))
+
+  (func $handle_acmDriverOpen (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $result i32) (local $index i32)
+    (local.set $index (i32.sub (local.get $arg1) (call $acm_pcm_driver_id)))
+    (local.set $result (i32.const 0))
+    (if (i32.gt_u (local.get $index) (i32.const 2)) (then (local.set $result (i32.const 5))))  ;; INVALHANDLE
+    (if (i32.eqz (local.get $arg0)) (then (local.set $result (i32.const 11))))                ;; INVALPARAM
+    (if (local.get $arg2) (then (local.set $result (i32.const 10))))                          ;; INVALFLAG
+    (if (i32.eqz (local.get $result))
+      (then (call $gs32 (local.get $arg0) (i32.add (i32.const 0x0ACE0001) (local.get $index)))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))  ;; 3 args stdcall
+  )
+
+  (func $handle_acmDriverClose (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $result i32)
+    (local.set $result (i32.const 0))
+    (if (i32.gt_u (call $acm_open_driver_index (local.get $arg0)) (i32.const 2))
+      (then (local.set $result (i32.const 5))))                                               ;; INVALHANDLE
+    (if (i32.and (i32.eqz (local.get $result)) (i32.ne (local.get $arg1) (i32.const 0)))
+      (then (local.set $result (i32.const 10))))                                              ;; INVALFLAG
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))  ;; 2 args stdcall
+  )
+
   (func $handle_acmDriverDetailsA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (i32.store offset=0 (global.get $reg_base) (call $acm_driver_details
       (local.get $arg0) (local.get $arg1) (local.get $arg2)))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))  ;; 3 args stdcall
   )
 
+  ;; ---- ACM streams: MS-ADPCM and IMA ADPCM decode to 16-bit PCM ----
+  ;;
+  ;; QMixer (Outwars) and Tomb Raider III expect the ADPCM codecs a stock
+  ;; Win98 installs. Both decode one block at a time; a block starts with a
+  ;; per-channel header and then packs 4-bit samples. The stream handle is a
+  ;; guest-heap record (HACMSTREAM):
+  ;;   +0 'ACMS' +4 wFormatTag +8 nChannels +12 nSamplesPerSec
+  ;;   +16 nBlockAlign +20 samples per block +24 coefficient count
+  ;;   +28 coefficient pairs (MS-ADPCM only: int16 coef1, int16 coef2 each)
+  ;; Encoding is not provided; an app that asks for it gets ACMERR_NOTPOSSIBLE,
+  ;; as from a codec without that direction.
+
+  (func $acm_s16 (param $g i32) (result i32)
+    (i32.extend16_s (call $gl16 (local.get $g))))
+
+  ;; Samples per block if $fmt (guest WAVEFORMATEX) is a well-formed MS-ADPCM
+  ;; or IMA ADPCM format, else 0. The extension's wSamplesPerBlock must match
+  ;; what nBlockAlign holds: MS-ADPCM spends 7 bytes per channel on the header
+  ;; and puts two samples there, IMA 4 bytes and one sample.
+  (func $acm_adpcm_samples_per_block (param $fmt i32) (result i32)
+    (local $tag i32) (local $ch i32) (local $align i32) (local $cb i32)
+    (local $spb i32) (local $ncoef i32) (local $hdr i32)
+    (if (i32.eqz (local.get $fmt)) (then (return (i32.const 0))))
+    (local.set $tag (call $gl16 (local.get $fmt)))
+    (if (i32.and (i32.ne (local.get $tag) (i32.const 2)) (i32.ne (local.get $tag) (i32.const 0x11)))
+      (then (return (i32.const 0))))
+    (local.set $ch (call $gl16 (i32.add (local.get $fmt) (i32.const 2))))
+    (if (i32.or (i32.eqz (local.get $ch)) (i32.gt_u (local.get $ch) (i32.const 2)))
+      (then (return (i32.const 0))))
+    (if (i32.ne (call $gl16 (i32.add (local.get $fmt) (i32.const 14))) (i32.const 4))
+      (then (return (i32.const 0))))
+    (if (i32.eqz (call $gl32 (i32.add (local.get $fmt) (i32.const 4))))
+      (then (return (i32.const 0))))
+    (local.set $align (call $gl16 (i32.add (local.get $fmt) (i32.const 12))))
+    (local.set $cb (call $gl16 (i32.add (local.get $fmt) (i32.const 16))))
+    (if (i32.lt_u (local.get $cb) (i32.const 2)) (then (return (i32.const 0))))
+    (local.set $spb (call $gl16 (i32.add (local.get $fmt) (i32.const 18))))
+    (local.set $hdr (i32.mul (local.get $ch) (select (i32.const 7) (i32.const 4)
+      (i32.eq (local.get $tag) (i32.const 2)))))
+    (if (i32.le_u (local.get $align) (local.get $hdr)) (then (return (i32.const 0))))
+    (if (i32.eq (local.get $tag) (i32.const 2))
+      (then
+        (if (i32.lt_u (local.get $cb) (i32.const 4)) (then (return (i32.const 0))))
+        (local.set $ncoef (call $gl16 (i32.add (local.get $fmt) (i32.const 20))))
+        (if (i32.or (i32.eqz (local.get $ncoef)) (i32.gt_u (local.get $ncoef) (i32.const 256)))
+          (then (return (i32.const 0))))
+        (if (i32.lt_u (local.get $cb) (i32.add (i32.const 4) (i32.shl (local.get $ncoef) (i32.const 2))))
+          (then (return (i32.const 0))))
+        (if (i32.ne (local.get $spb)
+              (i32.add (i32.div_u (i32.shl (i32.sub (local.get $align) (local.get $hdr)) (i32.const 1))
+                                  (local.get $ch)) (i32.const 2)))
+          (then (return (i32.const 0)))))
+      (else
+        ;; IMA data comes in 4-byte runs per channel.
+        (if (i32.rem_u (i32.sub (local.get $align) (local.get $hdr))
+                       (i32.shl (local.get $ch) (i32.const 2)))
+          (then (return (i32.const 0))))
+        (if (i32.ne (local.get $spb)
+              (i32.add (i32.div_u (i32.shl (i32.sub (local.get $align) (local.get $hdr)) (i32.const 1))
+                                  (local.get $ch)) (i32.const 1)))
+          (then (return (i32.const 0))))))
+    (local.get $spb))
+
+  ;; Write a 16-bit PCM WAVEFORMATEX(+cbSize when the buffer holds it).
+  (func $acm_write_pcm16_format (param $dst i32) (param $cb i32) (param $ch i32) (param $rate i32)
+    (call $gs16 (local.get $dst) (i32.const 1))                               ;; WAVE_FORMAT_PCM
+    (call $gs16 (i32.add (local.get $dst) (i32.const 2)) (local.get $ch))
+    (call $gs32 (i32.add (local.get $dst) (i32.const 4)) (local.get $rate))
+    (call $gs32 (i32.add (local.get $dst) (i32.const 8))
+      (i32.mul (local.get $rate) (i32.shl (local.get $ch) (i32.const 1))))
+    (call $gs16 (i32.add (local.get $dst) (i32.const 12)) (i32.shl (local.get $ch) (i32.const 1)))
+    (call $gs16 (i32.add (local.get $dst) (i32.const 14)) (i32.const 16))
+    (if (i32.ge_u (local.get $cb) (i32.const 18))
+      (then (call $gs16 (i32.add (local.get $dst) (i32.const 16)) (i32.const 0)))))
+
+  ;; Is $dst the one PCM format an ADPCM $src decodes to?
+  (func $acm_is_pcm16_of (param $dst i32) (param $src i32) (result i32)
+    (i32.and
+      (i32.and
+        (i32.eq (call $gl16 (local.get $dst)) (i32.const 1))
+        (i32.eq (call $gl16 (i32.add (local.get $dst) (i32.const 14))) (i32.const 16)))
+      (i32.and
+        (i32.eq (call $gl16 (i32.add (local.get $dst) (i32.const 2)))
+                (call $gl16 (i32.add (local.get $src) (i32.const 2))))
+        (i32.eq (call $gl32 (i32.add (local.get $dst) (i32.const 4)))
+                (call $gl32 (i32.add (local.get $src) (i32.const 4)))))))
+
+  (func $acm_clamp16 (param $v i32) (result i32)
+    (if (i32.lt_s (local.get $v) (i32.const -32768)) (then (return (i32.const -32768))))
+    (if (i32.gt_s (local.get $v) (i32.const 32767)) (then (return (i32.const 32767))))
+    (local.get $v))
+
+  ;; IMA ADPCM step sizes (index 0..88; the caller clamps the index).
+  (func $ima_step_size (param $i i32) (result i32)
+    (block $c88
+    (block $c87
+    (block $c86
+    (block $c85
+    (block $c84
+    (block $c83
+    (block $c82
+    (block $c81
+    (block $c80
+    (block $c79
+    (block $c78
+    (block $c77
+    (block $c76
+    (block $c75
+    (block $c74
+    (block $c73
+    (block $c72
+    (block $c71
+    (block $c70
+    (block $c69
+    (block $c68
+    (block $c67
+    (block $c66
+    (block $c65
+    (block $c64
+    (block $c63
+    (block $c62
+    (block $c61
+    (block $c60
+    (block $c59
+    (block $c58
+    (block $c57
+    (block $c56
+    (block $c55
+    (block $c54
+    (block $c53
+    (block $c52
+    (block $c51
+    (block $c50
+    (block $c49
+    (block $c48
+    (block $c47
+    (block $c46
+    (block $c45
+    (block $c44
+    (block $c43
+    (block $c42
+    (block $c41
+    (block $c40
+    (block $c39
+    (block $c38
+    (block $c37
+    (block $c36
+    (block $c35
+    (block $c34
+    (block $c33
+    (block $c32
+    (block $c31
+    (block $c30
+    (block $c29
+    (block $c28
+    (block $c27
+    (block $c26
+    (block $c25
+    (block $c24
+    (block $c23
+    (block $c22
+    (block $c21
+    (block $c20
+    (block $c19
+    (block $c18
+    (block $c17
+    (block $c16
+    (block $c15
+    (block $c14
+    (block $c13
+    (block $c12
+    (block $c11
+    (block $c10
+    (block $c9
+    (block $c8
+    (block $c7
+    (block $c6
+    (block $c5
+    (block $c4
+    (block $c3
+    (block $c2
+    (block $c1
+    (block $c0
+    (br_table $c0 $c1 $c2 $c3 $c4 $c5 $c6 $c7 $c8 $c9 $c10 $c11 $c12 $c13 $c14 $c15 $c16 $c17 $c18 $c19 $c20 $c21 $c22 $c23 $c24 $c25 $c26 $c27 $c28 $c29 $c30 $c31 $c32 $c33 $c34 $c35 $c36 $c37 $c38 $c39 $c40 $c41 $c42 $c43 $c44 $c45 $c46 $c47 $c48 $c49 $c50 $c51 $c52 $c53 $c54 $c55 $c56 $c57 $c58 $c59 $c60 $c61 $c62 $c63 $c64 $c65 $c66 $c67 $c68 $c69 $c70 $c71 $c72 $c73 $c74 $c75 $c76 $c77 $c78 $c79 $c80 $c81 $c82 $c83 $c84 $c85 $c86 $c87 $c88 (local.get $i)))
+    (return (i32.const 7)))
+    (return (i32.const 8)))
+    (return (i32.const 9)))
+    (return (i32.const 10)))
+    (return (i32.const 11)))
+    (return (i32.const 12)))
+    (return (i32.const 13)))
+    (return (i32.const 14)))
+    (return (i32.const 16)))
+    (return (i32.const 17)))
+    (return (i32.const 19)))
+    (return (i32.const 21)))
+    (return (i32.const 23)))
+    (return (i32.const 25)))
+    (return (i32.const 28)))
+    (return (i32.const 31)))
+    (return (i32.const 34)))
+    (return (i32.const 37)))
+    (return (i32.const 41)))
+    (return (i32.const 45)))
+    (return (i32.const 50)))
+    (return (i32.const 55)))
+    (return (i32.const 60)))
+    (return (i32.const 66)))
+    (return (i32.const 73)))
+    (return (i32.const 80)))
+    (return (i32.const 88)))
+    (return (i32.const 97)))
+    (return (i32.const 107)))
+    (return (i32.const 118)))
+    (return (i32.const 130)))
+    (return (i32.const 143)))
+    (return (i32.const 157)))
+    (return (i32.const 173)))
+    (return (i32.const 190)))
+    (return (i32.const 209)))
+    (return (i32.const 230)))
+    (return (i32.const 253)))
+    (return (i32.const 279)))
+    (return (i32.const 307)))
+    (return (i32.const 337)))
+    (return (i32.const 371)))
+    (return (i32.const 408)))
+    (return (i32.const 449)))
+    (return (i32.const 494)))
+    (return (i32.const 544)))
+    (return (i32.const 598)))
+    (return (i32.const 658)))
+    (return (i32.const 724)))
+    (return (i32.const 796)))
+    (return (i32.const 876)))
+    (return (i32.const 963)))
+    (return (i32.const 1060)))
+    (return (i32.const 1166)))
+    (return (i32.const 1282)))
+    (return (i32.const 1411)))
+    (return (i32.const 1552)))
+    (return (i32.const 1707)))
+    (return (i32.const 1878)))
+    (return (i32.const 2066)))
+    (return (i32.const 2272)))
+    (return (i32.const 2499)))
+    (return (i32.const 2749)))
+    (return (i32.const 3024)))
+    (return (i32.const 3327)))
+    (return (i32.const 3660)))
+    (return (i32.const 4026)))
+    (return (i32.const 4428)))
+    (return (i32.const 4871)))
+    (return (i32.const 5358)))
+    (return (i32.const 5894)))
+    (return (i32.const 6484)))
+    (return (i32.const 7132)))
+    (return (i32.const 7845)))
+    (return (i32.const 8630)))
+    (return (i32.const 9493)))
+    (return (i32.const 10442)))
+    (return (i32.const 11487)))
+    (return (i32.const 12635)))
+    (return (i32.const 13899)))
+    (return (i32.const 15289)))
+    (return (i32.const 16818)))
+    (return (i32.const 18500)))
+    (return (i32.const 20350)))
+    (return (i32.const 22385)))
+    (return (i32.const 24623)))
+    (return (i32.const 27086)))
+    (return (i32.const 29794)))
+    (i32.const 32767))
+
+  ;; MS-ADPCM delta adaptation factors, indexed by the unsigned nibble.
+  (func $msadpcm_adapt (param $i i32) (result i32)
+    (block $c15
+    (block $c14
+    (block $c13
+    (block $c12
+    (block $c11
+    (block $c10
+    (block $c9
+    (block $c8
+    (block $c7
+    (block $c6
+    (block $c5
+    (block $c4
+    (block $c3
+    (block $c2
+    (block $c1
+    (block $c0
+    (br_table $c0 $c1 $c2 $c3 $c4 $c5 $c6 $c7 $c8 $c9 $c10 $c11 $c12 $c13 $c14 $c15 (local.get $i)))
+    (return (i32.const 230)))
+    (return (i32.const 230)))
+    (return (i32.const 230)))
+    (return (i32.const 230)))
+    (return (i32.const 307)))
+    (return (i32.const 409)))
+    (return (i32.const 512)))
+    (return (i32.const 614)))
+    (return (i32.const 768)))
+    (return (i32.const 614)))
+    (return (i32.const 512)))
+    (return (i32.const 409)))
+    (return (i32.const 307)))
+    (return (i32.const 230)))
+    (return (i32.const 230)))
+    (i32.const 230))
+
+  ;; One MS-ADPCM block -> spb*ch samples at $dst (Wine msadp32's arithmetic:
+  ;; prediction (s1*c1 + s2*c2) / 256 truncated, plus nibble*delta, clamped;
+  ;; delta = max(16, adapt[nibble]*delta / 256)). The header holds each
+  ;; channel's predictor index, delta and the block's first two samples
+  ;; (sample2 is played first). Stereo nibbles alternate, left in the high one.
+  (func $msadpcm_decode_block (param $st i32) (param $src i32) (param $dst i32)
+    (local $ch i32) (local $spb i32) (local $ncoef i32) (local $n i32) (local $total i32)
+    (local $nib i32) (local $c i32) (local $p i32) (local $byte i32)
+    (local $d0 i32) (local $d1 i32) (local $a0 i32) (local $a1 i32) (local $b0 i32) (local $b1 i32)
+    (local $c10 i32) (local $c20 i32) (local $c11 i32) (local $c21 i32)
+    (local $pred i32) (local $s i32) (local $data i32) (local $out i32)
+    (local.set $ch (call $gl32 (i32.add (local.get $st) (i32.const 8))))
+    (local.set $spb (call $gl32 (i32.add (local.get $st) (i32.const 20))))
+    (local.set $ncoef (call $gl32 (i32.add (local.get $st) (i32.const 24))))
+    ;; predictor indices -> coefficient pairs (an index past the table uses
+    ;; the first pair rather than reading beyond it)
+    (local.set $p (call $gl8 (local.get $src)))
+    (if (i32.ge_u (local.get $p) (local.get $ncoef)) (then (local.set $p (i32.const 0))))
+    (local.set $c10 (call $acm_s16 (i32.add (local.get $st) (i32.add (i32.const 28) (i32.shl (local.get $p) (i32.const 2))))))
+    (local.set $c20 (call $acm_s16 (i32.add (local.get $st) (i32.add (i32.const 30) (i32.shl (local.get $p) (i32.const 2))))))
+    (if (i32.eq (local.get $ch) (i32.const 1))
+      (then
+        (local.set $d0 (call $acm_s16 (i32.add (local.get $src) (i32.const 1))))
+        (local.set $a0 (call $acm_s16 (i32.add (local.get $src) (i32.const 3))))
+        (local.set $b0 (call $acm_s16 (i32.add (local.get $src) (i32.const 5))))
+        (call $gs16 (local.get $dst) (local.get $b0))
+        (call $gs16 (i32.add (local.get $dst) (i32.const 2)) (local.get $a0))
+        (local.set $data (i32.add (local.get $src) (i32.const 7)))
+        (local.set $out (i32.add (local.get $dst) (i32.const 4))))
+      (else
+        (local.set $p (call $gl8 (i32.add (local.get $src) (i32.const 1))))
+        (if (i32.ge_u (local.get $p) (local.get $ncoef)) (then (local.set $p (i32.const 0))))
+        (local.set $c11 (call $acm_s16 (i32.add (local.get $st) (i32.add (i32.const 28) (i32.shl (local.get $p) (i32.const 2))))))
+        (local.set $c21 (call $acm_s16 (i32.add (local.get $st) (i32.add (i32.const 30) (i32.shl (local.get $p) (i32.const 2))))))
+        (local.set $d0 (call $acm_s16 (i32.add (local.get $src) (i32.const 2))))
+        (local.set $d1 (call $acm_s16 (i32.add (local.get $src) (i32.const 4))))
+        (local.set $a0 (call $acm_s16 (i32.add (local.get $src) (i32.const 6))))
+        (local.set $a1 (call $acm_s16 (i32.add (local.get $src) (i32.const 8))))
+        (local.set $b0 (call $acm_s16 (i32.add (local.get $src) (i32.const 10))))
+        (local.set $b1 (call $acm_s16 (i32.add (local.get $src) (i32.const 12))))
+        (call $gs16 (local.get $dst) (local.get $b0))
+        (call $gs16 (i32.add (local.get $dst) (i32.const 2)) (local.get $b1))
+        (call $gs16 (i32.add (local.get $dst) (i32.const 4)) (local.get $a0))
+        (call $gs16 (i32.add (local.get $dst) (i32.const 6)) (local.get $a1))
+        (local.set $data (i32.add (local.get $src) (i32.const 14)))
+        (local.set $out (i32.add (local.get $dst) (i32.const 8)))))
+    (local.set $total (i32.mul (i32.sub (local.get $spb) (i32.const 2)) (local.get $ch)))
+    (block $done (loop $each
+      (br_if $done (i32.ge_u (local.get $n) (local.get $total)))
+      (local.set $byte (call $gl8 (i32.add (local.get $data) (i32.shr_u (local.get $n) (i32.const 1)))))
+      (local.set $nib (select (i32.shr_u (local.get $byte) (i32.const 4))
+                              (i32.and (local.get $byte) (i32.const 15))
+                              (i32.eqz (i32.and (local.get $n) (i32.const 1)))))
+      (local.set $c (i32.and (i32.and (local.get $n) (i32.const 1)) (i32.eq (local.get $ch) (i32.const 2))))
+      (if (local.get $c)
+        (then
+          (local.set $pred (i32.div_s (i32.add (i32.mul (local.get $a1) (local.get $c11))
+                                               (i32.mul (local.get $b1) (local.get $c21))) (i32.const 256)))
+          (local.set $s (call $acm_clamp16 (i32.add (local.get $pred)
+            (i32.mul (i32.sub (local.get $nib) (i32.shl (i32.shr_u (local.get $nib) (i32.const 3)) (i32.const 4)))
+                     (local.get $d1)))))
+          (local.set $b1 (local.get $a1)) (local.set $a1 (local.get $s))
+          (local.set $d1 (i32.div_s (i32.mul (call $msadpcm_adapt (local.get $nib)) (local.get $d1)) (i32.const 256)))
+          (if (i32.lt_s (local.get $d1) (i32.const 16)) (then (local.set $d1 (i32.const 16)))))
+        (else
+          (local.set $pred (i32.div_s (i32.add (i32.mul (local.get $a0) (local.get $c10))
+                                               (i32.mul (local.get $b0) (local.get $c20))) (i32.const 256)))
+          (local.set $s (call $acm_clamp16 (i32.add (local.get $pred)
+            (i32.mul (i32.sub (local.get $nib) (i32.shl (i32.shr_u (local.get $nib) (i32.const 3)) (i32.const 4)))
+                     (local.get $d0)))))
+          (local.set $b0 (local.get $a0)) (local.set $a0 (local.get $s))
+          (local.set $d0 (i32.div_s (i32.mul (call $msadpcm_adapt (local.get $nib)) (local.get $d0)) (i32.const 256)))
+          (if (i32.lt_s (local.get $d0) (i32.const 16)) (then (local.set $d0 (i32.const 16))))))
+      (call $gs16 (i32.add (local.get $out) (i32.shl (local.get $n) (i32.const 1))) (local.get $s))
+      (local.set $n (i32.add (local.get $n) (i32.const 1)))
+      (br $each))))
+
+  ;; One IMA ADPCM block -> spb*ch samples at $dst. Each channel's 4-byte
+  ;; header holds its first sample (played as sample 0) and step index; the
+  ;; rest comes in 4-byte runs per channel, low nibble first. The difference
+  ;; is the classic bit-accumulated step/8 + step/4 + step/2 + step.
+  (func $imaadpcm_decode_block (param $st i32) (param $src i32) (param $dst i32)
+    (local $ch i32) (local $spb i32) (local $c i32) (local $s i32) (local $idx i32)
+    (local $k i32) (local $nruns i32) (local $j i32) (local $byte i32) (local $nib i32)
+    (local $step i32) (local $diff i32) (local $pos i32) (local $half i32)
+    (local.set $ch (call $gl32 (i32.add (local.get $st) (i32.const 8))))
+    (local.set $spb (call $gl32 (i32.add (local.get $st) (i32.const 20))))
+    (local.set $nruns (i32.shr_u (i32.sub (local.get $spb) (i32.const 1)) (i32.const 3)))
+    (local.set $c (i32.const 0))
+    (block $chans_done (loop $chans
+      (br_if $chans_done (i32.ge_u (local.get $c) (local.get $ch)))
+      (local.set $s (call $acm_s16 (i32.add (local.get $src) (i32.shl (local.get $c) (i32.const 2)))))
+      (local.set $idx (call $gl8 (i32.add (local.get $src) (i32.add (i32.shl (local.get $c) (i32.const 2)) (i32.const 2)))))
+      (if (i32.gt_u (local.get $idx) (i32.const 88)) (then (local.set $idx (i32.const 88))))
+      (call $gs16 (i32.add (local.get $dst) (i32.shl (local.get $c) (i32.const 1))) (local.get $s))
+      (local.set $pos (i32.const 1))
+      (local.set $k (i32.const 0))
+      (block $runs_done (loop $runs
+        (br_if $runs_done (i32.ge_u (local.get $k) (local.get $nruns)))
+        (local.set $j (i32.const 0))
+        (block $bytes_done (loop $bytes
+          (br_if $bytes_done (i32.ge_u (local.get $j) (i32.const 8)))
+          (local.set $byte (call $gl8 (i32.add (local.get $src)
+            (i32.add (i32.shl (local.get $ch) (i32.const 2))
+              (i32.add (i32.shl (i32.add (i32.mul (local.get $k) (local.get $ch)) (local.get $c)) (i32.const 2))
+                       (i32.shr_u (local.get $j) (i32.const 1)))))))
+          (local.set $nib (select (i32.shr_u (local.get $byte) (i32.const 4))
+                                  (i32.and (local.get $byte) (i32.const 15))
+                                  (i32.and (local.get $j) (i32.const 1))))
+          (local.set $step (call $ima_step_size (local.get $idx)))
+          (local.set $diff (i32.shr_u (local.get $step) (i32.const 3)))
+          (if (i32.and (local.get $nib) (i32.const 4)) (then (local.set $diff (i32.add (local.get $diff) (local.get $step)))))
+          (if (i32.and (local.get $nib) (i32.const 2)) (then (local.set $diff (i32.add (local.get $diff) (i32.shr_u (local.get $step) (i32.const 1))))))
+          (if (i32.and (local.get $nib) (i32.const 1)) (then (local.set $diff (i32.add (local.get $diff) (i32.shr_u (local.get $step) (i32.const 2))))))
+          (local.set $s (call $acm_clamp16
+            (select (i32.sub (local.get $s) (local.get $diff)) (i32.add (local.get $s) (local.get $diff))
+                    (i32.and (local.get $nib) (i32.const 8)))))
+          (local.set $half (i32.and (local.get $nib) (i32.const 7)))
+          (local.set $idx (i32.add (local.get $idx)
+            (select (i32.sub (i32.shl (local.get $half) (i32.const 1)) (i32.const 6)) (i32.const -1)
+                    (i32.ge_u (local.get $half) (i32.const 4)))))
+          (if (i32.lt_s (local.get $idx) (i32.const 0)) (then (local.set $idx (i32.const 0))))
+          (if (i32.gt_s (local.get $idx) (i32.const 88)) (then (local.set $idx (i32.const 88))))
+          (call $gs16 (i32.add (local.get $dst)
+            (i32.shl (i32.add (i32.mul (local.get $pos) (local.get $ch)) (local.get $c)) (i32.const 1)))
+            (local.get $s))
+          (local.set $pos (i32.add (local.get $pos) (i32.const 1)))
+          (local.set $j (i32.add (local.get $j) (i32.const 1)))
+          (br $bytes)))
+        (local.set $k (i32.add (local.get $k) (i32.const 1)))
+        (br $runs)))
+      (local.set $c (i32.add (local.get $c) (i32.const 1)))
+      (br $chans))))
+
+  ;; The live stream record behind $has, or 0. Handles are guest-heap
+  ;; pointers carrying the 'ACMS' tag; Close clears it.
+  (func $acm_stream_lookup (param $has i32) (result i32)
+    (if (i32.eqz (call $heap_block_size_checked (local.get $has))) (then (return (i32.const 0))))
+    (if (i32.ne (call $gl32 (local.get $has)) (i32.const 0x534D4341)) (then (return (i32.const 0))))
+    (local.get $has))
+
   ;; acmStreamOpen(phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback,
   ;;               dwInstance, fdwOpen) — 8 args stdcall.
-  ;; No codec is installed, so any stream with a non-PCM end is
-  ;; ACMERR_NOTPOSSIBLE — for ACM_STREAMOPENF_QUERY and a real open alike,
-  ;; exactly as on a machine without that codec. PCM-to-PCM would be the
-  ;; built-in converter's job, which does not exist yet: fail fast.
+  ;; ADPCM -> 16-bit PCM of the same rate and channels is decoded here. Every
+  ;; other pair is ACMERR_NOTPOSSIBLE, as on a machine without that codec,
+  ;; except PCM-to-PCM, the built-in converter's job, which does not exist
+  ;; yet: fail fast. QUERY (0x1) answers without opening; ASYNC (0x2) is
+  ;; NOTPOSSIBLE because these codecs are not asynchronous.
   (func $handle_acmStreamOpen (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $result i32)
+    (local $result i32) (local $fdw i32) (local $spb i32) (local $st i32) (local $ncoef i32) (local $i i32)
+    (local.set $fdw (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32))))
     (local.set $result (i32.const 11))                      ;; MMSYSERR_INVALPARAM
     (if (i32.and (i32.ne (local.get $arg2) (i32.const 0)) (i32.ne (local.get $arg3) (i32.const 0)))
       (then
+        (local.set $result (i32.const 512))                 ;; ACMERR_NOTPOSSIBLE
+        (local.set $spb (call $acm_adpcm_samples_per_block (local.get $arg2)))
+        ;; A named driver (had from acmDriverOpen) must be the codec for this
+        ;; tag: MS-ADPCM is driver 1, IMA ADPCM driver 2.
+        (if (i32.and (i32.ne (local.get $spb) (i32.const 0)) (i32.ne (local.get $arg1) (i32.const 0)))
+          (then
+            (if (i32.ne (call $acm_open_driver_index (local.get $arg1))
+                        (select (i32.const 1) (i32.const 2)
+                          (i32.eq (call $gl16 (local.get $arg2)) (i32.const 2))))
+              (then (local.set $spb (i32.const 0))))))
         (if (i32.and
-              (i32.eq (i32.load16_u (call $g2w (local.get $arg2))) (i32.const 1))
-              (i32.eq (i32.load16_u (call $g2w (local.get $arg3))) (i32.const 1)))
-          (then (call $crash_unimplemented (local.get $name_ptr))))
-        (local.set $result (i32.const 512))))              ;; ACMERR_NOTPOSSIBLE
+              (i32.and (i32.ne (local.get $spb) (i32.const 0))
+                       (call $acm_is_pcm16_of (local.get $arg3) (local.get $arg2)))
+              (i32.and (i32.eqz (local.get $arg4))
+                       (i32.eqz (i32.and (local.get $fdw) (i32.const 0x2)))))
+          (then
+            (local.set $result (i32.const 0))
+            (if (i32.eqz (i32.and (local.get $fdw) (i32.const 0x1)))
+              (then
+                (local.set $ncoef (select (call $gl16 (i32.add (local.get $arg2) (i32.const 20))) (i32.const 0)
+                  (i32.eq (call $gl16 (local.get $arg2)) (i32.const 2))))
+                (local.set $st (call $heap_alloc (i32.add (i32.const 28) (i32.shl (local.get $ncoef) (i32.const 2)))))
+                (if (i32.eqz (local.get $st))
+                  (then (local.set $result (i32.const 7)))  ;; MMSYSERR_NOMEM
+                  (else
+                    (call $gs32 (local.get $st) (i32.const 0x534D4341))   ;; 'ACMS'
+                    (call $gs32 (i32.add (local.get $st) (i32.const 4)) (call $gl16 (local.get $arg2)))
+                    (call $gs32 (i32.add (local.get $st) (i32.const 8)) (call $gl16 (i32.add (local.get $arg2) (i32.const 2))))
+                    (call $gs32 (i32.add (local.get $st) (i32.const 12)) (call $gl32 (i32.add (local.get $arg2) (i32.const 4))))
+                    (call $gs32 (i32.add (local.get $st) (i32.const 16)) (call $gl16 (i32.add (local.get $arg2) (i32.const 12))))
+                    (call $gs32 (i32.add (local.get $st) (i32.const 20)) (local.get $spb))
+                    (call $gs32 (i32.add (local.get $st) (i32.const 24)) (local.get $ncoef))
+                    (local.set $i (i32.const 0))
+                    (block $copied (loop $copy
+                      (br_if $copied (i32.ge_u (local.get $i) (local.get $ncoef)))
+                      (call $gs32 (i32.add (local.get $st) (i32.add (i32.const 28) (i32.shl (local.get $i) (i32.const 2))))
+                        (call $gl32 (i32.add (local.get $arg2) (i32.add (i32.const 22) (i32.shl (local.get $i) (i32.const 2))))))
+                      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                      (br $copy)))))))))
+        (if (i32.and
+              (i32.eq (call $gl16 (local.get $arg2)) (i32.const 1))
+              (i32.eq (call $gl16 (local.get $arg3)) (i32.const 1)))
+          (then (call $crash_unimplemented (local.get $name_ptr))))))
     (if (i32.ne (local.get $arg0) (i32.const 0))
-      (then (call $gs32 (local.get $arg0) (i32.const 0))))
+      (then (call $gs32 (local.get $arg0) (select (local.get $st) (i32.const 0) (i32.eqz (local.get $result))))))
     (i32.store offset=0 (global.get $reg_base) (local.get $result))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 36)))
   )
 
-  ;; Every other stream call names an HACMSTREAM and validates it first.
-  ;; acmStreamOpen above never hands one out, so there is no stream table and
-  ;; no handle names a stream: each call answers MMSYSERR_INVALHANDLE. This is
-  ;; the lookup a PCM converter's stream table replaces.
-  (func $acm_stream_validate (param $has i32) (result i32)
-    (i32.const 5))                                          ;; MMSYSERR_INVALHANDLE
-
+  ;; acmStreamClose(has, fdwClose)
   (func $handle_acmStreamClose (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (i32.store offset=0 (global.get $reg_base) (call $acm_stream_validate (local.get $arg0)))
+    (local $st i32) (local $result i32)
+    (local.set $st (call $acm_stream_lookup (local.get $arg0)))
+    (local.set $result (i32.const 5))                       ;; MMSYSERR_INVALHANDLE
+    (if (local.get $st)
+      (then
+        (call $gs32 (local.get $st) (i32.const 0))
+        (call $heap_free (local.get $st))
+        (local.set $result (i32.const 0))))
+    (if (i32.and (i32.eqz (local.get $result)) (i32.ne (local.get $arg1) (i32.const 0)))
+      (then (local.set $result (i32.const 10))))            ;; MMSYSERR_INVALFLAG (closed anyway)
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
   )
 
+  ;; Bytes of 16-bit PCM one block of stream $st decodes to.
+  (func $acm_stream_pcm_block_bytes (param $st i32) (result i32)
+    (i32.shl (i32.mul (call $gl32 (i32.add (local.get $st) (i32.const 20)))
+                      (call $gl32 (i32.add (local.get $st) (i32.const 8)))) (i32.const 1)))
+
+  ;; acmStreamSize(has, cbInput, pdwOutputBytes, fdwSize). Whole blocks only:
+  ;; SOURCE (0) gives the PCM bytes cbInput of ADPCM decodes to, DESTINATION
+  ;; (1) the ADPCM bytes needed to fill cbInput of PCM. Less than one block
+  ;; is ACMERR_NOTPOSSIBLE.
   (func $handle_acmStreamSize (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (i32.store offset=0 (global.get $reg_base) (call $acm_stream_validate (local.get $arg0)))
+    (local $st i32) (local $result i32) (local $blocks i32) (local $out i32)
+    (local.set $st (call $acm_stream_lookup (local.get $arg0)))
+    (local.set $result (i32.const 5))                       ;; MMSYSERR_INVALHANDLE
+    (if (local.get $st)
+      (then
+        (local.set $result (i32.const 0))
+        (if (i32.eqz (local.get $arg2)) (then (local.set $result (i32.const 11))))
+        (if (i32.gt_u (i32.and (local.get $arg3) (i32.const 0xF)) (i32.const 1))
+          (then (local.set $result (i32.const 10))))
+        (if (i32.eqz (local.get $result))
+          (then
+            (if (i32.and (local.get $arg3) (i32.const 1))
+              (then
+                (local.set $blocks (i32.div_u (local.get $arg1) (call $acm_stream_pcm_block_bytes (local.get $st))))
+                (local.set $out (i32.mul (local.get $blocks) (call $gl32 (i32.add (local.get $st) (i32.const 16))))))
+              (else
+                (local.set $blocks (i32.div_u (local.get $arg1) (call $gl32 (i32.add (local.get $st) (i32.const 16)))))
+                (local.set $out (i32.mul (local.get $blocks) (call $acm_stream_pcm_block_bytes (local.get $st))))))
+            (if (i32.eqz (local.get $blocks))
+              (then (local.set $result (i32.const 512)))
+              (else (call $gs32 (local.get $arg2) (local.get $out))))))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
   )
 
-  ;; acmStreamPrepareHeader / acmStreamUnprepareHeader / acmStreamConvert all
-  ;; take (has, pash, fdw) and dispatch here through their api_table handler.
-  (func $handle_acm_stream_header_op (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (i32.store offset=0 (global.get $reg_base) (call $acm_stream_validate (local.get $arg0)))
+  ;; ACMSTREAMHEADER: +0 cbStruct(>=84) +4 fdwStatus +8 dwUser +12 pbSrc
+  ;; +16 cbSrcLength +20 cbSrcLengthUsed +24 dwSrcUser +28 pbDst
+  ;; +32 cbDstLength +36 cbDstLengthUsed +40 dwDstUser +44 dwReservedDriver[10].
+  ;; fdwStatus: DONE 0x10000, PREPARED 0x20000, INQUEUE 0x100000.
+  ;; Common checks for the three header calls: a live stream, a header of at
+  ;; least ACMSTREAMHEADER size, and no flags beyond $allowed. Returns 0 or an
+  ;; MMRESULT.
+  (func $acm_header_check (param $has i32) (param $pash i32) (param $fdw i32) (param $allowed i32) (result i32)
+    (if (i32.eqz (call $acm_stream_lookup (local.get $has))) (then (return (i32.const 5))))
+    (if (i32.eqz (local.get $pash)) (then (return (i32.const 11))))
+    (if (i32.lt_u (call $gl32 (local.get $pash)) (i32.const 84)) (then (return (i32.const 11))))
+    (if (i32.and (local.get $fdw) (i32.xor (local.get $allowed) (i32.const -1)))
+      (then (return (i32.const 10))))
+    (i32.const 0))
+
+  ;; acmStreamPrepareHeader(has, pash, fdwPrepare): marks the header
+  ;; prepared and records its buffers in dwReservedDriver, as the ACM does.
+  (func $handle_acmStreamPrepareHeader (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $result i32) (local $status i32)
+    (local.set $result (call $acm_header_check (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 0)))
+    (if (i32.eqz (local.get $result))
+      (then
+        (local.set $status (call $gl32 (i32.add (local.get $arg1) (i32.const 4))))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 4))
+          (i32.or (i32.and (local.get $status) (i32.const 0xFFFEFFFF)) (i32.const 0x20000)))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 44)) (call $gl32 (i32.add (local.get $arg1) (i32.const 12))))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 48)) (call $gl32 (i32.add (local.get $arg1) (i32.const 16))))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 52)) (call $gl32 (i32.add (local.get $arg1) (i32.const 28))))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 56)) (call $gl32 (i32.add (local.get $arg1) (i32.const 32))))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+  )
+
+  ;; acmStreamUnprepareHeader(has, pash, fdwUnprepare)
+  (func $handle_acmStreamUnprepareHeader (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $result i32) (local $status i32)
+    (local.set $result (call $acm_header_check (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 0)))
+    (if (i32.eqz (local.get $result))
+      (then
+        (local.set $status (call $gl32 (i32.add (local.get $arg1) (i32.const 4))))
+        (if (i32.eqz (i32.and (local.get $status) (i32.const 0x20000)))
+          (then (local.set $result (i32.const 514)))        ;; ACMERR_UNPREPARED
+          (else
+            (call $gs32 (i32.add (local.get $arg1) (i32.const 4))
+              (i32.and (local.get $status) (i32.const 0xFFFDFFFF)))))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+  )
+
+  ;; acmStreamConvert(has, pash, fdwConvert). Decodes every whole block of
+  ;; the source that fits the destination, synchronously, and reports what it
+  ;; used. BLOCKALIGN (0x4), START (0x10) and END (0x20) are accepted; whole
+  ;; blocks are all these codecs ever convert, and each block is independent,
+  ;; so none changes the result.
+  (func $handle_acmStreamConvert (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $result i32) (local $st i32) (local $status i32) (local $align i32) (local $pcm i32)
+    (local $blocks i32) (local $room i32) (local $i i32) (local $src i32) (local $dst i32)
+    (local.set $result (call $acm_header_check (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 0x34)))
+    (if (i32.eqz (local.get $result))
+      (then
+        (local.set $status (call $gl32 (i32.add (local.get $arg1) (i32.const 4))))
+        (if (i32.eqz (i32.and (local.get $status) (i32.const 0x20000)))
+          (then (local.set $result (i32.const 514))))))     ;; ACMERR_UNPREPARED
+    (if (i32.eqz (local.get $result))
+      (then
+        (local.set $st (call $acm_stream_lookup (local.get $arg0)))
+        (local.set $align (call $gl32 (i32.add (local.get $st) (i32.const 16))))
+        (local.set $pcm (call $acm_stream_pcm_block_bytes (local.get $st)))
+        (local.set $src (call $gl32 (i32.add (local.get $arg1) (i32.const 12))))
+        (local.set $dst (call $gl32 (i32.add (local.get $arg1) (i32.const 28))))
+        (local.set $blocks (i32.div_u (call $gl32 (i32.add (local.get $arg1) (i32.const 16))) (local.get $align)))
+        (local.set $room (i32.div_u (call $gl32 (i32.add (local.get $arg1) (i32.const 32))) (local.get $pcm)))
+        (if (i32.lt_u (local.get $room) (local.get $blocks)) (then (local.set $blocks (local.get $room))))
+        (block $decoded (loop $each
+          (br_if $decoded (i32.ge_u (local.get $i) (local.get $blocks)))
+          (if (i32.eq (call $gl32 (i32.add (local.get $st) (i32.const 4))) (i32.const 2))
+            (then (call $msadpcm_decode_block (local.get $st)
+                    (i32.add (local.get $src) (i32.mul (local.get $i) (local.get $align)))
+                    (i32.add (local.get $dst) (i32.mul (local.get $i) (local.get $pcm)))))
+            (else (call $imaadpcm_decode_block (local.get $st)
+                    (i32.add (local.get $src) (i32.mul (local.get $i) (local.get $align)))
+                    (i32.add (local.get $dst) (i32.mul (local.get $i) (local.get $pcm))))))
+          (local.set $i (i32.add (local.get $i) (i32.const 1)))
+          (br $each)))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 20)) (i32.mul (local.get $blocks) (local.get $align)))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 36)) (i32.mul (local.get $blocks) (local.get $pcm)))
+        (call $gs32 (i32.add (local.get $arg1) (i32.const 4))
+          (i32.or (i32.and (local.get $status) (i32.const 0xFFEFFFFF)) (i32.const 0x10000)))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
   )
 
