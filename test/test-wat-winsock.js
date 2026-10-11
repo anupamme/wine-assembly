@@ -364,6 +364,57 @@ async function main() {
     wat.test_wsa_cleanup();
   });
 
+  check('socket event broker atomically enumerates and shares process records', () => {
+    const { processSharedCtx } = require('../lib/worker-imports');
+    const broker = imports.host.socket_event;
+    assert.strictEqual(typeof broker, 'function', 'socket event broker must exist');
+    const child = createHostImports({ ...processSharedCtx(hostContext), getMemory: () => memory.buffer });
+    const event = imports.host.create_event(1, 0, 0, 0);
+    const out = wa(alloc(44)), view = new DataView(memory.buffer, out, 44);
+    const select = (socket, mask) => broker(0, socket, event, mask, 0);
+    const post = (socket, bit, error=0) => broker(1, socket, bit, error, 0);
+    const enumerate = (socket, handle=event, ptr=out) => child.host.socket_event(2, socket, handle, 0, ptr);
+    assert.strictEqual(select(7, 0x21), 0);
+    post(7, 2); // unselected FD_WRITE must not signal or leak into the record
+    assert.strictEqual(imports.host.wait_single(event, 0), 258);
+    post(7, 1); post(7, 32, 10054);
+    assert.strictEqual(imports.host.wait_single(event, 0), 0);
+    for (let i=0;i<11;i++) view.setUint32(i*4, 0xdeadbeef, true);
+    assert.strictEqual(enumerate(7, 0x12345678), 10022);
+    assert.strictEqual(view.getUint32(0,true), 0xdeadbeef, 'failure leaves output untouched');
+    assert.strictEqual(imports.host.wait_single(event,0),0,'failure preserves event signal');
+    assert.strictEqual(enumerate(7,event,memory.buffer.byteLength-4),10014);
+    assert.strictEqual(enumerate(7),0);
+    assert.strictEqual(view.getUint32(0,true),0x21);
+    assert.strictEqual(view.getUint32(4,true),0);
+    assert.strictEqual(view.getUint32(24,true),10054);
+    assert.strictEqual(view.getUint32(8,true),0xdeadbeef,'unreported error slots stay untouched');
+    assert.strictEqual(imports.host.wait_single(event,0),258);
+    assert.strictEqual(enumerate(7),0);
+    assert.strictEqual(view.getUint32(0,true),0,'record cleared');
+    post(7,1);
+    assert.strictEqual(imports.host.wait_single(event,0),0,'next notification signals after reset');
+    assert.strictEqual(enumerate(7,0),0);
+    assert.strictEqual(imports.host.wait_single(event,0),0,'NULL event does not reset');
+    imports.host.reset_event(event);
+    assert.strictEqual(broker(4,8,7,0,0),0,'accepted socket inherits association');
+    child.host.socket_event(1,8,32,10061,0);
+    assert.strictEqual(enumerate(8),0);
+    assert.strictEqual(view.getUint32(0,true),32);
+    assert.strictEqual(view.getUint32(24,true),10061);
+    assert.strictEqual(broker(3,8,0,0,0),0);
+    post(8,1);
+    assert.strictEqual(enumerate(8),0);
+    assert.strictEqual(view.getUint32(0,true),0,'cancel removes association and pending record');
+    assert.strictEqual(select(7,0),0);
+    post(7,1);
+    assert.strictEqual(enumerate(7),0);
+    assert.strictEqual(view.getUint32(0,true),0);
+    assert.strictEqual(broker(0,7,0x12345678,1,0),10022);
+    assert.strictEqual(select(7,0x80000000),10022,'unsupported mask rejected');
+    assert.strictEqual(imports.host.close_event(event),1);
+  });
+
   check('WSAConnect is registered with seven arguments', () => {
     const api = require('../src/api_table.json').find(api => api.name === 'WSAConnect');
     assert(api, 'WSAConnect must resolve by name');

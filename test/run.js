@@ -2752,6 +2752,7 @@ async function main() {
     // the guest's sockets still work; the room is just this process alone.
     vlanWire: VLAN_WIRE ? new (require('../lib/vlan-wire').ProcessWire)(process) : null,
     audioStatsStride: AUDIO_STATS ? AUDIO_STATS_STRIDE : 0,
+    isEventHandle: handle => !!(threadManager && threadManager.isEventHandle(handle)),
     signalSyncHandle: handle => threadManager
       ? threadManager.setEvent(handle >>> 0) : 0,
     resetSyncHandle: handle => threadManager

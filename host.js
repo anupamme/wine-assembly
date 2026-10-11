@@ -1807,6 +1807,7 @@ class WineAssembly {
       // browser context on the same path so short-lived Storm events release
       // their fixed-table slots instead of leaking until creation fails.
       closeSyncHandle: handle => self._closeSyncHandle(handle),
+      isEventHandle: handle => !!(self.threadManager && self.threadManager.isEventHandle(handle)),
       signalSyncHandle: handle => self.threadManager
         ? self.threadManager.setEvent(handle >>> 0) : 0,
       resetSyncHandle: handle => self.threadManager

@@ -176,3 +176,32 @@ close, rejected mutex close, and inability to signal the closed object.
 All 55 Winsock checks and the ThreadManager/mutex checks pass. The remaining
 Dark Reign 2 blocker is still WSAEnumNetworkEvents/WSAEventSelect, not this
 lifecycle prerequisite; no fresh gameplay or screenshot claim.
+
+## Shared event-record transaction prerequisite
+
+The host now owns one socketEventRecords map per process, inherited together
+with the event validator and signal/reset callbacks. socket_event operations
+are: 0 select (socket index, event, mask), 1 post (index, FD bit, error),
+2 enumerate (index, optional reset event, reserved, contiguous output WASM
+address), 3 cancel, 4 inherit (child index, parent index), 5 selected mask.
+Supported selection bits are READ/WRITE/ACCEPT/CONNECT/CLOSE (0x3b); unsupported
+bits fail with WSAEINVAL. Enum validates the 44-byte span and event first, then
+resets, copies only nominated error slots, and clears the record in one
+synchronous host call. No guest callback or await occurs during that operation.
+Errors retain the record and leave the output untouched; NULL event skips reset.
+
+This is a host-side prerequisite, not a newly exposed Winsock API. WAT does
+not yet import socket_event, and no real worker RPC or game replay is claimed.
+Next wire it through the generated import signature and public EventSelect/Enum
+handlers; connect socket destroy, accept inheritance and AsyncSelect cancellation
+to it. Audit local TCP close/shutdown notification paths as well as wire events.
+Use existing read re-enable flags, preserve nonblocking side effects, and check
+actual socket readiness through API tests before an ordinary DR2 replay.
+
+The old control fails because no broker exists. Evidence:
+scratch/runs/20261011T2225Z-winsock-event-record/. All 56 Winsock checks, worker
+context inheritance, ThreadManager tests and full build pass. The new test
+uses two host-import contexts sharing one process record and real event objects:
+selection filtering, recorded errors, untouched unreported error slots, invalid
+output/event failure preservation, clear/reset, next-event signaling, optional
+reset, accept inheritance, cancellation and invalid masks are covered.
