@@ -1861,13 +1861,21 @@
   ;; file, on error, or for a stream this CRT does not own. The byte lands in
   ;; the caller's own argument slot ([esp+4]); a cdecl callee owns its
   ;; parameters, and the FILE* is already in $arg0.
+  ;; That slot IS the FILE*, so a call that parks must put it back: the retry
+  ;; runs on the frame as left, and with the slot zeroed it was fgetc(NULL),
+  ;; i.e. EOF. Anno 1602 reads haeuser.cod, figuren.cod and its .gad files
+  ;; with fgetc; under the browser's lazy file policy the first byte parked,
+  ;; the retry saw EOF, every file looked empty and the main menu never drew
+  ;; (ANNO-LAZY-BLACK-20261011).
   (func $handle_getc (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $slot i32) (local $read i32)
     (local.set $slot (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (local.get $slot) (i32.const 0))
     (local.set $read (call $crt_file_read (local.get $arg0) (local.get $slot) (i32.const 1)))
     (if (i32.eq (local.get $read) (global.get $CRT_READ_PARKED))
-      (then (call $crt_park) (return)))
+      (then
+        (call $gs32 (local.get $slot) (local.get $arg0))
+        (call $crt_park) (return)))
     (i32.store offset=0 (global.get $reg_base)
       (select (call $gl8 (local.get $slot)) (i32.const -1)
         (i32.eq (local.get $read) (i32.const 1))))

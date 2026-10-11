@@ -15,7 +15,10 @@
 // restore its cdecl frame and point EIP back at its thunk when it parks, pop
 // its return address exactly once when it completes, and return exactly the
 // bytes of the file -- fgets in particular, which reads a byte at a time and
-// has to give back what it took before it parks.
+// has to give back what it took before it parks. Retries run on the frame the
+// parked call left: getc reads its byte into its own FILE* slot, and once
+// left zeroed by a park the retry was getc(NULL) = EOF (Anno 1602's
+// haeuser.cod, ANNO-LAZY-BLACK-20261011).
 
 'use strict';
 
@@ -28,10 +31,25 @@ const { bootRenderHarness } = require('./render-helper');
 
 const STACK = 0x00300000;
 const THUNK = 0x0013579b;
+// t_<name> builds the cdecl frame and makes the call. r_<name> is the retry
+// after a park: it runs the handler again on the frame exactly as the parked
+// call left it, reading its arguments back from the stack the way the thunk
+// does -- a real guest never pushes them twice, so a handler that wrote over
+// its own argument slot before parking must have put it back.
 const call = (name, params) => {
   const args = params.map(p => `(local.get $${p})`);
   while (args.length < 5) args.push('(i32.const 0)');
+  const reread = params.map((p, i) => `(call $gl32 (i32.const ${STACK + 4 + 4 * i}))`);
+  while (reread.length < 5) reread.push('(i32.const 0)');
   return String.raw`
+  (func (export "r_${name}") (result i32)
+    (i32.store offset=0 (global.get $reg_base) (i32.const 0x7e7e7e7e))
+    (global.set $eip (i32.const 0))
+    (global.set $handler_set_eip (i32.const 0))
+    (global.set $yield_reason (i32.const 0))
+    (global.set $yield_flag (i32.const 0))
+    (call $handle_${name} ${reread.join(' ')} (i32.const 0))
+    (i32.load offset=0 (global.get $reg_base)))` + String.raw`
   (func (export "t_${name}") ${params.map(p => `(param $${p} i32)`).join(' ')} (result i32)
     (i32.store offset=16 (global.get $reg_base) (i32.const ${STACK}))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0x7e7e7e7e))
@@ -89,7 +107,7 @@ const GUEST = 'c:\\dark\\graphics\\intface\\mouse.crs';
   const run = async (name, ...args) => {
     for (let parks = 0; ; parks++) {
       assert(parks < 32, `${name} keeps parking`);
-      const r = e[`t_${name}`](...args);
+      const r = parks ? e[`r_${name}`]() : e[`t_${name}`](...args);
       if (e.get_yield_reason() !== 12) {
         assert.strictEqual(e.get_esp() >>> 0, STACK + 4, `${name} pops its return address exactly once`);
         return { r, parks };
