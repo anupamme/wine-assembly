@@ -129,36 +129,54 @@ black frame shows the 3D pass's sprite quads arriving with `xyz=NaN` and no
 level geometry submitted at all (a NaN camera fails every visibility test),
 while the ortho HUD is finite; identical under WebGL and the WAT rasterizer.
 
-What is known about the NaN (CLI route, fork with no renderer):
-- `--trace-fpu` shows millions of `raise IE` from compares that READ it
-  (`0x477fa6`/`0x477fd2` ~33M each, `0x467a10/56/99`, CRT math-error paths
-  `0x483a1a`/`0x484b7a`), the first ~batch 2445-2452.
-- It is not made by a plain FADD/FSUB/FMUL/FDIV: a trace-only "NaN made"
-  check on those (WIP patch `scratch/wip/fpu-nan-made-trace-w5.patch`)
-  fires 0 times. Not the uop tier or x87 island predecode either (both off:
-  still NaN).
-- The first NaN to reach the x87 stack is a non-canonical
-  **0xffc9a893** (raw bits from memory, not an x87-produced 0xffc00000), via
-  `fpu_set`/`fpu_push` (experiment `scratch/wip/mdk2-nanentry-experiment-w5.js`).
-  Its EIP attribution (`0x45f97a`, `fld [ecx+0x14]; fcomp [0x48c228]`) is
-  NOT reliable: the page compiler runs many blocks between `$eip` updates,
-  and neither operand was NaN (`[0x48c228]` stays 0.0 through b6000; the
-  watched `[ecx+0x14]` went 0 -> 1.0 only).
-- Lead, unproven: `0x45f9d0(obj, idx, w)` stores
-  `w * table[(signed char)map[idx] << 5 + 8]` into a node's `+0x14`; a map
-  byte of -1 would read 24 bytes before the table, i.e. heap metadata whose
-  bits differ between Windows' heap and ours (4-byte size header).
+Where the NaN comes from (CLI route, boat bx_td2jejvz, 2026-10-11; evidence
+`scratch/runs/20261011T2000Z-mdk2_demo-nan-source-w5`):
+
+- It is **file data**: the ARGB colour **0xffc9a893** at offset 0x154 of
+  `data\base.zip:Ricochet.mod` (the bullet-ricochet particle model; the
+  record named `RICOCHET_EMIT` starts at 0xe0). The worker thread T1 (the
+  `_beginthread(0x451f30)` file worker) copies the decompressed bytes into a
+  heap buffer with `rep movsd` at `0x457765`.
+- The archives are PKWARE DCL "implode" (zip method 10, flags 0), which the
+  game explodes itself. A JS port of zlib's `contrib/blast`
+  (`scratch/wip/mdk2-dcl-explode-zipblast-w5.js`) explodes all 856 entries
+  of base/local/scripts.zip with 0 failures, and `Ricochet.mod` holds the
+  same bytes the emulator produced: **the guest's decompression is correct.**
+- The colour becomes a float in the node-array init at
+  `0x45eefe..0x45ef74`: for `count = word header[+8]` (7 here) channels it
+  copies `src[edi+8]` raw into each 40-byte node's weight `+0x14`
+  (`src = [ebp+8]`, 32-byte records; `+0x10` -> node `+8`, `+0xc` ->
+  node `+0x1c`). For Ricochet.mod `src` is file offset **0x14c**, equal to
+  header word `+0xe`, so record 0's weight is the colour. The bytes at 0x14c
+  do not look like channel records; the dword offset table at file `+0x20`
+  (0xe0, 0x180, 0x280, 0xbe0, ...) looks like where records really start.
+- The first NaN x87 load is on the main thread (tid 1), `fld [ecx+0x14]`
+  of such a node (run head `0x45f97a`). From there it reaches the camera.
+- Ruled out: plain FADD/FSUB/FMUL/FDIV making it (trace-only "NaN made"
+  check, `scratch/wip/fpu-nan-made-trace-w5.patch`, 0 hits); the uop tier
+  and x87 island predecode (both off: still NaN); SSE/3DNow (CPUID exposes no
+  extended leaves, SSE off) and MMX (0 retired); a corrupted constant
+  (`[0x48c228]` stays 0.0).
+- Still open: is 0x14c really the channel-array offset the game intends?
+  Find the instruction that writes `[ebp+8]` and check its arithmetic
+  against the header (16-bit offset field, sign/zero extension, base). If our
+  execution matches Windows, the NaN is the game's own and the difference is
+  elsewhere (what Windows does with a NaN weight).
 - The frame meter at `0x401f28` divides 1000 by an unset frame delta once at
   startup (ZE, inf in a 32-slot ring). Real hardware does the same.
 - Tooling gotchas: `--trace-at` halts each batch at its first hit, so those
-  runs fall behind and never reach the NaN frame; plain `--watch` (chaining
-  off) shifts allocation addresses, so take the address from a run in the
-  same mode.
+  runs fall behind and never reach the NaN frame. Plain `--watch` (chaining
+  off) shifts allocation addresses, and neither watch mode sees a value that
+  is written and read inside one fall-through chain (no desk trip): log the
+  load's address instead (boat-only `ldtrace.js`/`ldtid.js` in the
+  evidence folder) and scan memory for the bits (`scanhook.js`).
+  `$current_thread_id` is 1 on the main thread.
 
 ## Open
 
-- Find the NaN's writer: rerun the NaN-entry experiment with page compile
-  off (exact `$eip`), or watch for 0xffc9a893 near the `0x45f9d0` tables.
+- Find the writer of the channel-array pointer `[ebp+8]` used by the node
+  init at `0x45eefe` and check whether 0x14c (Ricochet.mod) is the offset the
+  game means (see Black world).
 - Jump: the binding is the game's own (Mouse B2) and the button is mapped;
   not yet seen in lit play, because the reliable route now lands in the black
   world.
