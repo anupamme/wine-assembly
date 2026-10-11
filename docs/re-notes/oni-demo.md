@@ -68,3 +68,10 @@ The new mixed-case regression fails against the old filesystem implementation.
 Unmodified Oni/data, without the diagnostic wrapper, now reaches the reviewed
 Bungie intro at 30000 batches: run20261011T1648Z-oni-case-fixed. This verifies
 the startup fix, not gameplay, FPS, audio or browser/mobile compatibility.
+
+Longer replay with Escape at 35000/65000 batches reaches a GL-initialization
+error under the default CLI backend, which intentionally has no GL context.
+Do not classify that modal as an emulator regression. With
+`--gl-renderer=software`, the bounded run continues to 144166 batches/30s,
+but the final GDI canvas capture is gray. Next inspect the GL/DirectDraw
+surface or a real browser route; no menu/gameplay qualification yet.
