@@ -153,6 +153,18 @@ const extraWat = String.raw`
   assert.strictEqual(wat.test_refcount(device5), 1, 'v5 Device7 failure does not AddRef');
   assert.strictEqual(wat.test_release(device5), 0, 'v5 device releases cleanly');
 
+  // ...but Device2 has no floor: a v3 DirectInput's device answers it, as the
+  // DirectX 5+ runtime does (Expendable creates DirectInput 0x0300 and QIs it).
+  const device3 = wat.test_create_device(0x0300) >>> 0;
+  assert.strictEqual(wat.test_query_interface(device3, device2W, out) >>> 0, 0,
+    'Device2 on a v3 device succeeds');
+  assert.strictEqual(wat.guest_read32(out) >>> 0, device3, 'v3 Device2 reuses the primary wrapper');
+  assert.strictEqual(wat.test_release(device3), 1, 'v3 Device2 reference balances');
+  wat.guest_write32(out, 0xcccccccc);
+  assert.strictEqual(wat.test_query_interface(device3, device7A, out) >>> 0, 0x80004002,
+    'Device7 on a v3 device still returns E_NOINTERFACE');
+  assert.strictEqual(wat.test_release(device3), 0, 'v3 device releases cleanly');
+
   const root = wat.test_create_root() >>> 0;
   for (const [name, iid, vtable] of [
     ['IDirectInputDeviceA', deviceA, deviceVtable],

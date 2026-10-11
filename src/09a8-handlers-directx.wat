@@ -9518,18 +9518,19 @@
     (if (i32.eqz (local.get $version))
       (then (local.set $version (i32.const 0x0700))))
     ;; Device1/2/7 have complete vtables here; Device8 (kind 5) does not, and
-    ;; is still refused rather than answered with a shorter table. A face is
-    ;; also only offered by a DirectInput of at least the version that defined
-    ;; it, which is how a v3 caller is kept from acquiring a v7 pointer.
+    ;; is still refused rather than answered with a shorter table. Device7 is
+    ;; only offered by a v7 DirectInput, which keeps a v3/v5 caller from a v7
+    ;; pointer. Device2 has no such floor: the DirectX 5+ runtime a Win98
+    ;; machine has answers it on every device object, whatever dwVersion the
+    ;; app passed to DirectInputCreate. Expendable creates a 0x0300
+    ;; DirectInput, QueryInterfaces Device2, and on E_NOINTERFACE released the
+    ;; device but later called Acquire/GetDeviceData through the NULL it kept.
     (if (i32.or
           (i32.eqz (local.get $kind))
           (i32.or
             (i32.gt_u (local.get $kind) (i32.const 4))
-            (i32.or
-              (i32.and (i32.eq (local.get $kind) (i32.const 3))
-                (i32.lt_u (local.get $version) (i32.const 0x0500)))
-              (i32.and (i32.eq (local.get $kind) (i32.const 4))
-                (i32.lt_u (local.get $version) (i32.const 0x0700))))))
+            (i32.and (i32.eq (local.get $kind) (i32.const 4))
+              (i32.lt_u (local.get $version) (i32.const 0x0700)))))
       (then
         (i32.store offset=0 (global.get $reg_base) (i32.const 0x80004002)) ;; E_NOINTERFACE
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
