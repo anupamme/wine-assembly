@@ -51,6 +51,23 @@ Mount the tree at `C:\` (`--exe-guest-path=C:\GiantsReaperDemo.exe --cwd=C:\`).
 | 1000 | click (320,437) "Enter New ID" | "Enter New Player ID" |
 | 1100 | `keypress` W, 6 (WM_CHAR; `keydown` letters are ignored) | name "W6" |
 | 1140 | Enter | main menu (Start New Single Player Game ...) |
-| 1400 | click (320,54) Start New Single Player Game | |
+| 1300 | mousedown/up IN PLACE (no move) | loading "Delphi's Story 1: Yan, the Samurai Smartie" |
+| ~2400 | | intro cutscene with subtitles |
+| ~2900 | | Mission Objectives over the HUD |
 
-Evidence: `scratch/runs/20261011T1840Z-giants-demo-w6`.
+**The menu cursor is the game's own, driven by DirectInput deltas.** It moves
+1:1 with the deltas (`GetDeviceState`, a 20-byte mouse state, every frame),
+but the game puts it on "Start New Single Player Game" by itself when the menu
+opens, while the host pointer is still where the last click was (320,437).
+So any absolute move aimed at the item's screen position is applied as a
+delta from the wrong origin and pins the cursor at the edge; clicking without
+moving selects the highlighted item. Not an emulator bug -- a real mouse
+user only ever moves relative to the cursor they see. On a phone this is
+why the layout uses trackpad (relative) touch.
+
+Open: the terrain renders mostly untextured (flat green) in the CLI's
+headless GL path; not investigated.
+
+Evidence: `scratch/runs/20261011T1840Z-giants-demo-w6`,
+`scratch/runs/20261011T1950Z-giants-di-cursor-w6` (m1-p0..p3 measure the
+cursor; m2/m3 the route into the mission).
