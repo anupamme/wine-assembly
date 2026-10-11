@@ -38761,5 +38761,26 @@
     "nargs": 7,
     "convention": "stdcall",
     "hash": 1618775544
+  },
+  {
+    "id": 4553,
+    "name": "WSASocketA",
+    "nargs": 6,
+    "convention": "stdcall",
+    "hash": 2494112742
+  },
+  {
+    "id": 4554,
+    "name": "WSASocketW",
+    "nargs": 6,
+    "convention": "stdcall",
+    "hash": 2796109884
+  },
+  {
+    "id": 4555,
+    "name": "WSASocket",
+    "nargs": 6,
+    "convention": "stdcall",
+    "hash": 1847186435
   }
 ]

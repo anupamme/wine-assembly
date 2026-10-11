@@ -299,3 +299,26 @@ replay clears WSASend export lookup and now stops at missing WSASocket,
 win32_socket.cpp:1817. It has not exercised the new send API itself yet.
 Evidence, module hash and capture: scratch/runs/20261011T2303Z-dark-reign2-wsasend/.
 No gameplay/FPS/audio qualification. Next WSASocket protocol-info/creation semantics.
+
+## Held WSASocket candidate (2026-10-11 23:21Z)
+
+Not ready for integration. A/W/plain exports and a shared socket-creation core
+pass 65 Winsock checks and the full build; a wrong frame-unwind control fails.
+The candidate currently rejects every nonzero creation flag. That is incomplete:
+WSA_FLAG_OVERLAPPED (1) is a valid attribute, and nonoverlapped I/O is also allowed
+on such sockets. [Microsoft contract](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasocketw).
+
+Ordinary DR2 calls WSASocketA(2,3,1,NULL,0,1): an IPv4 raw ICMP socket with that
+attribute. The candidate returns 10022. The guest then formats its 446-byte
+fatal-error explanation through a 256-byte buffer and crashes at 0x0078678a in
+its Sprintf error string. This is not evidence of a layout/compiler regression.
+Earlier filtered traces omitted the final buffered batch; the API breakpoint
+captures the actual request and WSAGetLastError result.
+
+Matched parent exits without that crash. Keeping the new implementation while
+removing only its three API registrations also avoids it. Next: correct creation
+attribute handling and raw-socket capability/error semantics, with regression
+coverage for this request, before another ordinary replay. Do not fake success
+for raw ICMP or overlapped I/O. No new menu/gameplay screenshot was produced.
+Evidence: scratch/runs/20261011T2311Z-dark-reign2-wsasocket/ (source patch, build,
+unit/negative control, A/B logs, error-buffer trace and API breakpoint).

@@ -78,6 +78,14 @@ async function main() {
         (local.get $s) (local.get $b) (local.get $c) (local.get $n) (i32.const 0) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsasocket") (param $wide i32) (param $af i32) (param $type i32) (param $proto i32) (param $info i32) (param $group i32) (param $flags i32) (result i64)
+      (global.set $yield_reason (i32.const 0))
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x300000))
+      (call $gs32 (i32.const 0x300018) (local.get $flags))
+      (call $dispatch_api_table (if (result i32) (local.get $wide) (then (call $lookup_api_id "WSASocketW")) (else (call $lookup_api_id "WSASocketA")))
+        (local.get $af) (local.get $type) (local.get $proto) (local.get $info) (local.get $group) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     (func (export "test_wsa_startup") (param $data i32) (result i32)
       (call $handle_WSAStartup (i32.const 0x0202) (local.get $data)
         (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
@@ -557,6 +565,21 @@ async function main() {
       set(d+8,2);set(d+12,0);assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsasend(cli,d,2,n))),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
       assert.strictEqual(wat.test_call_recv(acc,out,110000,0),-1);
     }
+  });
+
+  check('WSASocket validates catalog selections and parks the full creation frame', () => {
+    wat.test_vsock_reset();const value=r=>Number(BigInt.asIntN(32,r));
+    assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10093);
+    wat.test_wsa_startup(alloc(400));const n=buf(4),out=buf(2000),dv=new DataView(memory.buffer);
+    for(const wide of [0,1]){
+      dv.setUint32(wa(n),2000,true);wat.test_wsa_protocols(wide,0,out,n);
+      for(let i=0;i<3;i++){const info=out+i*(wide?628:372),r=wat.test_wsasocket(wide,-1,-1,-1,info,0,0);assert(value(r)>0);assert.strictEqual(Number(r>>32n),0x30001c);assert.strictEqual(wat.test_call_closesocket(value(r)),0);}
+      dv.setUint32(wa(out)+20,0,true);assert.strictEqual(value(wat.test_wsasocket(wide,-1,-1,-1,out,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);
+    }
+    assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,1,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+    for(const [group,flags] of [[1,0],[0,1],[0,2]]){assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,group,flags)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);}
+    let calls=0;hostContext.openLanLink=()=>{calls++;return false;};const r=wat.test_wsasocket(0,0,2,17,0,0,0);assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(r>>32n),0x300000);assert.strictEqual(calls,1);
+    hostContext.openLanLink=()=>true;const opened=wat.test_wsasocket(0,0,2,17,0,0,0);assert(value(opened)>0);assert.strictEqual(Number(opened>>32n),0x30001c);wat.test_call_closesocket(value(opened));delete hostContext.openLanLink;
   });
 
   check('network event APIs report real TCP read, write and close readiness', () => {
