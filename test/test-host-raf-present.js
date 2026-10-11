@@ -80,23 +80,36 @@ function driveWorkerLoop(h) {
   wine.instance = { exports: {} };
   wine.guestWorker = {
     broker: { publish() {} },
+    // runMain reads the main link's send depth and wave offer first
+    // (28a104092, f2367f0c5); an idle link has neither.
+    link: { threadSendDepth: 0, _waveOffer: null },
     slice() { return new Promise(resolve => resolvers.push(resolve)); },
   };
   wine.running = true;
   wine._runThreaded(1000);
   const tick = () => new Promise(resolve => setImmediate(resolve));
+  // The step awaits its boundary work (the wave-callback pump, f2367f0c5)
+  // before it asks for the slice; wait until it has.
+  const inFlight = async () => {
+    for (let i = 0; i < 20 && !resolvers.length; i++) await tick();
+  };
   // Finish the in-flight slice (optionally presenting inside it), let the
   // boundary run, and start the next slice.
   const finishSlice = async ({ presents = 0, next = true } = {}) => {
     for (let i = 0; i < presents; i++) h.present();
+    await inFlight();
+    assert.strictEqual(resolvers.length, 1, 'the step has asked for its slice');
     resolvers.shift()({ eip: 1, yield: 0, focusHwnd: 0, blocks: 1000, ms: 1 });
     await tick();
     if (next) {
       assert.strictEqual(scheduled.length, 1, 'a completed slice schedules its successor');
       scheduled.shift()();
+      // Return with the next slice in flight, so a caller's rAF or present
+      // lands inside it rather than in the step's boundary await.
+      await inFlight();
     }
   };
-  return { finishSlice, resolvers, scheduled };
+  return { finishSlice, inFlight, resolvers, scheduled };
 }
 
 (async () => {
@@ -180,6 +193,7 @@ function driveWorkerLoop(h) {
     h.wine.logToUI = () => {};
     h.present();
     h.wine.renderer.endWorkerGuestSlice();
+    await loop.inFlight();
     loop.resolvers.shift()({ eip: 1, yield: 0, focusHwnd: 0, blocks: 1000, ms: 1,
       trapped: 'unreachable', regs: {} });
     await new Promise(resolve => setImmediate(resolve));
