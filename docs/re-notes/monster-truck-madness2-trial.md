@@ -1,7 +1,7 @@
 # Monster Truck Madness 2 Trial (Terminal Reality / Microsoft, 1998)
 
-Candidate `monster-truck-madness2-trial` (not yet registered: its race
-draws but the truck does not respond to controls yet). `Monsterx.exe` is a statically linked MFC 4.0 MDI app
+App `monster_truck_madness2_trial` (candidate `monster-truck-madness2-trial`,
+localOnly; plays in the software renderer). `Monsterx.exe` is a statically linked MFC 4.0 MDI app
 (`AfxFrameOrView40s`, `AfxMDIFrame40s` classes). Its UI frames are
 `CMDIChildWnd`s whose views are `CFormView`s, created as dialogs.
 
@@ -37,8 +37,7 @@ renderer.
    with form view `0x10004`. After OK, child 2 `0x1000b` gets form view
    `0x1000c`.
 3. The shell screen ("Trial Version", menus Race/View/Options/Help) appears
-   by about b120. It is magenta-tinted under our 32-bit desktop (palette,
-   not investigated). Left idle, it auto-starts the attract demo, "Farm Road
+   by about b120 (magenta before 16668e502, see below). Left idle, it auto-starts the attract demo, "Farm Road
    29": "Loading terrain database" at about b540, frames from about b1100.
 4. **Software renderer = DISPDIB mode 13h** (works since ad1b472f5). After
    "Loading additional graphics" it creates a `DisplayDibWindow` (our
@@ -70,26 +69,37 @@ Check-In) → GO → OK on "Before You Begin" → the race draws from about b170
 in-cab view, HUD, minimap. Evidence:
 `scratch/runs/20261011T0535Z-monster_truck_madness2_trial-dispdib-race-claude1863`.
 
-**Open: the truck does not drive.** With Up held from b1700 the speedometer
-stays near zero and the lap timer at 00:00 through b2600. What is known:
+**The truck drives** (registered 8de759fae; evidence
+`scratch/runs/20261011T0625Z-monster_truck_madness2_trial-gameplay-claude1863`).
+Add `1700:keydown:38` to hold Up. It is slow to get going at the headless
+clock: the speedometer is still near zero at b2600 and well up by b2850, and
+the "Back" gap to the leader shrinks from 1:03.87 to 0:35.37 by b3450. A
+2026-10-11 note here that it "does not drive" was a run that stopped too
+early. How the controls actually work:
 
-- The race loop is PeekMessage → TranslateMessage → DispatchMessage. The
-  DisplayDibWindow now passes WM_KEYDOWN to its owner, the view `0x10036`
-  (an MFC `AfxFrameOrView40s`), whose message map does not handle it:
-  CWnd::Default → `CallWindowProcA`. So the race does not steer from key
-  messages.
-- During the race (b1850-1950, all threads) the only calls are TLS/LastError,
-  a mutex pair, QueryPerformanceCounter, Sleep, DirectSound position,
-  timeGetTime, and once a frame `PeekMessageA`, `SetCursorPos`,
-  `GetWindowRect`. No `GetKeyState`, `joyGetPosEx` or DirectInput call.
-- The exe imports `DirectInputCreateA` (DINPUT), `joyGetPosEx`/`joyGetPos`/
-  `joyGetNumDevs`/`joyGetDevCapsA` and `GetKeyState`. `Monsterx.ini [Control]`
-  has `joystickActive=0`, and `[Keys]` maps scan codes plus VKs
-  (`keyAccelerate=72` / `_VK=38`, brake 80/40, right 77/39, left 75/37).
-- "Before You Begin" prints "Your controls are set to" with an **empty**
-  device name: the control setup found nothing, which is probably why no
-  input API is ever polled. Next: find where that name comes from (Options →
-  Controls, the DirectInput keyboard enumeration) before touching the race.
+- No input API is polled in the race. Keys arrive as WM_KEYDOWN/WM_KEYUP and
+  the app's `PreTranslateMessage` (0x4276e0, via thunk 0x406244; app vtable
+  0x606bb8) handles them before dispatch, writing a byte per **scan code**
+  into the key table at `0x722e50` (`--watch=0x722e98` = accelerate, scan
+  0x48, goes to 1 at the first keydown, EIP 0x4045e3). So lParam's scan-code
+  byte must be right; the VK is not what it reads.
+- `Monsterx.ini [Keys]` maps scan codes plus VKs (`keyAccelerate=72` / `_VK=38`,
+  brake 80/40, right 77/39, left 75/37); `[Control] joystickActive=0`.
+- The only DirectInput use is `IDirectInput_EnumDevices(DIDEVTYPE_JOYSTICK,
+  DIEDFL_FORCEFEEDBACK)` at startup; joysticks via `joyGetDevCapsA`.
+- "Before You Begin" shows "Your controls are set to" with a blank device
+  name although `[0x63e240]` (control type) is 0, i.e. "Keyboard"
+  (0x475160 switches on it and `SetWindowText`s the static at `+0x320`). So
+  that blank is a dialog-text rendering issue, not missing controls. Open.
+
+## The pink shell (fixed 2026-10-11, 16668e502)
+
+Every shell bitmap is a DIB section the game remaps onto a palette it builds
+(0x56f270 sets the palette up; GetDIBColorTable, then nearest-colour against
+the palette, then SetDIBColorTable). The loop's bound is
+`CPalette::GetEntryCount` = `GetObject(hpal, 2, &w)` (called from 0x56f45d),
+and we answered 0, so the remapped table was stack garbage. GetObject on a
+palette now writes the WORD count.
 
 ## The empty view list (fixed 2026-10-11, f54d8df3d)
 
