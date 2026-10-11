@@ -706,6 +706,19 @@ for (const mode of ['fit', 'zoom']) {
   for (const id of ['bricks', 'cwordzap']) {
     assert.strictEqual(apps[id].singleAppMaximize, false, `${id} is not auto-maximized`);
   }
+  // Little Fighter 2 has no maximize box, so its window never grew the desktop
+  // before it made its windowed DirectDraw primary: on an 844x390 landscape
+  // phone everything below y~370 of its 800x575 window stayed grey
+  // (LF2-PHONE-LANDSCAPE-CUTOFF-20261011).
+  assert.deepStrictEqual(apps.little_fighter_2.singleAppMinDesktop, { w: 1024, h: 768 },
+    'Little Fighter 2 starts on a desktop its window and primary fit');
+  {
+    const phone = makeRenderer(844, 390, 844, 390);
+    phone.singleAppMinDesktop = apps.little_fighter_2.singleAppMinDesktop;
+    const size = phone.singleAppBackingSize(844, 390);
+    assert.ok(size.w >= 820 && size.h >= 595,
+      `the landscape desktop holds LF2's window rect (20,20)-(820,595): got ${size.w}x${size.h}`);
+  }
   // Taipei draws its title splash with a DC outside WM_PAINT; the phone
   // maximize repainted over it and phones showed an empty green window until
   // the first tap (TAIPEI-PHONE-EMPTY, runs/20261011T1600Z-taipei-phone-w6).
