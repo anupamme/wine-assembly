@@ -61,6 +61,17 @@ function volumePath(first, n) {
   return hit ? path.join(dir, hit) : null;
 }
 
+// The cab's .hdr beside it, matched case-insensitively like volumePath: a CD
+// image names it DATA1.HDR, and on a case-sensitive filesystem the guess
+// "DATA1.hdr" missed it, so the 209 MB DATA1.CAB was read as its own header
+// and the file table pointed far outside it (Baldur's Gate demo, ERR_OUT_OF_RANGE).
+function headerPath(cab) {
+  const dir = path.dirname(cab);
+  const want = path.basename(cab).replace(/\.cab$/i, '.hdr').toLowerCase();
+  const hit = fs.readdirSync(dir).find(name => name.toLowerCase() === want);
+  return hit ? path.join(dir, hit) : null;
+}
+
 function readVolumes(first) {
   const volumes = [];
   for (let n = 1; ; n++) {
@@ -191,8 +202,8 @@ function main() {
   }
   const outArg = args.find(a => a.startsWith('--out='));
   const groupArg = args.find(a => a.startsWith('--group='));
-  const hdr = path.join(path.dirname(cab), path.basename(cab).replace(/\.cab$/i, '.hdr'));
-  const headerBuf = fs.readFileSync(fs.existsSync(hdr) ? hdr : cab);
+  const hdr = headerPath(cab);
+  const headerBuf = fs.readFileSync(hdr || cab);
   const files = readCatalog(headerBuf);
   if (args.includes('--list-groups')) {
     for (const g of readGroups(headerBuf)) console.log(`${g.first}-${g.last}  ${g.name}`);
@@ -228,4 +239,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { readCatalog, readGroups, readVolumes, extractFile, inflateChunks, unshieldPath };
+module.exports = { readCatalog, readGroups, readVolumes, extractFile, inflateChunks, unshieldPath, headerPath };
