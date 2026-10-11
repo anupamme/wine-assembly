@@ -109,3 +109,50 @@ Two oddities, seen but not investigated:
   window, while `--frame-stats` covered the whole window. With the trace window
   equal to the measurement window, the counts agree (the run above). Check
   that the present-distinct count looks plausible before quoting it.
+
+## Frame pacing in the browser
+
+The game paces itself with Blitz's `CreateTimer`/`WaitTimer`, not with vsync:
+
+- `0x100191e1` (CreateTimer, `this` in ECX): `CreateEventA(0,0,0,0)` into
+  `[this+4]`, then `timeSetEvent(1000/hz, 0, 0x1001923b, this,
+  TIME_PERIODIC)`. That gives a 16 ms period for 60 Hz.
+- `0x1001923b` (the TimeProc): `inc [this+0xc]`, then `SetEvent([this+4])`.
+- `0x1001924e` (WaitTimer): `WaitForSingleObject([this+4], 1000)` until it
+  returns 0, then returns the ticks since the last call (`[this+0xc]` minus
+  `[this+0x10]`).
+
+Each frame is about 44 Blts, Lock/Unlock, `timeGetTime` x2 and the timer wait.
+After that it polls `GetVerticalBlankStatus` until TRUE, then
+`Flip(..., DDFLIP_WAIT)`. Between frames the main thread makes 8 or more empty
+`PeekMessage` calls with no other API in between, which trips the queue-spin
+detector (yield 15).
+
+The event is auto-reset. So a late timer thread that fires two or three
+overdue periods back to back gives one wake, hence one frame. The visible rate
+is the number of wakes, not the number of ticks.
+
+Browser measurements (boat, menu, 15 s, `tools/profile-web-frames.js`,
+directdraw:22 = Flips/s):
+
+| route | before de80bb4c1 | after |
+|---|---|---|
+| Threads, headless | 30.3 | 62.5 |
+| Threads, headful (llvmpipe) | 23.8 | 41.7 |
+| cooperative, headless | 62.5 | 62.5 |
+| cooperative, headful (llvmpipe) | 37-43 | (unchanged) |
+
+- **The Threads loss (fixed in de80bb4c1).** The yield-15 park held the worker
+  page step for the full 50 ms (`MAX_PARK_SLEEP_MS`), and the timer thread's
+  SetEvent did not wake it. Spin parks now end on a sibling's signal.
+- **Headful cooperative on the boat is not the game.** llvmpipe compositing
+  stalls the page thread for 35-48 ms about every 75 ms (no rAF, timers late,
+  while the page CPU is only ~20% busy). The timer thread then catches up in
+  bursts, and the auto-reset event drops the extra wakes. Headless, the same
+  build holds 62.5. Measure pacing headless, or on a machine with a GPU.
+
+Ruled out: blit cost (putImageData ~0.1 ms per call), the vblank model
+(GetVerticalBlankStatus has the ~8% duty cycle), Flip vsync (off by default),
+the deadline clock (`?sched-arm` without g is no better), and the cooperative
+wake-after-thread-phase ordering (a fix for it measured 62.51 against 62.51).
+Evidence: `scratch/runs/20261011T0940Z-jardinains-threads-fps`.
