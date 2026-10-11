@@ -2210,7 +2210,8 @@
     ;; Return to dialog loop thunk which pumps messages until EndDialog. Keep
     ;; this API frame in place until then: its consumed args hold the previous
     ;; pump state, and CACA0004 pops all 24 bytes after restoring them.
-    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 44)))  ;; API frame + 4 args + ret
+    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 48)))  ;; API frame + sentinel + 4 args + ret
+    (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (i32.const 0xDCBAABCD))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $dlg_loop_thunk))  ;; ret → dialog message loop
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $hwnd))          ;; hDlg
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)) (i32.const 0x0110))         ;; WM_INITDIALOG

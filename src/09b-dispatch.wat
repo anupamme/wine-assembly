@@ -865,6 +865,14 @@
     ;; DialogBoxParamA continuation — dialog proc returned, pump next message or finish
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0004))
       (then
+        ;; USER accepts old cdecl dialog/window callbacks. Every guest call
+        ;; from this pump owns a sentinel below its four args. Stdcall leaves
+        ;; it at ESP; cdecl leaves it at ESP+16. Idle reentry has no marker.
+        (if (i32.eq (call $gl32 (i32.load offset=16 (global.get $reg_base))) (i32.const 0xDCBAABCD))
+          (then (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4))))
+          (else
+            (if (i32.eq (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))) (i32.const 0xDCBAABCD))
+              (then (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))))))
         ;; This branch always re-dispatches the pump by setting EIP; mark it
         ;; so the outer thunk-zone auto-pop (in $run) doesn't misread an
         ;; unchanged EIP as "handler left EIP alone" and pop [esp].
@@ -1033,7 +1041,8 @@
                 (global.set $eip (global.get $dlg_loop_thunk))
                 (global.set $steps (i32.const 0))
                 (return)))
-            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
+            (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (i32.const 0xDCBAABCD))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $dlg_loop_thunk))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $arg0))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)) (local.get $arg1))
@@ -1088,7 +1097,8 @@
               (then (local.set $arg4 (global.get $dlg_proc))))
             (if (i32.lt_u (local.get $arg4) (global.get $image_base))
               (then (local.set $arg4 (global.get $dlg_proc))))
-            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
+            (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (i32.const 0xDCBAABCD))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $dlg_loop_thunk))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $arg0))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)) (local.get $arg1))
@@ -1136,7 +1146,8 @@
                 ;; can't reroute input to the inner sub-dialog.
                 (local.set $arg0 (global.get $dlg_pump_hwnd))
                 (local.set $arg4 (global.get $dlg_proc))))
-            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
+            (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (i32.const 0xDCBAABCD))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $dlg_loop_thunk))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $arg0))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)) (local.get $arg1))
@@ -1178,7 +1189,8 @@
             ;; arguments are hwnd, WM_TIMER, id, and the tick count.
             (if (local.get $arg3)
               (then
-                (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+                (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
+                (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (i32.const 0xDCBAABCD))
                 (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $dlg_loop_thunk))
                 (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $arg0))
                 (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)) (local.get $arg1))
@@ -1202,7 +1214,8 @@
               (then (local.set $arg4 (global.get $dlg_proc))))
             (if (i32.lt_u (local.get $arg4) (global.get $image_base))
               (then (local.set $arg4 (global.get $dlg_proc))))
-            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+            (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
+            (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (i32.const 0xDCBAABCD))
             (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $dlg_loop_thunk))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $arg0))
             (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)) (local.get $arg1))

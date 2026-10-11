@@ -141,3 +141,27 @@ owner-callback-full.log/json is a separate diagnostic control: tracing
 0x004bf420 records only earlier callbacks, not a new hit at modal completion.
 Thus the older prev_eip field alone does not prove a teardown callback ran
 immediately before the faulty return. No emulator fix is claimed here.
+
+## Cdecl callback compatibility fix (16:22Z)
+
+EXE497580 passes callback4975b0 directly to its modal API (call through
+5080d0); this callback returns with plain ret, leaving its four arguments.
+The modal pump assumed ret16 and accumulated callback arguments.
+[Microsoft's calling-convention account](https://devblogs.microsoft.com/oldnewthing/20040115-00/?p=41043)
+documents USER's sentinel-based compatibility for cdecl window procedures.
+
+Each modal guest callback now places a sentinel below its arguments. At
+return, the pump consumes either the stdcall sentinel or the four cdecl
+arguments plus sentinel; idle reentry has no marker. The initial WM_INITDIALOG
+frame uses the same convention. The frame stays on the guest stack, so nested
+modal calls and different threads do not share a cleanup pointer.
+
+Full remote build passed. test-callwindowproc-dialog-modal now uses a cdecl
+nested DLGPROC alongside its existing stdcall callers and second-thread
+checks: old source fails to resume the outer subclass; changed source passes
+with exact final ESP. Custom dialog dispatch and button-command queue tests
+also pass. Run20261011T1622Z-turok-cdecl retains all logs and module hash.
+Ordinary Video->Direct3D->Properties->Return now returns to the Options
+screen without the previous data-EIP crash (500 batches). Reviewed final
+canvas is a menu, not gameplay. Native comctl32/ole32 remain absent on this
+fork, as in the matched failing control. No browser/FPS/audio claim.

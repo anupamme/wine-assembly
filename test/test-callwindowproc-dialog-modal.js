@@ -64,8 +64,9 @@ const u32 = n => [n, n >>> 8, n >>> 16, n >>> 24].map(x => x & 255);
   bytes.fill(0, addr(template), addr(template) + 64);
   view.setUint32(addr(template), 0x80000000, true);
   view.setUint16(addr(template) + 14, 80, true); view.setUint16(addr(template) + 16, 40, true);
-  // The nested dialog remains open until the harness supplies EndDialog.
-  bytes.set([0x81,0x7c,0x24,8,...u32(0x110),0x75,9,0x8b,0x44,0x24,4,0xa3,...u32(seen),0x31,0xc0,0xc2,16,0], addr(nested));
+  // The legacy cdecl nested DLGPROC leaves its four arguments on the stack.
+  // It remains open until EndDialog; the USER continuation must clean them.
+  bytes.set([0x81,0x7c,0x24,8,...u32(0x110),0x75,9,0x8b,0x44,0x24,4,0xa3,...u32(seen),0x31,0xc0,0xc3], addr(nested));
   bytes.set([0x6a,0,0x68,...u32(nested),0x6a,0,0x68,...u32(template),0x6a,0,0xb8,...u32(thunk('DialogBoxIndirectParamA')),0xff,0xd0,0xa3,...u32(seen+4),...setResult(77),0xb8,1,0,0,0,0xc2,16,0],addr(proc));
   // Subclass forwards its original four arguments and the native dialog marker.
   const forward = [0xff,0x74,0x24,16];
