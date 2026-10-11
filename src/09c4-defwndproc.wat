@@ -1126,7 +1126,7 @@
     (i32.load8_u (i32.add (global.get $FLASH_TABLE) (local.get $idx))))
 
   ;; Per-window show state, held one bit per condition in SHOW_STATE_TABLE.
-  ;; These four functions are the only code that knows which bit is which.
+  ;; These functions are the only code that knows which bit is which.
   ;;
   ;; Maximized (bit 0) is set by ShowWindow(SW_SHOWMAXIMIZED) and by the
   ;; WM_SYSCOMMAND handler after SC_MAXIMIZE / SC_RESTORE commits its geometry
@@ -1139,6 +1139,14 @@
   ;; GetWindowPlacement. The renderer keeps its own `_minimized` for
   ;; compositing; this bit is what the *guest* is allowed to ask about, so the
   ;; answer no longer depends on which side of the host boundary you stand on.
+  ;;
+  ;; Show-sized (bit 2) records that ShowWindow already gave this window the
+  ;; size notification USER sends a window on its first show (Wine's
+  ;; WIN_NEED_SIZE, cleared once sent). Without it every hidden->visible
+  ;; transition posted another WM_SIZE, and a window whose WM_SIZE handler
+  ;; hides and re-shows itself never stopped: Paint's text box flickered for
+  ;; as long as the Text tool was active, its Fonts palette never painted, and
+  ;; its size dropdown closed under the next click.
   (func $wnd_show_state_addr (param $hwnd i32) (result i32)
     (local $idx i32)
     (local.set $idx (call $wnd_table_find (local.get $hwnd)))
@@ -1168,6 +1176,10 @@
     (call $wnd_show_state_bit_get (local.get $hwnd) (i32.const 2)))
   (func $wnd_min_set (param $hwnd i32) (param $val i32)
     (call $wnd_show_state_bit_set (local.get $hwnd) (i32.const 2) (local.get $val)))
+  (func $wnd_show_sized_get (param $hwnd i32) (result i32)
+    (call $wnd_show_state_bit_get (local.get $hwnd) (i32.const 4)))
+  (func $wnd_show_sized_set (param $hwnd i32)
+    (call $wnd_show_state_bit_set (local.get $hwnd) (i32.const 4) (i32.const 1)))
 
   ;; Fold an SW_* command into the stored show state. Called from ShowWindow so
   ;; every route into it — the API, WinMain's nCmdShow, the Win16 bridge —

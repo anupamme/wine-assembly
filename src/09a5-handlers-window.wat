@@ -1313,6 +1313,9 @@
     ;; because that single slot belongs to main_hwnd. Unreal keeps a visible
     ;; log window as main while showing its separate viewport; without this
     ;; size message WinDrv never allocates the software framebuffer.
+    ;; Only the FIRST show: USER clears its need-size flag once the message is
+    ;; sent ($wnd_show_sized_get). Paint's text box hides and re-shows itself
+    ;; from its own WM_SIZE handler, so a post on every show never ended.
     (if (i32.and
           (i32.and
             (i32.and (i32.ne (local.get $arg1) (i32.const 0))
@@ -1323,8 +1326,10 @@
                          (i32.const 0x40000000))
                 (i32.const 0))
               (i32.ne (local.get $arg0) (global.get $main_hwnd))))
-          (i32.ne (local.get $client_size) (i32.const 0)))
+          (i32.and (i32.ne (local.get $client_size) (i32.const 0))
+                   (i32.eqz (call $wnd_show_sized_get (local.get $arg0)))))
       (then
+        (call $wnd_show_sized_set (local.get $arg0))
         (drop (call $post_queue_push
           (local.get $arg0) (i32.const 0x0005)
           (i32.const 0) (local.get $client_size)))))
