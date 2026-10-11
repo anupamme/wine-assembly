@@ -86,6 +86,16 @@
       (br $scan)))
     (i32.const 0xFFFF))
 
+  ;; For the host's LoadLibrary dependency check: is the NUL-terminated name
+  ;; at guest $name_g an API the emulator answers for?
+  (func (export "api_name_known") (param $name_g i32) (result i32)
+    (i32.ne (call $lookup_api_id (call $g2w (local.get $name_g))) (i32.const 0xFFFF)))
+
+  ;; GetLastError's value, for host-completed calls (a LoadLibrary that the
+  ;; host refuses sets ERROR_MOD_NOT_FOUND).
+  (func (export "set_last_error") (param $code i32)
+    (global.set $last_error (local.get $code)))
+
   ;; These Glide 3 exports collide with Glide 2 names/ABIs. The DLL name,
   ;; not a previous query call, selects their thunk. Other names use the
   ;; ordinary API table. Keep static imports and GetProcAddress consistent.
