@@ -2215,6 +2215,10 @@
   ;; replaces the thread's extra info with that message's: always 0 here.
   (func $handle_PeekMessageA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $sp i32) (local $ret i32)
+    ;; A DISPDIB game draws to the VGA window with no call per frame; its
+    ;; message poll is where the frame is shown (09d5-dispdib.wat).
+    (if (i32.load offset=4 (global.get $DISPDIB_STATE))
+      (then (call $dispdib_present)))
     (local.set $sp (i32.load offset=16 (global.get $reg_base)))
     (local.set $ret (call $gl32 (local.get $sp)))
     (call $handle_PeekMessageA_pump (local.get $arg0) (local.get $arg1) (local.get $arg2)
