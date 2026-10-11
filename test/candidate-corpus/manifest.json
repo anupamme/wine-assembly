@@ -720,6 +720,37 @@
       }
     },
     {
+      "id": "incoming-demo",
+      "name": "Incoming Demo",
+      "kind": "game",
+      "version": "1998 Rage Software PC demo 'Incoming Lux-et-Robur' (WinZip self-extractor holding a ready-to-run tree: incoming.exe, asc, ppm, pcobject, wavs, save); Direct3D",
+      "executables": [
+        "installed/incoming/incoming.exe"
+      ],
+      "sourcePage": "https://archive.org/details/incoming_201401",
+      "license": "proprietary Rage Games demo: readme.txt carries no redistribution grant, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/incoming_201401/incoming.exe",
+          "sha1": "c00f73f19088d50c8fb3690fc7a0fea503ea5f5f",
+          "type": "archive",
+          "into": "installed/incoming"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/incoming/incoming.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "expendable-demo",
       "name": "Expendable Demo",
       "kind": "game",

@@ -116,6 +116,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Hellbender Trial (System\ install layout, Quick Configuration dialog art) | [hellbender-trial.md](hellbender-trial.md) |
 | Expendable Demo (launcher -> Go.exe, registry options, DirectInput Device2, route) | [expendable-demo.md](expendable-demo.md) |
 | Rayman 2 demo (Ubi.ini renderer, thread thunk sync, CREATESTRUCT scratch over the PE header) | [rayman2-demo.md](rayman2-demo.md) |
+| Incoming demo (Rage, Direct3D; zip tree, menu-to-turret route, in-game key chart) | [incoming-demo.md](incoming-demo.md) |
 | Kingpin Demo (Quake II engine GL, loopback timeouts during a slow level load) | [kingpin-demo.md](kingpin-demo.md) |
 | Hexen II Demo (GL build vs bundled 3Dfx MiniGL, WinDirect software build, slow meshing) | [hexen2-demo.md](hexen2-demo.md) |
 | SiN Demo (Quake II engine GL, long scripted intro before control) | [sin-demo.md](sin-demo.md) |
