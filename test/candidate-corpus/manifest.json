@@ -1004,6 +1004,44 @@
       }
     },
     {
+      "id": "kingpin-demo",
+      "name": "Kingpin Demo",
+      "kind": "game",
+      "version": "Kingpin: Life of Crime alpha demo v0.22n (Xatrix / Interplay, 1999), OpenGL",
+      "executables": [
+        "installed/kingpin.exe"
+      ],
+      "sourcePage": "https://archive.org/details/win-98-games-k-o.-7z",
+      "license": "proprietary commercial demo; readme.txt grants personal noncommercial home use only and forbids copying, distribution, decompiling or disassembly, so keep it a local ignored fixture and never deploy it. The package is a collector's WinZip repack of the demo tree served from inside the item's 7z, not Interplay's original installer",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/win-98-games-k-o.-7z/Win98_Games-K-O.7z/Kingpin-DEMO-OpenGL.EXE",
+          "sha1": "551cd7267945aa13ff9b5cfdd6991d56279e2738",
+          "type": "file",
+          "destination": "sources/Kingpin-DEMO-OpenGL.EXE"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/Kingpin-DEMO-OpenGL.EXE",
+          "into": "installed"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/kingpin.exe"
+      },
+      "cli": {
+        "maxBatches": 7000,
+        "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
