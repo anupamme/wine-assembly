@@ -170,6 +170,8 @@
   ;; primary wrappers so $dx_from_this works for aux guest ptrs too. Dedup'd
   ;; by (slot, vtbl) via linear scan.
   (global $COM_WRAPPERS_AUX  i32 (region.addr $COM_WRAPPERS_AUX 0))
+  (global $COM_AUX_REFS  i32 (region.addr $COM_AUX_REFS 0))
+  (global $COM_AUX_REFS_SIZE i32 (region.size $COM_AUX_REFS))
   (global $COM_WRAPPERS_AUX_SIZE i32 (region.size $COM_WRAPPERS_AUX))
   ;; One per live DX object, because an app may hold an alternate view of every
   ;; object it owns at once and exhaustion is not a graceful degradation here:
@@ -1419,6 +1421,9 @@
     (if (i32.eq (local.get $type) (i32.const 7))
       (then (call $di_format_map_drop (local.get $entry_wa))))
     (call $vbdd_draw_state_reset (local.get $entry_wa))
+    ;; Its secondary wrappers outlive it in the aux pool, keyed by slot: their
+    ;; interface counts must not carry over to the slot's next object.
+    (drop (call $dx_aux_refs_of_slot (call $dx_slot_of (local.get $entry_wa)) (i32.const 1)))
     ;; Zero the DX_OBJECTS entry type (marks it logically freed; wrapper stays).
     (i32.store (local.get $entry_wa) (i32.const 0))
     (i32.store (call $dx_surf_owner_ptr (local.get $entry_wa)) (i32.const 0))
@@ -1434,13 +1439,77 @@
   ;; The API table routes only interfaces with byte-identical lifetime rules
   ;; here; surfaces, buffers, devices, viewports and other owned objects keep
   ;; their named Release handlers so their final-release teardown still runs.
+  ;; DirectDraw counts references per interface: after
+  ;; QueryInterface(IID_IDirectDraw2) the IDirectDraw and IDirectDraw2 pointers
+  ;; each hold their own count, and IDirectDraw::Release returns IDirectDraw's
+  ;; -- 0 in the common "QI for v2, release v1" idiom -- while the object lives
+  ;; on through v2. Outwars enumerates drivers that way and skips any whose
+  ;; Release does not return 0. The object total (DxObject refcount) still
+  ;; decides lifetime; these counts only shape what AddRef/Release return.
+  ;; A secondary wrapper's count lives in $COM_AUX_REFS by aux index; the
+  ;; primary interface's is the total minus its slot's secondary counts.
+  ;; Only QueryInterface paths that call $dx_aux_ref_add track a wrapper;
+  ;; an untracked one (count 0) keeps returning the total, as before.
+  (func $dx_aux_index (param $this i32) (result i32)
+    (local $off i32)
+    (local.set $off (i32.sub
+      (i32.add (i32.sub (local.get $this) (global.get $image_base)) (global.get $GUEST_BASE))
+      (global.get $COM_WRAPPERS_AUX)))
+    (if (result i32) (i32.lt_u (local.get $off)
+          (i32.mul (global.get $COM_WRAPPERS_AUX_MAX) (i32.const 8)))
+      (then (i32.shr_u (local.get $off) (i32.const 3)))
+      (else (i32.const -1))))
+  (func $dx_aux_ref_add (param $this i32) (param $delta i32) (result i32)
+    (local $i i32)
+    (local.set $i (call $dx_aux_index (local.get $this)))
+    (if (i32.lt_s (local.get $i) (i32.const 0)) (then (return (i32.const -1))))
+    (i32.add (local.get $delta) (i32.atomic.rmw.add
+      (i32.add (global.get $COM_AUX_REFS) (i32.shl (local.get $i) (i32.const 2)))
+      (local.get $delta))))
+  (func $dx_aux_refs (param $this i32) (result i32)
+    (local $i i32)
+    (local.set $i (call $dx_aux_index (local.get $this)))
+    (if (i32.lt_s (local.get $i) (i32.const 0)) (then (return (i32.const 0))))
+    (i32.atomic.load (i32.add (global.get $COM_AUX_REFS) (i32.shl (local.get $i) (i32.const 2)))))
+  ;; Sum (or, with $clear, zero) the secondary counts of every aux wrapper of
+  ;; $slot.
+  (func $dx_aux_refs_of_slot (param $slot i32) (param $clear i32) (result i32)
+    (local $n i32) (local $i i32) (local $sum i32) (local $cell i32)
+    (local.set $n (i32.load (global.get $COM_AUX_NEXT_SHARED)))
+    (block $done (loop $lp
+      (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+      (if (i32.eq (i32.load offset=4 (i32.add (global.get $COM_WRAPPERS_AUX)
+            (i32.shl (local.get $i) (i32.const 3)))) (local.get $slot))
+        (then
+          (local.set $cell (i32.add (global.get $COM_AUX_REFS) (i32.shl (local.get $i) (i32.const 2))))
+          (local.set $sum (i32.add (local.get $sum) (i32.atomic.load (local.get $cell))))
+          (if (local.get $clear) (then (i32.atomic.store (local.get $cell) (i32.const 0))))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br $lp)))
+    (local.get $sum))
+  ;; The count a COM method returns for $this given the object total $total.
+  (func $dx_interface_count (param $this i32) (param $entry i32) (param $total i32) (result i32)
+    (local $own i32) (local $rest i32)
+    (if (i32.ge_s (call $dx_aux_index (local.get $this)) (i32.const 0))
+      (then
+        (local.set $own (call $dx_aux_refs (local.get $this)))
+        (return (select (local.get $own) (local.get $total) (i32.gt_s (local.get $own) (i32.const 0))))))
+    (local.set $rest (call $dx_aux_refs_of_slot (call $dx_slot_of (local.get $entry)) (i32.const 0)))
+    ;; No tracked secondary interface: the primary holds the whole total.
+    (if (i32.le_s (local.get $rest) (i32.const 0)) (then (return (local.get $total))))
+    (select (i32.sub (local.get $total) (local.get $rest)) (i32.const 0)
+      (i32.gt_s (local.get $total) (local.get $rest))))
+
   (func $dx_com_addref (param $this i32) (result i32)
     (local $entry i32) (local $rc i32)
     (local.set $entry (call $dx_from_this (local.get $this)))
     (local.set $rc
       (i32.add (load.field DxObject refcount (local.get $entry)) (i32.const 1)))
     (store.field DxObject refcount (local.get $entry) (local.get $rc))
-    (local.get $rc))
+    ;; A tracked secondary interface counts its own AddRef too.
+    (if (i32.gt_s (call $dx_aux_refs (local.get $this)) (i32.const 0))
+      (then (drop (call $dx_aux_ref_add (local.get $this) (i32.const 1)))))
+    (call $dx_interface_count (local.get $this) (local.get $entry) (local.get $rc)))
 
   (func $dx_com_release_basic (param $this i32) (result i32)
     (local $entry i32) (local $rc i32)
@@ -1452,7 +1521,10 @@
       (then
         (call $dx_free (local.get $entry))
         (return (i32.const 0))))
-    (local.get $rc))
+    ;; A tracked secondary interface gives up one of its own references.
+    (if (i32.gt_s (call $dx_aux_refs (local.get $this)) (i32.const 0))
+      (then (return (call $dx_aux_ref_add (local.get $this) (i32.const -1)))))
+    (call $dx_interface_count (local.get $this) (local.get $entry) (local.get $rc)))
 
   ;; Shared dispatch endpoints. One stdcall argument: this.
   (func $handle_dx_com_addref (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
@@ -2275,6 +2347,8 @@
       (then
         (store.field DxObject refcount (local.get $entry)
           (i32.add (load.field DxObject refcount (local.get $entry)) (i32.const 1)))
+        ;; A secondary DirectDraw interface carries its own count.
+        (drop (call $dx_aux_ref_add (local.get $obj) (i32.const 1)))
         (call $gs32 (local.get $arg2) (local.get $obj))
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
