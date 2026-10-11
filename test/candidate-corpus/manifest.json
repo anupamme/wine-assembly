@@ -862,6 +862,40 @@
       }
     },
     {
+      "id": "pharaoh-demo",
+      "name": "Pharaoh Demo",
+      "kind": "game",
+      "version": "1999 demo (Impressions Games / Sierra), InstallShield 5 media of 1999-08-10",
+      "executables": [
+        "installed/PharaohDemo.exe"
+      ],
+      "sourcePage": "https://archive.org/details/PharaohDemo",
+      "license": "Sierra demo EULA (EULADEMO.txt, shipped in the package): a limited licence to install and use one copy; 'you may not ... copy, photocopy, reproduce' and no redistribution grant. Kept localOnly; not a deployment input",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/PharaohDemo/PharaohDemo.zip",
+          "sha1": "e09b5f046b07386aefe46137a05c88f3d3874c90",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "Executable" },
+        { "type": "copyTree", "from": "installed-extracted/Executable", "into": "installed" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/PharaohDemo.exe"
+      },
+      "cli": {
+        "maxBatches": 4000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "monster-truck-madness2-trial",
       "name": "Monster Truck Madness 2 Trial",
       "kind": "game",
