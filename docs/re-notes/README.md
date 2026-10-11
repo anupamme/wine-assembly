@@ -107,6 +107,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Re-Volt demo (DirectPlay lobby registration, load-time CRC, licence) | [re-volt-demo.md](re-volt-demo.md) |
 | Midtown Madness Trial (D3D device names, absolute DirectInput mouse, mouse driving) | [midtown-madness-trial.md](midtown-madness-trial.md) |
 | Monster Truck Madness 2 Trial (MFC CFormView WM_CREATE, DisplayDibWindow, renderer DLL probing) | [monster-truck-madness2-trial.md](monster-truck-madness2-trial.md) |
+| Heretic II Demo (early InstallShield 5 cabs, time bomb, GL window position) | [heretic2-demo.md](heretic2-demo.md) |
 | Command & Conquer: Red Alert (Win95 demo) | [red-alert-95-demo.md](red-alert-95-demo.md) |
 | Die by the Sword (demo) | [die-by-the-sword-demo.md](die-by-the-sword-demo.md) |
 | Dark Colony (magazine demo) | [dark-colony-demo.md](dark-colony-demo.md) |
