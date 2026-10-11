@@ -8658,3 +8658,58 @@ Not yet tried:
 - right or middle button drags, or both buttons together;
 - the mouse wheel;
 - what the camera code actually polls. Trace `GetDeviceState`/`GetDeviceData` during a drag, and compare with what `lib/renderer-input.js` delivers for `di-mouse*` and `relmousemove`.
+
+## 2026-10-11: what the camera input path reads, and the gate in front of it
+
+**The input census** (bx_anbwyget, runs/20261011T1500Z-bw2-camera-input-trace-boat):
+- There is one DirectInput device, the mouse, read through buffered `GetDeviceData` (20-byte records).
+- There is no DirectInput keyboard. Keys come from `GetAsyncKeyState`.
+- Our DI mouse used to lack the wheel and the middle button. It has had both since 009c8ff11.
+
+**The gated trace** (bx_msdh4rte, runs/20261011T1707Z-bw2-gated-route-boat). The trace ran with `--trace-api-paused` and was switched on at about 4400 s, at the end of the Land3 intro:
+- The only call is `GetDeviceData`, once per game frame from ret `0x009b0933`.
+- There is no `GetAsyncKeyState` or `GetDeviceState` in that phase.
+- Wheel -360, a middle drag, a right drag and Left held all left the land unmoved.
+
+**Static: the record loop in the poll `0x9b0880`.**
+- The loop processes records while the *next record's `dwTimeStamp` is non-zero*. The buffer is zeroed first and the returned count is not used.
+- The loop runs only if `[0x17792d4] != 0`.
+- `dwOfs` goes through a byte map plus a jump table:
+
+| dwOfs | handling |
+|---|---|
+| 0, 4 | X / Y, scaled by `[0x17792c0]` and added to `+0xcc` / `+0xd0` |
+| 8 | wheel: kept only when 40 < \|v\| < 10000, added to manager `+0x10c` (absolute `0x1d734f4`) |
+| 12 / 13 / 14 | left / right / middle |
+
+Button records go through `0x9afe60(bits)`:
+
+| button | press | double-click (gap < `[0x1d7a734]`) | release |
+|---|---|---|---|
+| left | 1 | 0x10 | 4 |
+| right | 2 | 0x20 | 8 |
+| middle | 0x40 | 0 | 0x80 |
+
+Our records, stamped with guest ticks, satisfy all of this.
+
+**Static: the consumer at `0x60ed90`.**
+- It turns pending bits in `[0x1d73544]` into bound actions: bit 1 → action 1, bit 2 → action 5, bit 0x40 → action 2.
+- It turns the wheel into action 3 (positive) or action 4 (negative).
+- Each goes through `0x611fa0(0, 0, action)`, the **action-binding dispatcher**, run with `ecx = [0x19504a8]`.
+- Only when it returns 1 is the wheel added to `[0x19a30e0]`, which looks like the zoom accumulator, and the pending bit cleared.
+
+**Static: `0x611fa0` with a == b == 0.**
+- It returns 0 at once when **`[0x18ed55c]` is non-zero**.
+- Otherwise it maps the action through `0x64c250` (the binding table) and runs it via `0x611830`.
+- A sibling flag, `[0x18ed558]`, gates the key path (a != 0) the same way.
+
+So a set `[0x18ed55c]` disables every mouse-bound action, which would explain a camera that ignores input while the cursor still tracks. It has not been read live yet.
+
+**Next boat:** read `[0x18ed55c]`, `[0x18ed558]` and `[0x19a30e0]` live (eval `guest_read32`):
+- during the intro;
+- in the Field tutorial at about 5400 s;
+- in free play;
+- around a `di-wheel`;
+- with `--count` on `0x60ee43` / `0x60ee6b` (zoom applied) and `0x60ee38` (dispatcher refused).
+
+If the flag clears in free play and the wheel then moves `[0x19a30e0]` and the view, the camera works and was only script-locked.
