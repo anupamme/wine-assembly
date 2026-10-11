@@ -876,6 +876,13 @@ const TRACE_AT_MEM = getArg('trace-at-mem', null); // --trace-at-mem=REG+OFF:LEN
 const TRACE_AT_START_BATCH = parseInt(getArg('trace-at-start-batch', '0'), 10) || 0; // delay --trace-at logging until batch N
 const TRACE_AT_LIMIT = parseInt(getArg('trace-at-limit', '0'), 10) || 0; // stop logging after N --trace-at hits (0 = unlimited)
 const BREAK_API = getArg('break-api', null); // --break-api=Name[,Name,...]: break on API call
+// --trace-api-mem=Name:ARG:LEN[,...]: at each entry of API Name, hexdump LEN
+// bytes at the guest pointer in stdcall argument ARG (0-based). For buffers
+// built on the stack just before the call (colour tables, rects, structs).
+const TRACE_API_MEM = (getArg('trace-api-mem', '') || '').split(',').filter(Boolean).map(spec => {
+  const [name, arg, len] = spec.split(':');
+  return { name, arg: parseInt(arg, 10) || 0, len: Math.min(parseInt(len, 10) || 64, 4096) };
+});
 const WATCH_SPEC = getArg('watch', null);    // --watch=0xADDR: break on memory change (dword)
 const WATCH_BYTE = getArg('watch-byte', null);   // --watch-byte=0xADDR: byte-granularity watch
 const WATCH_WORD = getArg('watch-word', null);   // --watch-word=0xADDR: 16-bit watch
@@ -3260,7 +3267,8 @@ async function main() {
   // which wraps a worker's log. --quiet-api-fast is now an alias of this.
   apiLogOff = QUIET_API &&
     !TRACE_API && !TRACE_API_COUNTS && !TRACE_CRITICAL &&
-    !TRACE_INPUT_DISPATCH && !ESP_DELTA && !ESP_AUDIT && !breakApis.length;
+    !TRACE_INPUT_DISPATCH && !ESP_DELTA && !ESP_AUDIT && !breakApis.length &&
+    !TRACE_API_MEM.length;
   h.log = (ptr, len) => {
     let t = apiNameCache.get(ptr);
     if (t === undefined) {
@@ -3327,6 +3335,27 @@ async function main() {
           logs.push(`[dispatch-input] ${t} hwnd=0x${msgHwnd.toString(16)} msg=0x${msgMsg.toString(16)} wParam=0x${msgWP.toString(16)} lParam=0x${(msgLP >>> 0).toString(16)}`);
         }
       } catch (_) {}
+    }
+
+    for (const spec of TRACE_API_MEM) {
+      if (t !== spec.name) continue;
+      try {
+        const e = instance.exports;
+        const imageBase = e.get_image_base() >>> 0;
+        const dv = new DataView(memory.buffer);
+        const g2w = addr => translateGuest(addr, imageBase, memory.buffer);
+        const ptr = dv.getUint32(g2w((e.get_esp() + 4 + spec.arg * 4) >>> 0), true) >>> 0;
+        logs.push(`[api-mem] ${t} arg${spec.arg}=${hex(ptr)} len=${spec.len}`);
+        for (let off = 0; ptr && off < spec.len; off += 16) {
+          const row = [];
+          for (let i = off; i < Math.min(off + 16, spec.len); i++) {
+            row.push(dv.getUint8(g2w((ptr + i) >>> 0)).toString(16).padStart(2, '0'));
+          }
+          logs.push(`  ${hex((ptr + off) >>> 0)}: ${row.join(' ')}`);
+        }
+      } catch (err) {
+        logs.push(`[api-mem] ${t} unreadable: ${err.message}`);
+      }
     }
 
     // Check API breakpoints
