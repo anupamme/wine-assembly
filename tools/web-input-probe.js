@@ -22,6 +22,9 @@
 //                 fast click or a tap reaches a busy guest (both queued together)
 //   tap:X,Y       a touchscreen tap (needs --touch); drives the touch bridge,
 //                 which `click` never reaches
+//   tdown:X,Y / tmove:X,Y / tup:X,Y — one finger's drag (needs --touch)
+//   lpress:X,Y[@MS] — a finger held still (default 900 ms): the long-press
+//                 right click
 //   down:X,Y      / up:X,Y   — the halves of a drag
 //   rdown:X,Y     / rup:X,Y  — the same with the right button (an RTS move order)
 //   key:Name      keyboard press (puppeteer key name, e.g. Enter, KeyA); a
@@ -636,6 +639,25 @@ async function main() {
         const [gx, gy] = rest.split(',').map(Number);
         const p = await toPage(page, gx, gy);
         await page.touchscreen.tap(p.x, p.y);
+      } else if (kind === 'tdown' || kind === 'tmove' || kind === 'tup' || kind === 'lpress') {
+        // The halves of a finger gesture, for what `tap` cannot express: a
+        // drag (tdown, tmove..., tup -- drag-select, drag-to-build) and a long
+        // press (lpress:X,Y[@MS], held past the bridge's 550 ms threshold, which
+        // it turns into a right click). The settle wait after each step is
+        // 400 ms, under that threshold, so tdown followed by tmove stays a drag.
+        const [xy, msArg] = rest.split('@');
+        const [gx, gy] = xy.split(',').map(Number);
+        const p = await toPage(page, gx, gy);
+        if (kind === 'tdown') await page.touchscreen.touchStart(p.x, p.y);
+        else if (kind === 'tmove') await page.touchscreen.touchMove(p.x, p.y);
+        else if (kind === 'tup') {
+          await page.touchscreen.touchMove(p.x, p.y);
+          await page.touchscreen.touchEnd();
+        } else {
+          await page.touchscreen.touchStart(p.x, p.y);
+          await wait(Number(msArg) || 900);
+          await page.touchscreen.touchEnd();
+        }
       } else if (kind === 'pressel') {
         // A real mouse press on a page element (a taskbar button) held for
         // MS before the release: `pressel:#task-buttons .task-btn@1000`. The
