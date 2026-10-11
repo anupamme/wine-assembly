@@ -79,7 +79,7 @@ It is not installed as a passing normal-suite test.
 The source audit adds these concrete constraints to the implementation:
 
 - Encoder record counts/copies/chunk limits use both15 floats and60 bytes
-  throughout gl_emit_vertex, packed copies and primitive assembly. Change
+  throughout gl_append_vertex4, packed copies and primitive assembly. Change
   all producers together with GLCommandStream.VERTEX_FLOATS and JS fallback.
 - Context records in09a8e are allocated/cleared as160 bytes, with the last
   currently used word at144. Appending four f32 values at148..160 requires
