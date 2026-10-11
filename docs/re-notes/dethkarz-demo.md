@@ -80,6 +80,18 @@ Evidence: `scratch/runs/20261011T0750Z-dethkarz_demo-race-w5/`.
 Route script: `route.sh` in the evidence folder. With threads off the run is
 about 36 s of wall time for 3900 batches.
 
+## Phone route (WebKit, iPhone 15 landscape, Threads on)
+
+- The driver dialog is drawn zoomed to the phone width. Real taps work on it:
+  the combo arrow, then "Microsoft Direct3D Hardware Driver", then OK.
+- The menus read Enter through `GetDeviceState`, not through messages. An
+  overlay Enter whose keydown and keyup came in one JS turn was never seen;
+  6d595095a holds every overlay key for at least 100 ms.
+- The overlay's Esc/Enter (top left) sit under the "swipe up here for more
+  screen" gutter until Safari's bars collapse (MOBILE-GUTTER-COVERS-TL-CONTROLS).
+- Race: Gas held 113 km/h, stick steers, Brake, Esc pauses. Evidence:
+  `scratch/runs/20261011T1330Z-dethkarz_demo-mobile-webkit-w5`.
+
 ## Open
 
 - Glide path: `grTexDetailControl` and the detail combine factor.
