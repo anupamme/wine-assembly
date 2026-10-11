@@ -54,6 +54,15 @@ const unrealInt = normalizeLazyFiles({}, [
 assert.strictEqual(unrealInt[0].httpRange, undefined, '.int localization stays eager');
 assert.strictEqual(unrealInt[1].httpRange, true, 'the package itself still streams');
 
+// Battlezone's mission .trn files are INI text too (GetPrivateProfileInt at
+// mission launch died with VfsPendingError on data\addon\misn02b.trn).
+const battlezoneTrn = normalizeLazyFiles({}, [
+  { url: 'game/data/addon/misn02b.trn', vfsPath: 'c:\\data\\addon\\misn02b.trn', size: 5067 },
+  { url: 'game/data/bzone.zfs', vfsPath: 'c:\\data\\bzone.zfs', size: 20 * MB },
+]).files;
+assert.strictEqual(battlezoneTrn[0].httpRange, undefined, '.trn mission descriptor stays eager');
+assert.strictEqual(battlezoneTrn[1].httpRange, true, 'the data archive still streams');
+
 assert.strictEqual(normalizeLazyFiles({}, [{ url: 'game/intro.avi', size: 30 * MB }]).files[0].httpRange, true,
   'the AVI reader parks, so a movie streams');
 const wav = [{ url: 'game/sfx.wav', size: 3 * MB }, { url: 'game/data.pak', size: 20 * MB }];
