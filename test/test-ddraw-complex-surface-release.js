@@ -36,6 +36,13 @@ const extraWat = String.raw`
     (call $dx_surface_release (local.get $surface)))
   (func (export "test_cs_live") (param $surface i32) (result i32)
     (i32.ne (call $ddraw_surface_entry_checked (local.get $surface)) (i32.const 0)))
+  (func (export "test_cs_qi") (param $surface i32) (param $iid i32) (param $out i32) (result i32)
+    (global.set $DX_VTBL_DDSURF3 (i32.const 0x53000000))
+    (i32.store offset=16 (global.get $reg_base) (i32.const 0x30000))
+    (call $handle_IDirectDrawSurface_QueryInterface (local.get $surface) (local.get $iid) (local.get $out) (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.load offset=0 (global.get $reg_base)))
+  (func (export "test_cs_addref") (param $surface i32) (result i32)
+    (call $dx_com_addref (local.get $surface)))
   (func (export "test_cs_vidmem") (result i32) (global.get $dx_vidmem_used))
 `;
 
@@ -82,6 +89,24 @@ const extraWat = String.raw`
       'GetAttachedSurface finds the implicit attachment');
     return wat.guest_read32(got) >>> 0;
   }
+
+  // Recoil converts the original interface to Surface3, then expects the
+  // original Release to reach zero while the Surface3 keeps storage alive.
+  describe(0x7, 32, 32, 0, 0x40);
+  assert.strictEqual(wat.test_cs_create(ddraw, desc, out), 0);
+  const original = wat.guest_read32(out) >>> 0;
+  const iid = 0x410400;
+  [0xda044e00, 0x11d069b2, 0xaa00d5a1, 0xbbdfb800].forEach((v,i) => wat.guest_write32(iid + i*4, v));
+  assert.strictEqual(wat.test_cs_qi(original, iid, got), 0);
+  const version3 = wat.guest_read32(got) >>> 0;
+  assert.notStrictEqual(version3, original);
+  assert.strictEqual(wat.test_cs_addref(version3), 2);
+  assert.strictEqual(wat.test_cs_release(version3), 1);
+  assert.strictEqual(wat.test_cs_release(original), 0, 'original interface reaches zero independently');
+  assert.strictEqual(wat.test_cs_live(version3), 1, 'Surface3 retains the underlying surface');
+  assert.strictEqual(wat.test_cs_release(version3), 0);
+  assert.strictEqual(wat.test_cs_live(version3), 0);
+  assert.strictEqual(wat.test_cs_vidmem(), vidmemBefore, 'final interface release frees storage');
 
   // Flip chain: DDSD_CAPS|DDSD_BACKBUFFERCOUNT, PRIMARY|FLIP|COMPLEX.
   describe(0x21, 0, 0, 1, 0x200 | 0x10 | 0x8);

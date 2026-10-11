@@ -87,3 +87,31 @@ add a silent success stub or claim the CLI video error is fixed.
 
 Final registration checks: remote test-touch-controls.js and
 test-local-proprietary-demo-dropdown.js both pass at 19:08:49Z.
+
+## Video-init cause and surface-interface fix
+
+The COMCTL32 browser failure was test-box provisioning: restoring the native
+DLL alone still404s without the normal binaries -> test/binaries symlink.
+With both restored, reviewed run20261011T1914Z-recoil-native-alias reaches the
+same video error as CLI. COMCTL32 is no longer missing on bx_y3exnm39.
+
+The guest helper at0x49be10 creates a surface, queries Surface3, then releases
+the original interface without resetting EAX. Its caller0x49c0ee treats any
+nonzero result as failure. The breakpoint at0x49be45 proves EAX=1, not a
+CreateSurface or QueryInterface failure (run20261011T1916Z-recoil-release-return).
+
+Surface3 now uses the existing DX auxiliary-interface reference accounting.
+AddRef/Release return that interface's count, while the total still controls
+teardown, implicit attachments, fences, clipper references and pixel storage.
+The original interface can reach zero while Surface3 retains the live surface.
+This follows the separate ref1/ref3 behavior in Wine's reference implementation:
+https://github.com/wine-mirror/wine/blob/master/dlls/ddraw/surface.c
+(see ddraw_surface1_Release and ddraw_surface3_Release).
+
+Extended complex-surface regression tests the QI/AddRef/Release sequence and
+final storage refund. Old code fails (3 instead of2); fixed passes. Final
+scoped patch full build and complex-release, Surface3 descriptor, clipper, and
+surface-fence regressions pass on the boat. An initial broader prototype
+reaches the rendered New Game menu (run20261011T1918Z-recoil-surface-fixed);
+that capture is not gameplay and predates the final Surface3-only scope.
+Final-patch New Game validation continues separately.

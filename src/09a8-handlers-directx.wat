@@ -4740,10 +4740,15 @@
       (then
         (local.set $wrapper (call $dx_get_wrapper_for_vtbl
           (call $dx_slot_of (local.get $entry)) (local.get $vtbl)))
-        (call $gs32 (local.get $arg2) (local.get $wrapper)))
+        (call $gs32 (local.get $arg2) (local.get $wrapper))
+        (if (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDSURF3))
+          (then (drop (call $dx_aux_ref_add (local.get $wrapper) (i32.const 1))))))
       (else
-        ;; Return same object for any other QI (DX3 compat)
-        (call $gs32 (local.get $arg2) (local.get $arg0))))
+        ;; Return same object for any other QI (DX3 compat). Preserve a
+        ;; tracked interface count when the returned wrapper is unchanged.
+        (call $gs32 (local.get $arg2) (local.get $arg0))
+        (if (i32.gt_s (call $dx_aux_refs (local.get $arg0)) (i32.const 0))
+          (then (drop (call $dx_aux_ref_add (local.get $arg0) (i32.const 1)))))))
     ;; COM rule: QI must AddRef the returned interface
     (store.field DxObject refcount (local.get $entry) (i32.add (load.field DxObject refcount (local.get $entry)) (i32.const 1)))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
@@ -4805,7 +4810,11 @@
                   (i32.eq (i32.load (call $dx_surf_owner_ptr (local.get $child)))
                           (local.get $owner)))
               (then (drop (call $dx_surface_release (local.get $attached)))))))))
-    (select (local.get $rc) (i32.const 0) (i32.gt_s (local.get $rc) (i32.const 0))))
+    ;; Lifetime is shared, but Release returns this interface's count.
+    (if (i32.le_s (local.get $rc) (i32.const 0)) (then (return (i32.const 0))))
+    (if (i32.gt_s (call $dx_aux_refs (local.get $this)) (i32.const 0))
+      (then (return (call $dx_aux_ref_add (local.get $this) (i32.const -1)))))
+    (call $dx_interface_count (local.get $this) (local.get $entry) (local.get $rc)))
 
   (func $handle_IDirectDrawSurface_Release (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (i32.store offset=0 (global.get $reg_base) (call $dx_surface_release (local.get $arg0)))
