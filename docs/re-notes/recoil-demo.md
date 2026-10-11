@@ -115,3 +115,11 @@ surface-fence regressions pass on the boat. An initial broader prototype
 reaches the rendered New Game menu (run20261011T1918Z-recoil-surface-fixed);
 that capture is not gameplay and predates the final Surface3-only scope.
 Final-patch New Game validation continues separately.
+
+Final patch validation: run20261011T1920Z-recoil-newgame (CLI) and
+run20261011T1921Z-recoil-browser-fixed (Chrome152, Threads) both render
+the main menu without Video Error. Run20261011T1922Z-recoil-browser-newgame
+holds a click at the visible New Game center (page380,340) for150ms;
+WM_LBUTTONDOWN/UP reach HWND10001 but the menu does not advance.
+Next inspect fullscreen client-coordinate conversion and the game polling
+path. No gameplay/FPS/audio/mobile qualification.
