@@ -3784,6 +3784,13 @@
       ;; than the same scene through SoftDrv.
       (if (i32.gt_u (local.get $sz) (i32.const 8))
         (then (i32.store (i32.add (local.get $wa) (i32.const 8)) (i32.const 0xA0000))))
+      ;; DDSCAPS_ZBUFFER: real attached depth surfaces are implemented.
+      ;; DX1-5 ddsCaps / DX6+ ddsOldCaps is at 132; DX6+ ddsCaps at 364.
+      ;; SS2 reads the latter before attempting EnumZBufferFormats.
+      (if (i32.ge_u (local.get $sz) (i32.const 136))
+        (then (i32.store offset=132 (local.get $wa) (i32.const 0x20000))))
+      (if (i32.ge_u (local.get $sz) (i32.const 368))
+        (then (i32.store offset=364 (local.get $wa) (i32.const 0x20000))))
       ;; dwZBufferBitDepths = DDBD_16 (0x400) — MCM checks
       (if (i32.gt_u (local.get $sz) (i32.const 0x38))
         (then (i32.store (i32.add (local.get $wa) (i32.const 0x38)) (i32.const 0x400))))
@@ -3802,6 +3809,10 @@
       (call $zero_memory (local.get $wa) (local.get $sz))
       (i32.store (local.get $wa) (local.get $sz))
       (i32.store (i32.add (local.get $wa) (i32.const 4)) (i32.const 0x24041))
+      (if (i32.ge_u (local.get $sz) (i32.const 136))
+        (then (i32.store offset=132 (local.get $wa) (i32.const 0x20000))))
+      (if (i32.ge_u (local.get $sz) (i32.const 368))
+        (then (i32.store offset=364 (local.get $wa) (i32.const 0x20000))))
       (if (i32.gt_u (local.get $sz) (i32.const 0x38))
         (then (i32.store (i32.add (local.get $wa) (i32.const 0x38)) (i32.const 0x400))))
       (if (i32.gt_u (local.get $sz) (i32.const 0x3c))

@@ -12,6 +12,9 @@ const assert = require('assert');
 const { bootRenderHarness } = require('./render-helper');
 
 const extraWat = String.raw`
+  (func (export "test_cs_caps") (param $driver i32) (param $hel i32)
+    (call $handle_IDirectDraw_GetCaps (i32.const 0)
+      (local.get $driver) (local.get $hel) (i32.const 0) (i32.const 0) (i32.const 0)))
   (func (export "test_cs_seed") (param $ddraw_vtbl i32) (param $surface_vtbl i32)
     (global.set $DX_VTBL_DDRAW (local.get $ddraw_vtbl))
     (global.set $DX_VTBL_DDSURF2 (local.get $surface_vtbl)))
@@ -42,6 +45,26 @@ const extraWat = String.raw`
   wat.test_cs_seed(0x51000000, 0x52000000);
   const ddraw = wat.test_cs_ddraw();
   const vidmemBefore = wat.test_cs_vidmem();
+
+  // SS2 checks DX6 ddsCaps, not merely dwZBufferBitDepths. Preserve the
+  // legacy field too, and never write a newer field into an older buffer.
+  for (const size of [132, 136, 316, 364, 368, 380]) {
+    for (const p of [0x411000, 0x412000]) {
+      for (let n = 0; n < 400; n += 4) wat.guest_write32(p + n, 0xa5a5a5a5);
+      wat.guest_write32(p, size);
+    }
+    wat.test_cs_caps(0x411000, 0x412000);
+    for (const p of [0x411000, 0x412000]) {
+      assert.strictEqual(wat.guest_read32(p), size);
+      assert.strictEqual(wat.guest_read32(p + size) >>> 0, 0xa5a5a5a5,
+        `GetCaps overwrote the ${size}-byte caller buffer`);
+      assert(wat.guest_read32(p + 56) & 0x400, '16-bit depth is supported');
+      if (size >= 136) assert(wat.guest_read32(p + 132) & 0x20000,
+        'legacy surface caps must advertise implemented depth surfaces');
+      if (size >= 368) assert(wat.guest_read32(p + 364) & 0x20000,
+        'DX6 surface caps must advertise implemented depth surfaces');
+    }
+  }
 
   function describe(flags, w, h, count, capsBits) {
     for (let i = 0; i < 108; i += 4) wat.guest_write32(desc + i, 0);

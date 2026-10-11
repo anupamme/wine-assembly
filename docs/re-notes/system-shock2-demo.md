@@ -116,3 +116,20 @@ Do not force the guest bit or treat all capabilities as supported.
 All named logs, command receipts and disassembly excerpts are in the existing
 1513Z run directory. The `mode-result` trace did not hit its requested address
 and establishes no mode-enumeration failure. No new gameplay or FPS evidence.
+
+## Missing Z-buffer surface capability (2026-10-11)
+
+`0x5d8a40` resolves the descriptor feature: after DirectDraw GetCaps it reads
+bit 17 of the driver structure at offset 364 (`0x5d8b72`). This is
+`DDCAPS_DX6.ddsCaps.dwCaps & DDSCAPS_ZBUFFER`, not a ValidateDevice outcome.
+If absent, `0x5d8b9b` disables the depth request and clears descriptor bits
+0 and 2. Otherwise the game calls EnumZBufferFormats, selects 16-bit depth
+(`0x5d8f90`), creates a Z surface and attaches it (`0x5d8f20`).
+
+The field layout and value are defined in
+[Wine's DirectDraw header](https://raw.githubusercontent.com/wine-mirror/wine/master/include/ddraw.h).
+Our GetCaps already advertises 16-bit depth in dwZBufferBitDepths, and the
+indexed-texture regression exercises real attached depth writes/comparisons,
+but both surface-capability fields were zero. The scoped fix reports the
+implemented Z-buffer bit at legacy offset 132 and DX6+ offset 364, for driver
+and HEL caps, only when each entire field fits the caller's structure.
