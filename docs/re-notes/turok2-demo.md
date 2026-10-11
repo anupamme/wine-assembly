@@ -170,3 +170,13 @@ The same build, Go Back at(320,430) then Single Player at(320,216), reaches
 a rendered first-person scene with weapon,100health and150ammo in45s.
 callback-play.png is reviewed gameplay rendering; player movement is not
 yet qualified by that capture. Separate movement replay follows.
+
+## Input control comparison
+
+The early W replay happened during loading and is excluded. A later replay
+captured batch5200, held VK87 at5210–5700, and captured5800/5900. Repeating
+exactly that route without W gives SHA256-identical before/after/final PNGs
+(movement-control-hashes.json and walk-control.json in run1622Z). The scene
+transition and health/weapon changes therefore do not prove player input.
+Next inspect actual configured keys and possible scripted/demo playback.
+Registration/playability remain unqualified; the modal crash fix is separate.

@@ -18,3 +18,17 @@ Remote source: /home/user/oni-demo-preflight/extracted/. No fixture copied
 to the persistent box. Next verify original PE/imports, stage the documented
 legacy layout, and run bounded CLI after Turok releases runtime.
 No launch, gameplay, screenshot, FPS, audio or mobile qualification yet.
+
+## First bounded startup (16:27Z)
+
+Original Oni.exe SHA256
+d1579b3a205bdb7771ac32ebf3af61f927d352fe2e3e35128207e84a2937a12d.
+Default and supplied -noswitch route both enumerate the four level DATs,
+initialize sound/input/graphics/game systems, then ExitProcess(0) while
+loading level0. The later eip-zero diagnostic is after that explicit exit;
+do not report it as the startup cause. Exported guest startup.txt/debugger.txt
+identify error1 at BFW_TM_Game.c:2529, propagated through Oni_Level.c:405
+and Oni.c:936. No explanatory error text is supplied. Next map the failing
+template/level load return and its file/mapping inputs; no cause proven.
+Evidence: scratch/runs/20261011T1627Z-oni-startup (commands and guest logs).
+The build is own branch6823f45d3/base3cf809538, not latest main GL changes.
