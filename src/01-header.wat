@@ -510,7 +510,9 @@
   (import "host" "com_revoke_class_object" (func $host_com_revoke_class_object (param i32) (result i32)))
   ;; com_revoke_class_object(cookie) → HRESULT
   ;; Returns 0=S_OK, 0x800401F0=CO_E_DLLNOTFOUND (need async load), other=error
-  (import "host" "com_get_pending_dll" (func $host_com_get_pending_dll (result i32)))
+  ;; (dest_wa, capacity) -> dest_wa, or 0 when nothing is pending. The host
+  ;; writes the server's path into the calling instance's own buffer.
+  (import "host" "com_get_pending_dll" (func $host_com_get_pending_dll (param i32 i32) (result i32)))
   (import "host" "com_initialize_thread" (func $host_com_initialize_thread (param i32 i32 i32) (result i32)))
   (import "host" "com_uninitialize_thread" (func $host_com_uninitialize_thread (param i32) (result i32)))
   ;; Thread/event host imports
@@ -3444,6 +3446,10 @@
   (global $com_unk_outer (mut i32) (i32.const 0))   ;; pUnkOuter
   (global $com_cls_ctx   (mut i32) (i32.const 0))   ;; dwClsContext
   (global $com_dll_name  (mut i32) (i32.const 0))   ;; WASM addr of DLL name string (from registry)
+  ;; This instance's own copy of that name (a guest heap block, 0 until first
+  ;; use). Not propagated at spawn: a thread that shared its parent's buffer
+  ;; would be back to reading whichever thread's server was written last.
+  (global $com_dll_name_buf (mut i32) (i32.const 0))
   ;; Current instance/thread COM state; CoSetState owns this IUnknown and
   ;; CoGetState returns an independently AddRefed pointer.
   (global $com_state_unknown (mut i32) (i32.const 0))

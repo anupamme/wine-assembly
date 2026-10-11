@@ -2384,6 +2384,18 @@
   (func $com_activate_after_release
     (call $com_activate_finish (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))))
 
+  ;; The in-proc server the host just said it needs, as a WASM address in this
+  ;; instance's own buffer (or 0). The host used to write it into one shared
+  ;; scratch string and keep one pending name for the whole process, so two
+  ;; threads activating COM at once could each read -- and load -- the other's
+  ;; server; the broker now keeps each thread's pending name apart too
+  ;; (lib/guest-rpc.js, comPendingScope).
+  (func $com_pending_dll_name (result i32)
+    (if (i32.eqz (global.get $com_dll_name_buf))
+      (then (global.set $com_dll_name_buf (call $heap_alloc (i32.const 260)))))
+    (if (i32.eqz (global.get $com_dll_name_buf)) (then (return (i32.const 0))))
+    (call $host_com_get_pending_dll (call $g2w (global.get $com_dll_name_buf)) (i32.const 260)))
+
   ;; Park a COM activation at its import thunk while JS loads an in-proc
   ;; server. Keeping the stdcall frame untouched lets the normal handler retry
   ;; once the DLL exists, without re-executing the guest PUSH/CALL block and
@@ -3482,7 +3494,7 @@
         (global.set $com_ppv_ptr (local.get $arg4))
         (global.set $com_unk_outer (local.get $arg1))
         (global.set $com_cls_ctx (local.get $arg2))
-        (global.set $com_dll_name (call $host_com_get_pending_dll))
+        (global.set $com_dll_name (call $com_pending_dll_name))
         ;; Yield to JS for async DLL fetch — DON'T advance ESP yet
         ;; JS will load DLL, then re-call com_create_instance
         (call $com_dll_block)
@@ -3537,7 +3549,7 @@
         (global.set $com_ppv_ptr (local.get $arg4))
         (global.set $com_unk_outer (local.get $arg2))
         (global.set $com_cls_ctx (local.get $host_ctx))
-        (global.set $com_dll_name (call $host_com_get_pending_dll))
+        (global.set $com_dll_name (call $com_pending_dll_name))
         (call $com_dll_block)
         (return)))
     (if (local.get $hr)

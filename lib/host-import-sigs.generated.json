@@ -1947,7 +1947,10 @@
       ]
     },
     "com_get_pending_dll": {
-      "params": [],
+      "params": [
+        "i32",
+        "i32"
+      ],
       "results": [
         "i32"
       ]
