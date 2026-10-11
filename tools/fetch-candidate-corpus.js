@@ -134,6 +134,25 @@ async function downloadOneWithRetries(url, destination) {
   throw lastError;
 }
 
+// Move every entry of `source` into `destination`, replacing what is there.
+// A file is unlinked first rather than overwritten, because unlinking needs
+// only a writable directory while overwriting needs a writable file.
+function mergeExtractedTree(source, destination) {
+  fs.mkdirSync(destination, { recursive: true });
+  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    const from = path.join(source, entry.name);
+    const to = path.join(destination, entry.name);
+    if (entry.isDirectory()) {
+      const existing = fs.lstatSync(to, { throwIfNoEntry: false });
+      if (existing && !existing.isDirectory()) fs.rmSync(to, { force: true });
+      mergeExtractedTree(from, to);
+    } else {
+      fs.rmSync(to, { recursive: true, force: true });
+      fs.renameSync(from, to);
+    }
+  }
+}
+
 function extractArchive(archive, destination, options = {}) {
   fs.mkdirSync(destination, { recursive: true });
   const result = spawnSync('7z', ['x', '-y', `-o${destination}`, archive], {
@@ -146,14 +165,25 @@ function extractArchive(archive, destination, options = {}) {
     fs.rmSync(destination, { recursive: true, force: true });
     fs.mkdirSync(destination, { recursive: true });
   }
+  // unar extracts into a fresh directory that is then merged over the
+  // destination. A 7z that fails partway leaves the entries it could not
+  // decode behind as empty files, and a RAR's read-only attribute makes them
+  // read-only, so `unar -f` straight into the destination fails on every one
+  // (Battlezone demo on a boat's codec-less 7z: 257 files).
+  const staging = fs.mkdtempSync(`${destination.replace(/[\\/]+$/, '')}.unar-`);
   const fallbackArgs = ['-f'];
   if (options.noDirectory) fallbackArgs.push('-D');
-  fallbackArgs.push('-o', destination, archive);
+  fallbackArgs.push('-o', staging, archive);
   const fallback = spawnSync('unar', fallbackArgs, {
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
   });
-  if (fallback.status === 0) return;
+  if (fallback.status === 0) {
+    mergeExtractedTree(staging, destination);
+    fs.rmSync(staging, { recursive: true, force: true });
+    return;
+  }
+  fs.rmSync(staging, { recursive: true, force: true });
 
   const primary = result.error && result.error.code === 'ENOENT'
     ? '7z unavailable'
