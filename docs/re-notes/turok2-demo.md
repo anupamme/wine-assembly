@@ -241,3 +241,11 @@ main menu with default Threads/lazy loading (Chromium155.0.8059.39,
 same run1711Z).43 manifest files mounted; native ole32/comctl32 are absent
 and use built-ins as in the CLI run. No browser input beyond launch yet.
 Next ordinary browser Options/Video/Direct3D route, then New Game/movement.
+
+Run20261011T1717Z-turok-browser clicks the Video route using the CLI-derived
+coordinates plus the observed browser viewport offset. Both video_3dfx.dll
+and video_d3d.dll load in the worker. Settings returns to Options, but Single
+Player reports "Unable to open graphics driver". The chosen combo value was
+not captured; do not assume successful D3D selection from DLL loading alone.
+Next capture the native Video dialog/selection at each stage before diagnosing
+a browser-specific renderer initialization defect. No browser gameplay claim.

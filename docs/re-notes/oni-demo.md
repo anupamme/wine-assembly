@@ -85,3 +85,28 @@ Guest startup logs reach "launch the out-of-game UI". Next compare real
 WebGL and inspect GL state/draw ordering if gray persists. This software run
 uses base3cf809538 plus root fixes, not main's later projective-vertex change;
 do not attribute the result to current-main WebGL without testing it.
+
+## Browser WebGL comparison (17:22Z)
+
+Run20261011T1719Z-oni-webgl: unchanged legacy EXE/data, tested root build plus
+case fix, Chromium155 with default Threads/WebGL. Escape after20s, capture
+after45s reaches a fully rendered New Game/Load Game/Options/Quit menu.
+Thus the gray UI observed above is specific to the tested software GL path,
+not a universal startup failure. Uses a temporary browser/server APPS entry,
+recorded in browser-entry.json and browser.js; not a committed registration.
+The initial server-unknown-app attempt was a harness setup failure, corrected
+by registering the entry server-side and copying assets within the served root.
+
+Ordinary browser click at465,489 opens "Press Start to begin a new game"
+with Start/Cancel. This is the game's own New Game confirmation, not gameplay.
+Next Start at260,493 and inspect the resulting level/loading state.
+
+Clicking Start at260,493 after1200ms advances into loading, then traps on
+**UNIMPLEMENTED API: glTexCoord4f**, captured in browser-start.log. Guest
+EIP406863 is the continuation, not the cause (instruction there is
+`mov esi,[ebp]`). The API table already has IDs4430/4431 for glTexCoord4f/fv,
+but no handler was found on current main. Next implement real four-component
+texture coordinates through the appropriate GL state/encoder/backend path,
+with projective-coordinate tests; retain fail-fast behavior until implemented.
+No level screenshot/player control qualification. Audio also remains unverified
+(browser logs report suspended AudioContext).
