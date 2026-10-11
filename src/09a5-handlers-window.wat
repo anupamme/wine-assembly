@@ -1263,15 +1263,25 @@
     (local $packed i32) (local $wndproc i32) (local $app_wndproc i32)
     (local $client_size i32)
     (local $was_visible i32)
+    (local $was_zoomed i32)
     (local $rect i32)
     (local.set $was_visible (i32.ne
       (i32.and (call $wnd_get_style (local.get $arg0)) (i32.const 0x10000000))
       (i32.const 0)))
+    ;; Visible, maximized and not iconic: SW_SHOWMAXIMIZED changes nothing
+    ;; (Wine WINPOS_MinMaximize answers SWP_NOSIZE|SWP_NOMOVE), so no WM_SIZE.
+    (local.set $was_zoomed (i32.and (local.get $was_visible)
+      (i32.and (call $wnd_max_get (local.get $arg0))
+               (i32.eqz (call $wnd_min_get (local.get $arg0))))))
     ;; WM_SHOWWINDOW(fShow=wParam, status=lParam=0 for ShowWindow API) before
     ;; the host toggles visibility, so wndprocs can observe the transition.
-    (drop (call $post_queue_push
-            (local.get $arg0) (i32.const 0x0018)
-            (i32.ne (local.get $arg1) (i32.const 0)) (i32.const 0)))
+    ;; Only a visibility change sends it (Wine show_window: show != was_visible);
+    ;; a wndproc that re-shows its visible window must not get another one.
+    (if (i32.ne (i32.ne (local.get $arg1) (i32.const 0)) (local.get $was_visible))
+      (then
+        (drop (call $post_queue_push
+                (local.get $arg0) (i32.const 0x0018)
+                (i32.ne (local.get $arg1) (i32.const 0)) (i32.const 0)))))
     (local.set $client_size (call $host_show_window (local.get $arg0) (local.get $arg1)))
     ;; Record the minimized/maximized state the command asks for. The renderer
     ;; keeps its own copy for compositing; this is the one the guest reads back
@@ -1419,8 +1429,12 @@
             (drop (call $paint_flush_shown_native_children (local.get $arg0)))))))
     ;; SW_MAXIMIZE (cmd=3): host already resized. Queue the actual
     ;; maximized move/size pair before paint and discard the stale
-    ;; create-time pending size from CW_USEDEFAULT.
-    (if (i32.and (i32.eq (local.get $arg1) (i32.const 3))
+    ;; create-time pending size from CW_USEDEFAULT. An already-zoomed window
+    ;; gets none: Dethkarz answers WM_SIZE(SIZE_MAXIMIZED) with
+    ;; ShowWindow(SW_SHOWMAXIMIZED), and a resend there never ends, starving
+    ;; input to its modal driver dialog.
+    (if (i32.and (i32.and (i32.eq (local.get $arg1) (i32.const 3))
+                          (i32.eqz (local.get $was_zoomed)))
                  (i32.eq (local.get $arg0) (global.get $main_hwnd)))
       (then
         ;; The maximized bit itself is already recorded by

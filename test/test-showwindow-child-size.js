@@ -58,9 +58,10 @@ const extraWat = String.raw`
 
   e.set_post_queue_count(0);
   e.test_call_show_window(child, 5);
-  assert.strictEqual(e.post_queue_depth(), 1,
-    'showing an already-visible child does not synthesize another WM_SIZE');
-  assert.strictEqual(e.post_queue_peek(0, 1) >>> 0, 0x0018);
+  // Windows sends WM_SHOWWINDOW only on a visibility change; Dethkarz calls
+  // ShowWindow from its WM_SHOWWINDOW arm and looped on the resend.
+  assert.strictEqual(e.post_queue_depth(), 0,
+    'showing an already-visible child sends neither WM_SIZE nor WM_SHOWWINDOW');
 
   e.test_call_show_window(child, 0);
   e.set_post_queue_count(0);
