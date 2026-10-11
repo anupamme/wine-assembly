@@ -70,6 +70,25 @@ const extraWat = String.raw`
     (i32.store offset=16 (global.get $reg_base) (local.get $saved_esp))
     (i32.load offset=0 (global.get $reg_base)))
 
+  (func (export "test_ds_duplicate")
+        (param $this i32) (param $original i32) (param $output i32) (result i32)
+    (local $saved_esp i32)
+    (local.set $saved_esp (i32.load offset=16 (global.get $reg_base)))
+    (call $handle_IDirectSound_DuplicateSoundBuffer
+      (local.get $this) (local.get $original) (local.get $output)
+      (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (local.get $saved_esp))
+    (i32.load offset=0 (global.get $reg_base)))
+
+  (func (export "test_dsbuf_release") (param $this i32) (result i32)
+    (local $saved_esp i32)
+    (local.set $saved_esp (i32.load offset=16 (global.get $reg_base)))
+    (call $handle_IDirectSoundBuffer_Release
+      (local.get $this) (i32.const 0) (i32.const 0)
+      (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (local.get $saved_esp))
+    (i32.load offset=0 (global.get $reg_base)))
+
   (func (export "test_dsbuf_get_caps")
         (param $this i32) (param $caps i32) (result i32)
     (local $saved_esp i32)
@@ -347,7 +366,39 @@ async function main() {
   assert.strictEqual(e.test_ds_set_cooperative_level(sound, topLevel, 4) >>> 0, 0,
     'DSSCL_WRITEPRIMARY is accepted by the modeled hardware primary ring');
 
+  // The final Release of a buffer frees its sample data. Create and Duplicate
+  // each allocate a private guest-heap copy, which nothing freed: Forsaken's
+  // attract loop rebuilds DirectSound and ~225 buffers per cycle and ran the
+  // guest heap dry within a minute. 300 rounds of a 1 MB buffer plus its
+  // duplicate is far more than the heap holds unless Release returns it.
+  const pcm = e.guest_alloc(18) >>> 0;
+  dv.setUint16(wa(pcm), 1, true);            // WAVE_FORMAT_PCM
+  dv.setUint16(wa(pcm) + 2, 2, true);        // stereo
+  dv.setUint32(wa(pcm) + 4, 22050, true);
+  dv.setUint32(wa(pcm) + 8, 88200, true);
+  dv.setUint16(wa(pcm) + 12, 4, true);
+  dv.setUint16(wa(pcm) + 14, 16, true);
+  dv.setUint16(wa(pcm) + 16, 0, true);
+  dv.setUint32(descWa, 20, true);
+  dv.setUint32(descWa + 4, 0, true);         // secondary
+  dv.setUint32(descWa + 8, 1 << 20, true);
+  dv.setUint32(descWa + 12, 0, true);
+  dv.setUint32(descWa + 16, pcm, true);
+  for (let round = 0; round < 300; round++) {
+    dv.setUint32(bufferOutputWa, 0, true);
+    assert.strictEqual(e.test_ds_create_buffer(sound, desc, bufferOutput) >>> 0, 0,
+      `round ${round}: a released 1 MB buffer's memory is available again`);
+    const buffer = dv.getUint32(bufferOutputWa, true);
+    dv.setUint32(bufferOutputWa, 0, true);
+    assert.strictEqual(e.test_ds_duplicate(sound, buffer, bufferOutput) >>> 0, 0,
+      `round ${round}: duplicate allocates`);
+    const duplicate = dv.getUint32(bufferOutputWa, true);
+    assert.strictEqual(e.test_dsbuf_release(duplicate) >>> 0, 0);
+    assert.strictEqual(e.test_dsbuf_release(buffer) >>> 0, 0);
+  }
+
   console.log('PASS DirectSound cooperative level gates primary-buffer format and Compact');
+  console.log('PASS released DirectSound buffers return their sample memory (300 x 2 MB)');
 }
 
 main().catch(error => {

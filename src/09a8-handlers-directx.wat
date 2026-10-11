@@ -8012,6 +8012,18 @@
       (then
         (local.set $handle (load.field DxObject misc0 (local.get $entry)))
         (if (local.get $handle) (then (drop (call $host_voice_close (local.get $handle)))))
+        ;; The sample data is this buffer's own guest-heap block: Create and
+        ;; Duplicate each allocate a private copy. Nothing freed it, so a game
+        ;; that rebuilds its sound set leaked every byte each time -- Forsaken's
+        ;; attract loop recreates DirectSound and ~225 buffers per cycle and
+        ;; exhausted the guest heap within a minute (CreateThread then failed to
+        ;; allocate a TLS vector). The voice is closed above, so no host reads
+        ;; this memory any more.
+        (local.set $handle (load.field DxObject misc1 (local.get $entry)))
+        (if (local.get $handle)
+          (then
+            (store.field DxObject misc1 (local.get $entry) (i32.const 0))
+            (call $heap_free (call $w2g (local.get $handle)))))
         (call $dx_free (local.get $entry))))
     (i32.store offset=0 (global.get $reg_base) (select (local.get $rc) (i32.const 0) (i32.gt_s (local.get $rc) (i32.const 0))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))
