@@ -43,9 +43,10 @@ node test/run.js --app=tomb_raider_3_demo --quiet-api --quiet-blocks \
 - `acmDriverEnum` from `0x46f930`: the callback at `0x46fb70` calls
   `acmDriverDetailsA` and compares `szShortName` with `"MS-ADPCM"`
   (`0x4b8fb4`). Without a match it returns false and the caller at
-  `0x4a3b47` ignores it, so the game runs with no ADPCM decode path. We report
-  the one built-in PCM converter only. **Sound is therefore unevaluated**: an
-  MS-ADPCM ACM codec would be the next step for audio.
+  `0x4a3b47` ignores it, so the game runs with no ADPCM decode path. Since dc7e8454d
+  the ACM lists MS-ADPCM, and the game finds it and calls `acmDriverOpen` on
+  it at startup. No ADPCM stream was opened through the passport route
+  (26000 batches, 2026-10-11), so where TR3 decodes with it is still unknown.
 - ZENABLE. TR3 never sets `D3DRENDERSTATE_ZENABLE`; it relies on the
   DirectX default (TRUE when a depth surface is attached to the render target
   at CreateDevice). With our old FALSE default every room drew without a depth
@@ -82,8 +83,8 @@ Partly investigated, not fixed:
 - **INDIA loading picture over gameplay.** The loading BMP fades out over the
   first seconds of the level, and stays longer when input dismisses the
   Controls overlay early. Not compared with hardware.
-- **Audio.** Needs an MS-ADPCM ACM codec. Without one, `acmDriverEnum` finds
-  only the PCM converter and the game runs silent.
+- **Audio.** The MS-ADPCM codec is found and opened (dc7e8454d); no stream
+  use seen yet on the passport route.
 
 Repro for the passport: `--app=tomb_raider_3_demo --input=8:dlg-cmd:1,40:dlg-cmd:1,18000:keydown:13,18100:keyup:13,18500:png:out.png --dx-surfaces`.
 

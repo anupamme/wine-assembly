@@ -20,8 +20,7 @@ stubs and the game dies on `QSWaveMixInitEx`. Default clock (200 ms/batch).
 
 | batch | input | screen |
 |---|---|---|
-| ~4045 | — | "Outwars Audio Compression Error: ACM is not installed" (MB_OK) |
-| 4300 | Enter | dismisses it |
+| ~4045 | — | (before dc7e8454d: "Outwars Audio Compression Error: ACM is not installed", Enter dismissed it; gone now) |
 | ~4700 | — | "Outwars CD Audio Error: Another program has the CDAUDIO device locked" (MB_RETRYCANCEL) |
 | 4800 | **Escape** (Cancel = play without music; Enter = Retry loops) | |
 | ~9000 | — | TRIAL VERSION title |
@@ -50,9 +49,14 @@ stubs and the game dies on `QSWaveMixInitEx`. Default clock (200 ms/batch).
 
 ## Audio
 
-QMIXER loads `msacm32` and resolves acmFormatSuggest/acmStream*; our ACM is the
-PCM converter only, so `acmFormatSuggest(ADPCM → PCM)` returns
-ACMERR_NOTPOSSIBLE (0x200) and the game reports ACM missing. A stock Win98 has
-the MS-ADPCM and IMA-ADPCM codecs: implementing ADPCM decode in the ACM stream
-path is the faithful fix (open). The CD-audio box comes from
+QMIXER loads `msacm32` and resolves acmFormatSuggest/acmStream*. Since
+dc7e8454d the ACM has the MS-ADPCM and IMA ADPCM codecs of a stock Win98
+(decode to 16-bit PCM in WAT), so `acmFormatSuggest(ADPCM → PCM)` and
+`acmStreamOpen` succeed and the "ACM is not installed" box is gone. Measured
+2026-10-11 (boat, main 8373af6cd, route to the main menu): 2 streams, 18
+`acmStreamConvert`, 3 `IDirectSoundBuffer_Play` and ~20k `Lock` (QMixer
+streams into DirectSound; `--audio-out` records waveOut only, so it stays
+empty). The first converted block (512-byte mono MS-ADPCM -> 2024 bytes) is
+real signal: min -32172, max 32356, RMS 21388. Evidence
+`scratch/runs/20261011T0740Z-outwars-acm-adpcm-w4`. The CD-audio box comes from
 `mciSendCommandA(MCI_OPEN, type cdaudio)` failing; Cancel continues.
