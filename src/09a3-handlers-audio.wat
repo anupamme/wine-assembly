@@ -3766,8 +3766,14 @@
     (i32.store offset=8 (local.get $slot) (local.get $arg2))
     (i32.store offset=12 (local.get $slot) (local.get $arg3))
     (i32.store offset=16 (local.get $slot) (call $host_get_ticks))
+    ;; +20: bit 0 = one-shot (TIME_PERIODIC clear); bits 0x10/0x20 keep
+    ;; TIME_CALLBACK_EVENT_SET/_PULSE, where lpTimeProc is an event HANDLE to
+    ;; signal, never code ($mm_timer_due_slot). Collapse! Crunch's timer
+    ;; thread jumped to its event handle 0xE0000 and died with 0xC000DE05.
     (i32.store offset=20 (local.get $slot)
-      (i32.eqz (i32.and (local.get $arg4) (i32.const 1))))
+      (i32.or
+        (i32.eqz (i32.and (local.get $arg4) (i32.const 1)))
+        (i32.and (local.get $arg4) (i32.const 0x30))))
     (call $mm_timer_thread_ensure)
     (i32.store offset=0 (global.get $reg_base) (local.get $tid))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))

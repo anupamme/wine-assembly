@@ -1754,3 +1754,18 @@ references 238 -> 355), so on SpiderMonkey the "forwarded" operand is a stack
 load instead of a cell load. Evidence:
 `scratch/runs/20261010T0200Z-mmx-emms-fwd-ab/` (tables, driver, both
 engines' disassembly for base / EMMS / forwarding).
+
+**Collapse! Crunch: threads and the winmm timer (2026-10-11, w5).**
+
+The user's report: Threads on, then `STACK OVERLAP: slot 6 ... overlaps slot 3`, then `ExitProcess 0xC000DE05`.
+The CLI reproduces it with `--threads --screen=1024x768`: click the CRUNCH level arrows (349,293)/(349,319), then START (228,306).
+
+- **Thread lifetimes.** Worker tid 3 (start `0x46a4f6`, one per sound) calls `ExitThread`. Tids 4 and 5 start the same way.
+- **The timer.** One of those worker threads calls `timeSetEvent` with `TIME_CALLBACK_EVENT_SET`/`_PULSE`, so `lpTimeProc` is an event handle (`0xE0000`), not code.
+- **The crash.** That call starts winmm's timer thread at the `0xCACA003B` thunk. It reused tid 3 and its freed stack. Its first turn called the handle as a TimeProc and faulted at EIP `0xE0000` with no SEH frame. `0xC000DE05` is `$seh_terminate_unhandled(0xDE00 | 0xC0000005)`.
+- **The overlap message.** The ExitThread'd worker was never retired, because the slice result returned early for a record that was already marked exited. Its stack range stayed registered, which is what printed the overlap.
+
+The timer's event kinds are now signalled in `$mm_timer_due_slot`. Exited workers are retired.
+After the fix the run reaches the Crunch board, and the timer thread stays alive.
+
+Still open: gameplay reads guest address `0x5` from `0x401860`/`0x40187d`, about 83k times by batch 2200 under `--fault-null`. It is unexamined.
