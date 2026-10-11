@@ -539,6 +539,52 @@ function makeManager(backend, extraOpts) {
     `actions=${actions.join(',')} external=${external.join(',')}`);
   }
 
+  // Worker boots are slow and runWorkerSlices spawns whenever the pending
+  // list is non-empty, so a second spawn pass can start while the first is
+  // still booting. It must not walk the list again and start a thread twice.
+  {
+    const backend = makeBackend([]);
+    const slowSpawn = backend.spawnThread.bind(backend);
+    backend.spawnThread = async spec => {
+      for (let i = 0; i < 3; i++) await new Promise(resolve => setImmediate(resolve));
+      return slowSpawn(spec);
+    };
+    const tm = makeManager(backend);
+    tm.createThread(0x401500, 0, 0, 0);
+    const first = tm._spawnPendingWorkers();
+    await new Promise(resolve => setImmediate(resolve));
+    tm.createThread(0x401600, 0, 0, 0);
+    tm.createThread(0x401700, 0, 0, 0);
+    const second = tm.runWorkerSlices(1000);
+    const third = tm._spawnPendingWorkers();
+    await Promise.all([first, second, third]);
+    const tids = backend.specs.map(spec => spec.tid);
+    check(tids.length === 3 && new Set(tids).size === 3 && tm._pendingThreads.length === 0
+      && tm.threads.size === 3,
+    'overlapping spawn passes start each pending thread exactly once',
+    `tids=${tids.join(',')} pending=${tm._pendingThreads.length} threads=${tm.threads.size}`);
+  }
+
+  // ExitThread marks the record during the slice. The slice result must still
+  // retire that Worker, or its stack range stays registered with the host and
+  // the next thread on the same tid and freed stack reports a STACK OVERLAP
+  // (Collapse! Crunch, Threads on).
+  {
+    const backend = makeBackend([[{}]]);
+    const tm = makeManager(backend);
+    tm.createThread(0x401500, 0, 0, 0);
+    await tm._spawnPendingWorkers();
+    const [handle, thread] = [...tm.threads.entries()][0];
+    thread.link.slice = async () => {
+      tm._markThreadExited(handle, thread, 0, 'ExitThread');
+      return { eip: 0x401000, yield: 0, ms: 1 };
+    };
+    await tm.runWorkerSlices(1000);
+    check(backend.dropped.includes(thread.link.slot),
+      'a worker that called ExitThread during its slice is retired',
+      `dropped=${backend.dropped.join(',')}`);
+  }
+
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 })().catch(err => { console.error('test-worker-thread-scheduler failed:', err); process.exit(1); });
