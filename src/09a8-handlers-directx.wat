@@ -3273,9 +3273,24 @@
       (select (i32.const 2) (i32.const 1) (i32.eqz (local.get $idx))))
     (local.set $caps (i32.add (local.get $record) (i32.const 116)))
     (call $d3dim_fill_device_desc7 (local.get $caps))
+    ;; D3DDEVICEDESC7.deviceGUID (+196) names the device, since the D3D7
+    ;; callback has no GUID argument: it is what a program passes back to
+    ;; CreateDevice. Left zero, Evolva matched no enumerated device against its
+    ;; preferred one and threw "D3DMgr: Could not set up preferred device".
     (if (i32.eq (local.get $idx) (i32.const 0))
       (then
-        (i32.store offset=116 (local.get $state) (i32.const 0x8AEA0)))) ;; HAL-style dev caps
+        (i32.store offset=116 (local.get $state) (i32.const 0x8AEA0)) ;; HAL-style dev caps
+        ;; IID_IDirect3DHALDevice {84E63DE0-46AA-11CF-816F-0000C020156E}
+        (i32.store offset=312 (local.get $state) (i32.const 0x84E63DE0))
+        (i32.store offset=316 (local.get $state) (i32.const 0x11CF46AA))
+        (i32.store offset=320 (local.get $state) (i32.const 0x00006F81))
+        (i32.store offset=324 (local.get $state) (i32.const 0x6E1520C0)))
+      (else
+        ;; IID_IDirect3DRGBDevice {A4665C60-2673-11CF-A31A-00AA00B93356}
+        (i32.store offset=312 (local.get $state) (i32.const 0xA4665C60))
+        (i32.store offset=316 (local.get $state) (i32.const 0x11CF2673))
+        (i32.store offset=320 (local.get $state) (i32.const 0xAA001AA3))
+        (i32.store offset=324 (local.get $state) (i32.const 0x5633B900))))
     ;; Push callback args right-to-left: ctx, caps7, name, desc.
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.load offset=4 (local.get $state)))
