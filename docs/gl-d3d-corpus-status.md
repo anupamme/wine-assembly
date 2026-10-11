@@ -414,3 +414,58 @@ size until the next swap, so `resizeContext` now swaps once after resizing.
 3. **Wrong pictures**: scr_fallingl black leaves on both arms
    (SCR-FALLINGL-BLACK-LEAVES-20261010), ptct untextured.
 4. **Fault**: Winamp MilkDrop (existing TODOS row).
+
+## Current-main refresh, 11 October 2026 (GFX-CORPUS-MATRIX-20261011)
+
+**Census.** `node tools/gfx-app-census.js --family=gl,d3drm,d3dim,d3d8,d3d9 --list`
+on `4cbde5326`: **92 of 294** registry apps reach a 3D API statically (ddraw 82,
+d3drm 14, d3dim 68, d3d8 13, d3d9 4, gl 24). Three of today's registrations
+are absent only because their executables are fetched, not kept, on the ops
+box: `re_volt_demo`, `forsaken_demo`, `midtown_madness_trial` (all DirectX 5/6
+D3DIM, run below).
+
+**Probe.** Boat `bx_az67mx8t` (4 vCPU, llvmpipe, Xorg `:0`, ops services off),
+main `4cbde5326`, the 10-10 `probe.js`: one unrouted `test/run.js --app=ID
+--no-close` per arm, **35 s wall clock**, final frame as PNG. Software arm is
+the default (D3DIM/D3DRM), `--d3d9-renderer=software` (D3D8/9) or
+`--gl-renderer=software`; GPU arm is `--headless-gl` (+ `--d3dim-gpu`). Up to
+three probes shared the 4 vCPUs, so batch counts are lower than an idle box.
+Apps that stop on a start-up dialog were re-probed with Enter at batches
+30/90/200/400 and `--stuck-after` raised. Frames, logs, summaries and the
+scripts: `scratch/runs/20261011T0600Z-gfx-corpus-matrix-w4/`. This is a
+regression sweep at a fixed short budget; the gameplay evidence in the 10-10
+table still stands where the probe reached the same point.
+
+| app | software (35 s) | GPU (35 s) | note |
+|---|---|---|---|
+| dx_flip3dtl, dx_globe, dx_viewer, dx_boids, dx_tunnel, dx_twist | renders | renders | samples animate per presented frame, so final frames differ by arm |
+| scr_jazz, scr_rockroll, scr_fallingl, scr_geometry | renders | renders | |
+| scr_architec | white at 35 s; renders at 60k batches (series) | same | a long first load, not a fault |
+| scr_scifi, scr_oasaver | **uniform frame** through 2.9M batches (120 s) on the default CLI clock | same | render with the 10-06 flags `--tick-ms-per-batch=2 --dx-surfaces` (scifi 237,900-byte frame): D3DRM-SCR-DEFAULT-CLOCK-UNIFORM-20261011 |
+| tomb_raider_2_demo, tomb_raider_3_demo | in-level after Enter on the setup dialog | same; identical frames at batches 60k/120k | |
+| gta2_demo, darkstone_demo, cmr2_demo, colin_mcrae_rally_demo, avp_alien_demo, avp_marine_demo, blood2_demo, mw3, diablo2_demo | menu | menu | |
+| drakan_demo, mcm, midtown_madness_trial | menu after Enter on the start-up message box | same | midtown: vehicle menu; mcm: profile name entry |
+| carmageddon2_demo | intro, then exits itself (code 0) at ~112k batches | same | unattended only; the 10-10 routed race is unaffected |
+| zuma_deluxe | black at 35-40 s; title at 100 s | — | slow load, not a fault |
+| re_volt_demo | Acclaim splash (8.4k batches in 35 s) | same | new; menu not reached within budget |
+| **forsaken_demo** | **dies**: guest heap exhausted, `Unable to allocate thread TLS vector` | same | FORSAKEN-HEAP-EXHAUSTION-20261011; w5's routed command (`--batch-size=200000`, 700 batches) still runs clean |
+| pawn | board | board | |
+| crimsonland, alien_shooter, ptct | launcher / setup dialog | same | need their routes |
+| quake2_demo | menu | menu, 1.78M GL calls | |
+| descent3_demo | pilot screen | same, 352k GL calls | |
+| anachronox_demo | intro | intro, 36k GL calls | |
+| halflife_uplink | menu | menu, 0 GL calls within 35 s | slow start (7.4k batches) |
+| warcraft3_demo | menu | menu, 504k GL calls | |
+| daikatana_demo | menu | menu, 1.94M GL calls | |
+| serious_sam_demo | first-run message box | same | needs the registered route (re-note) |
+| **quake3_demo** | not run | not run | fixture: QUAKE3-FIXTURE-INSTALL-STEP-20261011 |
+| winamp | main window | main window | MilkDrop not exercised |
+
+Not re-probed (heavy, or fresh 10-10 evidence): arcanum, aow2, tdr2000,
+diehard, deus_ex, ut2003/ut2004, morrowind, pirates (Codex), bw2.
+
+**Regressions since 10-10: none found.** Every app that reached a point on
+10-10 reached it again on both arms, and the two arms agree wherever they can
+be compared at the same batch. New failures: Forsaken's heap exhaustion on an
+unattended run, quake3's unreproducible fixture, and the scifi/oasaver
+default-clock frame.
