@@ -50,3 +50,15 @@ that the new case fails there. Run existing projective-vertex tests as well.
 Then rebuild on a temporary boat with the filename-case fix, repeat the
 ordinary Oni menu/New Game/Start route, and verify actual player movement.
 Do not equate clearing the API trap with correct rendering or gameplay.
+
+## WebGL texture-matrix prerequisite verified
+
+The browser shader now carries matrix-generated S/T/Q and divides in the
+fragment shader, including both texture units and the GL_CLAMP border path.
+Extended test-gl-projective-web tests the quarter-width boundary (16/64),
+independent position w and texture q (32/64), q=1 reset, WebGL1/2 and both
+sampling paths. Old source fails with boundary11; all26 fixed cases plus
+16 existing border checks pass. Evidence: scratch/runs/20261011T1846Z-oni-projective-matrix.
+
+This does not implement glTexCoord4f/4fv, change the packed ABI, or fix the
+software rasterizer. Those remain required before Oni can pass its trap.
