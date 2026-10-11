@@ -9,6 +9,29 @@ async function fixture(){
  return root;
 }
 function request(port,url,method='GET',headers={}){return new Promise((resolve,reject)=>{const req=http.request({host:'127.0.0.1',port,path:url,method,headers},res=>{const chunks=[];res.on('data',c=>chunks.push(c));res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body:Buffer.concat(chunks).toString()}));});req.on('error',reject);req.end();});}
+test('JezzBall score helper is served and required before launch', async () => {
+ const root = await fixture();
+ const app = require('../lib/apps').APPS.wep16_jezzball;
+ const helper = 'binaries/wep16/WEP4/WEP4UTIL.DLL';
+ try {
+  await fs.writeFile(path.join(root, 'lib/apps.js'), 'module.exports=' + JSON.stringify({APPS:{wep16_jezzball:app}}));
+  await fs.symlink('test/binaries', path.join(root, 'binaries'));
+  for (const asset of [app.exe, ...app.files, ...(app.dlls || []), app.iconFile].filter(Boolean)) {
+   const name = typeof asset === 'string' ? asset : asset.url;
+   await fs.mkdir(path.dirname(path.join(root, name)), {recursive:true});
+   await fs.writeFile(path.join(root, name), 'fixture');
+  }
+  const complete = await buildCatalog(root);
+  assert(complete.allowed.has(helper), 'imported score DLL must pass the hosted allowlist');
+  assert.equal(complete.routes[0].available, true);
+  await fs.unlink(path.join(root, helper));
+  const missing = await buildCatalog(root);
+  assert.equal(missing.routes[0].available, false);
+  assert.deepEqual(missing.routes[0].missingPaths, [helper]);
+ } finally {
+  await fs.rm(root, {recursive:true, force:true});
+ }
+});
 test('registered closure, private entry, GET/HEAD ranges, isolation and denied paths',async()=>{
  const root=await fixture(),serve=createEmulatorHandler(root);const server=http.createServer(async(req,res)=>{try{if(!await serve(req,res)){res.writeHead(404);res.end();}}catch(e){res.writeHead(500);res.end(e.message);}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port;
  try{
