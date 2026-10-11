@@ -12212,6 +12212,11 @@
         (br $cols)))
       (local.set $y (i32.add (local.get $y) (i32.const 1)))
       (br $rows)))
+    ;; GetClipboardData hands this out as the CF_DIB HGLOBAL, and GlobalLock
+    ;; accepts only GlobalAlloc provenance (bf45d4a68). Unmarked, the lock
+    ;; returned NULL and Paint's Paste reported "Error getting the Clipboard
+    ;; Data!" — the same mark $clipboard_store_binary_data gives its copy.
+    (call $heap_global_mark (local.get $dst_g))
     (global.set $clipboard_binary_format (i32.const 8)) ;; CF_DIB
     (global.set $clipboard_binary_ptr (local.get $dst_g))
     (global.set $clipboard_binary_len (i32.wrap_i64 (local.get $size64)))
