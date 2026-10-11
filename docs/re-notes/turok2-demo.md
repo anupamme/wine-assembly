@@ -235,3 +235,9 @@ must still select Direct3D; default Glide3 remains unsupported. App catalog
 test passes. The broader dropdown-manifest test is blocked by the unrelated
 missing `test/binaries/win98-games-a-d/Black and White 2-DX9-D3D/installed/.wine-assembly-browser.json`
 on the remote test tree. Browser gameplay, FPS, audio and mobile remain open.
+
+Registered real emulator-handler browser launch also reaches the reviewed
+main menu with default Threads/lazy loading (Chromium155.0.8059.39,
+same run1711Z).43 manifest files mounted; native ole32/comctl32 are absent
+and use built-ins as in the CLI run. No browser input beyond launch yet.
+Next ordinary browser Options/Video/Direct3D route, then New Game/movement.
