@@ -292,6 +292,10 @@ outside their own run directory, including absolute paths, traversal and symlink
 It covers screenshots, diagrams, gameplay screenshots, artifact arrays/object
 maps, explicit evidence, and build source-manifest/patch files. Missing local
 artifacts are reported separately; containment does not prove completeness.
+Its `invalid` list names records the dashboard will not show at all (no string
+`candidateId`, no ISO `startedAt`, an `outcome` outside the list below, or a
+`verification` other than `reviewed`/`unreviewed`): their candidate cards say
+"No linked capture". It does not change the exit code, so fix them by hand.
 Historical commands and source working-directory metadata remain unchanged.
 Run its regression tests with `node --test ops/run-evidence.test.js`.
 For existing bundles, `node ops/check-run-evidence.js --localize ROOT` copies

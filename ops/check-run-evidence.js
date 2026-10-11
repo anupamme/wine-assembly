@@ -39,9 +39,22 @@ function references(raw) {
   return refs;
 }
 
+// The fields ops/readers.js requires before it will list a run at all (see
+// ops/README "Result format"). A record that fails them is dropped from the
+// dashboard with only a source notice, so its candidate card shows no capture.
+const OUTCOMES = ['passed', 'failed', 'timeout', 'harness-error', 'running', 'unknown'];
+function schemaProblems(raw) {
+  const problems = [];
+  if (typeof raw.candidateId !== 'string') problems.push('candidateId must be a string');
+  if (typeof raw.startedAt !== 'string' || Number.isNaN(Date.parse(raw.startedAt))) problems.push('startedAt must be an ISO time');
+  if (!OUTCOMES.includes(raw.outcome)) problems.push(`outcome must be one of ${OUTCOMES.join('|')}`);
+  if (raw.verification !== undefined && raw.verification !== 'reviewed' && raw.verification !== 'unreviewed') problems.push('verification must be reviewed|unreviewed');
+  return problems;
+}
+
 function inspect(root) {
   root = path.resolve(root);
-  const runs = path.join(root, 'scratch/runs'), records = [], errors = [], missing = [];
+  const runs = path.join(root, 'scratch/runs'), records = [], errors = [], missing = [], invalid = [];
   if (!fs.existsSync(runs)) throw new Error('Run directory missing: ' + runs);
   for (const id of fs.readdirSync(runs).sort()) {
     const dir = path.join(runs, id), file = path.join(dir, 'result.json');
@@ -49,6 +62,8 @@ function inspect(root) {
     const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
     const record = {id, dir, file, raw, refs: references(raw)};
     records.push(record);
+    const problems = schemaProblems(raw);
+    if (problems.length) invalid.push({run: id, problems});
     for (const ref of record.refs) {
       ref.target = path.resolve(dir, ref.value);
       try { ref.real = fs.realpathSync(ref.target); } catch (e) { ref.missing = e.code; }
@@ -59,7 +74,7 @@ function inspect(root) {
       else if (ref.missing) missing.push({run: id, path: ref.value, reason: ref.missing});
     }
   }
-  return {records, errors, missing};
+  return {records, errors, missing, invalid};
 }
 
 // Preserve original files and links. Copy only named files, verify bytes, then
@@ -103,8 +118,9 @@ if (require.main === module) {
   try {
     const migration = apply ? localize(root) : undefined;
     const result = inspect(root);
-    console.log(JSON.stringify({runs: result.records.length, errors: result.errors, missing: result.missing, migration}, null, 2));
+    console.log(JSON.stringify({runs: result.records.length, errors: result.errors, missing: result.missing,
+      invalid: result.invalid, migration}, null, 2));
     process.exitCode = result.errors.length ? 1 : 0;
   } catch (e) { console.error(e.message); process.exitCode = 1; }
 }
-module.exports = {references, inspect, localize};
+module.exports = {references, inspect, localize, schemaProblems};

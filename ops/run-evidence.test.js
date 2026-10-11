@@ -43,3 +43,20 @@ test('missing escaping paths still fail; absolute and sibling references fail', 
   fs.writeFileSync(path.join(dir, 'result.json'), JSON.stringify({artifacts: ['escape/missing.log']}));
   assert.equal(inspect(root).errors.length, 1);
 });
+
+test('records the dashboard reader would drop are reported as invalid, without failing the run', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'run-evidence-'));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  const write = (id, record) => {
+    fs.mkdirSync(path.join(root, 'scratch/runs', id), {recursive: true});
+    fs.writeFileSync(path.join(root, 'scratch/runs', id, 'result.json'), JSON.stringify(record));
+  };
+  // The shape several agents wrote on 2026-10-11: status/reviewed instead of outcome/verification, no startedAt.
+  write('legacy', {candidateId: 'rollcage_demo', status: 'pass', reviewed: true});
+  write('good', {candidateId: 'rollcage-demo', startedAt: '2026-10-11T06:50:00Z', outcome: 'passed', verification: 'reviewed'});
+  const report = inspect(root);
+  assert.deepEqual(report.invalid.map(entry => entry.run), ['legacy']);
+  assert.deepEqual(report.invalid[0].problems, ['startedAt must be an ISO time',
+    'outcome must be one of passed|failed|timeout|harness-error|running|unknown']);
+  assert.deepEqual(report.errors, []);
+});
