@@ -722,6 +722,80 @@
       }
     },
     {
+      "id": "dethkarz-demo",
+      "name": "Dethkarz Demo",
+      "kind": "game",
+      "version": "1998 Melbourne House/Infogrames city demo, German magazine cover-disc build (INFO.TXT), InstallShield 5 setup 1998-09-30",
+      "executables": [
+        "installed/dethkarz/Dethkarz.exe"
+      ],
+      "sourcePage": "https://archive.org/details/DETHKARZ",
+      "license": "proprietary Melbourne House/Infogrames promotional demo with NO licence or redistribution grant: City Demo Readme.txt and INFO.TXT (a German magazine cover-disc blurb) state no terms; local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/DETHKARZ/DETHKARZ.zip",
+          "sha1": "b43457dfe3d18a25822c5048b735d4570ea476ac",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "unshield",
+          "cab": "DATA1.CAB",
+          "into": "installed-extracted",
+          "group": "Dethkarz Main Files"
+        },
+        {
+          "type": "unshield",
+          "cab": "DATA1.CAB",
+          "into": "installed-extracted",
+          "group": "Data"
+        },
+        {
+          "type": "unshield",
+          "cab": "DATA1.CAB",
+          "into": "installed-extracted",
+          "group": "GOB File"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Dethkarz_Main_Files",
+          "into": "installed/dethkarz"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Data",
+          "into": "installed/dethkarz/Data"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/GOB_File",
+          "into": "installed/dethkarz/Data"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Dethkarz_Main_Files/Device_Libraries",
+          "into": "installed/dethkarz/Device Libraries"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/dethkarz/Dethkarz.exe"
+      },
+      "cli": {
+        "maxBatches": 1500,
+        "batchSize": 200000,
+        "dlls": [
+          "installed/dethkarz/IFORCE2.DLL",
+          "installed/dethkarz/Device Libraries/Vertigo Direct3D.dll"
+        ],
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "midtown-madness-trial",
       "name": "Midtown Madness Trial",
       "kind": "game",
