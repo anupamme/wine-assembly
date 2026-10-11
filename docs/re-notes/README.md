@@ -113,6 +113,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Heretic II Demo (early InstallShield 5 cabs, time bomb, GL window position) | [heretic2-demo.md](heretic2-demo.md) |
 | Hellbender Trial (System\ install layout, Quick Configuration dialog art) | [hellbender-trial.md](hellbender-trial.md) |
 | Kingpin Demo (Quake II engine GL, loopback timeouts during a slow level load) | [kingpin-demo.md](kingpin-demo.md) |
+| Hexen II Demo (GL build vs bundled 3Dfx MiniGL, WinDirect software build, slow meshing) | [hexen2-demo.md](hexen2-demo.md) |
 | Command & Conquer: Red Alert (Win95 demo) | [red-alert-95-demo.md](red-alert-95-demo.md) |
 | Die by the Sword (demo) | [die-by-the-sword-demo.md](die-by-the-sword-demo.md) |
 | Dark Colony (magazine demo) | [dark-colony-demo.md](dark-colony-demo.md) |
