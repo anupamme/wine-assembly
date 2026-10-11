@@ -62,3 +62,40 @@ sampling paths. Old source fails with boundary11; all26 fixed cases plus
 
 This does not implement glTexCoord4f/4fv, change the packed ABI, or fix the
 software rasterizer. Those remain required before Oni can pass its trap.
+
+## Software control reproduced, 2026-10-11 21:33 UTC
+
+A diagnostic derived from test-gl-projective-vertex.js loads the same
+S=3*s, Q=1+2*s texture matrix as the WebGL regression. At width32, the
+software boundary is16 instead of8. With independent position w=1|3,
+it is24 instead of16. The original position-w controls pass (16 and24).
+Thus the texture-matrix per-vertex divide is an observed rendering failure,
+not only a source-level concern. No GL implementation changed in this run.
+Evidence and runnable diagnostic: scratch/runs/20261011T2133Z-oni-software-projective/.
+The identity receipt records the actual boat source and raster SHA256;
+the diagnostic exits nonzero intentionally, asserting the missing behavior.
+It is not installed as a passing normal-suite test.
+
+The source audit adds these concrete constraints to the implementation:
+
+- Encoder record counts/copies/chunk limits use both15 floats and60 bytes
+  throughout gl_emit_vertex, packed copies and primitive assembly. Change
+  all producers together with GLCommandStream.VERTEX_FLOATS and JS fallback.
+- Context records in09a8e are allocated/cleared as160 bytes, with the last
+  currently used word at144. Appending four f32 values at148..160 requires
+  at least164 bytes; update every allocation/reset and context restore path.
+  Attribute-stack nodes separately save both texture pairs and need expansion.
+- Software near/far clipping interpolates48-byte records. Adding q0/q1
+  makes56 bytes. The near polygon at512 then ends736 (still before viewport
+  at768), but five far records at784 would end1064 and overlap the normal
+  matrix scratch beginning1024. Relocate/reserve these ranges together;
+  changing only the interpolation stride corrupts lighting/texgen state.
+- Preserve position reciprocal-w for depth/color/fog. Unit0 and unit1 need
+  separate interpolated texture-Q/w denominators, including lines and points.
+  Two-component calls/arrays must restore r=0,q=1, and four-component
+  client arrays, display lists and context/attribute restores must retain q.
+
+Next: implement this coordinated state/stream/raster change, then promote
+this diagnostic into the existing regression and run both software and
+WebGL quarter-boundary checks before replaying Oni. glTexCoord4f/4fv remain
+fail-fast until the complete route exists; no gameplay qualification yet.
