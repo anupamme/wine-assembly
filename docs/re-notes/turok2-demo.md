@@ -249,3 +249,24 @@ Player reports "Unable to open graphics driver". The chosen combo value was
 not captured; do not assume successful D3D selection from DLL loading alone.
 Next capture the native Video dialog/selection at each stage before diagnosing
 a browser-specific renderer initialization defect. No browser gameplay claim.
+
+## Blank browser selector (17:35Z)
+
+Run20261011T1735Z-turok-video captures the native Video dialog before input,
+after opening the driver selector, and after End/Enter. The selector remains
+visibly blank throughout; Single Player again reports the driver error. This
+does not establish that Direct3D was selected. Both renderer DLLs loading is
+insufficient evidence of successful driver enumeration.
+
+Static disassembly identifies the next read-only comparison: WM_INITDIALOG
+reads count at guest0xaf6e24 and calls CB_ADDSTRING (0x143) at0x497928 for
+records beginning0xaf5bf0, stride0xe8. CB_SETCURSEL uses0xaf5bd4. Enumeration
+at0x4a94d0 loads each video DLL, resolves its entry point, calls it at0x4a9597,
+and adds the returned record count at0x4a95ba. Compare record bytes and count
+between browser and the working CLI before changing combo behavior.
+
+The replacement boat bx_s4kn6qcr retained raw fixtures but dropped build,
+browser dependencies and the registered fixture directory. Rehydrated npm
+dependencies, full build and candidate PREP succeeded remotely; browser is
+now Chromium152, distinct from the original155 evidence. No runtime fix is
+claimed by this investigation update.
