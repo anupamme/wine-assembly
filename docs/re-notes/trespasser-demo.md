@@ -68,3 +68,14 @@ the game's own physics, not confirmed. Options (310,285) > Controls
 - Not tried on a phone; the touch layout follows the table above.
 
 Evidence: scratch/runs/20261011T2210Z-trespasser-demo-claude1863.
+
+## Browser: the level opens through LZ32
+
+The game opens `data\DEMO.SCN` with `LZOpenFileA` and checks a 0x30-byte
+header with `LZRead`. In the browser the file is streamed (lazy), and LZ32's
+reads used to fail on a chunk that was not resident yet: `LZRead` returned -1
+and the page said "Scene File Invalid." while the CLI (eager files) loaded the
+level. 196ea863c makes LZRead/LZOpenFile/LZInit park like ReadFile; the level
+now loads in the page (Threads, WebGL). Reproduce the browser's file policy
+headless with `--lazy-ranges=5`; diffing the eager and lazy runs' file
+accesses (`tres-lazydiff.sh` in the evidence folder) is what found it.
