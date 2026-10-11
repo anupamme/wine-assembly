@@ -682,6 +682,44 @@
       }
     },
     {
+      "id": "rayman2-demo",
+      "name": "Rayman 2: The Great Escape Demo",
+      "kind": "game",
+      "version": "1999 Ubisoft PC demo (ready-to-run tree: Rayman2Demo.exe, BinData, dll/GliDX6vr.dll Direct3D and GliVD1vr.dll Glide renderers)",
+      "executables": [
+        "installed/rayman2/Rayman2Demo.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Rayman2TheGreatEscape",
+      "license": "proprietary Ubisoft demo: no redistribution grant in its Readme.txt or installer, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Rayman2TheGreatEscape/Rayman2Demo.zip",
+          "sha1": "b133d45c0b388c43e0466af2813f460895655f8c",
+          "type": "archive",
+          "into": "installed/rayman2"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "writeText",
+          "file": "installed/windows/ubisoft/ubi.ini",
+          "text": "[Rayman2]\r\nDirectory=C:\\rayman2\r\nTexturesMem=Agp\r\nGLI_Mode=1 - 640 x 480 x 16\r\nGLI_Device=Direct3D HAL\r\nGLI_Driver=display\r\nGLI_Dll=DirectX6\r\nGLI_DllFile=GliDX6\r\nLanguage=English\r\nParticuleRate=High\r\nSoundOnHD=1\r\nComplete=1\r\n"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/rayman2/Rayman2Demo.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "expendable-demo",
       "name": "Expendable Demo",
       "kind": "game",
