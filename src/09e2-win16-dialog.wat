@@ -472,6 +472,14 @@
               (i32.ne (i32.shr_u (local.get $target) (i32.const 16)) (i32.const 0))
               (i32.lt_u (local.get $target) (i32.const 0xFFFF0000)))
           (then (local.set $proc (local.get $target))))
+        ;; The title-bar close: if the DLGPROC declines it, DefDlgProc's
+        ;; default follows when the pump resumes ($win16_dlg_close_default).
+        (global.set $win16_dlg_close_pending
+          (select (local.get $msg) (i32.const 0)
+            (i32.or
+              (i32.and (i32.eq (local.get $msg) (i32.const 0x0112))
+                       (i32.eq (i32.and (local.get $wparam) (i32.const 0xFFF0)) (i32.const 0xF060)))
+              (i32.eq (local.get $msg) (i32.const 0x0010)))))
         (call $win16_dlg_send (local.get $proc) (local.get $hwnd) (local.get $msg)
           (local.get $wparam) (local.get $lparam))
         (return (i32.const 1))))
@@ -505,6 +513,32 @@
   ;; own loop is bridged to, so a modal dialog sees the delivery order USER
   ;; defines — pending creates, the post queue, non-client work, painting,
   ;; input, timers — rather than a second opinion about it maintained here.
+  ;; DefDlgProc's share of the title-bar close, which a DLGPROC usually leaves
+  ;; to it: WM_SYSCOMMAND(SC_CLOSE) becomes WM_CLOSE, and WM_CLOSE becomes the
+  ;; IDCANCEL click -- unless the dialog's Cancel button is disabled, when USER
+  ;; only beeps. The DLGPROC's FALSE is in AX when the pump resumes. Without
+  ;; this a Win16 dialog ignored its X: JezzBall's high-score dialog in the
+  ;; browser Threads route, where the page no longer force-closes a frame
+  ;; (USER-JEZZBALL-SYSCOMMAND-TRAP-20261011).
+  (global $win16_dlg_close_pending (mut i32) (i32.const 0))
+  (func $win16_dlg_close_default (param $dlg i32)
+    (local $msg i32) (local $cancel i32)
+    (local.set $msg (global.get $win16_dlg_close_pending))
+    (global.set $win16_dlg_close_pending (i32.const 0))
+    (if (i32.or (i32.eqz (local.get $msg)) (global.get $win16_dlg_ended)) (then (return)))
+    (if (i32.ne (i32.and (i32.load offset=0 (global.get $reg_base)) (i32.const 0xFFFF)) (i32.const 0))
+      (then (return)))
+    (if (i32.eq (local.get $msg) (i32.const 0x0112))
+      (then
+        (drop (call $post_queue_push (local.get $dlg) (i32.const 0x0010) (i32.const 0) (i32.const 0)))
+        (return)))
+    (local.set $cancel (call $ctrl_find_by_id (local.get $dlg) (i32.const 2)))
+    (if (i32.and (i32.ne (local.get $cancel) (i32.const 0))
+          (i32.ne (call $ctrl_style_disabled (call $wnd_get_style (local.get $cancel))) (i32.const 0)))
+      (then (return)))
+    ;; Exactly what clicking the Cancel button posts (BN_CLICKED).
+    (drop (call $post_queue_push (local.get $dlg) (i32.const 0x0111) (i32.const 2) (local.get $cancel))))
+
   (func $win16_dlg_pump
     (local $dlg i32) (local $proc i32) (local $scratch i32) (local $packed i32)
     (local $hwnd i32) (local $msg i32) (local $owner i32)
@@ -533,6 +567,7 @@
         (global.set $steps (i32.const 0))
         (return)))
 
+    (call $win16_dlg_close_default (local.get $dlg))
     ;; EndDialog, and the procedure that called it has returned.
     (if (global.get $win16_dlg_ended)
       (then
