@@ -4,7 +4,7 @@
 // These do not assert installation, gameplay, compatibility or licensing.
 // Installers are grouped with their target title, not by packaging format.
 const groups = [
-  ['action-adventure', 'Action / adventure', ['beyond-good-evil-demo', 'return-fire-demo', 'pirates-2004', 'gta2-demo']],
+  ['action-adventure', 'Action / adventure', ['beyond-good-evil-demo', 'giants-demo', 'return-fire-demo', 'pirates-2004', 'gta2-demo']],
   ['adventure', 'Adventure', ['scummvm-fotaq', 'gog-free-beneath-a-steel-sky', 'gog-free-flight-of-the-amazon-queen', 'gog-free-lure-of-the-temptress']],
   ['arcade', 'Arcade / brick breakers', ['dxball', 'qbob', 'jardinains', 'reflexive-ricochet-xtreme']],
   ['fighting', 'Fighting', ['little-fighter-2-installer']],
@@ -30,7 +30,7 @@ for (const [id, label, candidates] of groups) {
 const registryGroups = [
   ['shooters', 'Shooters', ['shogo_demo','incoming_demo','mdk2_demo','sin_demo','sof_demo','hexen2_demo','kingpin_demo','hellbender_trial','expendable_demo','quake3_demo','outwars_trial','forsaken_demo','serious_sam_demo','diehard_nakatomi_demo','ut348_demo','blood2_demo','avp_alien_demo','avp_marine_demo','descent3_demo','daikatana_demo','delta_force_demo']],
   ['graphics-demos', 'Graphics demos / screensavers', ['heaven7','cashcow','bakkslide7','ptct','wep16_idlewild','wep16_lifegen']],
-  ['action-adventure', 'Action / adventure', ['heretic2_demo','hitman_glide_demo','hype_glide_demo','tomb_raider_2_demo','tomb_raider_3_demo','die_by_the_sword_demo','drakan_demo','asghan_demo']],
+  ['action-adventure', 'Action / adventure', ['giants_demo','heretic2_demo','hitman_glide_demo','hype_glide_demo','tomb_raider_2_demo','tomb_raider_3_demo','die_by_the_sword_demo','drakan_demo','asghan_demo']],
   ['sports-simulation', 'Sports / simulation', ['mw3','freespace_demo','starlancer_demo','comanche_gold_demo']],
   ['strategy', 'Strategy / tactics', ['mcm','myth_tfl','braveheart_demo']],
   // test/binaries/SOURCES.md identifies Bricks as Klotski, not a brick breaker.

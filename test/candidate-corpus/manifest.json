@@ -1647,6 +1647,52 @@
       }
     },
     {
+      "id": "giants-demo",
+      "name": "Giants: Citizen Kabuto Demo",
+      "kind": "game",
+      "version": "Reaper demo (Planet Moon/Interplay 2001), InstallShield 6 media of 2001-02-08",
+      "executables": [
+        "installed/GiantsReaperDemo.exe"
+      ],
+      "sourcePage": "https://archive.org/details/giantsreaperdemoinstall",
+      "license": "Interplay/Planet Moon limited licence (license.txt, installed with the game): personal noncommercial home use only; no decompiling, reverse engineering or disassembly; may not be copied or distributed. Kept localOnly; not a deployment input. Investigate with API traces only.",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/giantsreaperdemoinstall/giantsreaperdemoinstall.exe",
+          "sha1": "9647ca577cb3db8e69e2717a129389cdf032fc76",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Main Files" },
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files Bin" },
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files WAbx" },
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files GData" },
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files GZP" },
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Stream Files" },
+        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Music Files" },
+        { "type": "copyTree", "from": "installed-extracted/Main_Files", "into": "installed" },
+        { "type": "copyTree", "from": "installed-extracted/Game_Files_Bin", "into": "installed/Bin" },
+        { "type": "copyTree", "from": "installed-extracted/Game_Files_WAbx", "into": "installed/Bin" },
+        { "type": "copyTree", "from": "installed-extracted/Game_Files_GData", "into": "installed/Bin" },
+        { "type": "copyTree", "from": "installed-extracted/Game_Files_GZP", "into": "installed/Bin" },
+        { "type": "copyTree", "from": "installed-extracted/Stream_Files", "into": "installed/Stream" },
+        { "type": "copyTree", "from": "installed-extracted/Music_Files", "into": "installed/Stream" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/GiantsReaperDemo.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "heroes-3-demo-installer",
       "name": "Heroes of Might and Magic III demo",
       "kind": "installer",

@@ -5972,6 +5972,29 @@
       (then (return (i32.const 0))))
     (local.get $entry))
 
+  ;; The first explicit AddAttachedSurface child of $entry whose creation caps
+  ;; include every $requested bit, as its guest COM pointer, or 0. Those
+  ;; relationships live on the child (DX_SURF_META +4 = parent slot + 1), not
+  ;; in the parent's single misc0 flip-chain link.
+  (func $dx_surface_explicit_child (param $entry i32) (param $requested i32) (result i32)
+    (local $parent_id i32) (local $slot i32) (local $child i32) (local $meta i32)
+    (local.set $parent_id (i32.add (call $dx_slot_of (local.get $entry)) (i32.const 1)))
+    (block $done (loop $scan
+      (br_if $done (i32.ge_u (local.get $slot) (global.get $DX_MAX)))
+      (local.set $child (i32.add (global.get $DX_OBJECTS) (i32.shl (local.get $slot) (i32.const 5))))
+      (local.set $meta (call $dx_surf_meta_ptr (local.get $child)))
+      (if (i32.and
+            (i32.and (i32.eq (load.field DxObject type (local.get $child)) (i32.const 2))
+                     (i32.gt_s (load.field DxObject refcount (local.get $child)) (i32.const 0)))
+            (i32.and (i32.eq (i32.load offset=4 (local.get $meta)) (local.get $parent_id))
+                     (i32.eq (i32.and (i32.load (local.get $meta)) (local.get $requested))
+                             (local.get $requested))))
+        (then (return (call $w2g (i32.add (global.get $COM_WRAPPERS)
+          (i32.shl (local.get $slot) (i32.const 3)))))))
+      (local.set $slot (i32.add (local.get $slot) (i32.const 1)))
+      (br $scan)))
+    (i32.const 0))
+
   (func $handle_IDirectDrawSurface_GetAttachedSurface (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $entry i32) (local $child i32) (local $child_entry i32)
     (local $requested i32) (local $actual i32)
@@ -5986,14 +6009,24 @@
         (i32.store offset=0 (global.get $reg_base) (i32.const 0x80070057)) ;; DDERR_INVALIDPARAMS
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
         (return)))
+    (local.set $requested (call $gl32 (local.get $arg1)))
     (local.set $child (load.field DxObject misc0 (local.get $entry)))
     (if (local.get $child)
       (then
         (local.set $child_entry (call $ddraw_surface_entry_checked (local.get $child)))
         (if (i32.eqz (local.get $child_entry)) (then (local.set $child (i32.const 0))))
-        (local.set $requested (call $gl32 (local.get $arg1)))
         (if (local.get $child_entry)
           (then (local.set $actual (i32.load (call $dx_surf_meta_ptr (local.get $child_entry))))))))
+    ;; The flip-chain link does not satisfy the request: try the surfaces
+    ;; attached with AddAttachedSurface. Giants attaches its Z-buffer to the
+    ;; back buffer that way and later asks the render target for
+    ;; DDSCAPS_ZBUFFER; NOTFOUND there ended the game at its error screen.
+    (if (i32.eqz (i32.and (i32.ne (local.get $child) (i32.const 0))
+                          (i32.eq (i32.and (local.get $actual) (local.get $requested))
+                                  (local.get $requested))))
+      (then
+        (local.set $child (call $dx_surface_explicit_child (local.get $entry) (local.get $requested)))
+        (local.set $actual (local.get $requested))))
     ;; Every requested capability must belong to the returned attachment.
     ;; Blitz probes a primary for TEXTURE|MIPMAP before converting loaded
     ;; images. Returning its unrelated back buffer makes Blitz copy that empty
