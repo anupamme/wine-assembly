@@ -269,6 +269,21 @@ const RegionMap = require('../lib/region-map.generated.js');
     assert.strictEqual(readEntries(palette, 215, 1).values[0], 0x00FFFFFF);
   });
 
+  check('GetObject on a palette answers its WORD entry count', () => {
+    // MFC's CPalette::GetEntryCount is GetObject(hpal, sizeof(WORD), &n).
+    // Answering 0 left Monster Truck Madness 2 remapping its shell bitmaps
+    // against an empty palette, which drew them in garbage (pink) colours.
+    const palette = createPalette([0x000000FF, 0x0000FF00, 0x00FF0000]);
+    const out = wat.guest_alloc(4) >>> 0;
+    wat.guest_write32(out, 0xAAAAAAAA);
+    assert.strictEqual(wat.test_call_GetObjectA(palette, 2, out), 2);
+    assert.strictEqual(wat.guest_read32(out) >>> 0, 0xAAAA0003, 'one WORD written');
+    assert.strictEqual(wat.test_call_GetObjectA(palette, 0, 0), 2, 'NULL buffer asks for the size');
+    assert.strictEqual(wat.test_call_GetObjectA(palette, 1, out), 0, 'a buffer too small for the WORD');
+    assert.strictEqual(wat.test_call_GetObjectA(0x3001F, 2, out), 2);
+    assert.strictEqual(wat.guest_read32(out) & 0xFFFF, 20, 'DEFAULT_PALETTE has the 20 static colours');
+  });
+
   console.log(`\n${passed}/${passed} checks passed`);
 })().catch(error => {
   console.error(error.stack || error);

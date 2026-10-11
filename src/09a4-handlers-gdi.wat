@@ -486,6 +486,21 @@
         (local.set $len (select (local.get $arg1) (i32.const 256)
           (i32.lt_u (local.get $arg1) (i32.const 256))))
         (local.set $dest (call $guest_span_in (local.get $arg2) (local.get $len)))))
+    ;; A palette's object is one WORD, its entry count: MFC's
+    ;; CPalette::GetEntryCount is GetObject(hpal, sizeof(WORD), &n).
+    (if (i32.or (i32.eq (local.get $arg0) (i32.const 0x3001F))
+                (i32.ne (call $gdi_palette_record (local.get $arg0)) (i32.const 0)))
+      (then
+        (if (i32.eqz (local.get $arg2))
+          (then (i32.store offset=0 (global.get $reg_base) (i32.const 2)))
+          (else (if (i32.ge_u (local.get $arg1) (i32.const 2))
+            (then
+              (i32.store16 (local.get $dest) (call $gdi_palette_count (local.get $arg0)))
+              (i32.store offset=0 (global.get $reg_base) (i32.const 2)))
+            (else (i32.store offset=0 (global.get $reg_base) (i32.const 0))))))
+        (call $guest_span_writeback (local.get $arg2) (local.get $dest) (local.get $len))
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+        (return)))
     (if (i32.eq (local.get $type) (i32.const 4))
       (then (i32.store offset=0 (global.get $reg_base) (call $gdi_font_write_logfont (local.get $arg0)
         (local.get $dest)
