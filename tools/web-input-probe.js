@@ -131,6 +131,11 @@ const HEADFUL = argv.includes('--headful');
 const NO_FULLSCREEN_API = argv.includes('--no-fullscreen-api');
 // Base origin to drive. Empty = serve this working tree over a temp server.
 const URL_BASE = (opt('url', '') || '').replace(/\/+$/, '');
+// --profile=DIR keeps the Chrome profile (localStorage, IndexedDB) in DIR and
+// leaves it there, so a second run sees what the first one saved: the only
+// way to check "save, reload, load" for an app's persistFiles. Default: a
+// throwaway profile per run.
+const PROFILE_DIR = opt('profile', '') || '';
 // A phone is a different page, not a smaller one: single-app mode, no taskbar,
 // a phone-sized emulated screen. --viewport=390x844 (optionally with a
 // device-pixel ratio, 390x844@3) and --touch reproduce one.
@@ -349,7 +354,8 @@ async function main() {
   // on wine-assembly.berrry.app" is otherwise unanswerable from this tool.
   const server = URL_BASE ? null : await startStaticServer();
   const base = URL_BASE || `http://127.0.0.1:${server.address().port}`;
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'wine-assembly-input-'));
+  if (PROFILE_DIR) fs.mkdirSync(PROFILE_DIR, { recursive: true });
+  const profile = PROFILE_DIR || fs.mkdtempSync(path.join(os.tmpdir(), 'wine-assembly-input-'));
   const browser = await puppeteer.launch({
     headless: !HEADFUL,
     executablePath: CHROME,
@@ -696,7 +702,7 @@ async function main() {
       server.closeAllConnections();
       server.close();
     }
-    fs.rmSync(profile, { recursive: true, force: true });
+    if (!PROFILE_DIR) fs.rmSync(profile, { recursive: true, force: true });
   }
   if (problems.length) {
     console.log('\npage problems:');
