@@ -715,6 +715,39 @@
       }
     },
     {
+      "id": "outwars-trial",
+      "name": "Outwars Trial",
+      "kind": "game",
+      "version": "1998 Direct3D trial (SingleTrac / Microsoft), owtrial.exe WinZip self-extractor of 1998-04-09",
+      "executables": [
+        "installed/owtrial.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Outwars_1020",
+      "license": "Microsoft trial download for free evaluation; the shipped readme.txt states no redistribution terms. Kept localOnly until a deployment decision is made",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Outwars_1020/owtrial.zip",
+          "sha1": "210573eb1acc875cad970573c788f446a93c4b5d",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        { "type": "extractArchive", "archive": "owtrial.exe", "into": "installed" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/owtrial.exe"
+      },
+      "cli": {
+        "maxBatches": 1000,
+        "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "monster-truck-madness2-trial",
       "name": "Monster Truck Madness 2 Trial",
       "kind": "game",
