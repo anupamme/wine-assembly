@@ -147,7 +147,10 @@ const LIGHTING = 137, AMBIENT = 139, COLORVERTEX = 141, DIFFUSEMATERIALSOURCE = 
   r = lit(XYZ | NORMAL | TEX1);
   assert.strictEqual(r.type, 2, 'D3DVERTEX comes back as LVERTEX');
   assert.strictEqual(hex(r.color), hex(0x408080c0));
-  assert.strictEqual(r.spec, 0, 'D3DVERTEX normal dwords cleared out of the specular slot');
+  // Black specular whose alpha, the vertex fog factor, is 255 (no fog): with
+  // 0 there, FOGENABLE fogged every D3D-lit vertex solid (Evolva's world).
+  assert.strictEqual(r.spec >>> 0, 0xFF000000,
+    'D3DVERTEX normal dwords replaced by a no-fog black specular');
   f32[0] = 0.25;
   assert.strictEqual(r.tu, u32[0], 'tu kept');
 

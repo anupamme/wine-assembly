@@ -1649,6 +1649,8 @@
           (if (i32.and (local.get $fvf) (i32.const 0x0020))
             (then (local.set $offset (i32.add (local.get $offset) (i32.const 4)))))
           (i32.store (i32.add (local.get $dst) (i32.const 16)) (i32.const 0xFFFFFFFF))
+          ;; No D3DFVF_SPECULAR: black specular whose alpha (the fog factor) is no fog.
+          (i32.store (i32.add (local.get $dst) (i32.const 20)) (i32.const 0xFF000000))
           (if (i32.and (local.get $fvf) (i32.const 0x0040)) (then
             (i32.store (i32.add (local.get $dst) (i32.const 16))
               (i32.load (i32.add (local.get $src) (local.get $offset))))
@@ -1676,7 +1678,7 @@
               (local.set $offset (i32.const 12))
               (i32.store (i32.add (local.get $dst) (i32.const 12)) (i32.const 0))
               (i32.store (i32.add (local.get $dst) (i32.const 16)) (i32.const 0xFFFFFFFF))
-              (i32.store (i32.add (local.get $dst) (i32.const 20)) (i32.const 0))
+              (i32.store (i32.add (local.get $dst) (i32.const 20)) (i32.const 0xFF000000)) ;; fog factor: none
               (if (i32.and (local.get $fvf) (i32.const 0x0010))
                 (then (local.set $offset (i32.add (local.get $offset) (i32.const 12)))))
               (if (i32.and (local.get $fvf) (i32.const 0x0020))
@@ -2609,8 +2611,9 @@
       (local.set $dst (call $g2w (i32.add (local.get $packed_g) (i32.shl (local.get $i) (i32.const 5)))))
       (if (i32.eq (local.get $vtxType) (i32.const 1)) (then
         ;; D3DVERTEX had the normal at +12..+23; D3DLVERTEX has reserved,colour,specular there.
+        ;; Specular alpha is the vertex fog factor: 255, no fog (not 0, solid fog).
         (i32.store offset=12 (local.get $dst) (i32.const 0))
-        (i32.store offset=20 (local.get $dst) (i32.const 0))))
+        (i32.store offset=20 (local.get $dst) (i32.const 0xFF000000))))
       (i32.store offset=16 (local.get $dst)
         (call $d3dim_d7_pack4
           (f32.add (f32.add (call $d3dim_d7_ch (local.get $ce) (i32.const 16))
@@ -6263,7 +6266,10 @@
         (local.set $tv    (i32.load (i32.add (local.get $src_wa) (i32.const 28)))))
       (else
         (local.set $color (call $d3dim_vertex_lit_color (local.get $state_guest) (local.get $src_wa)))
-        (local.set $spec  (i32.const 0))
+        ;; No specular colour is computed, and its alpha -- the fog factor
+        ;; when FOGENABLE is on and no fog mode computes one -- is 255, no
+        ;; fog. Zero fogged every D3D-lit vertex solid (Evolva's whole world).
+        (local.set $spec  (i32.const 0xFF000000))
         (local.set $tu    (i32.load (i32.add (local.get $src_wa) (i32.const 24))))
         (local.set $tv    (i32.load (i32.add (local.get $src_wa) (i32.const 28))))))
     (call $vertex_project (local.get $state_guest) (local.get $src_wa) (local.get $dst_wa))
