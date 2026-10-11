@@ -236,3 +236,28 @@ still absent on the boat, and the runner reports that separately.
 Evidence: scratch/runs/20261011T2233Z-dark-reign2-network-events/. Next implement
 truthful protocol enumeration for the virtual TCP/UDP provider, then replay;
 never return an invented empty protocol list to bypass this check.
+
+## Protocol catalog (2026-10-11 22:46Z)
+
+WSAEnumProtocolsA/W (and the legacy unsuffixed ANSI lookup) enumerate the
+virtual TCP, UDP and IPX datagram providers, with stable catalog identities,
+real address/socket/protocol attributes, terminated protocol filters, ANSI or
+UTF-16 names, and complete-buffer size negotiation. IPX covers packet types
+1000..1255; it does not claim protocol-zero matching. Datagram size uses the
+same VLN_MAX_PAYLOAD limit as sendto. No native interfaces, QoS, multicast or
+IFS handles are advertised.
+
+Contract references: [enumeration](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsaenumprotocolsa)
+and [record layout](https://learn.microsoft.com/en-us/windows/win32/api/winsock2/ns-winsock2-wsaprotocol_infoa).
+The existing Winsock suite passes 60/60 checks including short-buffer
+nonmutation, filter deduplication/ranges, usable IPv4 socket tuples, UTF-16,
+startup and invalid-pointer errors. Full boat build passes (1,774,919 bytes).
+
+Ordinary replay on bx_euq6n9pm with the final built tree gets beyond the
+protocol export lookup and now fails on missing WSARecv, win32_socket.cpp:1805.
+The game loads its socket exports before calling them: this does not prove it
+has exercised enumeration itself. Reviewed fatal-dialog capture, logs, patch
+and exact module hash: scratch/runs/20261011T2246Z-dark-reign2-protocol-enum/.
+Still no menu, controlled gameplay, FPS or audio qualification. Next implement
+real WSARecv scatter/gather, including correct blocking/overlapped semantics;
+do not disguise an unimplemented mode with success.

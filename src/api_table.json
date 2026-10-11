@@ -38726,5 +38726,26 @@
     "nargs": 3,
     "convention": "stdcall",
     "hash": 2291620022
+  },
+  {
+    "id": 4548,
+    "name": "WSAEnumProtocolsA",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 2672033743
+  },
+  {
+    "id": 4549,
+    "name": "WSAEnumProtocolsW",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 2370036601
+  },
+  {
+    "id": 4550,
+    "name": "WSAEnumProtocols",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 994237972
   }
 ]

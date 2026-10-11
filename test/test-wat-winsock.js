@@ -44,6 +44,15 @@ const GAME_PORT = 8035;
 async function main() {
   const root = path.join(__dirname, '..');
   const wasm = compileSrcWasm((file, source) => file === '13-exports.wat' ? source + String.raw`
+    (func (export "test_wsa_protocols") (param $wide i32) (param $f i32) (param $p i32) (param $n i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $dispatch_api_table
+        (if (result i32) (local.get $wide)
+          (then (call $lookup_api_id "WSAEnumProtocolsW"))
+          (else (call $lookup_api_id "WSAEnumProtocolsA")))
+        (local.get $f) (local.get $p) (local.get $n) (i32.const 0) (i32.const 0) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     (func (export "test_wsa_startup") (param $data i32) (result i32)
       (call $handle_WSAStartup (i32.const 0x0202) (local.get $data)
         (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
@@ -422,6 +431,37 @@ async function main() {
     assert.strictEqual(broker(0,7,0x12345678,1,0),10022);
     assert.strictEqual(select(7,0x80000000),10022,'unsupported mask rejected');
     assert.strictEqual(imports.host.close_event(event),1);
+  });
+
+  check('protocol enumeration sizes, filters and reports usable virtual transports', () => {
+    wat.test_vsock_reset();
+    const n=buf(4), out=buf(2000), filter=buf(16);
+    const dv=new DataView(memory.buffer); const set=(p,v)=>dv.setUint32(wa(p),v,true),get=p=>dv.getUint32(wa(p),true);
+    const run=(wide,f,p,cap)=>{set(n,cap);const r=wat.test_wsa_protocols(wide,f,p,n);assert.strictEqual(Number(r>>32n),0x300010,'stdcall pop');return Number(BigInt.asIntN(32,r));};
+    assert.strictEqual(run(0,0,out,2000),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10093);
+    wat.test_wsa_startup(alloc(400));
+    bytes.fill(0xa5,wa(out),wa(out)+2000);
+    assert.strictEqual(run(0,0,0,0),-1);assert.strictEqual(get(n),1116);assert.strictEqual(wat.test_call_WSAGetLastError(),10055);
+    assert.strictEqual(run(0,0,out,1115),-1);assert(readBuf(out,2000).every(v=>v===0xa5),'short output untouched');
+    assert.strictEqual(run(0,0,out,2000),3);assert.strictEqual(get(n),1116);
+    for(const [i,protocol,type,flags] of [[0,6,1,38],[1,17,2,521]]){
+      const p=out+i*372;assert.strictEqual(get(p),flags);assert.strictEqual(get(p+36),i+1);assert.strictEqual(get(p+40),1);
+      assert.strictEqual(get(p+76),2);assert.strictEqual(get(p+80),16);assert.strictEqual(get(p+88),type);assert.strictEqual(get(p+92),protocol);
+      const sock=wat.test_call_socket(get(p+76),type,protocol);assert(sock>0);wat.test_call_closesocket(sock);
+      assert.strictEqual(get(p+112),0);assert.strictEqual(bytes[wa(p)+371],0);
+    }
+    assert.strictEqual(bytes[wa(out)+1116],0xa5,'guard after records');
+    assert.strictEqual(get(out+744+16),0);assert.strictEqual(get(out+744+76),6);assert.strictEqual(get(out+744+92),1000);assert.strictEqual(get(out+744+96),255);
+    set(filter,1001);set(filter+4,0);assert.strictEqual(run(0,filter,out,2000),1);assert.strictEqual(get(out+76),6);
+    set(filter,17);set(filter+4,17);set(filter+8,0);
+    assert.strictEqual(run(1,filter,out,2000),1);assert.strictEqual(get(n),628);assert.strictEqual(get(out+92),17);
+    const name=Buffer.from(memory.buffer,wa(out)+116,512).toString('utf16le').split('\0')[0];assert.strictEqual(name,'Wine Assembly virtual UDP/IPv4');
+    set(filter,999);set(filter+4,0);assert.strictEqual(run(0,filter,0,0),0);assert.strictEqual(get(n),0);
+    set(filter,0);assert.strictEqual(run(0,filter,0,0),0);
+    assert.strictEqual(run(0,0,0,1116),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+    assert.strictEqual(run(0,0xfffffffc,out,2000),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+    assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsa_protocols(0,0,out,0))),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
   });
 
   check('network event APIs report real TCP read, write and close readiness', () => {
