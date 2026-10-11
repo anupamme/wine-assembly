@@ -293,6 +293,13 @@ const TRACE_API = !!TRACE_API_RAW;
 const TRACE_API_FILTER = (TRACE_API_RAW && TRACE_API_RAW.includes('='))
   ? new Set(TRACE_API_RAW.split('=')[1].split(',').map(s => s.trim()).filter(Boolean))
   : null;
+// --trace-api-paused (with --quiet-api): install the --trace-api logging but keep
+// the WAT API log OFF until a control command {"action":"trace-api","on":true}
+// turns it on. Any --trace-api switches every Win32 call to three host calls
+// (log, log_i32, log_api_exit), which slowed Black & White 2 about 4x and moved
+// a route's timing out from under its inputs; paused, the run is full speed up
+// to the moment worth tracing. {"on":false} pauses it again.
+const TRACE_API_PAUSED = hasFlag('trace-api-paused');
 const TRACE_API_DEDUP = hasFlag('trace-api-dedup'); // --trace-api-dedup: collapse N consecutive identical lines into "(xN)"
 const TRACE_API_COUNTS = hasFlag('trace-api-counts'); // --trace-api-counts: print histogram of API call names at end
 const TRACE_MOUSE_STATE = hasFlag('trace-mouse-state'); // --trace-mouse-state: log renderer mouse state changes seen by host imports
@@ -1768,8 +1775,12 @@ async function main() {
   // calls ($api_calls) and h.log sees only non-API log lines, so the total
   // is the sum -- the same number the per-call log used to produce.
   let apiLogOff = false;
+  // The WAT counter ($api_calls) runs only while the log is off. apiWatSeen is
+  // the part of it already folded into apiCount when --trace-api-paused
+  // switched the log on, so toggling never counts a call twice.
+  let apiWatSeen = 0;
   const apiTotal = () => (apiLogOff && instance && instance.exports.get_api_calls)
-    ? apiCount + (instance.exports.get_api_calls() >>> 0) : apiCount;
+    ? apiCount + ((instance.exports.get_api_calls() >>> 0) - apiWatSeen) : apiCount;
   const apiCounts = TRACE_API_COUNTS ? new Map() : null;
   let lastApiName = null;  // track last API name for return value correlation
   let lastApiEntry = null; // typed metadata for last API (for return formatting)
@@ -3271,7 +3282,7 @@ async function main() {
   // The list is every reader of an API name or exit below, plus --esp-audit,
   // which wraps a worker's log. --quiet-api-fast is now an alias of this.
   apiLogOff = QUIET_API &&
-    !TRACE_API && !TRACE_API_COUNTS && !TRACE_CRITICAL &&
+    (!TRACE_API || TRACE_API_PAUSED) && !TRACE_API_COUNTS && !TRACE_CRITICAL &&
     !TRACE_INPUT_DISPATCH && !ESP_DELTA && !ESP_AUDIT && !breakApis.length &&
     !TRACE_API_MEM.length;
   h.log = (ptr, len) => {
@@ -4763,6 +4774,11 @@ async function main() {
 
   const instance = await WebAssembly.instantiate(wasmModule, imports);
   ctx.exports = instance.exports;
+  // Quiet runs silence the per-call API log from the first instruction, DLL
+  // initialization included. Applied only after DllMain ran, the early calls
+  // were logged (and so counted twice, by h.log and by $api_calls) and a
+  // --trace-api-paused run printed them before it was switched on.
+  if (apiLogOff && instance.exports.set_api_log) instance.exports.set_api_log(0);
   // An app whose game loop runs on a worker thread opts into the worker-heavy
   // page-index split (lib/apps.js `workerHeavyCodeCache`), before anything is
   // decoded and before any thread instance is created. --worker-heavy-code-cache
@@ -7091,6 +7107,20 @@ async function main() {
       };
     }
     if (cmd.action === 'snapshot') return controlSnapshot();
+    if (cmd.action === 'trace-api') {
+      if (!TRACE_API || !TRACE_API_PAUSED) throw new Error('trace-api needs --trace-api[=NAMES] --trace-api-paused');
+      const on = cmd.on !== false;
+      const watNow = instance.exports.get_api_calls ? instance.exports.get_api_calls() >>> 0 : 0;
+      if (on && apiLogOff) { apiCount += watNow - apiWatSeen; apiWatSeen = watNow; }
+      if (!on && !apiLogOff) apiWatSeen = watNow;
+      apiLogOff = !on;
+      const setLog = exports => { if (exports && exports.set_api_log) exports.set_api_log(on ? 1 : 0); };
+      setLog(instance.exports);
+      if (threadManager) for (const [, t] of threadManager.threads) setLog(t.instance && t.instance.exports);
+      inheritWasm('set_api_log', on ? 1 : 0);
+      logs.push(`[trace-api] ${on ? 'on' : 'paused'} at batch ${tickState.batch | 0}`);
+      return { traceApi: on, batch: tickState.batch | 0 };
+    }
     if (cmd.action === 'eval') return controlEval(cmd.code || '');
     if (cmd.action === 'png') return controlPng(String(cmd.path || ''));
     if (cmd.action === 'input-message') {
