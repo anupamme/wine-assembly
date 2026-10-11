@@ -38551,5 +38551,27 @@
       }
     ],
     "ret": "MMRESULT"
+  },
+  {
+    "id": 4526,
+    "name": "acmDriverPriority",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 505214578,
+    "args": [
+      {
+        "name": "hadid",
+        "type": "HANDLE"
+      },
+      {
+        "name": "dwPriority",
+        "type": "DWORD"
+      },
+      {
+        "name": "fdwPriority",
+        "type": "DWORD"
+      }
+    ],
+    "ret": "MMRESULT"
   }
 ]

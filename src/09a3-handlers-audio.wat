@@ -351,9 +351,9 @@
       (then (return (i32.const 11))))
     (local.set $sw (call $g2w (local.get $src)))
     (local.set $dw (call $g2w (local.get $dst)))
-    ;; An ADPCM source: the codecs decode to 16-bit PCM at the source's rate
-    ;; and channel count, and nothing else (they do not resample or remix).
-    ;; Every field the caller pins must agree with that.
+    ;; An ADPCM source: the codecs decode to 16-bit (or, pinned, 8-bit) PCM
+    ;; at the source's rate and channel count, and nothing else (they do not
+    ;; resample or remix). Every field the caller pins must agree with that.
     (if (call $acm_adpcm_samples_per_block (local.get $src))
       (then
         (local.set $ch (i32.load16_u offset=2 (local.get $sw)))
@@ -368,10 +368,19 @@
                 (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x40000)) (i32.const 0))
                          (i32.ne (i32.load offset=4 (local.get $dw)) (local.get $rate)))
                 (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x80000)) (i32.const 0))
-                         (i32.ne (i32.load16_u offset=14 (local.get $dw)) (i32.const 16)))))
+                         (i32.and (i32.ne (i32.load16_u offset=14 (local.get $dw)) (i32.const 16))
+                                  (i32.ne (i32.load16_u offset=14 (local.get $dw)) (i32.const 8))))))
           (then (return (i32.const 512))))                  ;; ACMERR_NOTPOSSIBLE
+        (local.set $bits (select (i32.const 8) (i32.const 16)
+          (i32.and (i32.ne (i32.and (local.get $fdw) (i32.const 0x80000)) (i32.const 0))
+                   (i32.eq (i32.load16_u offset=14 (local.get $dw)) (i32.const 8)))))
         (call $acm_write_pcm16_format (local.get $dst) (local.get $cb)
           (local.get $ch) (local.get $rate))
+        (if (i32.eq (local.get $bits) (i32.const 8))
+          (then
+            (call $gs32 (i32.add (local.get $dst) (i32.const 8)) (i32.mul (local.get $rate) (local.get $ch)))
+            (call $gs16 (i32.add (local.get $dst) (i32.const 12)) (local.get $ch))
+            (call $gs16 (i32.add (local.get $dst) (i32.const 14)) (i32.const 8))))
         (return (i32.const 0))))
     (if (i32.ne (i32.load16_u (local.get $sw)) (i32.const 1))
       (then (return (i32.const 512))))                      ;; ACMERR_NOTPOSSIBLE
@@ -419,21 +428,122 @@
   (func $acm_pcm_driver_id (result i32) (i32.const 0x0ACD0001))
   (func $acm_driver_id (param $index i32) (result i32)
     (i32.add (i32.const 0x0ACD0001) (local.get $index)))
-  ;; fdwSupport of driver $index: CONVERTER (0x2) for PCM, CODEC (0x1) else.
+  ;; fdwSupport of driver $index: CONVERTER (0x2) for PCM, CODEC (0x1) else,
+  ;; plus ACMDRIVERDETAILS_SUPPORTF_DISABLED (0x80000000) while
+  ;; acmDriverPriority has it disabled.
   (func $acm_driver_support (param $index i32) (result i32)
-    (select (i32.const 0x2) (i32.const 0x1) (i32.eqz (local.get $index))))
+    (i32.or
+      (select (i32.const 0x2) (i32.const 0x1) (i32.eqz (local.get $index)))
+      (select (i32.const 0x80000000) (i32.const 0)
+        (call $acm_driver_disabled (local.get $index)))))
+
+  ;; Shared per-driver state ($ACM_DRIVER_STATE): bit 31 disabled, low byte
+  ;; priority. A zero byte is the boot order, priority = index + 1, so the
+  ;; zero-filled region needs no initialisation.
+  (global $ACM_DRIVER_STATE i32 (region.addr $ACM_DRIVER_STATE 0))
+  (global $ACM_DRIVER_STATE_SIZE i32 (region.size $ACM_DRIVER_STATE))
+  (func $acm_driver_state (param $index i32) (result i32)
+    (i32.add (global.get $ACM_DRIVER_STATE) (i32.shl (local.get $index) (i32.const 2))))
+  (func $acm_driver_disabled (param $index i32) (result i32)
+    (i32.ne (i32.and (i32.load (call $acm_driver_state (local.get $index)))
+                     (i32.const 0x80000000)) (i32.const 0)))
+  (func $acm_driver_priority (param $index i32) (result i32)
+    (local $p i32)
+    (local.set $p (i32.and (i32.load (call $acm_driver_state (local.get $index))) (i32.const 0xFF)))
+    (select (i32.add (local.get $index) (i32.const 1)) (local.get $p) (i32.eqz (local.get $p))))
+  (func $acm_driver_set_priority (param $index i32) (param $p i32)
+    (local $a i32)
+    (local.set $a (call $acm_driver_state (local.get $index)))
+    (i32.store (local.get $a)
+      (i32.or (i32.and (i32.load (local.get $a)) (i32.const 0xFFFFFF00)) (local.get $p))))
+  ;; Driver index holding priority $p (1..3).
+  (func $acm_driver_at_priority (param $p i32) (result i32)
+    (local $i i32)
+    (block $done (loop $scan
+      (br_if $done (i32.ge_u (local.get $i) (i32.const 3)))
+      (if (i32.eq (call $acm_driver_priority (local.get $i)) (local.get $p))
+        (then (return (local.get $i))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br $scan)))
+    (i32.const 0))
+
+  ;; acmDriverPriority(hadid, dwPriority, fdwPriority) -> MMRESULT, after
+  ;; Wine's msacm32 and the Win98 contract. ENABLE 0x1 / DISABLE 0x2 change a
+  ;; driver's enabled state; BEGIN 0x10000 / END 0x20000 only bracket a batch
+  ;; of changes (notification deferral) and must come alone, with no driver
+  ;; and no priority. dwPriority 0 keeps the priority, -1 makes it the
+  ;; lowest, 1..3 moves the driver there and shifts the others. FreeSpace
+  ;; calls it after enumerating the ADPCM codecs (dc7e8454d added them).
+  (func $acm_driver_priority_set (param $hadid i32) (param $prio i32) (param $fdw i32) (result i32)
+    (local $index i32) (local $old i32) (local $i i32) (local $p i32) (local $a i32)
+    (if (i32.and (local.get $fdw) (i32.const 0xFFFCFFFC)) (then (return (i32.const 10))))  ;; INVALFLAG
+    (if (i32.eq (i32.and (local.get $fdw) (i32.const 0x3)) (i32.const 0x3)) (then (return (i32.const 10))))
+    (if (i32.eq (i32.and (local.get $fdw) (i32.const 0x30000)) (i32.const 0x30000)) (then (return (i32.const 10))))
+    (if (i32.and (local.get $fdw) (i32.const 0x30000))
+      (then
+        (if (i32.or (i32.ne (i32.and (local.get $fdw) (i32.const 0x3)) (i32.const 0))
+              (i32.or (i32.ne (local.get $prio) (i32.const 0)) (i32.ne (local.get $hadid) (i32.const 0))))
+          (then (return (i32.const 11))))                                    ;; INVALPARAM
+        (return (i32.const 0))))
+    (local.set $index (i32.sub (local.get $hadid) (call $acm_pcm_driver_id)))
+    (if (i32.gt_u (local.get $index) (i32.const 2)) (then (return (i32.const 5))))  ;; INVALHANDLE
+    (if (i32.eq (local.get $prio) (i32.const -1)) (then (local.set $prio (i32.const 3))))
+    (if (i32.gt_u (local.get $prio) (i32.const 3)) (then (return (i32.const 11))))
+    (local.set $a (call $acm_driver_state (local.get $index)))
+    (if (i32.and (local.get $fdw) (i32.const 0x1))
+      (then (i32.store (local.get $a) (i32.and (i32.load (local.get $a)) (i32.const 0x7FFFFFFF)))))
+    (if (i32.and (local.get $fdw) (i32.const 0x2))
+      (then (i32.store (local.get $a) (i32.or (i32.load (local.get $a)) (i32.const 0x80000000)))))
+    (if (local.get $prio)
+      (then
+        ;; Move $index from $old to $prio; drivers between them shift by one.
+        (local.set $old (call $acm_driver_priority (local.get $index)))
+        (local.set $i (i32.const 0))
+        (block $done (loop $shift
+          (br_if $done (i32.ge_u (local.get $i) (i32.const 3)))
+          (local.set $p (call $acm_driver_priority (local.get $i)))
+          (if (i32.ne (local.get $i) (local.get $index))
+            (then
+              (if (i32.and (i32.lt_u (local.get $old) (local.get $prio))
+                    (i32.and (i32.gt_u (local.get $p) (local.get $old)) (i32.le_u (local.get $p) (local.get $prio))))
+                (then (call $acm_driver_set_priority (local.get $i) (i32.sub (local.get $p) (i32.const 1)))))
+              (if (i32.and (i32.gt_u (local.get $old) (local.get $prio))
+                    (i32.and (i32.ge_u (local.get $p) (local.get $prio)) (i32.lt_u (local.get $p) (local.get $old))))
+                (then (call $acm_driver_set_priority (local.get $i) (i32.add (local.get $p) (i32.const 1)))))))
+          (local.set $i (i32.add (local.get $i) (i32.const 1)))
+          (br $shift)))
+        (call $acm_driver_set_priority (local.get $index) (local.get $prio))))
+    (i32.const 0))
+
+  (func $handle_acmDriverPriority (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (i32.store offset=0 (global.get $reg_base)
+      (call $acm_driver_priority_set (local.get $arg0) (local.get $arg1) (local.get $arg2)))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))  ;; 3 args stdcall
 
   ;; acmDriverEnum(fnCallback, dwInstance, fdwEnum) calls
   ;; fnCallback(hadid, dwInstance, fdwSupport) per driver until the callback
   ;; returns FALSE, then returns MMSYSERR_NOERROR. The iterator lives on the
   ;; guest stack (tagged like DirectSoundEnumerate's, so the CACA0007
   ;; continuation finds it): +0 tag 'ACME', +4 caller return, +8 callback,
-  ;; +12 dwInstance, +16 index of the driver just reported. NOLOCAL
-  ;; (0x40000000) and DISABLED (0x80000000) are the only flags; every driver
-  ;; here is global and enabled, so neither one removes any.
+  ;; +12 dwInstance, +16 priority (1..3) of the driver just reported, +20
+  ;; fdwEnum. Drivers are reported in acmDriverPriority order. NOLOCAL
+  ;; (0x40000000) removes nothing (every driver here is global); without
+  ;; DISABLED (0x80000000) a disabled driver is skipped.
+  ;; First priority >= $p whose driver the enumeration reports, or 0.
+  (func $acm_driver_enum_next (param $p i32) (param $fdw i32) (result i32)
+    (block $done (loop $scan
+      (br_if $done (i32.gt_u (local.get $p) (i32.const 3)))
+      (if (i32.or (i32.ne (i32.and (local.get $fdw) (i32.const 0x80000000)) (i32.const 0))
+                  (i32.eqz (call $acm_driver_disabled (call $acm_driver_at_priority (local.get $p)))))
+        (then (return (local.get $p))))
+      (local.set $p (i32.add (local.get $p) (i32.const 1)))
+      (br $scan)))
+    (i32.const 0))
+
   (func $acm_driver_enum_invoke (param $frame i32)
     (local $sp i32) (local $index i32)
-    (local.set $index (call $gl32 (i32.add (local.get $frame) (i32.const 16))))
+    (local.set $index (call $acm_driver_at_priority
+      (call $gl32 (i32.add (local.get $frame) (i32.const 16)))))
     (local.set $sp (i32.sub (local.get $frame) (i32.const 16)))
     (call $gs32 (local.get $sp) (global.get $ddenum_ret_thunk))
     (call $gs32 (i32.add (local.get $sp) (i32.const 4)) (call $acm_driver_id (local.get $index)))
@@ -447,16 +557,19 @@
   (func $acm_driver_enum_continue
     (local $frame i32) (local $next i32)
     (local.set $frame (i32.load offset=16 (global.get $reg_base)))
-    (local.set $next (i32.add (call $gl32 (i32.add (local.get $frame) (i32.const 16))) (i32.const 1)))
+    (local.set $next (call $acm_driver_enum_next
+      (i32.add (call $gl32 (i32.add (local.get $frame) (i32.const 16))) (i32.const 1))
+      (call $gl32 (i32.add (local.get $frame) (i32.const 20)))))
     (if (i32.and (i32.ne (i32.load (global.get $reg_base)) (i32.const 0))
-                 (i32.lt_u (local.get $next) (i32.const 3)))
+                 (i32.ne (local.get $next) (i32.const 0)))
       (then
         (call $gs32 (i32.add (local.get $frame) (i32.const 16)) (local.get $next))
         (call $acm_driver_enum_invoke (local.get $frame))
         (return)))
-    ;; Return to the caller past the iterator and the 3-argument stdcall frame.
+    ;; Return to the caller past the 24-byte iterator, the return address and
+    ;; the 3-argument stdcall frame.
     (global.set $eip (call $gl32 (i32.add (local.get $frame) (i32.const 4))))
-    (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $frame) (i32.const 36)))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $frame) (i32.const 40)))
     (i32.store (global.get $reg_base) (i32.const 0)))
 
   (func $handle_acmDriverEnum (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
@@ -471,14 +584,22 @@
         (i32.store offset=0 (global.get $reg_base) (local.get $result))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
         (return)))
+    ;; Every driver disabled and DISABLED not asked for: nothing to report.
+    (local.set $result (call $acm_driver_enum_next (i32.const 1) (local.get $arg2)))
+    (if (i32.eqz (local.get $result))
+      (then
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+        (return)))
     ;; The iterator sits just below the caller's frame (ESP -> return address).
-    (local.set $frame (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+    (local.set $frame (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 24)))
     (call $gs32 (local.get $frame) (i32.const 0x454D4341))               ;; 'ACME'
     (call $gs32 (i32.add (local.get $frame) (i32.const 4))
       (call $gl32 (i32.load offset=16 (global.get $reg_base))))
     (call $gs32 (i32.add (local.get $frame) (i32.const 8)) (local.get $arg0))
     (call $gs32 (i32.add (local.get $frame) (i32.const 12)) (local.get $arg1))
-    (call $gs32 (i32.add (local.get $frame) (i32.const 16)) (i32.const 0))
+    (call $gs32 (i32.add (local.get $frame) (i32.const 16)) (local.get $result))
+    (call $gs32 (i32.add (local.get $frame) (i32.const 20)) (local.get $arg2))
     (call $acm_driver_enum_invoke (local.get $frame)))
 
   ;; One dword of ACMDRIVERDETAILS, written only if it lies inside the
@@ -582,6 +703,8 @@
     (local.set $index (i32.sub (local.get $arg1) (call $acm_pcm_driver_id)))
     (local.set $result (i32.const 0))
     (if (i32.gt_u (local.get $index) (i32.const 2)) (then (local.set $result (i32.const 5))))  ;; INVALHANDLE
+    (if (i32.and (i32.eqz (local.get $result)) (call $acm_driver_disabled (local.get $index)))
+      (then (local.set $result (i32.const 12))))                                              ;; NOTENABLED
     (if (i32.eqz (local.get $arg0)) (then (local.set $result (i32.const 11))))                ;; INVALPARAM
     (if (local.get $arg2) (then (local.set $result (i32.const 10))))                          ;; INVALFLAG
     (if (i32.eqz (local.get $result))
@@ -683,11 +806,15 @@
       (then (call $gs16 (i32.add (local.get $dst) (i32.const 16)) (i32.const 0)))))
 
   ;; Is $dst the one PCM format an ADPCM $src decodes to?
+  ;; PCM of the source's rate and channels at 16 or 8 bits: what msadp32 and
+  ;; imaadp32 decode to. FreeSpace asks for 8-bit mono 22050 Hz.
   (func $acm_is_pcm16_of (param $dst i32) (param $src i32) (result i32)
     (i32.and
       (i32.and
         (i32.eq (call $gl16 (local.get $dst)) (i32.const 1))
-        (i32.eq (call $gl16 (i32.add (local.get $dst) (i32.const 14))) (i32.const 16)))
+        (i32.or
+          (i32.eq (call $gl16 (i32.add (local.get $dst) (i32.const 14))) (i32.const 16))
+          (i32.eq (call $gl16 (i32.add (local.get $dst) (i32.const 14))) (i32.const 8))))
       (i32.and
         (i32.eq (call $gl16 (i32.add (local.get $dst) (i32.const 2)))
                 (call $gl16 (i32.add (local.get $src) (i32.const 2))))
@@ -1081,6 +1208,13 @@
                         (select (i32.const 1) (i32.const 2)
                           (i32.eq (call $gl16 (local.get $arg2)) (i32.const 2))))
               (then (local.set $spb (i32.const 0))))))
+        ;; With no driver named, ACM picks among ENABLED codecs only: a codec
+        ;; acmDriverPriority disabled leaves the conversion impossible.
+        (if (i32.and (i32.ne (local.get $spb) (i32.const 0)) (i32.eqz (local.get $arg1)))
+          (then
+            (if (call $acm_driver_disabled
+                  (select (i32.const 1) (i32.const 2) (i32.eq (call $gl16 (local.get $arg2)) (i32.const 2))))
+              (then (local.set $spb (i32.const 0))))))
         (if (i32.and
               (i32.and (i32.ne (local.get $spb) (i32.const 0))
                        (call $acm_is_pcm16_of (local.get $arg3) (local.get $arg2)))
@@ -1097,7 +1231,11 @@
                   (then (local.set $result (i32.const 7)))  ;; MMSYSERR_NOMEM
                   (else
                     (call $gs32 (local.get $st) (i32.const 0x534D4341))   ;; 'ACMS'
-                    (call $gs32 (i32.add (local.get $st) (i32.const 4)) (call $gl16 (local.get $arg2)))
+                    ;; +4: wFormatTag, | 0x10000 when the output is 8-bit PCM.
+                    (call $gs32 (i32.add (local.get $st) (i32.const 4))
+                      (i32.or (call $gl16 (local.get $arg2))
+                        (select (i32.const 0x10000) (i32.const 0)
+                          (i32.eq (call $gl16 (i32.add (local.get $arg3) (i32.const 14))) (i32.const 8)))))
                     (call $gs32 (i32.add (local.get $st) (i32.const 8)) (call $gl16 (i32.add (local.get $arg2) (i32.const 2))))
                     (call $gs32 (i32.add (local.get $st) (i32.const 12)) (call $gl32 (i32.add (local.get $arg2) (i32.const 4))))
                     (call $gs32 (i32.add (local.get $st) (i32.const 16)) (call $gl16 (i32.add (local.get $arg2) (i32.const 12))))
@@ -1137,9 +1275,14 @@
   )
 
   ;; Bytes of 16-bit PCM one block of stream $st decodes to.
+  ;; 1 when the stream decodes to 8-bit PCM (see acmStreamOpen's +4).
+  (func $acm_stream_out8 (param $st i32) (result i32)
+    (i32.ne (i32.and (call $gl32 (i32.add (local.get $st) (i32.const 4))) (i32.const 0x10000)) (i32.const 0)))
+  ;; Decoded bytes of one block in the stream's output format.
   (func $acm_stream_pcm_block_bytes (param $st i32) (result i32)
     (i32.shl (i32.mul (call $gl32 (i32.add (local.get $st) (i32.const 20)))
-                      (call $gl32 (i32.add (local.get $st) (i32.const 8)))) (i32.const 1)))
+                      (call $gl32 (i32.add (local.get $st) (i32.const 8))))
+             (i32.eqz (call $acm_stream_out8 (local.get $st)))))
 
   ;; acmStreamSize(has, cbInput, pdwOutputBytes, fdwSize). Whole blocks only:
   ;; SOURCE (0) gives the PCM bytes cbInput of ADPCM decodes to, DESTINATION
@@ -1228,6 +1371,7 @@
   (func $handle_acmStreamConvert (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $result i32) (local $st i32) (local $status i32) (local $align i32) (local $pcm i32)
     (local $blocks i32) (local $room i32) (local $i i32) (local $src i32) (local $dst i32)
+    (local $scratch i32) (local $out i32) (local $k i32)
     (local.set $result (call $acm_header_check (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 0x34)))
     (if (i32.eqz (local.get $result))
       (then
@@ -1244,17 +1388,40 @@
         (local.set $blocks (i32.div_u (call $gl32 (i32.add (local.get $arg1) (i32.const 16))) (local.get $align)))
         (local.set $room (i32.div_u (call $gl32 (i32.add (local.get $arg1) (i32.const 32))) (local.get $pcm)))
         (if (i32.lt_u (local.get $room) (local.get $blocks)) (then (local.set $blocks (local.get $room))))
+        ;; 8-bit output: each block decodes to 16-bit samples in a scratch
+        ;; block, then narrows into the caller's buffer, which is sized for
+        ;; 8-bit (acmStreamSize). Unsigned 8-bit PCM is the high byte + 128.
+        (if (i32.and (i32.ne (local.get $blocks) (i32.const 0))
+                     (i32.ne (call $acm_stream_out8 (local.get $st)) (i32.const 0)))
+          (then
+            (local.set $scratch (call $heap_alloc (i32.shl (local.get $pcm) (i32.const 1))))
+            (if (i32.eqz (local.get $scratch)) (then (local.set $blocks (i32.const 0))))))
         (block $decoded (loop $each
           (br_if $decoded (i32.ge_u (local.get $i) (local.get $blocks)))
-          (if (i32.eq (call $gl32 (i32.add (local.get $st) (i32.const 4))) (i32.const 2))
+          (local.set $out (select (local.get $scratch)
+            (i32.add (local.get $dst) (i32.mul (local.get $i) (local.get $pcm)))
+            (i32.ne (local.get $scratch) (i32.const 0))))
+          (if (i32.eq (i32.and (call $gl32 (i32.add (local.get $st) (i32.const 4))) (i32.const 0xFFFF)) (i32.const 2))
             (then (call $msadpcm_decode_block (local.get $st)
                     (i32.add (local.get $src) (i32.mul (local.get $i) (local.get $align)))
-                    (i32.add (local.get $dst) (i32.mul (local.get $i) (local.get $pcm)))))
+                    (local.get $out)))
             (else (call $imaadpcm_decode_block (local.get $st)
                     (i32.add (local.get $src) (i32.mul (local.get $i) (local.get $align)))
-                    (i32.add (local.get $dst) (i32.mul (local.get $i) (local.get $pcm))))))
+                    (local.get $out))))
+          (if (local.get $scratch)
+            (then
+              (local.set $k (i32.const 0))
+              (block $narrowed (loop $narrow
+                (br_if $narrowed (i32.ge_u (local.get $k) (local.get $pcm)))
+                (call $gs8 (i32.add (i32.add (local.get $dst) (i32.mul (local.get $i) (local.get $pcm))) (local.get $k))
+                  (i32.add (i32.shr_s (call $acm_s16 (i32.add (local.get $scratch) (i32.shl (local.get $k) (i32.const 1))))
+                                      (i32.const 8))
+                           (i32.const 128)))
+                (local.set $k (i32.add (local.get $k) (i32.const 1)))
+                (br $narrow)))))
           (local.set $i (i32.add (local.get $i) (i32.const 1)))
           (br $each)))
+        (if (local.get $scratch) (then (call $heap_free (local.get $scratch))))
         (call $gs32 (i32.add (local.get $arg1) (i32.const 20)) (i32.mul (local.get $blocks) (local.get $align)))
         (call $gs32 (i32.add (local.get $arg1) (i32.const 36)) (i32.mul (local.get $blocks) (local.get $pcm)))
         (call $gs32 (i32.add (local.get $arg1) (i32.const 4))

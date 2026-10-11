@@ -102,6 +102,8 @@ const extraWat = String.raw`
       (then (call $handle_acmDriverOpen (local.get $a) (local.get $b) (local.get $c) (i32.const 0) (i32.const 0) (i32.const 0))))
     (if (i32.eq (local.get $op) (i32.const 11))
       (then (call $handle_acmDriverClose (local.get $a) (local.get $b) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))))
+    (if (i32.eq (local.get $op) (i32.const 12))
+      (then (call $handle_acmDriverPriority (local.get $a) (local.get $b) (local.get $c) (i32.const 0) (i32.const 0) (i32.const 0))))
     (i32.store offset=16 (global.get $reg_base) (local.get $saved))
     (i32.load offset=0 (global.get $reg_base)))
 
@@ -125,6 +127,14 @@ const extraWat = String.raw`
     (call $gs32 (local.get $sp) (i32.const 0x00401234))     ;; caller's return address
     (i32.store offset=16 (global.get $reg_base) (local.get $sp))
     (call $handle_acmDriverEnum (local.get $cb) (local.get $inst) (i32.const 0)
+      (i32.const 0) (i32.const 0) (i32.const 0))
+    (local.get $sp))
+  (func (export "test_acm_enum_start_fdw") (param $cb i32) (param $inst i32) (param $fdw i32) (result i32)
+    (local $sp i32)
+    (local.set $sp (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+    (call $gs32 (local.get $sp) (i32.const 0x00401234))
+    (i32.store offset=16 (global.get $reg_base) (local.get $sp))
+    (call $handle_acmDriverEnum (local.get $cb) (local.get $inst) (local.get $fdw)
       (i32.const 0) (i32.const 0) (i32.const 0))
     (local.get $sp))
   (func (export "test_acm_enum_callback_returns") (param $answer i32)
@@ -276,9 +286,13 @@ async function main() {
     assert.deepStrictEqual([dv().getUint16(wa(sugg), true), dv().getUint16(wa(sugg) + 2, true),
       u32(sugg + 4), u32(sugg + 8), dv().getUint16(wa(sugg) + 12, true), dv().getUint16(wa(sugg) + 14, true)],
     [1, ch, rate, rate * ch * 2, ch * 2, 16], `${name}: suggested PCM`);
-    // A pinned 8-bit destination is not something these codecs produce.
+    // A pinned 8-bit destination is one msadp32/imaadp32 also decode to.
     dv().setUint16(wa(sugg) + 14, 8, true);
-    assert.strictEqual(e.test_acm_call(OP.suggest, src, sugg, 18, 0x80000, 0), 512);
+    assert.strictEqual(e.test_acm_call(OP.suggest, src, sugg, 18, 0x80000, 0), 0);
+    assert.deepStrictEqual([u32(sugg + 8), dv().getUint16(wa(sugg) + 12, true), dv().getUint16(wa(sugg) + 14, true)],
+      [rate * ch, ch, 8], `${name}: suggested 8-bit PCM`);
+    dv().setUint16(wa(sugg) + 14, 12, true);
+    assert.strictEqual(e.test_acm_call(OP.suggest, src, sugg, 18, 0x80000, 0), 512, 'nor any other depth');
     e.test_acm_call(OP.suggest, src, sugg, 18, 0, 0);
 
     const phas = alloc(4);
@@ -325,6 +339,41 @@ async function main() {
       assert(maxDiff <= 64, `${name}: ${maxDiff} LSB from ffmpeg's decode (layout or nibble order wrong?)`);
       v.note = `within ${maxDiff} LSB of ffmpeg`;
     }
+    // The same blocks decoded to 8-bit PCM (FreeSpace's request): one byte
+    // per sample, the 16-bit sample's high byte offset to unsigned.
+    {
+      const dst8 = alloc(18);
+      mem().copyWithin(wa(dst8), wa(sugg), wa(sugg) + 18);
+      dv().setUint32(wa(dst8) + 8, rate * ch, true);
+      dv().setUint16(wa(dst8) + 12, ch, true);
+      dv().setUint16(wa(dst8) + 14, 8, true);
+      const ph8 = alloc(4);
+      assert.strictEqual(e.test_acm_stream_open(ph8, src, dst8, 0) >>> 0, 0, `${name}: open to 8-bit PCM`);
+      const h8 = u32(ph8);
+      assert.strictEqual(e.test_acm_call(OP.size, h8, data.length, out, 0, 0), 0);
+      assert.strictEqual(u32(out), v.pcmBytes / 2, `${name}: 8-bit acmStreamSize(SOURCE)`);
+      const out8 = alloc(v.pcmBytes / 2 + 8);
+      const hdr8 = alloc(84);
+      mem().fill(0, wa(hdr8), wa(hdr8) + 84);
+      dv().setUint32(wa(hdr8), 84, true);
+      dv().setUint32(wa(hdr8) + 12, pbSrc, true);
+      dv().setUint32(wa(hdr8) + 16, data.length, true);
+      dv().setUint32(wa(hdr8) + 28, out8, true);
+      dv().setUint32(wa(hdr8) + 32, v.pcmBytes / 2, true);   // exactly the 8-bit size
+      mem().fill(0xEE, wa(out8) + v.pcmBytes / 2, wa(out8) + v.pcmBytes / 2 + 8);
+      assert.strictEqual(e.test_acm_call(OP.prepare, h8, hdr8, 0, 0, 0), 0);
+      assert.strictEqual(e.test_acm_call(OP.convert, h8, hdr8, 0x34, 0, 0), 0, `${name}: 8-bit convert`);
+      assert.strictEqual(u32(hdr8 + 36), v.pcmBytes / 2, `${name}: 8-bit bytes produced`);
+      const got = mem().subarray(wa(out8), wa(out8) + v.pcmBytes / 2);
+      for (let s = 0; s < got.length; s++) {
+        const want = ((pcm.readInt16LE(s * 2) >> 8) + 128) & 0xFF;
+        if (got[s] !== want) assert.fail(`${name}: 8-bit sample ${s} is ${got[s]}, want ${want}`);
+      }
+      assert(mem().subarray(wa(out8) + v.pcmBytes / 2, wa(out8) + v.pcmBytes / 2 + 8).every(b => b === 0xEE),
+        `${name}: nothing written past the 8-bit buffer`);
+      assert.strictEqual(e.test_acm_call(OP.unprepare, h8, hdr8, 0, 0, 0), 0);
+      assert.strictEqual(e.test_acm_call(OP.close, h8, 0, 0, 0, 0), 0);
+    }
     assert.strictEqual(e.test_acm_call(OP.unprepare, has, hdr, 0, 0, 0), 0);
     assert.strictEqual(e.test_acm_call(OP.unprepare, has, hdr, 0, 0, 0), 514, 'already unprepared');
     assert.strictEqual(e.test_acm_call(OP.close, has, 0, 0, 0, 0), 0);
@@ -358,6 +407,50 @@ async function main() {
   assert.strictEqual(e.test_acm_call(OP.driverClose, msHad, 0, 0, 0, 0), 0);
   assert.strictEqual(e.test_acm_call(OP.driverClose, pcmHad, 0, 0, 0, 0), 0);
   assert.strictEqual(e.test_acm_call(OP.driverClose, 0x1234, 0, 0, 0, 0), 5, 'invalid driver handle');
+
+  // ---- acmDriverPriority (FreeSpace calls it after enumerating the codecs) ----
+  const PRIO = 12, MS = 0x0ACD0002, IMA = 0x0ACD0003;
+  const enumAll = fdw => {
+    const ids = [];
+    const start = e.test_get_esp() >>> 0;
+    const caller = e.test_acm_enum_start_fdw(0x00402000, 0, fdw) >>> 0;
+    while ((e.get_eip() >>> 0) === 0x00402000) {
+      const sp = e.test_get_esp() >>> 0;
+      ids.push(u32(sp + 4));
+      e.test_acm_enum_callback_returns(1);
+    }
+    assert.strictEqual(e.get_eip() >>> 0, 0x00401234, 'enumeration returns to its caller');
+    assert.strictEqual(e.test_get_esp() >>> 0, caller + 16, 'and pops its three arguments');
+    e.test_set_esp(start);
+    return ids;
+  };
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 0, 0x4, 0, 0), 10, 'unknown flag');
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 0, 0x3, 0, 0), 10, 'ENABLE with DISABLE');
+  assert.strictEqual(e.test_acm_call(PRIO, 0, 0, 0x30000, 0, 0), 10, 'BEGIN with END');
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 0, 0x10000, 0, 0), 11, 'BEGIN names no driver');
+  assert.strictEqual(e.test_acm_call(PRIO, 0, 1, 0x20000, 0, 0), 11, 'END carries no priority');
+  assert.strictEqual(e.test_acm_call(PRIO, 0, 0, 0x10000, 0, 0), 0, 'BEGIN alone');
+  assert.strictEqual(e.test_acm_call(PRIO, 0, 0, 0x20000, 0, 0), 0, 'END alone');
+  assert.strictEqual(e.test_acm_call(PRIO, 0x0ACD0009, 0, 0, 0, 0), 5, 'unknown driver id');
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 4, 0, 0, 0), 11, 'priority past the last driver');
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 0, 0, 0, 0), 0, 'no change at all is fine');
+
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 0, 0x2, 0, 0), 0, 'disable MS-ADPCM');
+  assert.strictEqual(e.test_acm_call(OP.details, MS, details, 0, 0, 0), 0);
+  assert.strictEqual(u32(details + 24) >>> 0, 0x80000001, 'details report CODEC | DISABLED');
+  assert.deepStrictEqual(enumAll(0), [0x0ACD0001, IMA], 'a disabled driver is not enumerated');
+  assert.deepStrictEqual(enumAll(0x80000000), [0x0ACD0001, MS, IMA], 'unless DISABLED is asked for');
+  assert.strictEqual(e.test_acm_call(OP.driverOpen, phad, MS, 0, 0, 0), 12, 'MMSYSERR_NOTENABLED');
+  assert.strictEqual(e.test_acm_stream_open_had(ph, 0, src, dst) >>> 0, 512,
+    'no enabled codec for MS-ADPCM: ACMERR_NOTPOSSIBLE');
+  assert.strictEqual(e.test_acm_call(PRIO, MS, 0, 0x1, 0, 0), 0, 'enable it again');
+  assert.strictEqual(e.test_acm_stream_open_had(ph, 0, src, dst) >>> 0, 0, 'and it converts again');
+  assert.strictEqual(e.test_acm_call(OP.close, u32(ph), 0, 0, 0, 0), 0);
+
+  assert.strictEqual(e.test_acm_call(PRIO, IMA, 1, 0, 0, 0), 0, 'IMA ADPCM first');
+  assert.deepStrictEqual(enumAll(0), [IMA, 0x0ACD0001, MS], 'enumeration follows priority');
+  assert.strictEqual(e.test_acm_call(PRIO, IMA, 0xFFFFFFFF, 0, 0, 0), 0, '-1: lowest');
+  assert.deepStrictEqual(enumAll(0), [0x0ACD0001, MS, IMA], 'back to the boot order');
 
   console.log('PASS ACM drivers, enumeration, format tags, suggestion and stream errors');
 }

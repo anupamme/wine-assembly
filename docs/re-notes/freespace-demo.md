@@ -43,3 +43,16 @@ Evidence: `scratch/runs/20261006-freespace-demo-target`.
 ## Open
 
 Audio (missing MS-ADPCM ACM codec), FPS, browser route.
+
+**ACM drivers (2026-10-11, w5; Telegram #39).** Startup's sound setup:
+1. `acmGetVersion`.
+2. `acmDriverEnum(..., fdwEnum=ACM_DRIVERENUMF_DISABLED)`, with `acmDriverDetailsA` for each driver.
+3. `acmDriverPriority(MS-ADPCM hadid, 0, 0)`. This is a no-op call; it was unimplemented and crashed the page after dc7e8454d added the ADPCM codecs.
+4. `acmStreamOpen` through the MS-ADPCM driver handle, with `fdwOpen=NONREALTIME`. The source is MS-ADPCM, mono, 22050 Hz, 512-byte blocks; the destination is **8-bit** mono PCM at 22050 Hz.
+5. `acmStreamSize` and `acmStreamConvert` follow.
+
+What changed:
+- `acmDriverPriority` is implemented with shared enable/priority state (`$ACM_DRIVER_STATE`).
+- The ADPCM codecs now also decode to 8-bit PCM. Before that, step 4 returned ACMERR_NOTPOSSIBLE.
+
+The game now reaches Choose Pilot with its ADPCM streams converting.

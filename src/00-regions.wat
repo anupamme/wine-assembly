@@ -203,6 +203,12 @@
     (owner "09a-handlers.wat:$mm_timer_slot"))
   (region.declare $MM_TIMER_NEXT_ID (size 0x00000004)
     (owner "01-header.wat:$MM_TIMER_NEXT_ID"))
+  ;; ACM driver state, one dword per built-in driver (PCM, MS-ADPCM, IMA
+  ;; ADPCM): bit 31 disabled, low byte priority (0 = default index + 1).
+  ;; Shared because acmDriverPriority on one guest thread changes what
+  ;; acmDriverEnum and acmStreamOpen see on every other.
+  (region.declare $ACM_DRIVER_STATE (size 0x00000010)
+    (owner "09a3-handlers-audio.wat:$acm_driver_state"))
   (region.declare $MCI_DEVICE_TABLE (size 0x00000100) (align 0x00000100)
     (owner "09a3-handlers-audio.wat:$mci_slot_addr"))
   ;; Open HMMIO state: 8 x 32-byte slots. Shared memory rather than a lazily
