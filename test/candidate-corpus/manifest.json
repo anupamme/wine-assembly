@@ -880,8 +880,7 @@
         }
       ],
       "postExtract": [
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "Executable" },
-        { "type": "copyTree", "from": "installed-extracted/Executable", "into": "installed" }
+        { "type": "is5Extract", "cab": "data1.cab", "into": "installed" }
       ],
       "browser": {
         "fileRoot": "installed",

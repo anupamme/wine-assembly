@@ -2,7 +2,9 @@
 'use strict';
 
 // Unpack an early InstallShield 5 cabinet set (data1.cab, data2.cab, ...)
-// that unshield cannot: the Heretic II demo (1998) is one.
+// that unshield cannot: the Heretic II demo (1998) is one. The Pharaoh demo
+// (1999) has the same version; unshield happens to read it, but this needs no
+// host install.
 //
 //   node tools/is5-extract.js data1.cab [--list] [--out=DIR]
 //

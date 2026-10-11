@@ -10,9 +10,16 @@ Impressions' 1999 city builder, built on the Caesar III engine family
 ```text
 archive.org PharaohDemo/PharaohDemo.zip (SHA-1 e09b5f04...)
   -> InstallShield 5 media (data1.cab, built 1999-08-10)
-  -> unshield, file group "Executable" -> installed/
+  -> tools/is5-extract.js (fetcher step is5Extract) -> installed/
      PharaohDemo.exe + SMACKW32.DLL + mss32.dll + binkw32.dll + data (305 files, ~121 MB)
 ```
+
+The cab's common header carries version 0x01000004, the early IS5 layout
+`tools/is5-extract.js` was written for (Heretic II). It yields the same 305
+files and 121 MB as `unshield -g Executable`, needs no host unshield (the ops box has none),
+and checks every file against its recorded expanded size. The fetched candidate
+is about 207 MB on disk (86 MB of installer media plus `installed/`); the zip
+itself only lives in the fetcher's temp directory.
 
 Licence: the Sierra demo EULA shipped in the package (EULADEMO.txt) grants a
 single-user licence and forbids copying or reproduction, so the candidate is
