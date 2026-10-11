@@ -457,3 +457,37 @@ analysis above describes. Count frames at `0x43f610`; any `grBufferSwap` rate
 gameplay. Title and loading screens swap without the callback (605 swaps vs
 2 x 279 frames over the whole run). `--present-distinct` sees nothing on this
 path: the CLI software Glide backend does not reach the present hook.
+
+## 2026-10-11: gameplay cost, and the worker page-index thrash
+
+**Route on current main (CLI, default 200 ms/batch clock).** The intro page
+("Press SPACE to continue") needs Space *held*: a 2-batch tap is missed. Space
+held over batches 10000-10050 starts loading; held again over 12650-12700 it
+passes the controls page; the knight is in the 3D alley by batch 13700. No
+Enter is needed. `--input=10000:keydown:32,10050:keyup:32,12650:keydown:32,12700:keyup:32`.
+Frames (`0x43f610`): 268 by 14000, 993 by 17000; they follow the guest clock,
+so they are identical across builds.
+
+**Cost.** Gameplay batches 14000-17000: ~45 s user CPU for ~725 frames, about
+62 ms per frame on one boat core. The whole game loop runs on guest worker
+thread tid1 (7701 distinct hot blocks, flat profile: the top block is 1%);
+music (`mpgmxbvr.dll`, MPEG decoder) runs on tid3, the main thread idles in
+MFC. About a third of CPU was spent building threaded code (`$decode_block`,
+`$page_publish`, x87 fusion, emitters); the Glide JS path is about 15%.
+
+**Cause.** A worker's page index held 16 compiled 4 KB pages
+(`$PAGE_INDEX_WORKER_SLOTS`; main 512). tid1 recompiled 4.48M pages in those
+3000 batches, 4.38M forced by "index arena full", = 47M block decodes. Code
+writes were not involved (invalidations flat). Doubling the worker *code
+partition* (768 KB -> 1.5 MB) halved full clears but saved only ~2.6%: the
+partition was not the limit. Found with run.js's per-thread cache report
+(3f223733d), which prints these counters for every guest thread.
+
+**Fix (86cf7ae36).** `workerHeavyCodeCache: true` in lib/apps.js switches
+the process to main 256 / workers 32 page-index slots in the same arena.
+tid1 page compiles 6.21M -> 2.71M per 17000-batch run; gameplay CPU about
+-12.7%; whole-run user CPU -10.2% over 3 interleaved reps. Still 2.5M forced
+recompiles at 32 slots: the game loop needs more pages than that, so a shared
+on-demand pool (and code-partition pooling with it) is the remaining lever.
+Evidence: `scratch/runs/20261011T0850Z-hype-fps-measure-boat`,
+`20261011T1000Z-hype-page-index-boat`, `20261011T1030Z-hype-page-index-ab-boat`.
