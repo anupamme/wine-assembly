@@ -53,7 +53,7 @@ const { parseShellLaunchCommand, resolveShellLaunchPath } = require('../host.js'
 const RegionMap = require('../lib/region-map.generated.js');
 let PNG;
 try { ({ PNG } = require('pngjs')); } catch (_) {}
-let createCanvas, Win98Renderer;
+let createCanvas, Win98Renderer, rendererLoadError = null;
 try {
   // A pure-JS raster surface, not a native canvas -- see lib/raster-canvas.js.
   // No font registration: WAT measures and rasterizes all text from its own
@@ -61,7 +61,7 @@ try {
   // dead (0 calls for notepad, calc and mspaint).
   createCanvas = require('../lib/canvas-compat').createCanvas;
   Win98Renderer = require('../lib/renderer').Win98Renderer;
-} catch (_) {}
+} catch (e) { rendererLoadError = e; }
 
 const ROOT = path.join(__dirname, '..');
 const SRC_DIR = path.join(ROOT, 'src');
@@ -2510,6 +2510,11 @@ async function main() {
     renderer.lazyPresentation = true;
     if (TRACE_COMPOSITE) renderer.traceComposite = true;
     if (TRACE_INPUT) renderer.onInputTrace = (what) => console.log(`[input-route] ${what}`);
+  } else if (!NO_RENDERER) {
+    // Without this a stale node_modules (no pngjs) ran for half an hour with
+    // no screen: every png refused, pointer input dropped, nothing said why.
+    console.error(`[renderer] unavailable, so no screen, captures or pointer input: ${
+      rendererLoadError ? rendererLoadError.message.split('\n')[0] : 'createCanvas/Win98Renderer missing'}`);
   }
   let videoRecorder = null;
   let videoEvery = 1;
@@ -10059,6 +10064,12 @@ async function main() {
       } else if (ev.action === 'wheel' && renderer && renderer.handleWheel) {
         renderer.handleWheel(ev.x, ev.y, ev.delta);
         logs.push(`[input] wheel ${ev.x},${ev.y} delta=${ev.delta} at batch ${batch}`);
+      } else if (typeof ev.msg !== 'number') {
+        // A pointer action that needs the renderer, with none to take it (no
+        // offscreen canvas: a missing pngjs did this on a boat). Say so instead
+        // of reading ev.msg below, which threw out of the main loop and left
+        // the run idle with its control channel unanswered.
+        logs.push(`[input] ${ev.action} dropped at batch ${batch}: no renderer`);
       } else if (renderer) {
         renderer.inputQueue.push({ type: 'key', hwnd: 0, msg: ev.msg, wParam: ev.wParam, lParam: ev.lParam });
         logs.push(`[input] injected msg=0x${ev.msg.toString(16)} wParam=0x${ev.wParam.toString(16)} at batch ${batch}`);
