@@ -165,3 +165,8 @@ Ordinary Video->Direct3D->Properties->Return now returns to the Options
 screen without the previous data-EIP crash (500 batches). Reviewed final
 canvas is a menu, not gameplay. Native comctl32/ole32 remain absent on this
 fork, as in the matched failing control. No browser/FPS/audio claim.
+
+The same build, Go Back at(320,430) then Single Player at(320,216), reaches
+a rendered first-person scene with weapon,100health and150ammo in45s.
+callback-play.png is reviewed gameplay rendering; player movement is not
+yet qualified by that capture. Separate movement replay follows.
