@@ -769,6 +769,37 @@
       }
     },
     {
+      "id": "battlezone-demo",
+      "name": "Battlezone Demo",
+      "kind": "game",
+      "version": "1998 Activision PC demo (CD-style tree: InstallShield 5 setup beside a ready-to-run Install\\data with bl_rel.exe and the dx5draw renderer plugin); Direct3D",
+      "executables": [
+        "rar/Bzone/Install/data/bl_rel.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Bzone",
+      "license": "proprietary Activision demo: no redistribution grant, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Bzone/Bzone.rar",
+          "sha1": "6a4c384207d3f1030135fb9f84251f477ba761ba",
+          "type": "archive",
+          "into": "rar"
+        }
+      ],
+      "browser": {
+        "fileRoot": "rar/Bzone/Install",
+        "exe": "rar/Bzone/Install/data/bl_rel.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "incoming-demo",
       "name": "Incoming Demo",
       "kind": "game",
