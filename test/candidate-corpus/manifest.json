@@ -769,6 +769,49 @@
       }
     },
     {
+      "id": "evolva-demo",
+      "name": "Evolva Demo",
+      "kind": "game",
+      "version": "2000 Computer Artworks / Interplay PC demo (zip around an InstallShield 5 self-extractor; data1.cab groups Resources, Program Executable Files, Program DLLS, Language DLL (English)); Direct3D",
+      "executables": [
+        "installed/evolva/Evolva.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Evolva_1020",
+      "license": "proprietary Interplay/Computer Artworks demo: no redistribution grant, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Evolva_1020/evolvademo.zip",
+          "sha1": "40e5cbc407348c8357d97d3e872f1af43fe93276",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        { "type": "extractArchive", "archive": "evolvademo.exe", "into": "sfx" },
+        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Resources" },
+        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Program Executable Files" },
+        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Program DLLS" },
+        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Language DLL (English)" },
+        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Registering DLLs" },
+        { "type": "copyTree", "from": "cab/Resources", "into": "installed/evolva" },
+        { "type": "copyTree", "from": "cab/Program_Executable_Files", "into": "installed/evolva" },
+        { "type": "copyTree", "from": "cab/Program_DLLS", "into": "installed/evolva" },
+        { "type": "copyTree", "from": "cab/Language_DLL_(English)", "into": "installed/evolva" },
+        { "type": "copyTree", "from": "cab/Registering_DLLs", "into": "installed/evolva" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/evolva/Evolva.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "battlezone-demo",
       "name": "Battlezone Demo",
       "kind": "game",
