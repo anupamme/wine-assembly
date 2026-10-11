@@ -52,6 +52,45 @@ async function collectTree(root, dir, extensions, files) {
     else if (entry.isFile() && extensions.has(path.extname(name).toLowerCase())) files.add(name);
   }
 }
+// A Win16 game's NE helper modules are not in the registry: host.js
+// (_loadWin16Dlls) fetches whatever the exe's module-reference table names,
+// plus the app's win16Modules, out of the exe's own directory. An allowlist
+// that only knows registered files 404s them -- VBRUN100 for TicTactics, which
+// then traps at its first instruction; WEP4UTIL for JezzBall -- so allow the
+// ones that sit beside the exe. The NE header and its tables are near the
+// start of the file, so only a prefix is read.
+async function win16ModuleFiles(root, exe, extraModules) {
+  const exeName = localPath(fileUrl(exe));
+  const exeFile = exeName && await realFile(root, exeName);
+  if (!exeFile) return [];
+  let bytes;
+  try {
+    const handle = await fsp.open(exeFile, 'r');
+    try {
+      const buffer = Buffer.alloc(0x20000);
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+      bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, bytesRead);
+    } finally { await handle.close(); }
+  } catch { return []; }
+  // The page's own NE parsing and candidate naming, so the server allows
+  // exactly the names host.js will ask for.
+  const { win16ModuleNames, win16StageableModules } = require('../lib/dll-loader');
+  const { win16FileCandidates } = require('../lib/vfs-seed');
+  const imported = new Set(win16ModuleNames(bytes).map(name => name.toUpperCase()));
+  if (!imported.size) return [];
+  const names = [
+    ...win16StageableModules(bytes).filter(name => imported.has(name.toUpperCase())),
+    ...(Array.isArray(extraModules) ? extraModules : []),
+  ];
+  const dir = path.posix.dirname(exeName), out = [];
+  for (const name of new Set(names)) {
+    for (const leaf of win16FileCandidates(name)) {
+      const candidate = path.posix.join(dir, leaf);
+      if (localPath(candidate) && await realFile(root, candidate)) { out.push(candidate); break; }
+    }
+  }
+  return out;
+}
 async function buildCatalog(inputRoot) {
   const root = await fsp.realpath(inputRoot), allowed = new Set(['index.html','host.js','build-info.js','sw-coi.js','manifest.webmanifest','lib/app-icon-manifest.json','lib/host-import-sigs.generated.json','src/api_table.json','test/binaries/tlbs/stdole2.tlb','build/wine-assembly.wasm','build/wine-assembly.compat.wasm']);
   await collectTree(root, 'lib', new Set(['.js']), allowed);
@@ -70,6 +109,7 @@ async function buildCatalog(inputRoot) {
     const dependencies = new Set(), invalid = [];
     const add = value => { const name = localPath(fileUrl(value)); if (name) { dependencies.add(name); allowed.add(name); } else if (value) invalid.push('Unsupported registered asset path'); };
     add(app.exe); for (const value of [...(app.files || []), ...(app.dlls || [])]) add(value);
+    for (const name of await win16ModuleFiles(root, app.exe, app.win16Modules)) add(name);
     if (app.iconFile) add(app.iconFile);
     if (app.localFileManifest) {
       add(app.localFileManifest);

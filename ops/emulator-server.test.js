@@ -32,6 +32,52 @@ test('JezzBall score helper is served and required before launch', async () => {
   await fs.rm(root, {recursive:true, force:true});
  }
 });
+// A minimal NE executable whose module-reference table names `modules`.
+function neImporting(modules) {
+ const ne = 0x40, modTab = 0x40, nameTab = modTab + modules.length * 2;
+ const names = [], offsets = [];
+ let off = 1;
+ for (const name of modules) { offsets.push(off); names.push(name.length, ...Buffer.from(name, 'latin1')); off += 1 + name.length; }
+ const bytes = Buffer.alloc(ne + nameTab + 1 + names.length + 16);
+ bytes.write('MZ', 0, 'latin1'); bytes.writeUInt32LE(ne, 0x3c);
+ bytes.write('NE', ne, 'latin1');
+ bytes.writeUInt16LE(modules.length, ne + 0x1e);
+ bytes.writeUInt16LE(modTab, ne + 0x28); bytes.writeUInt16LE(nameTab, ne + 0x2a);
+ offsets.forEach((value, i) => bytes.writeUInt16LE(value, ne + modTab + i * 2));
+ Buffer.from([0, ...names]).copy(bytes, ne + nameTab);
+ return bytes;
+}
+
+test('Win16 helper modules the exe imports (and win16Modules) are served from beside the exe', async () => {
+ // TicTactics imports VBRUN100, which host.js fetches from the exe's own
+ // directory; the registry does not list it, so the hosted page 404'd it and
+ // the guest trapped at its first instruction (WIN16-WORKER-TRAP-20261011).
+ const root = await fixture();
+ try {
+  const dir = 'test/binaries/wep16/WEP4';
+  const apps = {APPS:{tic:{exe:dir + '/TICTACDP.EXE', files:[], win16Modules:['THREED']},
+   pe:{exe:dir + '/PLAIN.EXE', files:[]}}};
+  await fs.writeFile(path.join(root, 'lib/apps.js'), 'module.exports=' + JSON.stringify(apps));
+  await fs.mkdir(path.join(root, dir), {recursive:true});
+  await fs.writeFile(path.join(root, dir, 'TICTACDP.EXE'), neImporting(['KERNEL', 'VBRUN100']));
+  await fs.writeFile(path.join(root, dir, 'PLAIN.EXE'), 'MZ not an NE image');
+  await fs.writeFile(path.join(root, dir, 'VBRUN100.DLL'), 'fixture');
+  await fs.writeFile(path.join(root, dir, 'THREED.VBX'), 'fixture');
+  await fs.writeFile(path.join(root, dir, 'UNUSED.DLL'), 'fixture');
+  const catalog = await buildCatalog(root);
+  assert(catalog.allowed.has(dir + '/VBRUN100.DLL'), 'the imported VB runtime must pass the hosted allowlist');
+  assert(catalog.allowed.has(dir + '/THREED.VBX'), 'a declared runtime-loaded module is allowed too');
+  assert(!catalog.allowed.has(dir + '/UNUSED.DLL'), 'a DLL nothing imports stays private');
+  assert(![...catalog.allowed].some(name => /KERNEL/i.test(name)), 'system modules are never looked for');
+  assert.equal(catalog.routes.find(r => r.appId === 'tic').available, true);
+  await fs.unlink(path.join(root, dir, 'VBRUN100.DLL'));
+  const without = await buildCatalog(root);
+  assert(!without.allowed.has(dir + '/VBRUN100.DLL'));
+  assert.equal(without.routes.find(r => r.appId === 'tic').available, true,
+   'an absent helper is not invented as a requirement');
+ } finally { await fs.rm(root, {recursive:true, force:true}); }
+});
+
 test('registered closure, private entry, GET/HEAD ranges, isolation and denied paths',async()=>{
  const root=await fixture(),serve=createEmulatorHandler(root);const server=http.createServer(async(req,res)=>{try{if(!await serve(req,res)){res.writeHead(404);res.end();}}catch(e){res.writeHead(500);res.end(e.message);}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port;
  try{
