@@ -38677,5 +38677,12 @@
     "convention": "stdcall",
     "hash": 2793894589,
     "handler": "gl_unimplemented"
+  },
+  {
+    "id": 4541,
+    "name": "WSAConnect",
+    "nargs": 7,
+    "convention": "stdcall",
+    "hash": 2233096024
   }
 ]

@@ -46,6 +46,17 @@ async function main() {
   const wasm = compileSrcWasm((file, source) => file === '13-exports.wat' ? source + String.raw`
     (func (export "test_wsa_is_blocking_lookup") (result i32)
       (call $lookup_api_id "WSAIsBlocking"))
+    (func (export "test_wsaconnect") (param $sp i32) (param $s i32) (param $addr i32)
+      (param $caller i32) (param $callee i32) (param $sqos i32) (param $gqos i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (local.get $sp))
+      (call $gs32 (i32.add (local.get $sp) (i32.const 24)) (local.get $sqos))
+      (call $gs32 (i32.add (local.get $sp) (i32.const 28)) (local.get $gqos))
+      (global.set $yield_reason (i32.const 0))
+      (call $dispatch_api_table (call $lookup_api_id "WSAConnect")
+        (local.get $s) (local.get $addr) (i32.const 16)
+        (local.get $caller) (local.get $callee) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     (func (export "test_wsa_is_blocking_dispatch") (result i64)
       (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
       (call $dispatch_api_table (call $lookup_api_id "WSAIsBlocking")
@@ -198,6 +209,55 @@ async function main() {
   // ---- byte order and address helpers --------------------------------
 
   wat.test_vsock_reset();
+
+  check('WSAConnect is registered with seven arguments', () => {
+    const api = require('../src/api_table.json').find(api => api.name === 'WSAConnect');
+    assert(api, 'WSAConnect must resolve by name');
+    assert.strictEqual(api.nargs, 7);
+  });
+  const wsaStack = alloc(64);
+  function wsaConnect(s, addr, caller=0, callee=0, sqos=0, gqos=0) {
+    const v=wat.test_wsaconnect(wsaStack,s,addr,caller,callee,sqos,gqos);
+    assert.strictEqual(Number(v >> 32n), wsaStack+32, 'WSAConnect pops all seven args');
+    return Number(v & 0xffffffffn)|0;
+  }
+  check('WSAConnect provider errors preserve the socket and stack', () => {
+    const s=wat.test_call_socket(AF_INET,SOCK_STREAM,0)|0, addr=sockaddr(ROOM_HOST,GAME_PORT);
+    for(const [args,error] of [ [[-1,addr],10038], [[s,addr,0,0,0,1],10022],
+      [[s,addr,0,0,1,0],10045], [[s,addr,1],10043] ]) {
+      assert.strictEqual(wsaConnect(...args),SOCKET_ERROR);
+      assert.strictEqual(wat.test_call_WSAGetLastError(),error);
+    }
+    assert.strictEqual(wsaConnect(s,addr),SOCKET_ERROR);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),WSAECONNREFUSED);
+    wat.test_call_closesocket(s);
+  });
+  check('WSAConnect establishes TCP and reports no callee data', () => {
+    const srv=wat.test_call_socket(AF_INET,SOCK_STREAM,0)|0;
+    assert.strictEqual(wat.test_call_bind(srv,sockaddr('0.0.0.0',GAME_PORT),16),0);
+    assert.strictEqual(wat.test_call_listen(srv,5),0);
+    const cli=wat.test_call_socket(AF_INET,SOCK_STREAM,0)|0, data=alloc(8);
+    new DataView(memory.buffer).setUint32(wa(data),123,true);
+    assert.strictEqual(wsaConnect(cli,sockaddr(ROOM_HOST,GAME_PORT),0,data),0);
+    assert.strictEqual(new DataView(memory.buffer).getUint32(wa(data),true),0);
+    const acc=wat.test_call_accept(srv,0,0)|0;
+    assert.notStrictEqual(acc,INVALID_SOCKET);
+    assert.strictEqual(wsaConnect(cli,sockaddr(ROOM_HOST,GAME_PORT)),SOCKET_ERROR);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10056);
+    for(const s of [cli,acc,srv])wat.test_call_closesocket(s);
+  });
+  check('WSAConnect blocking retries retain the complete seven-argument frame', () => {
+    const s=wat.test_call_socket(AF_INET,SOCK_STREAM,0)|0, addr=sockaddr('10.0.0.2',GAME_PORT);
+    for(let n=0;n<3;n++) {
+      const v=wat.test_wsaconnect(wsaStack,s,addr,0,0,0,0);
+      assert.strictEqual(Number(v >> 32n),wsaStack,'park restores original ESP');
+      assert.strictEqual(wat.get_yield_reason(),8,'waiting for virtual wire');
+    }
+    setNonblocking(s,true);
+    assert.strictEqual(wsaConnect(s,addr),SOCKET_ERROR);
+    assert([10035,10037].includes(wat.test_call_WSAGetLastError()));
+    wat.test_call_closesocket(s);
+  });
 
   check('WSAIsBlocking reports no nested blocking hook', () => {
     assert.strictEqual(wat.test_call_WSAIsBlocking() | 0, 0);

@@ -1441,9 +1441,13 @@
   ;; connect(s, name, namelen)
   (func $handle_connect (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
                         (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+    (call $vsock_connect (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 16)))
+
+  ;; Both entrypoints preserve their own complete argument frame on a park.
+  (func $vsock_connect (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $unpop i32)
     (local $idx i32) (local $rec i32) (local $ip i32) (local $port i32)
     (local $lis i32) (local $lrec i32) (local $child i32) (local $crec i32)
-    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
     (local.set $idx (call $vsock_index (local.get $arg0)))
     (if (i32.lt_s (local.get $idx) (i32.const 0))
       (then
@@ -1483,7 +1487,7 @@
             (call $vsock_set_error (i32.const 10037))      ;; WSAEALREADY
             (i32.store offset=0 (global.get $reg_base) (i32.const -1))
             (return)))
-        (call $vsock_block (i32.const 16))
+        (call $vsock_block (local.get $unpop))
         (return)))
     (if (i32.eq (load.field VSock state (local.get $rec)) (i32.const 4))
       (then
@@ -1542,7 +1546,7 @@
                 (call $vsock_set_error (i32.const 10035))  ;; WSAEWOULDBLOCK
                 (i32.store offset=0 (global.get $reg_base) (i32.const -1))
                 (return)))
-            (call $vsock_block (i32.const 16))
+            (call $vsock_block (local.get $unpop))
             (return)))
         (store.field VSock state (local.get $rec) (i32.const 6))
         (store.field VSock flags (local.get $rec) (i32.or (load.field VSock flags (local.get $rec)) (i32.const 8)))
@@ -1552,7 +1556,7 @@
             (call $vsock_set_error (i32.const 10035))      ;; WSAEWOULDBLOCK
             (i32.store offset=0 (global.get $reg_base) (i32.const -1))
             (return)))
-        (call $vsock_block (i32.const 16))
+        (call $vsock_block (local.get $unpop))
         (return)))
     (local.set $lis (call $vsock_find_listener (local.get $ip) (local.get $port)))
     (if (i32.lt_s (local.get $lis) (i32.const 0))
@@ -1603,6 +1607,33 @@
       (load.field VSock acc_count (local.get $lrec)) (local.get $child))
     (store.field VSock acc_count (local.get $lrec) (i32.add (load.field VSock acc_count (local.get $lrec)) (i32.const 1)))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)))
+
+  ;; WSAConnect: the virtual TCP provider has no connection data or QoS.
+  ;; Unsupported requests return provider errors, never a fabricated connection.
+  (func $handle_WSAConnect (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+                          (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $sp i32) (local $sqos i32) (local $gqos i32) (local $idx i32) (local $err i32)
+    (local.set $sp (i32.load offset=16 (global.get $reg_base)))
+    (local.set $sqos (call $gl32 (i32.add (local.get $sp) (i32.const 24))))
+    (local.set $gqos (call $gl32 (i32.add (local.get $sp) (i32.const 28))))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32)))
+    (local.set $idx (call $vsock_index (local.get $arg0)))
+    (if (i32.lt_s (local.get $idx) (i32.const 0))
+      (then (local.set $err (i32.const 10038)))
+      (else
+        ;; Datagram connect is not provided by this TCP path.
+        (if (i32.ne (load.field VSock type (call $vsock_rec (local.get $idx))) (i32.const 1))
+          (then (local.set $err (i32.const 10045))))
+        (if (local.get $arg3) (then (local.set $err (i32.const 10043))))
+        (if (local.get $sqos) (then (local.set $err (i32.const 10045))))
+        (if (local.get $gqos) (then (local.set $err (i32.const 10022))))))
+    (if (local.get $err)
+      (then
+        (call $vsock_set_error (local.get $err))
+        (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    ;; TCP returns no connection data, including on asynchronous completion.
+    (if (local.get $arg4) (then (call $gs32 (local.get $arg4) (i32.const 0))))
+    (call $vsock_connect (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 32)))
 
   ;; accept(s, addr, addrlen)
   (func $handle_accept (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)

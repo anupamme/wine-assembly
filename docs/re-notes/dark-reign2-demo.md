@@ -58,3 +58,26 @@ no manifest candidate yet, so no result is attached to another game's card.
 The first fixture also lacks `test/binaries/dlls/shell32.dll` and
 `test/binaries/dlls/msvcrt.dll`; dbghelp reports failed symbol initialization.
 The explicit device-rejection log is the current primary lead.
+
+## WSAConnect implemented; event notification is next
+
+The virtual TCP provider now exposes `WSAConnect`, sharing the existing
+connection implementation with `connect`. Each entrypoint supplies its own
+stack-frame size, so blocking retries preserve all seven WSAConnect arguments.
+Successful TCP connections report zero callee-data bytes. Unsupported connection
+data and QoS requests return provider errors; reserved group QoS is rejected.
+Datagram connect is not implemented by this TCP path and returns an unsupported
+operation error. This is not a claim of complete Winsock 2 support.
+
+The old tree fails the name-resolution regression; the fixed full build and
+all 50 Winsock checks pass, including TCP establishment, already-connected
+errors, provider errors and three consecutive blocking retry stack checks.
+Existing fragmented session and async-select tests also pass.
+
+Ordinary replay now resolves WSAConnect and stops at the next missing symbol:
+`WSAEnumNetworkEvents` in `ws2_32.dll` (`win32_socket.cpp:1796`). The fatal dialog
+and final game log are recorded in
+`scratch/runs/20261011T2115Z-dark-reign2-wsaconnect/`. Implement event selection,
+latched network-event/error reporting and event reset semantics together;
+do not add a silent empty-events stub to get past the lookup. No menu or
+gameplay is qualified yet.
