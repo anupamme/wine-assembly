@@ -232,3 +232,19 @@ through touch-only Software/OK/Game/Start. Tapping New Game does not advance:
 that menu belongs to the game and polls its DirectInput cursor. Next verify
 ordinary touch-trackpad drags and tap at the resulting cursor, then gameplay.
 No phone gameplay/FPS/audio claim.
+
+## Touch-only gameplay verified (Chrome emulation)
+
+Reviewed run20261011T2033Z-recoil-touch-held at844x390 with Threads uses
+only CDP touch events: native Software/OK/Game/Start, trackpad drags to
+New Game and Start, and800ms held Fire presses on the overlay. Cursor
+coordinates are read for test feedback; no guest writes or keyboard/mouse
+injection. After100 seconds, a2.5-second Left hold on the direction pad
+rotates the tank/view and minimap, moving the wreck to the right side.
+Before/after gameplay captures are reviewed.
+
+UX follow-up: ordinary trackpad taps reach and highlight New Game but do
+not activate it (run20261011T2029Z-recoil-touch-gameplay); held Fire does.
+The remaining issue is the short trackpad click pulse, not cursor movement.
+This route verifies Chrome touch emulation, not WebKit or a physical phone.
+FPS and audibility remain unmeasured.
