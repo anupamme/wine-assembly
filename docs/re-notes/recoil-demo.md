@@ -123,3 +123,62 @@ holds a click at the visible New Game center (page380,340) for150ms;
 WM_LBUTTONDOWN/UP reach HWND10001 but the menu does not advance.
 Next inspect fullscreen client-coordinate conversion and the game polling
 path. No gameplay/FPS/audio/mobile qualification.
+
+## Relative mouse menu route (2026-10-11)
+
+Recoil registration/refcount fix integrated on main ed013f819. Browser
+run1927Z confirms delivered pointer358,106 and HWND10001; held click/Enter
+do not advance. Main-menu polling calls DirectInput GetDeviceState16 bytes
+at return0x46690c (buffer0x564230), not an absolute Win32 cursor.
+Relative movement and held button work: run1931Z reaches name/difficulty.
+Read-only cursor data at0x564258/0x56425c shows (357,109) before a move
+and (460,479) after (82,313); game sensitivity scales motion and clamps.
+Button byte0x56423c is0x80 while held. No input emulator change was needed.
+
+Verified CLI sequence (batch-size default1000; source9c7cbf823):
+120:click:168:289,130:click:323:326,160:click:25:31,170:click:38:52,
+20000:relmousemove:30:-134:10,24000:relmousemove:0:36:10,
+26000:di-mousedown:1,27000:di-mouseup:1,
+62000:relmousemove:66:255:10,64000:di-mousedown:1,65000:di-mouseup:1.
+At180000 batches reviewed run20261011T1934Z-recoil-level-route shows the
+3D opening: tank on a truck beside the water. This is not yet gameplay.
+Longer650000-batch run finished at19:36:14Z with no reported crash; its
+450000/520000 captures and held-Up460000..510000 require separate review.
+Browser ordinary gameplay, FPS, audio and mobile remain unverified.
+
+Player control verified in CLI run20261011T1938Z-recoil-turn-check: the
+450000-batch baseline exactly matches the forward-run before PNG; holding
+Left460000..500000 visibly rotates tank/view left and moves the obstacle to
+the right edge, with minimap orientation changing. Reviewed before/after
+gameplay captures are published. Browser/mobile/FPS/audio remain unverified.
+
+## Browser relative input (2026-10-11)
+
+The registry opts into relativeMouse because Recoil menus and aiming consume
+DirectInput relative motion. The existing browser pointer-lock path supplies
+unbounded mouse deltas. No renderer or emulator core change is needed.
+
+Reviewed run20261011T1954Z-recoil-pointer-files on Chrome152 with Threads
+and cross-origin isolation reaches New Game, name/difficulty, mission screen,
+then gameplay HUD. Ordinary Puppeteer mouse motion and held clicks drive
+those menus; read-only guest cursor feedback guides the test. No guest state
+is patched. The initial Left hold overlaps the cutscene transition, so this
+run alone does not establish browser player steering.
+
+The fork omitted prepared candidate files and native COMCTL32. Restore real
+files under test/binaries/candidates/recoil-demo/game; the emulator server
+rejects symlinks outside the checkout. Regenerate the browser manifest with
+the existing candidate preparation tool. The earlier files-unavailable
+runs1947Z/1951Z/1953Z are fixture failures, not pointer-lock regressions.
+
+Existing touch-controls and local-proprietary-demo-dropdown tests pass.
+The touch test needed its original packages/freeware/blobby-volley/settings.dat
+fixture restored on the fork. Mobile behavior, FPS and audibility are unknown.
+
+Browser player control verified in run20261011T1956Z-recoil-browser-turn.
+Wait100 seconds after Start so the opening finishes, then hold ArrowLeft
+for2.5 seconds: the tank/view turns left, the wreck shifts to the right edge
+and the minimap rotates. Both frames show gameplay HUD and enemies.
+Chrome152.0.7977.42, Threads and cross-origin isolation enabled; WASM
+a2eca9be09f0f966f019e61fa02fd0aafef61008517c155a33e78de9a8495eeb.
+This qualifies browser steering, not mobile controls, FPS or audibility.
