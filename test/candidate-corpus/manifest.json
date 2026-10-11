@@ -1222,6 +1222,72 @@
       }
     },
     {
+      "id": "mdk2-demo",
+      "name": "MDK2 Demo",
+      "kind": "game",
+      "version": "2000 BioWare/Interplay demo (Omen engine, OpenGL), InstallShield 6 self-extractor MDK2Demo.exe; file groups Minimum + english",
+      "executables": [
+        "installed/mdk2demo/mdk2Main.exe",
+        "installed/mdk2demo/MDK2.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Mdk2Demo",
+      "license": "proprietary BioWare/Interplay promotional demo with NO licence or redistribution grant: readmeEN.txt names BioWare Corp. and Interplay registration only; local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Mdk2Demo/MDK2Demo.exe",
+          "sha1": "981cd1f0774c6dae690cdf97bf08d975a43f8e81",
+          "type": "file",
+          "destination": "sources/MDK2Demo.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/MDK2Demo.exe",
+          "into": "setup"
+        },
+        {
+          "type": "unshield",
+          "cab": "setup/data1.cab",
+          "into": "groups",
+          "group": "Minimum"
+        },
+        {
+          "type": "unshield",
+          "cab": "setup/data1.cab",
+          "into": "groups",
+          "group": "english"
+        },
+        {
+          "type": "copyTree",
+          "from": "groups/Minimum",
+          "into": "installed/mdk2demo"
+        },
+        {
+          "type": "copyTree",
+          "from": "groups/english",
+          "into": "installed/mdk2demo"
+        },
+        {
+          "type": "writeText",
+          "file": "installed/mdk2demo/save/config.lua",
+          "text": "chSetVideoMode(640, 480, 16, 16, 60, 1, 1, 0.8, 0, 1, 0, 0)\r\nchSndForceSoftwareMode(1)\r\n"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/mdk2demo/mdk2Main.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 200000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "hexen-2-demo",
       "name": "Hexen II Demo",
       "kind": "game",
