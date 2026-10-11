@@ -1304,6 +1304,74 @@
     (global.set $yield_flag (i32.const 1))
     (global.set $steps (i32.const 0)))
 
+  ;; IPv4/ICMP packet primitives for the room transport. Addresses below are
+  ;; host-owned WASM buffer spans, NOT guest pointers. Callers validate spans.
+  ;; RFC 792 checksum: big-endian words, odd tail padded with a low zero byte.
+  (func $vsock_inet_checksum (param $p i32) (param $n i32) (result i32)
+    (local $sum i32)
+    (block $tail (loop $words
+      (br_if $tail (i32.lt_u (local.get $n) (i32.const 2)))
+      (local.set $sum (i32.add (local.get $sum)
+        (i32.or (i32.shl (i32.load8_u (local.get $p)) (i32.const 8))
+          (i32.load8_u offset=1 (local.get $p)))))
+      (local.set $sum (i32.add (i32.and (local.get $sum) (i32.const 65535))
+        (i32.shr_u (local.get $sum) (i32.const 16))))
+      (local.set $p (i32.add (local.get $p) (i32.const 2)))
+      (local.set $n (i32.sub (local.get $n) (i32.const 2)))
+      (br $words)))
+    (if (local.get $n) (then
+      (local.set $sum (i32.add (local.get $sum)
+        (i32.shl (i32.load8_u (local.get $p)) (i32.const 8))))))
+    (local.set $sum (i32.add (i32.and (local.get $sum) (i32.const 65535))
+      (i32.shr_u (local.get $sum) (i32.const 16))))
+    (i32.xor (local.get $sum) (i32.const 65535)))
+
+  ;; Produce an echo reply only from a valid, complete IPv4 echo request.
+  ;; Returns 0 without writing for unsupported options/fragments or malformed
+  ;; packets. The caller owns routing/local-address checks; this is not a
+  ;; promise that an arbitrary remote host exists. Input/output may overlap.
+  (func $vsock_icmp_echo_reply (param $src i32) (param $n i32)
+      (param $dst i32) (param $cap i32) (param $id i32) (result i32)
+    (local $len i32) (local $sum i32) (local $from i32) (local $to i32)
+    (if (i32.lt_u (local.get $n) (i32.const 28)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load8_u (local.get $src)) (i32.const 0x45)) (then (return (i32.const 0))))
+    (local.set $len (i32.or
+      (i32.shl (i32.load8_u offset=2 (local.get $src)) (i32.const 8))
+      (i32.load8_u offset=3 (local.get $src))))
+    (if (i32.ne (local.get $len) (local.get $n)) (then (return (i32.const 0))))
+    (if (i32.gt_u (local.get $len) (local.get $cap)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load8_u offset=9 (local.get $src)) (i32.const 1)) (then (return (i32.const 0))))
+    ;; Only DF may be set: reserved flag, MF and fragment offset are rejected.
+    (if (i32.or (i32.and (i32.load8_u offset=6 (local.get $src)) (i32.const 0xbf))
+                (i32.load8_u offset=7 (local.get $src))) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.load8_u offset=8 (local.get $src))) (then (return (i32.const 0))))
+    (if (call $vsock_inet_checksum (local.get $src) (i32.const 20)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load8_u offset=20 (local.get $src)) (i32.const 8)) (then (return (i32.const 0))))
+    (if (i32.load8_u offset=21 (local.get $src)) (then (return (i32.const 0))))
+    (if (call $vsock_inet_checksum (i32.add (local.get $src) (i32.const 20))
+          (i32.sub (local.get $len) (i32.const 20))) (then (return (i32.const 0))))
+    (local.set $from (i32.load offset=12 (local.get $src)))
+    (local.set $to (i32.load offset=16 (local.get $src)))
+    (memory.copy (local.get $dst) (local.get $src) (local.get $len))
+    (i32.store8 offset=1 (local.get $dst) (i32.const 0))
+    (i32.store8 offset=4 (local.get $dst) (i32.shr_u (local.get $id) (i32.const 8)))
+    (i32.store8 offset=5 (local.get $dst) (local.get $id))
+    (i32.store16 offset=6 (local.get $dst) (i32.const 0))
+    (i32.store8 offset=8 (local.get $dst) (i32.const 64))
+    (i32.store16 offset=10 (local.get $dst) (i32.const 0))
+    (i32.store offset=12 (local.get $dst) (local.get $to))
+    (i32.store offset=16 (local.get $dst) (local.get $from))
+    (i32.store8 offset=20 (local.get $dst) (i32.const 0))
+    (i32.store16 offset=22 (local.get $dst) (i32.const 0))
+    (local.set $sum (call $vsock_inet_checksum (local.get $dst) (i32.const 20)))
+    (i32.store8 offset=10 (local.get $dst) (i32.shr_u (local.get $sum) (i32.const 8)))
+    (i32.store8 offset=11 (local.get $dst) (local.get $sum))
+    (local.set $sum (call $vsock_inet_checksum (i32.add (local.get $dst) (i32.const 20))
+      (i32.sub (local.get $len) (i32.const 20))))
+    (i32.store8 offset=22 (local.get $dst) (i32.shr_u (local.get $sum) (i32.const 8)))
+    (i32.store8 offset=23 (local.get $dst) (local.get $sum))
+    (local.get $len))
+
   ;; ---- handlers -------------------------------------------------------
 
   ;; socket(af, type, protocol)

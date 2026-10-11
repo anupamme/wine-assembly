@@ -342,3 +342,26 @@ The previous Sprintf crash is gone. There is still no menu/gameplay/FPS result.
 Evidence: scratch/runs/20261011T2326Z-dark-reign2-socket-capability/.
 Next work requires real raw ICMP packet semantics and overlapped socket state;
 do not turn either into success solely to get past startup.
+
+## ICMP packet prerequisite (2026-10-11 23:33Z)
+
+Static disassembly at 0x0051e289..0x0051e2a5 shows the socket wrapper requests
+flag1 for all three branches: raw ICMP, UDP and TCP. Adding raw allocation alone
+would leave the common creation-attribute requirement unresolved.
+
+Added internal WAT Internet-checksum and IPv4 echo-reply helpers. They validate
+both checksums, complete lengths, IPv4 header shape, protocol, TTL, ICMP type/code
+and unsupported fragmentation/options before writing. Replies reverse addresses,
+use caller-supplied IP identification, preserve ICMP identifier/sequence/payload,
+and recompute both checksums. These operate on validated host-owned buffer spans;
+the eventual caller must enforce room destination ownership. They do not assert
+that an arbitrary destination exists or generate a reply for an absent peer.
+[Packet contract: RFC792](https://www.rfc-editor.org/rfc/rfc792.html).
+
+66/66 Winsock checks and full build pass, including an independent checksum
+oracle, fixed known vector, odd/even payloads through maximum IPv4 size,
+in-place operation, output guards and malformed-packet no-write checks.
+These helpers are not wired to public sockets: no API capability change and no
+new ordinary-run screenshot. Next: raw-packet receive queues/room frame routing,
+read readiness, send/recv handlers and overlapped creation/operation state.
+Evidence: scratch/runs/20261011T2333Z-dark-reign2-icmp-packet/.

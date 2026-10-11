@@ -44,6 +44,11 @@ const GAME_PORT = 8035;
 async function main() {
   const root = path.join(__dirname, '..');
   const wasm = compileSrcWasm((file, source) => file === '13-exports.wat' ? source + String.raw`
+    (func (export "test_icmp_reply") (param $src i32) (param $n i32) (param $dst i32) (param $cap i32) (param $id i32) (result i32)
+      (call $vsock_icmp_echo_reply (call $g2w (local.get $src)) (local.get $n)
+        (call $g2w (local.get $dst)) (local.get $cap) (local.get $id)))
+    (func (export "test_checksum") (param $p i32) (param $n i32) (result i32)
+      (call $vsock_inet_checksum (call $g2w (local.get $p)) (local.get $n)))
     (func (export "test_wsa_protocols") (param $wide i32) (param $f i32) (param $p i32) (param $n i32) (result i64)
       (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
       (call $dispatch_api_table
@@ -565,6 +570,54 @@ async function main() {
       set(d+8,2);set(d+12,0);assert.strictEqual(Number(BigInt.asIntN(32,wat.test_wsasend(cli,d,2,n))),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
       assert.strictEqual(wat.test_call_recv(acc,out,110000,0),-1);
     }
+  });
+
+  check('IPv4 ICMP echo packets preserve payload and reject malformed input without writes', () => {
+    const checksum = bytes => {
+      let sum=0;
+      for(let i=0;i<bytes.length;i+=2) sum += bytes[i]*256+(bytes[i+1]||0);
+      while(sum>65535)sum=(sum%65536)+Math.floor(sum/65536);
+      return 65535-sum;
+    };
+    const packet = n => {
+      const b=Buffer.alloc(n+28);b[0]=0x45;b.writeUInt16BE(b.length,2);
+      b.writeUInt16BE(0xabcd,4);b[6]=0x40;b[8]=32;b[9]=1;
+      b.writeUInt32BE(0x0a000001,12);b.writeUInt32BE(0x0a000002,16);
+      b[20]=8;b.writeUInt16BE(0x1234,24);b.writeUInt16BE(0x5678,26);
+      for(let i=28;i<b.length;i++)b[i]=(i*43+7)&255;
+      b.writeUInt16BE(checksum(b.subarray(20)),22);
+      b.writeUInt16BE(checksum(b.subarray(0,20)),10);return b;
+    };
+    const vector=buf(Buffer.from('0001f203f4f5f6f7','hex'));
+    assert.strictEqual(wat.test_checksum(vector,8),0x220d,'known checksum vector');
+    for(const n of [0,1,2,31,1025,65507]){
+      const input=packet(n),src=buf(input),dst=buf(input.length+4);
+      new Uint8Array(memory.buffer,wa(dst),input.length+4).fill(0xa5);
+      assert.strictEqual(wat.test_icmp_reply(src,input.length,dst,input.length,0x2468),input.length);
+      const reply=Buffer.from(new Uint8Array(memory.buffer,wa(dst),input.length));
+      assert.deepStrictEqual(Buffer.from(new Uint8Array(memory.buffer,wa(src),input.length)),input);
+      assert.strictEqual(checksum(reply.subarray(0,20)),0);assert.strictEqual(checksum(reply.subarray(20)),0);
+      assert.strictEqual(reply.readUInt32BE(12),0x0a000002);assert.strictEqual(reply.readUInt32BE(16),0x0a000001);
+      assert.strictEqual(reply.readUInt16BE(4),0x2468);assert.strictEqual(reply[8],64);assert.strictEqual(reply[20],0);
+      assert.deepStrictEqual(reply.subarray(24),input.subarray(24),'identifier, sequence and all payload bytes');
+      assert.deepStrictEqual([...new Uint8Array(memory.buffer,wa(dst)+input.length,4)],[165,165,165,165]);
+      assert.strictEqual(wat.test_icmp_reply(src,input.length,src,input.length,0x2468),input.length);
+      assert.deepStrictEqual(Buffer.from(new Uint8Array(memory.buffer,wa(src),input.length)),reply,'in-place response');
+    }
+    const original=packet(3),dst=buf(100);
+    const reject=(b,n=b.length,cap=100)=>{
+      new Uint8Array(memory.buffer,wa(dst),100).fill(0xa5);
+      assert.strictEqual(wat.test_icmp_reply(buf(b),n,dst,cap,1),0);
+      assert(new Uint8Array(memory.buffer,wa(dst),100).every(x=>x===0xa5));
+    };
+    reject(original,27);reject(original,original.length-1);reject(original,original.length,original.length-1);
+    for(const [offset,value]of [[0,0x46],[0,0x65],[6,0x20],[6,0x80],[7,1],[8,0],[9,17],[20,0],[21,1],[30,0]]){
+      const bad=Buffer.from(original);bad[offset]=value;
+      if(offset<20){bad.writeUInt16BE(0,10);bad.writeUInt16BE(checksum(bad.subarray(0,20)),10);}
+      else if(offset<24){bad.writeUInt16BE(0,22);bad.writeUInt16BE(checksum(bad.subarray(20)),22);}
+      reject(bad);
+    }
+    const badHeader=Buffer.from(original);badHeader[10]^=1;reject(badHeader);
   });
 
   check('WSASocket validates catalog selections and parks the full creation frame', () => {
