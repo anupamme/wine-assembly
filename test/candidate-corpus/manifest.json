@@ -1184,6 +1184,44 @@
       }
     },
     {
+      "id": "shogo-demo",
+      "name": "Shogo: Mobile Armor Division Demo",
+      "kind": "game",
+      "version": "1998 Monolith PC Gamer demo (LithTech 1.0, Direct3D and software renderers), ShogoDemo.zip with the loose Game directory plus its InstallShield 3 setup",
+      "executables": [
+        "installed/shogodemo/Client.exe",
+        "installed/shogodemo/ShogoDem.exe"
+      ],
+      "sourcePage": "https://archive.org/details/ShogoMobileArmorDivisionDemo",
+      "license": "proprietary Monolith promotional demo with NO licence or redistribution grant: Game/Readme.txt says only 'Copyright 1998 Monolith Productions, Inc.' for the PC Gamer Demo Version; local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/ShogoMobileArmorDivisionDemo/ShogoDemo.zip",
+          "sha1": "f372ab1a822002107980e6648fe101d10c19fb19",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "Game",
+          "into": "installed/shogodemo"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/shogodemo/Client.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 200000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "hexen-2-demo",
       "name": "Hexen II Demo",
       "kind": "game",
