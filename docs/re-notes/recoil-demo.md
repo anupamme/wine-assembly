@@ -182,3 +182,18 @@ and the minimap rotates. Both frames show gameplay HUD and enemies.
 Chrome152.0.7977.42, Threads and cross-origin isolation enabled; WASM
 a2eca9be09f0f966f019e61fa02fd0aafef61008517c155a33e78de9a8495eeb.
 This qualifies browser steering, not mobile controls, FPS or audibility.
+
+## Phone route follow-up
+
+Touch-enabled Chrome at844x390 renders the pad and Fire/Alt fire/Map/Menu
+controls (reviewed run20261011T2007Z-recoil-phone-start). Switching a live
+desktop session into touch emulation did not instantiate the controls;
+run2004Z is a harness limitation, not evidence of a broken phone launch.
+
+Touch-only run20261011T2009Z-recoil-phone-menu remains in the native graphics
+selector: a200ms touch at307,214 selects software, but the same held tap
+at421,240 on OK does not close it. Later menu taps consequently test nothing.
+Capture filenames describe intended checkpoints; reviewed contents show
+the selector still open. Next trace native-dialog touch/button dispatch,
+including hit coordinates and down/up pairing. No root cause yet; phone
+gameplay/steering/FPS/audio remain unverified. The desktop route is unaffected.
