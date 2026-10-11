@@ -654,8 +654,12 @@
                 (if (result i32) (local.get $graceful)
                   (then (i32.const 1))     ;; orderly EOF for the reader
                   (else (i32.const 5)))))))))  ;; read-closed + reset
+    (if (i32.ge_s (local.get $peer) (i32.const 0)) (then
+      (call $vsock_async_post (local.get $peer) (i32.const 32)
+        (select (i32.const 0) (i32.const 10054) (local.get $graceful)))))
     (local.set $buf (load.field VSock rx_buf (local.get $rec)))
     (if (local.get $buf) (then (call $heap_free (local.get $buf))))
+    (drop (call $host_socket_event (i32.const 3) (local.get $idx) (i32.const 0) (i32.const 0) (i32.const 0)))
     ;; Notification ownership ends with this socket, not with its recycled
     ;; table index. Clear before publishing the slot as free; do not allocate
     ;; an async table merely to close a socket that never used notifications.
@@ -1615,6 +1619,10 @@
     (store.field-elem VSock acc_queue (local.get $lrec)
       (load.field VSock acc_count (local.get $lrec)) (local.get $child))
     (store.field VSock acc_count (local.get $lrec) (i32.add (load.field VSock acc_count (local.get $lrec)) (i32.const 1)))
+
+    (call $vsock_async_post (local.get $lis) (i32.const 8) (i32.const 0))
+    (call $vsock_async_post (local.get $idx) (i32.const 16) (i32.const 0))
+    (call $vsock_async_post (local.get $idx) (i32.const 2) (i32.const 0))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)))
 
   ;; WSAConnect: the virtual TCP provider has no connection data or QoS.
@@ -1657,6 +1665,7 @@
         (call $vsock_set_error (i32.const 10038))
         (i32.store offset=0 (global.get $reg_base) (i32.const -1))
         (return)))
+    (drop (call $host_socket_event (i32.const 6) (local.get $idx) (i32.const 8) (i32.const 0) (i32.const 0)))
     (local.set $rec (call $vsock_rec (local.get $idx)))
     (if (i32.ne (load.field VSock state (local.get $rec)) (i32.const 3))
       (then
@@ -1700,10 +1709,17 @@
         (i32.store (local.get $carec) (i32.load (local.get $arec)))
         (i32.store offset=4 (local.get $carec) (i32.load offset=4 (local.get $arec)))
         (i32.store offset=8 (local.get $carec) (i32.load offset=8 (local.get $arec)))))
+    (drop (call $host_socket_event (i32.const 4) (local.get $child) (local.get $idx) (i32.const 0) (i32.const 0)))
+    (store.field VSock mode (call $vsock_rec (local.get $child))
+      (load.field VSock mode (local.get $rec)))
+    (if (load.field VSock acc_count (local.get $rec))
+      (then (call $vsock_async_post (local.get $idx) (i32.const 8) (i32.const 0))))
     (local.set $crec (call $vsock_rec (local.get $child)))
     (call $vsock_write_sockaddr (local.get $arg1) (local.get $arg2)
       (load.field VSock remote_ip (local.get $crec))
       (load.field VSock remote_port (local.get $crec)))
+    (if (call $vsock_write_ready (local.get $child))
+      (then (call $vsock_async_post (local.get $child) (i32.const 2) (i32.const 0))))
     ;; Anything the peer sent between the SYN and this accept is already in the
     ;; ring, and its FD_READ went to a socket that did not exist yet. Report the
     ;; edge now, or that first packet waits for a second one to announce it.
@@ -1904,7 +1920,8 @@
                   (then
                     (if (i32.eqz (load.field VSock mode (local.get $rec)))
                       (then (call $vsock_block (i32.const 20)) (return)))
-                    (call $vsock_set_error (i32.const 10035))
+                    (drop (call $host_socket_event (i32.const 6) (local.get $idx) (i32.const 2) (i32.const 0) (i32.const 0)))
+          (call $vsock_set_error (i32.const 10035))
                     (i32.store offset=0 (global.get $reg_base) (i32.const -1))
                     (return)))
                 (local.set $i (i32.const 0))
@@ -1933,7 +1950,8 @@
               (then
                 (if (i32.eqz (load.field VSock mode (local.get $rec)))
                   (then (call $vsock_block (i32.const 20)) (return)))
-                (call $vsock_set_error (i32.const 10035))
+                (drop (call $host_socket_event (i32.const 6) (local.get $idx) (i32.const 2) (i32.const 0) (i32.const 0)))
+          (call $vsock_set_error (i32.const 10035))
                 (i32.store offset=0 (global.get $reg_base) (i32.const -1))
                 (return)))))
         (local.set $n (local.get $arg2))
@@ -1951,6 +1969,7 @@
           ;; The window is closed or the wire is full.
           (if (i32.eqz (load.field VSock mode (local.get $rec)))
             (then (call $vsock_block (i32.const 20)) (return)))
+          (drop (call $host_socket_event (i32.const 6) (local.get $idx) (i32.const 2) (i32.const 0) (i32.const 0)))
           (call $vsock_set_error (i32.const 10035))
           (i32.store offset=0 (global.get $reg_base) (i32.const -1))
           (return))
@@ -1976,12 +1995,14 @@
         ;; The peer's ring is full; a blocking send waits for it to drain.
         (if (i32.eqz (load.field VSock mode (local.get $rec)))
           (then (call $vsock_block (i32.const 20)) (return)))
-        (call $vsock_set_error (i32.const 10035))
+        (drop (call $host_socket_event (i32.const 6) (local.get $idx) (i32.const 2) (i32.const 0) (i32.const 0)))
+          (call $vsock_set_error (i32.const 10035))
         (i32.store offset=0 (global.get $reg_base) (i32.const -1))
         (return)))
     (local.set $n (local.get $arg2))
     (if (i32.gt_u (local.get $n) (local.get $space)) (then (local.set $n (local.get $space))))
     (call $vsock_ring_write (local.get $peer) (local.get $arg1) (local.get $n))
+    (call $vsock_async_post (local.get $peer) (i32.const 1) (i32.const 0))
     (i32.store offset=0 (global.get $reg_base) (local.get $n)))
 
   ;; The datagram send behind sendto and WSASendTo. $unpop is the caller's
@@ -2252,6 +2273,11 @@
         (if (i32.eq (load.field VSock peer (local.get $rec)) (i32.const -2))
           (then (call $vsock_owe_credit (local.get $idx) (local.get $n) (i32.const 1))))
         (i32.store offset=0 (global.get $reg_base) (local.get $n))
+        ;; A local sender that saw WSAEWOULDBLOCK is writable again.
+        (if (i32.ge_s (load.field VSock peer (local.get $rec)) (i32.const 0)) (then
+          (if (call $host_socket_event (i32.const 5)
+                (load.field VSock peer (local.get $rec)) (i32.const 0) (i32.const 0) (i32.const 0))
+            (then (call $vsock_async_post (load.field VSock peer (local.get $rec)) (i32.const 2) (i32.const 0))))))
         (call $vsock_read_rearm (local.get $idx))
         (return)))
     (local.set $flags (load.field VSock flags (local.get $rec)))
@@ -2302,7 +2328,8 @@
         (if (i32.ge_s (local.get $peer) (i32.const 0))
           (then
             (local.set $prec (call $vsock_rec (local.get $peer)))
-            (store.field VSock flags (local.get $prec) (i32.or (load.field VSock flags (local.get $prec)) (i32.const 1)))))))
+            (store.field VSock flags (local.get $prec) (i32.or (load.field VSock flags (local.get $prec)) (i32.const 1)))
+            (call $vsock_async_post (local.get $peer) (i32.const 32) (i32.const 0))))))
     (if (i32.ne (local.get $arg1) (i32.const 1))
       (then
         (store.field VSock flags (local.get $rec) (i32.or (load.field VSock flags (local.get $rec)) (i32.const 1)))))
@@ -3144,7 +3171,17 @@
   ;; Report one event to the window that asked for it. lParam packs the event
   ;; and the error the way WSAMAKESELECTREPLY does; wParam is the handle.
   (func $vsock_async_post (param $idx i32) (param $event i32) (param $error i32)
-    (local $rec i32) (local $w i32) (local $tid i32) (local $sock i32)
+    (local $rec i32) (local $w i32) (local $tid i32) (local $sock i32) (local $mask i32)
+    (local.set $mask (call $host_socket_event (i32.const 5) (local.get $idx) (i32.const 0) (i32.const 0) (i32.const 0)))
+    (if (local.get $mask) (then
+      (if (i32.eqz (i32.and (local.get $mask) (local.get $event))) (then (return)))
+      (if (i32.eq (local.get $event) (i32.const 1)) (then
+        (local.set $sock (call $vsock_rec (local.get $idx)))
+        (if (i32.and (load.field VSock flags (local.get $sock)) (i32.const 0x20)) (then (return)))
+        (store.field VSock flags (local.get $sock)
+          (i32.or (load.field VSock flags (local.get $sock)) (i32.const 0x20)))))
+      (drop (call $host_socket_event (i32.const 1) (local.get $idx) (local.get $event) (local.get $error) (i32.const 0)))
+      (return)))
     (local.set $rec (call $vsock_async_rec (local.get $idx)))
     (if (i32.eqz (local.get $rec)) (then (return)))
     (local.set $w (call $g2w (local.get $rec)))
@@ -3205,6 +3242,7 @@
         (call $vsock_set_error (i32.const 10055))          ;; WSAENOBUFS
         (i32.store offset=0 (global.get $reg_base) (i32.const -1))
         (return)))
+    (drop (call $host_socket_event (i32.const 3) (local.get $idx) (i32.const 0) (i32.const 0) (i32.const 0)))
     (local.set $w (call $g2w (local.get $rec)))
     (i32.store        (local.get $w) (local.get $arg1))    ;; hWnd
     (i32.store offset=4 (local.get $w) (local.get $arg2))  ;; wMsg
@@ -3226,6 +3264,59 @@
     (if (i32.gt_u (load.field VSock acc_count (call $vsock_rec (local.get $idx))) (i32.const 0))
       (then (call $vsock_async_post (local.get $idx) (i32.const 0x08) (i32.const 0))))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0)))
+
+  (func $handle_WSAEventSelect (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+      (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $idx i32) (local $rec i32) (local $wa i32) (local $error i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+    (if (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED))) (then
+      (call $vsock_set_error (i32.const 10093))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (local.set $idx (call $vsock_index (local.get $arg0)))
+    (if (i32.lt_s (local.get $idx) (i32.const 0)) (then
+      (call $vsock_set_error (i32.const 10038))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (local.set $rec (call $vsock_async_rec (local.get $idx)))
+    (if (i32.eqz (local.get $rec)) (then
+      (call $vsock_set_error (i32.const 10055))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (local.set $error (call $host_socket_event (i32.const 0) (local.get $idx) (local.get $arg1) (local.get $arg2) (i32.const 0)))
+    (if (local.get $error) (then
+      (call $vsock_set_error (local.get $error))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (memory.fill (call $g2w (local.get $rec)) (i32.const 0) (global.get $VSOCK_ASYNC_REC))
+    (local.set $rec (call $vsock_rec (local.get $idx)))
+    (store.field VSock mode (local.get $rec) (i32.const 1))
+    (call $vsock_read_reenable (local.get $idx))
+    (if (load.field VSock rx_len (local.get $rec))
+      (then (call $vsock_async_post (local.get $idx) (i32.const 1) (i32.const 0))))
+    (if (call $vsock_write_ready (local.get $idx))
+      (then (call $vsock_async_post (local.get $idx) (i32.const 2) (i32.const 0))))
+    (if (load.field VSock acc_count (local.get $rec))
+      (then (call $vsock_async_post (local.get $idx) (i32.const 8) (i32.const 0))))
+    (i32.store (global.get $reg_base) (i32.const 0)))
+
+  (func $handle_WSAEnumNetworkEvents (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+      (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $idx i32) (local $rec i32) (local $wa i32) (local $error i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+    (if (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED))) (then
+      (call $vsock_set_error (i32.const 10093))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (local.set $idx (call $vsock_index (local.get $arg0)))
+    (if (i32.lt_s (local.get $idx) (i32.const 0)) (then
+      (call $vsock_set_error (i32.const 10038))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (if (i32.eqz (local.get $arg2)) (then
+      (call $vsock_set_error (i32.const 10014))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (local.set $wa (call $guest_span_in (local.get $arg2) (i32.const 44)))
+    (local.set $error (call $host_socket_event (i32.const 2) (local.get $idx) (local.get $arg1) (i32.const 0) (local.get $wa)))
+    (if (local.get $error) (then
+      (call $vsock_set_error (local.get $error))
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+    (call $guest_span_writeback (local.get $arg2) (local.get $wa) (i32.const 44))
+    (i32.store (global.get $reg_base) (i32.const 0)))
 
   ;; getprotobyname(name) → struct protoent* (NULL when unknown)
   ;;

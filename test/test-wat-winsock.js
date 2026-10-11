@@ -97,6 +97,15 @@ async function main() {
         (i32.const 0) (i32.const 0) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsa_network_event") (param $op i32) (param $s i32) (param $ev i32) (param $p i32) (result i32)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $dispatch_api_table
+        (if (result i32) (local.get $op)
+          (then (call $lookup_api_id "WSAEnumNetworkEvents"))
+          (else (call $lookup_api_id "WSAEventSelect")))
+        (local.get $s) (local.get $ev) (local.get $p)
+        (i32.const 0) (i32.const 0) (i32.const 0))
+      (i32.load (global.get $reg_base)))
     ;; A live HWND, so WSAAsyncSelect's posts route to this thread's queue.
     (func (export "test_make_window") (result i32)
       (local $hwnd i32)
@@ -413,6 +422,80 @@ async function main() {
     assert.strictEqual(broker(0,7,0x12345678,1,0),10022);
     assert.strictEqual(select(7,0x80000000),10022,'unsupported mask rejected');
     assert.strictEqual(imports.host.close_event(event),1);
+  });
+
+  check('network event APIs report real TCP read, write and close readiness', () => {
+    for (const name of ['WSAEventSelect','WSAEnumNetworkEvents']) assert(require('../src/api_table.json').some(a=>a.name===name),name);
+    wat.test_vsock_reset();
+    wat.test_wsa_startup(alloc(400));
+    const {srv,cli,acc} = connectedPair();
+    const event = Number(wat.test_wsa_create_event() & 0xffffffffn), out=alloc(44);
+    const view=new DataView(memory.buffer,wa(out),44);
+    const select=(s,mask)=>wat.test_wsa_network_event(0,s,event,mask);
+    const enumerate=(s,ev=event)=>wat.test_wsa_network_event(1,s,ev,out);
+    assert.strictEqual(select(acc,0x23),0);
+    assert.strictEqual(enumerate(acc),0);
+    assert.strictEqual(view.getUint32(0,true),2,'connected socket initially writable');
+    assert.strictEqual(wat.test_call_send(cli,buf([1,2,3]),3,0),3);
+    assert.strictEqual(imports.host.wait_single(event,0),0);
+    assert.strictEqual(sibling.test_wsa_network_event(1,acc,event,out),0);
+    assert.strictEqual(view.getUint32(0,true),1,'read event crosses instance');
+    assert.strictEqual(imports.host.wait_single(event,0),258);
+    assert.strictEqual(wat.test_call_recv(acc,buf(1),1,0),1);
+    assert.strictEqual(enumerate(acc),0);
+    assert.strictEqual(view.getUint32(0,true),1,'partial recv reenables read');
+    assert.strictEqual(wat.test_call_closesocket(cli),0);
+    assert.strictEqual(enumerate(acc,0x12345678),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10022);
+    assert.strictEqual(enumerate(acc),0);
+    assert.strictEqual(view.getUint32(0,true),32);
+    assert.strictEqual(view.getUint32(24,true),10054);
+    assert.strictEqual(wat.test_call_WSAAsyncSelect(acc,0,0,0),0);
+    assert.strictEqual(enumerate(acc),0);
+    assert.strictEqual(view.getUint32(0,true),0);
+    wat.test_call_closesocket(acc); wat.test_call_closesocket(srv);
+    assert.strictEqual(enumerate(acc),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10038);
+    wat.test_wsa_close_event(event); wat.test_wsa_cleanup();
+  });
+
+  check('network FD_WRITE rearms only after a would-block send', () => {
+    wat.test_vsock_reset(); wat.test_wsa_startup(alloc(400));
+    const {srv,cli,acc}=connectedPair();
+    const ev=Number(wat.test_wsa_create_event() & 0xffffffffn),out=alloc(44);
+    const mask=()=>new DataView(memory.buffer,wa(out),44).getUint32(0,true);
+    const enumerate=()=>wat.test_wsa_network_event(1,cli,ev,out);
+    assert.strictEqual(wat.test_wsa_network_event(0,cli,ev,2),0);
+    enumerate(); assert.strictEqual(mask(),2);
+    const payload=buf(100000);
+    assert(wat.test_call_send(cli,payload,100000,0)>0);
+    assert.strictEqual(wat.test_call_send(cli,payload,1,0),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10035);
+    assert.strictEqual(wat.test_call_recv(acc,buf(1),1,0),1);
+    enumerate(); assert.strictEqual(mask(),2);
+    wat.test_call_recv(acc,buf(1),1,0);
+    enumerate(); assert.strictEqual(mask(),0,'read without another blocked send emits no write event');
+    wat.test_wsa_close_event(ev); wat.test_wsa_cleanup();
+  });
+  check('accepted sockets inherit event selection and close cancels it', () => {
+    wat.test_vsock_reset(); wat.test_wsa_startup(alloc(400));
+    const srv=wat.test_call_socket(AF_INET,SOCK_STREAM,0);
+    wat.test_call_bind(srv,sockaddr('0.0.0.0',GAME_PORT),16); wat.test_call_listen(srv,5);
+    const ev=Number(wat.test_wsa_create_event() & 0xffffffffn),out=alloc(44);
+    const mask=()=>new DataView(memory.buffer,wa(out),44).getUint32(0,true);
+    assert.strictEqual(wat.test_wsa_network_event(0,srv,ev,11),0);
+    const cli=wat.test_call_socket(AF_INET,SOCK_STREAM,0);
+    assert.strictEqual(wat.test_call_connect(cli,sockaddr(ROOM_HOST,GAME_PORT),16),0);
+    assert.strictEqual(wat.test_wsa_network_event(1,srv,ev,out),0); assert.strictEqual(mask(),8);
+    const acc=wat.test_call_accept(srv,0,0);
+    assert(acc>0);
+    assert.strictEqual(wat.test_wsa_network_event(1,acc,ev,out),0); assert.strictEqual(mask(),2);
+    wat.test_call_send(cli,buf([4]),1,0);
+    assert.strictEqual(wat.test_wsa_network_event(1,acc,ev,out),0); assert.strictEqual(mask(),1);
+    wat.test_call_closesocket(acc);
+    const replacement=wat.test_call_socket(AF_INET,SOCK_STREAM,0);
+    assert.strictEqual(wat.test_wsa_network_event(1,replacement,ev,out),0); assert.strictEqual(mask(),0);
+    wat.test_wsa_close_event(ev); wat.test_wsa_cleanup();
   });
 
   check('WSAConnect is registered with seven arguments', () => {

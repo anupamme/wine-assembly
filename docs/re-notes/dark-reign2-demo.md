@@ -205,3 +205,34 @@ uses two host-import contexts sharing one process record and real event objects:
 selection filtering, recorded errors, untouched unreported error slots, invalid
 output/event failure preservation, clear/reset, next-event signaling, optional
 reset, accept inheritance, cancellation and invalid masks are covered.
+
+## Network event APIs and next ordinary blocker
+
+WSAEventSelect/WSAEnumNetworkEvents now resolve through the append-only API
+table and call the process host broker. Selection makes the socket nonblocking,
+replaces async-window notification ownership, and reports current readiness.
+Enumeration copies the record and optionally resets its event; unreported error
+slots remain untouched. Accept inherits selection/nonblocking mode, and close
+or AsyncSelect cancels it before socket-slot reuse. READ re-enables through
+recv; WRITE re-enables after a would-block send; ACCEPT re-enables on accept.
+Local TCP connect/send/close/shutdown paths now report the same events as wire
+paths. The host import and its generated RPC signature are included.
+
+All 59 Winsock checks and the full build pass, including real TCP read/write/
+reset events across WASM instances, partial reads, write-buffer exhaustion and
+recovery, accepted-socket inheritance/initial write, cancellation, and slot reuse.
+This is not a real browser-worker concurrency or multiplayer qualification.
+Unsupported event masks (outside READ/WRITE/ACCEPT/CONNECT/CLOSE) fail explicitly.
+
+An ordinary CLI replay passes the old WSAEnumNetworkEvents lookup, then stops
+at missing **WSAEnumProtocols** in ws2_32.dll, win32_socket.cpp:1799. The reviewed
+640x480 error screenshot agrees with dr2.log. No menu or gameplay yet. Replay
+uses the version before the final accepted-socket initial-WRITE correction;
+the final build and regression logs are separate from that replay build log.
+The boat was missing stdole2.tlb; copied the existing local 15,088-byte fixture
+to test/binaries/tlbs/stdole2.tlb before the successful replay. shell32.dll is
+still absent on the boat, and the runner reports that separately.
+
+Evidence: scratch/runs/20261011T2233Z-dark-reign2-network-events/. Next implement
+truthful protocol enumeration for the virtual TCP/UDP provider, then replay;
+never return an invented empty protocol list to bypass this check.

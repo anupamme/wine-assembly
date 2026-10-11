@@ -38712,5 +38712,19 @@
     "nargs": 1,
     "convention": "stdcall",
     "hash": 1504196434
+  },
+  {
+    "id": 4546,
+    "name": "WSAEventSelect",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 4042022542
+  },
+  {
+    "id": 4547,
+    "name": "WSAEnumNetworkEvents",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 2291620022
   }
 ]
