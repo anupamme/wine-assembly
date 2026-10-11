@@ -4033,6 +4033,12 @@ async function main() {
       return 0;
     }
     fs.writeFileSync(regIn, JSON.stringify(storage.exportStore()));
+    // An app-local DLL loads as a real PE only when seeded (the app's `dlls`
+    // or --dll-seed); the child has no app entry, so hand it the parent's.
+    // Rollcage's setup relaunches its own exe as the front end, which then
+    // imports QMIXER.DLL from beside it and crashed on the unresolved import.
+    const childDllSeeds = [...((ASSET_ENTRY && ASSET_ENTRY.dlls) || []), ...DLL_SEED]
+      .map(appAsset).filter(p => fs.existsSync(p));
     const args = [
       `--exe=${exeRow.outputPath}`, `--vfs-tree=${inDir}`, `--exe-guest-path=${guestExe}`,
       `--cwd=${cwd}`, `--args=${parsed.params.trim()}`,
@@ -4040,6 +4046,7 @@ async function main() {
       '--stuck-after=0', '--max-batches=1000000000', `--max-seconds=${MAX_SECONDS || 600}`,
       '--spawned-child', '--spawn-processes',
       `--save-vfs=${outDir}`, `--reg-import=${regIn}`, `--reg-export=${regOut}`,
+      ...(childDllSeeds.length ? [`--dll-seed=${childDllSeeds.join(',')}`] : []),
       ...PIPE_CHILD_ARGS,
       // and on down the tree: instmsi's msiexec is a grandchild.
       ...(PIPE_CHILD_ARGS.length ? [`--pipe-child-args=${PIPE_CHILD_ARGS.join(' ')}`] : []),
