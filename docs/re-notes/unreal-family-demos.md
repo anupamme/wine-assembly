@@ -909,3 +909,11 @@ and `SetMenu` reloaded the untouched resource anyway. aeedc00f0 resolves an
 unattached LoadMenu handle through its detached alias, and SetMenu attaches an
 existing alias. The bar now reads File / View / Window. Evidence:
 `scratch/runs/20261011T0200Z-unreal-special-menu-labels-w5`.
+
+**Lazy `.int` files in the page (2026-10-11, w5; Telegram #30/#31).** In the browser, `unreal_special_demo` crashed at batch 0 with
+`VfsPendingError: c:\system\core.int ... async-only provider` from `ini_get_string`.
+
+- Unreal's localization tables (`Core.int`, `Engine.int`, …) are INI files that the engine reads through `GetPrivateProfileString`, and that read cannot park.
+- lib/app-files.js's lazy policy streamed them, because `int` was not among its eager config extensions.
+- `int` is now eager: 18 files, about 35 KB, out of 196 MB of streamed data.
+- A headless `--lazy-ranges` run reproduces the crash before the change. After it, the run reaches the title flyby ("Press ESC to begin").

@@ -45,6 +45,15 @@ for (const url of ['game/plugin.dll', 'game/game.ini', 'game/save/slot1.sav', 'g
 assert.strictEqual(byUrl.get('game/ranged.mpq'), files[7], 'an explicit httpRange/preloadRanges entry is left as written');
 assert.strictEqual(summary.lazyFiles, 5, 'four defaults plus the explicit ranged archive');
 
+// Unreal's localization tables (Core.int) are INI files that GetPrivateProfile
+// reads synchronously, so they stay eager however small the rest of the app is.
+const unrealInt = normalizeLazyFiles({}, [
+  { url: 'game/system/core.int', vfsPath: 'c:\\system\\core.int', size: 9000 },
+  { url: 'game/system/core.u', vfsPath: 'c:\\system\\core.u', size: 20 * MB },
+]).files;
+assert.strictEqual(unrealInt[0].httpRange, undefined, '.int localization stays eager');
+assert.strictEqual(unrealInt[1].httpRange, true, 'the package itself still streams');
+
 assert.strictEqual(normalizeLazyFiles({}, [{ url: 'game/intro.avi', size: 30 * MB }]).files[0].httpRange, true,
   'the AVI reader parks, so a movie streams');
 const wav = [{ url: 'game/sfx.wav', size: 3 * MB }, { url: 'game/data.pak', size: 20 * MB }];
