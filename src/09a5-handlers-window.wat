@@ -1225,6 +1225,14 @@
     (call $handle_MessageBox_core (local.get $arg0) (local.get $arg1)
       (local.get $arg2) (local.get $arg3) (i32.const 20) (i32.const 0)))
 
+  ;; MessageBoxExA(hWnd, lpText, lpCaption, uType, wLanguageId): MessageBoxA
+  ;; plus the language of the button captions, which this renderer draws in
+  ;; English either way. Starlancer's packed lancer.exe resolves it by name
+  ;; and exits before its entry point when GetProcAddress returns NULL.
+  (func $handle_MessageBoxExA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $handle_MessageBox_core (local.get $arg0) (local.get $arg1)
+      (local.get $arg2) (local.get $arg3) (i32.const 24) (i32.const 0)))
+
   ;; MessageBoxIndirectA(lpMsgBoxParams). MSGBOXPARAMSA is ten DWORDs; icon,
   ;; help callback/context, and language affect decoration/notifications but
   ;; not the owner/text/caption/button behavior this renderer implements.

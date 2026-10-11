@@ -38484,5 +38484,35 @@
     "convention": "stdcall",
     "hash": 1017740128,
     "handler": "IDirect3DCubeTexture9_AddDirtyRect"
+  },
+  {
+    "id": 4523,
+    "name": "MessageBoxExA",
+    "nargs": 5,
+    "convention": "stdcall",
+    "hash": 645508403,
+    "args": [
+      {
+        "name": "hWnd",
+        "type": "HWND"
+      },
+      {
+        "name": "lpText",
+        "type": "LPCSTR"
+      },
+      {
+        "name": "lpCaption",
+        "type": "LPCSTR"
+      },
+      {
+        "name": "uType",
+        "type": "UINT"
+      },
+      {
+        "name": "wLanguageId",
+        "type": "WORD"
+      }
+    ],
+    "ret": "int"
   }
 ]

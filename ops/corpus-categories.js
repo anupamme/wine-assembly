@@ -13,7 +13,7 @@ const groups = [
   ['racing', 'Racing / driving', ['need-for-speed-2-demo', 'rollcage-demo', 'need-for-speed-3-demo', 'need-for-speed-2-full', 'need-for-speed-2-se-full', 'generally', 'elasto-mania']],
   ['role-playing', 'Role-playing', ['baldurs-gate2-demo', 'dungeons-of-dredmor-release', 'dungeons-of-dredmor', 'nethack-win32', 'diablo-2-demo-installer', 'fallout-demo', 'diablo-shareware', 'gog-free-elder-scrolls-arena', 'gog-free-elder-scrolls-daggerfall', 'gog-free-ultima-iv', 'deus-ex-demo', 'icewind-dale-demo', 'baldurs-gate-noninteractive-demo', 'baldurs-gate-interactive-demo', 'baldurs-gate-chapters-1-2-demo', 'arcanum-demo']],
   ['shooters', 'Shooters', ['serious-sam-demo', 'outwars-trial', 'forsaken-demo', 'quake-2-demo-installer', 'half-life-uplink-installer', 'gog-free-shadow-warrior-classic', 'unreal-special-edition', 'unreal-tournament-demo-348', 'unreal-tournament-2003-demo', 'unreal-tournament-2004-demo', 'unreal-tournament-3-demo-installer', 'moorhuhn', 'moorhuhn-2', 'moorhuhn-winter', 'moorhuhn-3', 'gallinelle-xxl', 'reflexive-crimsonland', 'reflexive-alien-shooter']],
-  ['sports-simulation', 'Sports / simulation', ['blobby-volley', 'simgolf-demo-installer', 'moorhuhn-tennis']],
+  ['sports-simulation', 'Sports / simulation', ['blobby-volley', 'simgolf-demo-installer', 'moorhuhn-tennis', 'starlancer-demo']],
   ['strategy', 'Strategy / tactics', ['disciples2-demo', 'liquid-war', 'pocket-tanks-installer', 'heroes-3-demo-installer', 'heroes-2-demo', 'starcraft-shareware', 'worms-2-demo', 'civilization-2-win16', 'civilization-2-mge-win32', 'warcraft3-demo', 'myth-the-fallen-lords', 'populous-the-beginning-demo']],
   ['tools', 'Applications / tools', ['generally-track-editor', 'putty', 'virtualdub', '7zip-file-manager', 'povray-installer', 'dependency-walker', 'far-manager-170', 'winrar-310']],
   ['collections', 'Collections / extras', ['best-of-moorhuhn']],
@@ -31,7 +31,7 @@ const registryGroups = [
   ['shooters', 'Shooters', ['quake3_demo','outwars_trial','forsaken_demo','serious_sam_demo','diehard_nakatomi_demo','ut348_demo','blood2_demo','avp_alien_demo','avp_marine_demo','descent3_demo','daikatana_demo','delta_force_demo']],
   ['graphics-demos', 'Graphics demos / screensavers', ['heaven7','cashcow','bakkslide7','ptct','wep16_idlewild','wep16_lifegen']],
   ['action-adventure', 'Action / adventure', ['heretic2_demo','hitman_glide_demo','hype_glide_demo','tomb_raider_2_demo','tomb_raider_3_demo','die_by_the_sword_demo','drakan_demo','asghan_demo']],
-  ['sports-simulation', 'Sports / simulation', ['mw3','freespace_demo','comanche_gold_demo']],
+  ['sports-simulation', 'Sports / simulation', ['mw3','freespace_demo','starlancer_demo','comanche_gold_demo']],
   ['strategy', 'Strategy / tactics', ['mcm','myth_tfl','braveheart_demo']],
   // test/binaries/SOURCES.md identifies Bricks as Klotski, not a brick breaker.
   ['puzzle-board', 'Puzzle / board games', ['fourstones','pawn','runenlegen','jigssawme','empipe','marbles','bricks']],

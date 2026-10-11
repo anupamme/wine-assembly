@@ -871,6 +871,44 @@
       }
     },
     {
+      "id": "starlancer-demo",
+      "name": "Starlancer Demo",
+      "kind": "game",
+      "version": "2000 Direct3D 7 trial (Digital Anvil / Microsoft), sldemo.exe self-extracting CAB of 2000-06-07 (Setup.Exe 1.2000.6.701)",
+      "executables": [
+        "installed/lancer.exe"
+      ],
+      "sourcePage": "https://archive.org/details/sldemo",
+      "license": "Microsoft trial EULA (EULA.rtf, 'Microsoft Starlancer (Trial Version)', shipped in the package): 'You may reproduce and distribute copies of the SOFTWARE PRODUCT; provided that a) each copy shall be a true and complete copy, including all copyright and trademark notices; b) each copy shall be accompanied by a copy of this EULA; and c) such distribution shall not be for commercial purposes.' Also the standard no reverse engineering/decompilation/disassembly clause except as applicable law permits. Kept localOnly until a deployment decision is made, as Midtown Madness Trial",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/sldemo/sldemo.exe",
+          "sha1": "ca8e2733aa6344b99c241023b3425ce8556739b9",
+          "type": "file",
+          "destination": "sources/sldemo.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/sldemo.exe",
+          "into": "installed"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/lancer.exe"
+      },
+      "cli": {
+        "maxBatches": 1500,
+        "batchSize": 2000000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",

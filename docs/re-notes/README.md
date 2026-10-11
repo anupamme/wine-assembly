@@ -103,6 +103,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Ultima IV: Quest of the Avatar (GOG) | [ultima4-gog.md](ultima4-gog.md) |
 | Quake II (demo) | [quake2-demo.md](quake2-demo.md) |
 | Forsaken demo (InstallShield 3 DATA.Z, execute-buffer cache slots, licence) | [forsaken-demo.md](forsaken-demo.md) |
+| Starlancer demo (packed lancer.exe, self-resolved imports, DirectInput cursor offset, menu route) | [starlancer-demo.md](starlancer-demo.md) |
 | Quake III Arena (demo 1.11) | [quake3-demo.md](quake3-demo.md) |
 | Re-Volt demo (DirectPlay lobby registration, load-time CRC, licence) | [re-volt-demo.md](re-volt-demo.md) |
 | Rollcage demo (working directory, ATD GFX chaining /FRONTEND child, DirectInput-only keys, licence) | [rollcage-demo.md](rollcage-demo.md) |
