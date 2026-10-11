@@ -95,6 +95,13 @@ function manager(main, localLink) {
       'COM Worker must preserve distinct server filenames for loaded-module lookup');
     assert.deepStrictEqual(replies.map(r => r.t), ['comDllLoaded', 'comDllLoaded']);
     assert(replies.every(r => r.loadAddr && !r.error), 'both worker loads complete');
+    paths.length = 0; replies.length = 0;
+    await sandbox.onmessage({data:{t:'loadLibrary',seq:3,fileName:'Video_D3D.dll',
+      bytes:new Uint8Array([1]),deps:[{fileName:'support.dll',bytes:new Uint8Array([2])}]}});
+    assert.deepStrictEqual(paths,['support.dll','Video_D3D.dll'],
+      'dynamic worker loads retain dependency and requested module filenames');
+    assert.strictEqual(replies[0].t,'libLoaded');
+    assert(replies[0].loadAddr && !replies[0].error,'dynamic load completes');
   }
 
   console.log('PASS  worker COM/LoadLibrary loads publish dll_count and thunks to main');

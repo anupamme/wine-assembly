@@ -320,3 +320,24 @@ hInstance/template lookup and DLL initialization/resource context in the
 worker; source routes DLL templates through push_rsrc_ctx before dlg_load.
 No root cause or additional fix is claimed yet. Do not disable Threads as
 the production fix or count the cooperative settings screen as gameplay.
+
+## Worker dynamic DLL filename fix
+
+Filtered API trace run20261011T1808Z-turok-resource-trace (actual start18:10Z)
+finds the failure before dialog parsing: GetModuleHandleA returns0, then
+FindResourceA(NULL,102,RT_DIALOG) fails and DialogBoxIndirectParamA receives
+a null template. The DLL's0x10002690 routine round-trips its module filename
+through GetModuleHandle before finding the template.
+
+The worker loadLibrary path omitted loadDll's modulePath argument for the
+requested DLL and dependencies, unlike the cooperative loader. Forward their
+resolved filenames so loadDll records the module paths. The extended worker
+message-boundary regression fails old source and passes the fix. The existing
+COM filename assertions also pass.
+
+With that JS-only fix and the same module, Threads/browser replay now passes
+FindResourceA(0x01370000,102,RT_DIALOG), then supplies nonzero template
+0x014830f0. Reviewed run20261011T1813Z-turok-resource-fixed shows the complete
+Direct3D Properties dialog with Threads still enabled. No guest file/settings
+patch or cooperative fallback. Next ordinary Properties OK, then Single
+Player/New Game and player movement; no browser gameplay qualification yet.
