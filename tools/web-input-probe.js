@@ -25,6 +25,8 @@
 //   tdown:X,Y / tmove:X,Y / tup:X,Y — one finger's drag (needs --touch)
 //   lpress:X,Y[@MS] — a finger held still (default 900 ms): the long-press
 //                 right click
+//   ptap:X,Y      a finger tap at PAGE (CSS) coordinates, for things drawn
+//                 where guest pixels are not page pixels (zoomed dialogs)
 //   down:X,Y      / up:X,Y   — the halves of a drag
 //   rdown:X,Y     / rup:X,Y  — the same with the right button (an RTS move order)
 //   key:Name      keyboard press (puppeteer key name, e.g. Enter, KeyA); a
@@ -639,6 +641,12 @@ async function main() {
         const [gx, gy] = rest.split(',').map(Number);
         const p = await toPage(page, gx, gy);
         await page.touchscreen.tap(p.x, p.y);
+      } else if (kind === 'ptap') {
+        // A finger at PAGE coordinates (CSS pixels), for what is drawn where
+        // guest pixels do not map 1:1 -- a single-app zoomed dialog, an
+        // on-screen control -- so the step taps exactly what a person would.
+        const [px, py] = rest.split(',').map(Number);
+        await page.touchscreen.tap(px, py);
       } else if (kind === 'tdown' || kind === 'tmove' || kind === 'tup' || kind === 'lpress') {
         // The halves of a finger gesture, for what `tap` cannot express: a
         // drag (tdown, tmove..., tup -- drag-select, drag-to-build) and a long
