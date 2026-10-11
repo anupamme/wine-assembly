@@ -264,3 +264,25 @@ release and idempotent blur cleanup. Full touch gameplay was verified in
 2033Z using held Fire; it was not repeated with this timing patch. The boat
 expired after evidence collection. Next validate the full ordinary-tap route
 and measure FPS/audio; physical phone/WebKit remain unverified.
+
+## Current-main ordinary-tap gameplay qualification
+
+Run `20261011T2056Z-recoil-main-tap-gameplay` rebuilt and tested main
+`274902b0258a26c41ac03b6bb190e1fbbc7c0c05` on temporary boat `bx_k7xdfrq9`.
+WASM SHA-256: `d5199d347404b8562a67dcf60e0e18ad5896e1d6a2bcd4c4de1a42559676b5b9`.
+Chrome 152, Threads enabled, touch viewport 844×390: Software → OK →
+Game → Start, then trackpad drags and ordinary taps on New Game and Start
+reach gameplay. The held-Fire workaround is no longer needed. A 2.5-second
+Left pad hold turns the tank/view/minimap; reviewed before/after captures
+show the wreck moving from ahead to the right edge. No guest writes or
+keyboard/mouse injection were used.
+
+During the following 30.002255-second gameplay sample, the existing
+`WinePerf.presentsTotal` counter advanced by 453: **15.10 guest presentation
+events/s**, with 453 canvas uploads. HUD drawing and input tracing were off.
+This is not a qualified logical-frame or physical-display FPS measurement;
+Chrome ran headless with SwiftShader and the game selected its software
+renderer. A source download for the next title overlapped on the same boat,
+so this observation is not a controlled performance benchmark. Raw counters,
+build log, route, source identity and reviewed screenshots are in the run.
+Audio, WebKit and a physical phone remain unverified.
