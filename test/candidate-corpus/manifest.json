@@ -1150,6 +1150,54 @@
       }
     },
     {
+      "id": "hexen-2-demo",
+      "name": "Hexen II Demo",
+      "kind": "game",
+      "version": "Hexen II demo 1.11 (Raven Software / Activision, 1997), OpenGL build glh2.exe",
+      "executables": [
+        "installed/glh2.exe"
+      ],
+      "sourcePage": "https://archive.org/details/win-98-games-e-j.-7z",
+      "license": "proprietary commercial demo; the bundled 'HEXEN II SUBLICENSE.doc' (Activision) grants personal use of one copy and forbids copying, distribution and reverse engineering, so keep it a local ignored fixture and never deploy it. The package is a collector's WinZip repack (with an installed Install/Hexen2 tree) served from inside the item's 7z; archive.org HexenII_1020 is mislabelled and holds the Heroes of Might and Magic II demo",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/win-98-games-e-j.-7z/Win98_Games-E-J.7z/Hexen2%20demo-SW-OpenGL.exe",
+          "sha1": "dcb5ab7c92352a8af4975151bd089354723d9417",
+          "type": "file",
+          "destination": "sources/Hexen2-demo-SW-OpenGL.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/Hexen2-demo-SW-OpenGL.exe",
+          "into": "setup"
+        },
+        {
+          "type": "copyTree",
+          "from": "setup/Install/Hexen2",
+          "into": "installed"
+        },
+        {
+          "type": "copyFile",
+          "from": "setup/Install/Hexen2/GLRoot/glh2.exe",
+          "into": "installed/glh2.exe"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/glh2.exe"
+      },
+      "cli": {
+        "maxBatches": 9000,
+        "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
