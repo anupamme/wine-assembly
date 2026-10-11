@@ -3279,7 +3279,7 @@
     ;; preferred one and threw "D3DMgr: Could not set up preferred device".
     (if (i32.eq (local.get $idx) (i32.const 0))
       (then
-        (i32.store offset=116 (local.get $state) (i32.const 0x8AEA0)) ;; HAL-style dev caps
+        (i32.store offset=116 (local.get $state) (i32.const 0x8AEA1)) ;; HAL-style dev caps, including FLOATTLVERTEX
         ;; IID_IDirect3DHALDevice {84E63DE0-46AA-11CF-816F-0000C020156E}
         (i32.store offset=312 (local.get $state) (i32.const 0x84E63DE0))
         (i32.store offset=316 (local.get $state) (i32.const 0x11CF46AA))
@@ -3466,8 +3466,8 @@
     (i32.store (i32.add (local.get $wa) (i32.const 8)) (i32.const 2))         ;; dcmColorModel = RGB
     ;; dwDevCaps
     (if (local.get $is_hal)
-      (then (i32.store (i32.add (local.get $wa) (i32.const 12)) (i32.const 0x8AEA0))) ;; HWRAST|DP2EX|DP2|DPTLV|TEXVID|EXECVID|TLVERTEXVID
-      (else (i32.store (i32.add (local.get $wa) (i32.const 12)) (i32.const 0x02A50))))  ;; DP2|DPTLV|TEXSYS|EXECSYS|TLVERTEXSYS
+      (then (i32.store (i32.add (local.get $wa) (i32.const 12)) (i32.const 0x8AEA1))) ;; existing HAL caps plus FLOATTLVERTEX
+      (else (i32.store (i32.add (local.get $wa) (i32.const 12)) (i32.const 0x02E51)))) ;; existing HEL caps plus DRAWPRIMTLVERTEX|FLOATTLVERTEX
     ;; dtcTransformCaps (8 bytes) at +16
     (i32.store (i32.add (local.get $wa) (i32.const 16)) (i32.const 8))
     (i32.store (i32.add (local.get $wa) (i32.const 20)) (i32.const 1))        ;; D3DTRANSFORMCAPS_CLIP

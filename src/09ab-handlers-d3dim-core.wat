@@ -7797,7 +7797,7 @@
     ;; common "has HW color model" check pattern.
     (i32.store (i32.add (local.get $wa) (i32.const 4))  (i32.const 0x7FF))     ;; dwFlags
     (i32.store (i32.add (local.get $wa) (i32.const 8))  (i32.const 2))          ;; RGB color model
-    (i32.store (i32.add (local.get $wa) (i32.const 12)) (i32.const 0x02A50))    ;; HEL-style devcaps
+    (i32.store (i32.add (local.get $wa) (i32.const 12)) (i32.const 0x02E51))    ;; HEL-style devcaps including DRAWPRIMTLVERTEX|FLOATTLVERTEX
     (i32.store (i32.add (local.get $wa) (i32.const 16)) (i32.const 8))          ;; transform.dwSize
     (i32.store (i32.add (local.get $wa) (i32.const 20)) (i32.const 1))          ;; transform.dwCaps=CLIP
     (i32.store (i32.add (local.get $wa) (i32.const 24)) (i32.const 1))          ;; bClipping
@@ -7828,7 +7828,7 @@
     (if (i32.eqz (local.get $desc)) (then (return)))
     (local.set $wa (call $g2w (local.get $desc)))
     (call $zero_memory (local.get $wa) (i32.const 236))
-    (i32.store (local.get $wa) (i32.const 0x02A50))                         ;; dwDevCaps
+    (i32.store (local.get $wa) (i32.const 0x02E51))                         ;; dwDevCaps including DRAWPRIMTLVERTEX|FLOATTLVERTEX
     (call $fill_primcaps (i32.add (local.get $desc) (i32.const 4)))          ;; dpcLineCaps
     (call $fill_primcaps (i32.add (local.get $desc) (i32.const 60)))         ;; dpcTriCaps
     ;; DX7 texture-stage filters have distinct MINF/MAGF bits. The legacy

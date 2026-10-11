@@ -77,9 +77,13 @@ const extraWat=String.raw`
         assert.strictEqual(e.guest_read32(guid)>>>0,{ramp:0xf2086b20,rgb:0xa4665c60,hal:0x84e63de0}[item.name]);
         assert.strictEqual(e.guest_read32(hw+8),item.name==='hal'?2:0);
         assert.strictEqual(e.guest_read32(hel+8),item.name==='hal'?0:item.name==='ramp'?1:2);
+        // Dark Reign II rejects descriptors without float TL vertices.
+        // DrawPrimitive already consumes these in both HAL and HEL paths.
+        for(const desc of [hw,hel]) assert.strictEqual(e.guest_read32(desc+12)&0x401,0x401,'float TL DrawPrimitive capability');
       } else {
         const caps=e.guest_read32(sp+12);
-        if(item.name==='hal')assert.strictEqual(e.guest_read32(caps),0x8aea0);
+        if(item.name==='hal')assert.strictEqual(e.guest_read32(caps),0x8aea1);
+        assert.strictEqual(e.guest_read32(caps)&0x401,0x401,'D3D7 float TL DrawPrimitive capability');
         for(const offset of [40,96]) assert.strictEqual(e.guest_read32(caps+offset),0x030003FF,'D3D7 callback point/linear stage filter caps');
       }
       e.resume(sp,version,cycle%2?0:1);
