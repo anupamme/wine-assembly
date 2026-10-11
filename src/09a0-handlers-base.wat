@@ -1649,6 +1649,18 @@
     (i32.or (call $loadlib_path_in_dir (local.get $name) "c:\\windows\\system")
             (call $loadlib_path_in_dir (local.get $name) "c:\\windows")))
 
+  ;; Optional modules a stock Win98 box does not have, by bare name. Each one
+  ;; must fail to load with ERROR_MOD_NOT_FOUND rather than take the
+  ;; image_base handle below, because programs probe for them and take a
+  ;; different path when they are there:
+  ;; - msi.dll: Wise's MSI bootstrap (Arcanum's Setup.exe), see below.
+  ;; - a3d.dll: Aureal's A3D audio driver, installed only with an Aureal card.
+  ;;   Trespasser loads it, finds no A3dCreate in our handle, frees it and
+  ;;   calls through NULL; with a NULL module it uses DirectSound.
+  (func $loadlib_absent_on_win98 (param $name i32) (result i32)
+    (i32.or (call $dll_name_match (local.get $name) "msi.dll")
+            (call $dll_name_match (local.get $name) "a3d.dll")))
+
   (func $handle_LoadLibraryA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $tmp i32) (local $src i32) (local $dst i32) (local $ch i32) (local $name_wa i32)
     (local.set $arg0 (call $loadlib_normalize_name (local.get $arg0)))
@@ -1700,7 +1712,7 @@
     ;; with exactly this LoadLibrary; the image_base fallback below told it MSI
     ;; was present, so it skipped instmsi and shell-executed the .msi into
     ;; nothing.
-    (if (call $dll_name_match (local.get $arg0) "msi.dll")
+    (if (call $loadlib_absent_on_win98 (local.get $arg0))
       (then
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))
         (global.set $last_error (i32.const 126)) ;; ERROR_MOD_NOT_FOUND

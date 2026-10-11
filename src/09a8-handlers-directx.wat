@@ -3836,8 +3836,11 @@
       ;; applied when the primary is presented (lib/gamma-lut.js). Without it
       ;; D3DDrv logs "Gamma control not available" and its frame is darker
       ;; than the same scene through SoftDrv.
+      ;; | DDCAPS2_CERTIFIED (0x1): a WHQL-certified display driver, as the
+      ;; cards these games shipped for reported. Trespasser stops at a "Direct
+      ;; Draw NOT certified -- OK to continue" box without it.
       (if (i32.gt_u (local.get $sz) (i32.const 8))
-        (then (i32.store (i32.add (local.get $wa) (i32.const 8)) (i32.const 0xA0000))))
+        (then (i32.store (i32.add (local.get $wa) (i32.const 8)) (i32.const 0xA0001))))
       ;; DDSCAPS_ZBUFFER: real attached depth surfaces are implemented.
       ;; DX1-5 ddsCaps / DX6+ ddsOldCaps is at 132; DX6+ ddsCaps at 364.
       ;; SS2 reads the latter before attempting EnumZBufferFormats.

@@ -58,6 +58,14 @@ async function main() {
   assert.strictEqual(load('C:\\WINDOWS\\SYSTEM\\SUB\\kernel32.dll'), 0,
     'a subdirectory of the system directory is not the system directory');
 
+  // Optional modules a stock Win98 box lacks fail to load, so a probe takes
+  // the "not installed" path: Trespasser's A3D probe called through NULL when
+  // it got a handle with no A3dCreate in it.
+  assert.strictEqual(load('A3d.dll'), 0, 'Aureal A3D is not installed');
+  assert.strictEqual(load('C:\\WINDOWS\\SYSTEM\\a3d.dll'), 0, 'not by system path either');
+  assert.strictEqual(load('msi.dll'), 0, 'Windows Installer is not installed');
+  assert(load('d3d9.dll'), 'a component we dispatch by API name still loads by bare name');
+
   console.log('PASS test-loadlibrary-system-path');
 }
 

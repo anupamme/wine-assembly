@@ -70,6 +70,12 @@ const extraWat = String.raw`
         'legacy surface caps must advertise implemented depth surfaces');
       if (size >= 368) assert(wat.guest_read32(p + 364) & 0x20000,
         'DX6 surface caps must advertise implemented depth surfaces');
+      // dwCaps2 at +8: Trespasser asks "Direct Draw NOT certified" without
+      // DDCAPS2_CERTIFIED; windowed rendering and gamma stay advertised.
+      if (p === 0x411000) {
+        assert.strictEqual(wat.guest_read32(p + 8) & 0xA0001, 0xA0001,
+          'driver caps report a certified driver that renders windowed with gamma');
+      }
     }
   }
 
