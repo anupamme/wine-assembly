@@ -3811,18 +3811,41 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))
 
+  ;; Is the DDCAPS at guest $p sized outside what any DirectDraw accepts? The
+  ;; bounds stay as wide as the old clamp (16..380, DDCAPS_DX7), so every size
+  ;; that used to be honoured still is; only the sizes that used to be
+  ;; replaced by 380 -- 0, stack garbage -- now fail as they do on Windows.
+  (func $ddcaps_size_invalid (param $p i32) (result i32)
+    (local $sz i32)
+    (local.set $sz (call $gl32 (local.get $p)))
+    (i32.or (i32.lt_u (local.get $sz) (i32.const 16))
+            (i32.gt_u (local.get $sz) (i32.const 380))))
+
   ;; GetCaps(this, lpDDDriverCaps, lpDDHELCaps)
   (func $handle_IDirectDraw_GetCaps (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $wa i32) (local $sz i32)
     ;; Fill driver caps if requested. CRITICAL: respect caller's dwSize —
     ;; DDraw v1 = 316, DDraw v5 = 380. Writing past it clobbers the caller's
-    ;; stack frame (and return address). Read dwSize from [arg1], clamp.
+    ;; stack frame (and return address).
+    ;;
+    ;; A dwSize that is not a DDCAPS size at all is DDERR_INVALIDPARAMS, and
+    ;; DirectDraw writes neither structure. Interstate '76 Nitro (0x486910)
+    ;; never sets dwSize on its two stack DDCAPS: on Windows the call fails and
+    ;; it logs stack garbage, while writing 380 bytes here ran over its frame
+    ;; and the log function "returned" into the CRT exit (code 5).
+    (local.set $sz (i32.const 0)) ;; 1 = a supplied DDCAPS has a bad dwSize
+    (if (local.get $arg1)
+      (then (if (call $ddcaps_size_invalid (local.get $arg1)) (then (local.set $sz (i32.const 1))))))
+    (if (local.get $arg2)
+      (then (if (call $ddcaps_size_invalid (local.get $arg2)) (then (local.set $sz (i32.const 1))))))
+    (if (local.get $sz)
+      (then
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x80070057)) ;; DDERR_INVALIDPARAMS
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+        (return)))
     (if (local.get $arg1) (then
       (local.set $wa (call $g2w (local.get $arg1)))
       (local.set $sz (i32.load (local.get $wa)))
-      (if (i32.or (i32.lt_u (local.get $sz) (i32.const 16))
-                  (i32.gt_u (local.get $sz) (i32.const 380)))
-        (then (local.set $sz (i32.const 380))))
       (call $zero_memory (local.get $wa) (local.get $sz))
       (i32.store (local.get $wa) (local.get $sz)) ;; preserve dwSize
       ;; dwCaps = DDCAPS_3D | DDCAPS_BLT | DDCAPS_BLTCOLORFILL | DDCAPS_COLORKEY.
@@ -3860,9 +3883,6 @@
     (if (local.get $arg2) (then
       (local.set $wa (call $g2w (local.get $arg2)))
       (local.set $sz (i32.load (local.get $wa)))
-      (if (i32.or (i32.lt_u (local.get $sz) (i32.const 16))
-                  (i32.gt_u (local.get $sz) (i32.const 380)))
-        (then (local.set $sz (i32.const 380))))
       (call $zero_memory (local.get $wa) (local.get $sz))
       (i32.store (local.get $wa) (local.get $sz))
       (i32.store (i32.add (local.get $wa) (i32.const 4)) (i32.const 0x24041))
