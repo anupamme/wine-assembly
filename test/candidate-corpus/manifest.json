@@ -1232,6 +1232,49 @@
       }
     },
     {
+      "id": "sin-demo",
+      "name": "SiN Demo",
+      "kind": "game",
+      "version": "SiN demo, OS Rev 0.93 (Ritual Entertainment / Activision, 1998)",
+      "executables": [
+        "installed/sin.exe"
+      ],
+      "sourcePage": "https://archive.org/details/swizzle_demu_Sin",
+      "license": "proprietary promotional demo with no stated terms: readme.htm and readme.doc carry only a 1998 contest notice, no licence or redistribution grant; keep it a local ignored fixture and never deploy it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/swizzle_demu_Sin/Sin.exe",
+          "sha1": "81a6145811b2f0d51357559aaef8e1e386ed7840",
+          "type": "file",
+          "destination": "sources/Sin.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/Sin.exe",
+          "into": "setup"
+        },
+        {
+          "type": "copyTree",
+          "from": "setup/data",
+          "into": "installed"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/sin.exe"
+      },
+      "cli": {
+        "maxBatches": 14000,
+        "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
