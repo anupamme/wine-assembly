@@ -55,11 +55,13 @@ const extraWat = String.raw`
     (global.set $eip (local.get $entry)))
   (func (export "test_resource_last_error") (result i32) (global.get $last_error))
   (func (export "test_resource_dll") (param $base i32) (param $rva i32)
+    (local $n i32)
+    (local.set $n (i32.atomic.load (global.get $DLL_SHARED)))
     (i32.store (i32.add (global.get $DLL_TABLE)
-      (i32.mul (global.get $dll_count) (i32.const 32))) (local.get $base))
+      (i32.mul (local.get $n) (i32.const 32))) (local.get $base))
     (i32.store (i32.add (global.get $DLL_RSRC_TABLE)
-      (i32.mul (global.get $dll_count) (i32.const 8))) (local.get $rva))
-    (global.set $dll_count (i32.add (global.get $dll_count) (i32.const 1))))
+      (i32.mul (local.get $n) (i32.const 8))) (local.get $rva))
+    (i32.atomic.store (global.get $DLL_SHARED) (i32.add (local.get $n) (i32.const 1))))
 `;
 
 function u32(value) {

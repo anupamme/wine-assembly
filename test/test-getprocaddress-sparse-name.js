@@ -11,7 +11,7 @@ const extraWat = String.raw`
   (func (export "test_last_error") (result i32) (global.get $last_error))
   (func (export "test_clear_last_error") (global.set $last_error (i32.const 0)))
   (func (export "test_register_loaded_module") (param $base i32)
-    (global.set $dll_count (i32.const 1))
+    (i32.atomic.store (global.get $DLL_SHARED) (i32.const 1))
     (i32.store (global.get $DLL_TABLE) (local.get $base))
     (i32.store offset=8 (global.get $DLL_TABLE) (i32.const 0x800))
     (i32.store offset=12 (global.get $DLL_TABLE) (i32.const 2))
