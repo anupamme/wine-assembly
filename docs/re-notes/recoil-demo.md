@@ -216,3 +216,19 @@ web-touch-cursor script skipped because its Chrome detector found none;
 the Puppeteer real-page replay above ran Chrome152 successfully.
 
 This fixes the phone selector; touch-only gameplay is still pending.
+
+## Native menu touch follow-up
+
+Run20261011T2022Z-recoil-touch-route exposed the next native UI target:
+Game-menu taps reused cursor419,323 after the selector closed. The native
+press predicate now recognizes menu bars using WAT-owned geometry and
+open menus (including taps that dismiss them), before native child controls.
+Regression fails old/passes fixed, covers scaled coordinates, absent bars,
+open menus and outside-presentation rejection. Touch-input and single-app
+layout checks pass.
+
+Reviewed run20261011T2024Z-recoil-touch-menu-fixed reaches the game main menu
+through touch-only Software/OK/Game/Start. Tapping New Game does not advance:
+that menu belongs to the game and polls its DirectInput cursor. Next verify
+ordinary touch-trackpad drags and tap at the resulting cursor, then gameplay.
+No phone gameplay/FPS/audio claim.

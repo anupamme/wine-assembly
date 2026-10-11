@@ -132,3 +132,20 @@ for (const aimOnly of [false, true]) {
     aimOnly ? [] : [['down', 20, 30, 0], ['up', 20, 30, 0]],
     'game surface retains relative tap or aim-only semantics');
 }
+
+// Exercise the real renderer predicate for menus in scaled phone coordinates.
+class MenuRenderer {}
+require('../lib/renderer-input').installInputHandlers(MenuRenderer);
+const mr = new MenuRenderer();
+let menuOpen = false, bar = true;
+mr._mapExclusiveInputPoint = (x,y) => ({x:x/2,y:y/2,outside:x<0});
+mr._openMenuContext = () => menuOpen ? {} : null;
+mr._inputWindowAtPoint = () => ({hwnd:1});
+mr._hasMenuBar = () => bar;
+mr._ensureWatMenu = () => {};
+mr._menuBarPos = () => ({barX:10,barY:20,barH:18});
+assert.strictEqual(mr.touchWantsImmediatePress(80,50),true,'native menu bar uses direct touch');
+assert.strictEqual(mr.touchWantsImmediatePress(80,100),false,'game client stays relative');
+bar=false;assert.strictEqual(mr.touchWantsImmediatePress(80,50),false,'no menu means no override');
+menuOpen=true;assert.strictEqual(mr.touchWantsImmediatePress(80,100),true,'open menu receives direct touch');
+assert.strictEqual(mr.touchWantsImmediatePress(-1,100),false,'outside presentation remains outside');
