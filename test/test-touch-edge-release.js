@@ -39,18 +39,24 @@ global.setInterval = () => 1;
 global.clearInterval = () => {};
 
 const events = [];
+// A scaled presentation, like a real one: the 640-pixel canvas shows a
+// 576x432 guest screen, and canvas -> guest floors. Events are recorded in
+// GUEST pixels, which is what the game sees. (With identity scaling the
+// first version of the fix passed here and still landed one pixel short in
+// StarCraft.)
+const SCALE = 640 / 576;
+const toGuest = v => Math.floor(v / SCALE);
 const renderer = {
   windows: {}, _mouseX: 0, _mouseY: 0,
-  // Identity presentation: canvas pixels are guest pixels.
-  _exclusivePresentationViewport: { nativeX: 0, nativeY: 0, nativeW: 640, nativeH: 480 },
-  _unmapExclusiveInputPoint: (x, y) => ({ x, y }),
+  _exclusivePresentationViewport: { nativeX: 0, nativeY: 0, nativeW: 576, nativeH: 432 },
+  _unmapExclusiveInputPoint: (x, y) => ({ x: x * SCALE, y: y * SCALE }),
   wantsRelativeMouse: () => false,
   handleMouseMove(x, y, opts) {
-    this._mouseX = x; this._mouseY = y;
-    events.push(['move', x, y, !!(opts && opts.teleport)]);
+    this._mouseX = toGuest(x); this._mouseY = toGuest(y);
+    events.push(['move', this._mouseX, this._mouseY, !!(opts && opts.teleport)]);
   },
-  handleMouseDown: (x, y, b) => events.push(['down', x, y, b]),
-  handleMouseUp: (x, y, b) => events.push(['up', x, y, b]),
+  handleMouseDown: (x, y, b) => events.push(['down', toGuest(x), toGuest(y), b]),
+  handleMouseUp: (x, y, b) => events.push(['up', toGuest(x), toGuest(y), b]),
   handleMenuHover() {},
 };
 const runningApps = [{ name: 'starcraft_shareware', mobileTouch: 'direct',
@@ -70,32 +76,33 @@ const tap = (id, x, y) => {
   (listeners.get('touchend') || []).at(-1)(tev([], [f]));
 };
 
-// Left edge: the click lands where the finger was, then the cursor steps in.
+// Left edge (canvas 1,201 = guest 0,180): the click lands where the finger
+// was, then the cursor steps edgeInset guest pixels in -- exactly 8, not 7.
 events.length = 0;
-tap(1, 1, 200);
+tap(1, 1, 201);
 const up = events.findIndex(e => e[0] === 'up');
 assert(up >= 0, 'the edge tap should still click');
-assert.deepStrictEqual(events[up], ['up', 1, 200, 0], 'the click belongs to the touched point');
-assert.deepStrictEqual(events.slice(up + 1), [['move', 8, 200, true]],
-  'after the click the cursor should move edgeInset pixels inside, as a teleport');
+assert.deepStrictEqual(events[up], ['up', 0, 180, 0], 'the click belongs to the touched point');
+assert.deepStrictEqual(events.slice(up + 1), [['move', 8, 180, true]],
+  'after the click the cursor should move exactly edgeInset guest pixels inside, as a teleport');
 
-// Bottom-right corner clamps on both axes.
+// Bottom-right corner (guest 575,431 on a 576x432 screen) clamps both axes.
 events.length = 0;
 tap(2, 639, 479);
-assert.deepStrictEqual(events.at(-1), ['move', 631, 471, true],
+assert.deepStrictEqual(events.at(-1), ['move', 567, 423, true],
   'a corner release should clamp both axes inside the inset');
 
 // Away from the edges nothing extra happens.
 events.length = 0;
-tap(3, 320, 240);
-assert.deepStrictEqual(events.at(-1), ['up', 320, 240, 0],
+tap(3, 321, 241);
+assert.deepStrictEqual(events.at(-1), ['up', 288, 216, 0],
   'a tap away from the edge should end with its own release');
 
 // Opt-in: without edgeInset an edge tap leaves the cursor where it was.
 delete runningApps[0].touchControls;
 events.length = 0;
-tap(4, 1, 200);
-assert.deepStrictEqual(events.at(-1), ['up', 1, 200, 0],
+tap(4, 1, 201);
+assert.deepStrictEqual(events.at(-1), ['up', 0, 180, 0],
   'without touchControls.edgeInset the bridge must not move the cursor');
 
 console.log('PASS  touch release near the screen edge parks the cursor inside edgeInset');
