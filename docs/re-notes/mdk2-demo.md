@@ -2,8 +2,9 @@
 
 **Status: registered (`mdk2_demo`), playable in the browser.** Projective
 vertices work since 9be0a0efb. Menu, New Game, the intro and the tutorial
-level all render and take input (Chromium, real WebGL). The "attract demo
-ignores input" puzzle was only the menu's idle timer (see Route). The fetch
+level all render and take input (Chromium, real WebGL), but the world is
+often black from a guest NaN (see Black world). The "attract demo ignores
+input" puzzle was only the menu's idle timer (see Menu). The fetch
 needs a real `unshield` (IS6 cabs; `tools/is5-extract.js` refuses them).
 
 ## Source
@@ -36,16 +37,131 @@ group `english` (`data\local.zip`, the string tables). Installed to
 - Through the launcher the spawned child sits in the same wait as below; run
   mdk2Main.exe directly with that config installed (as shogo_demo does).
 
+## OpenGL init (what was fixed)
+
+`0x4526e0` suspends the worker thread (`SuspendThread([0x4b8810])`, the
+`_beginthread(0x451f30)` file-request worker), sets the video mode and
+resumes it at `0x4534a3`. If GL init fails, the error path loads strings
+through that **suspended** worker and both threads idle in `SleepEx` forever
+(main polls `[0x4b87d0]` at `0x4522b0`/`0x4522d0`) — no window, no message.
+GL init failed for two reasons, both fixed:
+
+1. `ReBaseImage` (imagehlp) had no api_table row: it rebases the GL driver
+   file below 0x64500000 before LoadLibrary and ignores the result. A missing
+   image is now FALSE/ERROR_FILE_NOT_FOUND (`test-rebaseimage.js`).
+2. Its GL loader resolves every name with GetProcAddress and gives up on a
+   NULL: `wglDescribeLayerPlane`, `wgl{Get,Set}LayerPaletteEntries`,
+   `wglRealizeLayerPalette` (now answered from the pixel format: no layer
+   planes) and `wglUseFont{Bitmaps,Outlines}A` (fail-fast rows)
+   (`test-wgl-layer-planes.js`).
+
+It then creates its context (ChangeDisplaySettingsA, wglCreateContext,
+wglMakeCurrent) and draws. `glVertex4f`/`glVertex4fv` with w = 1.0 are now
+exactly glVertex3f/3fv (11,890 calls in one run).
+
+Projective vertices (fixed 9be0a0efb): the level draws through ~3.5M
+glVertex4f and ~380K glVertex4fv per run, many with w ≠ 1 (call site
+`0x464ffb`). The packed vertex now carries w and both rasterizers divide
+by clip w.
+
+
+## Input
+
+- Keyboard is a DirectInput device (c_dfDIKeyboard, cooperative level 6,
+  `Acquire` + 256-byte `GetDeviceState` every frame); the mouse is a
+  DirectInput relative device (16-byte state). The CLI needs both the WM and
+  the DI form of every action (`keydown`+`di-keydown`,
+  `mousedown`+`di-mousedown:1`); the browser feeds both by itself.
+- A key must be held across a poll: Playwright `keyboard.press` (down+up in
+  one turn) is sometimes dropped at the difficulty prompt; hold 200-400 ms.
+- Menu cursor: DI relative motion, ~0.47-0.61 guest px per host px. The
+  Options dialogs follow the mouse, not the arrow keys; in the CLI use
+  `relmousemove:DX:DY:4` (negative deltas work).
+- **Default bindings**, read from the game's own Options (tower icon) ->
+  Controls -> Customize screen (CLI frame:
+  `scratch/runs/20261011T1745Z-mdk2_demo-controls-screen-w5/customize-bindings.png`):
+
+  | Action | Key |
+  |---|---|
+  | move forward / backward | Num 8 / Num 2 (arrow keys also work in play) |
+  | turn left / right | Z / X |
+  | strafe left / right | Num 4 / Num 6 (Left/Right arrows strafe too) |
+  | look up / down | Num 7 / Num 1 |
+  | jump | Mouse B2 (right button) |
+  | shoot / combine | Mouse B1 (left button) |
+  | quick save / load | F6 / F7 |
+
+  Further pages: Kurt / Max / Dr. Hawkins Controls, Default Keys 1/2. Space
+  toggles Kurt's sniper mode (seen in play). The touch layout maps the arrow
+  pad, Fire = MOUSE1, Jump = MOUSE2, Sniper = Space, Enter, Esc.
+
+## Menu and the "attract demo"
+
+Startup runs the Lua scripts `mdk2` and `menu` (`0x41fbc0`;
+`0x4426a0(name)` calls a Lua function). The copyright/logo screen *is* the
+menu's entry: with no input, the idle timer `[0x4b657c]` runs "playdemo"
+(`0x402378`; `-test` on the command line does too), the "Demo"-labelled
+level that looped in every early run. Click the logo screen before it fires
+(~25 s in the browser) and the main menu appears. Icons: gamepad = New Game,
+tower = Options (Video/Audio/Controls/Game), monitor, floppy, red X = quit.
+
+## Route (browser, Chromium, desktop 1280x900, Threads on)
+
+t~12 s click the logo -> menu; Enter -> Select Difficulty (Medium
+highlighted; one Up = Easy); Enter -> LOADING comic (~t24-160 if not
+skipped). Esc every 10 s from t40 to t110 skips the comic, the title card
+"The Jim Dandy, Earth Orbit 8:59AM" and the in-engine cutscenes; one more Esc
+pauses (Enter on Paused = Continue). Timing drifts run to run: a lost
+difficulty Enter leaves the Esc presses backing out to the quit prompt. When
+the route reaches play lit (2 of ~6 runs), Kurt stands on the tutorial pad by
+t~114: "Use your directional keys..." -> "Use the mouse to look..." -> "stand
+by the arrow... face the exit". Unskipped, the Jim Dandy cutscene is still
+running at t260. Evidence:
+`scratch/runs/20261011T1715Z-mdk2_demo-browser-gameplay-w5`.
+
+## Black world (NaN camera)
+
+The world sometimes renders black with the HUD and Doc's prompts drawn: in
+the CLI tutorial, in the browser after most Esc-skip routes (always when the
+skips run into the "Aboard the Alien Minecrawler" card), and in WebKit
+software GL. It is **a guest NaN, not a renderer fault**: `--trace-gl` on a
+black frame shows the 3D pass's sprite quads arriving with `xyz=NaN` and no
+level geometry submitted at all (a NaN camera fails every visibility test),
+while the ortho HUD is finite; identical under WebGL and the WAT rasterizer.
+
+What is known about the NaN (CLI route, fork with no renderer):
+- `--trace-fpu` shows millions of `raise IE` from compares that READ it
+  (`0x477fa6`/`0x477fd2` ~33M each, `0x467a10/56/99`, CRT math-error paths
+  `0x483a1a`/`0x484b7a`), the first ~batch 2445-2452.
+- It is not made by a plain FADD/FSUB/FMUL/FDIV: a trace-only "NaN made"
+  check on those (WIP patch `scratch/wip/fpu-nan-made-trace-w5.patch`)
+  fires 0 times. Not the uop tier or x87 island predecode either (both off:
+  still NaN).
+- The first NaN to reach the x87 stack is a non-canonical
+  **0xffc9a893** (raw bits from memory, not an x87-produced 0xffc00000), via
+  `fpu_set`/`fpu_push` (experiment `scratch/wip/mdk2-nanentry-experiment-w5.js`).
+  Its EIP attribution (`0x45f97a`, `fld [ecx+0x14]; fcomp [0x48c228]`) is
+  NOT reliable: the page compiler runs many blocks between `$eip` updates,
+  and neither operand was NaN (`[0x48c228]` stays 0.0 through b6000; the
+  watched `[ecx+0x14]` went 0 -> 1.0 only).
+- Lead, unproven: `0x45f9d0(obj, idx, w)` stores
+  `w * table[(signed char)map[idx] << 5 + 8]` into a node's `+0x14`; a map
+  byte of -1 would read 24 bytes before the table, i.e. heap metadata whose
+  bits differ between Windows' heap and ours (4-byte size header).
+- The frame meter at `0x401f28` divides 1000 by an unset frame delta once at
+  startup (ZE, inf in a 32-slot ring). Real hardware does the same.
+- Tooling gotchas: `--trace-at` halts each batch at its first hit, so those
+  runs fall behind and never reach the NaN frame; plain `--watch` (chaining
+  off) shifts allocation addresses, so take the address from a run in the
+  same mode.
+
 ## Open
 
-- **Jump binding unknown**: right mouse and Ctrl probes landed on the Pause
-  menu (Esc-timing drift), so the touch layout has no Jump button. Read it
-  from Paused → Options → controls and add it.
-- **World drops to black mid-play** (HUD and prompts still drawn): seen in
-  WebKit software GL just before a Jump probe, at level start in the CLI,
-  and when the intro cutscene ran to its end. Unknown whether game-side
-  (fade/visibility) or ours.
-
+- Find the NaN's writer: rerun the NaN-entry experiment with page compile
+  off (exact `$eip`), or watch for 0xffc9a893 near the `0x45f9d0` tables.
+- Jump: the binding is the game's own (Mouse B2) and the button is mapped;
+  not yet seen in lit play, because the reliable route now lands in the black
+  world.
 - Playwright WebKit on Linux has no WebGL on a Worker's OffscreenCanvas
   (control: `getContext` returns null there, a main-thread canvas works), so
   the GL render worker cannot create a context and the game area stays gray.
