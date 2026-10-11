@@ -3537,6 +3537,49 @@
         ]
       },
       "notes": "Reviewed remote browser run 20261010T1432Z-bge-input-consumer: original demo reaches Jade fight; Q changes food/health HUD and Up moves toward doorway. Local installed tree is not staged, so this entry does not promise dashboard launch availability. Browser route uses binkw32.dll and saved settings. Audio and logical FPS unverified; no public desktop release."
+    },
+    {
+      "id": "recoil-demo",
+      "name": "Recoil Demo",
+      "kind": "game",
+      "version": "1998 Virgin/Zipper preliminary demo; software or 3dfx renderer",
+      "executables": [
+        "game/RecoilDemo.exe"
+      ],
+      "sourcePage": "https://archive.org/details/RecoilDemo",
+      "license": "Proprietary Virgin Interactive evaluation demo; license.txt grants personal use and reserves distribution rights. Local compatibility fixture only; do not deploy or ship.",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/RecoilDemo/RECOIL.zip",
+          "sha1": "ac0f23a00dc9e132d7abd21ab07934b0ef0adbc4",
+          "type": "archive",
+          "into": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "archive/recoil.exe",
+          "into": "setup"
+        },
+        {
+          "type": "is5Extract",
+          "cab": "setup/data1.cab",
+          "into": "game"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/RecoilDemo.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
