@@ -146,6 +146,29 @@ It then calls `SetCooperativeLevel(..., DDSCL_EXCLUSIVE|DDSCL_FULLSCREEN)` and
 striped garbage (`scratch/runs/20261011T0905Z-lf2-esc-fullscreen-w6/after-altenter.png`).
 The game draws for a 16-bit screen into what is now an 8-bit mode. A 794x550
 mode does not exist on real hardware, so a Win98 driver would most likely
-refuse it. Still open: what LF2 does after `0x438f60` when that call fails.
-Until then, use the page's own fullscreen (the "Use browser fullscreen" button
-on the bar above the game), which scales the windowed game.
+refuse it.
+
+**Alt+Enter cannot work, on Windows either (2026-10-11, claude:1863).** The
+teardown `0x401a40` releases the primary `[0x44a210]`, the back buffer
+`[0x44a854]` and the DirectDraw object `[0x449e48]`, and nothing else. The ~20
+sprite surfaces made at startup (CreateSurface, ret `0x439a00`) belong to that
+released object, and the game keeps blitting from them. DirectDraw frees a
+released object's surfaces, and a mode change loses every surface anyway. LF2
+never restores them, and no CreateSurface follows the toggle. Both
+outcomes are now measured on the CLI (`scratch/runs/20261011T1120Z-little_fighter_2-altenter-claude1863`):
+
+- **Mode accepted (before the fix):** the menu bitmaps are stripes, and a
+  second Alt+Enter returns to the bordered window with the menu still gone
+  (only the logo strokes and the GDI credits remain).
+- **Mode refused:** `SetDisplayMode` now returns DDERR_INVALIDMODE for a width
+  that is not a multiple of 8, as a VGA-family driver does. `0x401000` returns
+  the HRESULT and `0x438f60` prints "DDStartup failed." and returns 0. That
+  happens before `0x401090` creates the primary and back buffer. The toggle's
+  `jge` at `0x438a60` takes 0 as success, so "Reinitialization failed." is
+  never printed. It shows the popup, and the next present calls through NULL
+  (`[eip-zero]`, prev EIP `0x401310`). That is LF2's own crash on a refusing
+  driver.
+
+The readme's key list does not mention Alt+Enter. Use the page's own
+fullscreen (the "Use browser fullscreen" button on the bar above the game),
+which scales the windowed game.

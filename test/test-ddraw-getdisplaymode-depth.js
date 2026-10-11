@@ -6,6 +6,10 @@
 // width*2 pitch for every mode, and Disciples (640x480x8) sized its software
 // back buffer from that: its first SmackBlitClear then ran with a NULL buffer
 // and a garbage pitch.
+//
+// SetDisplayMode refuses a width that is not a multiple of 8 with
+// DDERR_INVALIDMODE, as a VGA-family driver does: Little Fighter 2's Alt+Enter
+// asks for 794x550x8 and accepting it presented garbage.
 
 const assert = require('assert');
 const { bootRenderHarness } = require('./render-helper');
@@ -20,6 +24,8 @@ const extraWat = String.raw`
     (call $handle_IDirectDraw_SetDisplayMode (local.get $dd) (local.get $w) (local.get $h)
       (local.get $bpp) (i32.const 0) (i32.const 0))
     (i32.load offset=0 (global.get $reg_base)))
+  (func (export "test_dm_set_esp") (result i32)
+    (i32.load offset=16 (global.get $reg_base)))
   (func (export "test_dm_get") (param $dd i32) (param $desc i32) (result i32)
     (i32.store offset=16 (global.get $reg_base) (i32.const 0x30000))
     (call $handle_IDirectDraw_GetDisplayMode (local.get $dd) (local.get $desc) (i32.const 0)
@@ -63,6 +69,17 @@ const extraWat = String.raw`
   assert.strictEqual(wat.test_dm_get(dd, desc) >>> 0, 0);
   assert.deepStrictEqual(mode(), { h: 480, w: 640, pitch: 2560, pfFlags: 0x40, bpp: 32, r: 0xff0000, g: 0xff00, b: 0xff },
     '32bpp: four bytes per pixel, 8-8-8 masks');
+  for (const [w, h] of [[794, 550], [0, 480], [640, 0]]) {
+    assert.strictEqual(wat.test_dm_set(dd, w, h, 8) >>> 0, 0x88760078, `${w}x${h} is DDERR_INVALIDMODE`);
+    assert.strictEqual(wat.test_dm_set_esp() >>> 0, 0x30000 + 20, 'refused IDirectDraw call still pops this + 3 args');
+    assert.strictEqual(wat.test_dm_get(dd, desc) >>> 0, 0);
+    assert.deepStrictEqual([mode().w, mode().h, mode().bpp], [640, 480, 32], 'a refused mode leaves the current one');
+  }
+  for (const [w, h] of [[320, 200], [512, 384], [1152, 864], [1600, 900]]) {
+    assert.strictEqual(wat.test_dm_set(dd, w, h, 16) >>> 0, 0, `${w}x${h} is accepted`);
+    assert.strictEqual(wat.test_dm_set_esp() >>> 0, 0x30000 + 20, 'accepted IDirectDraw call pops this + 3 args');
+  }
+  console.log('PASS  SetDisplayMode refuses widths no VGA CRTC can time');
   console.log('PASS  GetDisplayMode reports the pitch and pixel format of the current mode');
 })().catch(error => {
   console.error(error && error.stack || error);

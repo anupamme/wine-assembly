@@ -4408,9 +4408,38 @@
       (br $gl)))
     (call $dx_primary_pal_set (local.get $pal_wa)))
 
+  ;; Pop SetDisplayMode's arguments: IDirectDraw takes this + 3, IDirectDraw2
+  ;; and later this + 5 (refresh rate and flags).
+  (func $dx_set_display_mode_pop (param $this i32)
+    (local $vtbl i32)
+    (local.set $vtbl (call $gl32 (local.get $this)))
+    (if (i32.or
+          (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDRAW2))
+          (i32.or
+            (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDRAW4))
+            (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDRAW7))))
+      (then (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28))))
+      (else (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20))))))
+
+  ;; Could a Win9x display driver offer this mode? A VGA-family CRTC times a
+  ;; scanline in 8-pixel character clocks, so every hardware mode's width is a
+  ;; multiple of 8 -- 320, 512, 640, 800, 1152 ... and every row of our own
+  ;; EnumDisplayModes table, whose host slot is clamped to the canvas but
+  ;; rounded below. Little Fighter 2's Alt+Enter asks for 794x550x8, its window
+  ;; size; a driver refuses that with DDERR_INVALIDMODE, where accepting it
+  ;; presented garbage (USER-LF2-ESC-BLACKBAR-20261011).
+  (func $dx_display_mode_valid (param $w i32) (param $h i32) (result i32)
+    (if (i32.or (i32.eqz (local.get $w)) (i32.eqz (local.get $h))) (then (return (i32.const 0))))
+    (i32.eqz (i32.and (local.get $w) (i32.const 7))))
+
   (func $handle_IDirectDraw_SetDisplayMode (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (local $vtbl i32) (local $target_hwnd i32) (local $changed i32)
+    (local $target_hwnd i32) (local $changed i32)
     (local $rect i32) (local $moved i32)
+    (if (i32.eqz (call $dx_display_mode_valid (local.get $arg1) (local.get $arg2)))
+      (then
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x88760078)) ;; DDERR_INVALIDMODE
+        (call $dx_set_display_mode_pop (local.get $arg0))
+        (return)))
     ;; Windows announces a mode switch only when the mode actually switches:
     ;; asking for the mode that is already current is a no-op and no
     ;; WM_DISPLAYCHANGE goes out. Posting one unconditionally is a live-lock
@@ -4502,14 +4531,7 @@
           (i32.or (i32.and (local.get $arg1) (i32.const 0xFFFF))
                   (i32.shl (local.get $arg2) (i32.const 16)))))))))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
-    (local.set $vtbl (call $gl32 (local.get $arg0)))
-    (if (i32.or
-          (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDRAW2))
-          (i32.or
-            (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDRAW4))
-            (i32.eq (local.get $vtbl) (global.get $DX_VTBL_DDRAW7))))
-      (then (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))) ;; v2+: this + 5 args
-      (else (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))))) ;; v1: this + 3 args
+    (call $dx_set_display_mode_pop (local.get $arg0)))
 
   ;; WaitForVerticalBlank(this, dwFlags, hEvent) — blocks until the next
   ;; vblank boundary, which is the whole point of the call.
