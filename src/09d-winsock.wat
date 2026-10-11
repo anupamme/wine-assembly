@@ -1307,9 +1307,8 @@
   ;; ---- handlers -------------------------------------------------------
 
   ;; socket(af, type, protocol)
-  (func $vsock_create_core (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
-      (param $unpop i32) (result i32)
-    (local $idx i32) (local $rec i32)
+  ;; Transport capability validation has no lobby/allocation side effects.
+  (func $vsock_validate_triple (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (result i32)
     (if (i32.eq (local.get $arg0) (i32.const 6))          ;; AF_IPX
       (then
         ;; IPX datagrams only (see $vsock_read_sockaddr_ipx). The protocol is
@@ -1318,22 +1317,18 @@
         ;; not carry.
         (if (i32.ne (local.get $arg1) (i32.const 2))
           (then
-            (call $vsock_set_error (i32.const 10044))      ;; WSAESOCKTNOSUPPORT
-            (return (i32.const -1))))
+            (return (i32.const 10044))))
         (if (i32.gt_u (i32.sub (local.get $arg2) (i32.const 1000)) (i32.const 255))
           (then
-            (call $vsock_set_error (i32.const 10043))      ;; WSAEPROTONOSUPPORT
-            (return (i32.const -1)))))
+            (return (i32.const 10043)))))
       (else
         (if (i32.ne (local.get $arg0) (i32.const 2))      ;; AF_INET
           (then
-            (call $vsock_set_error (i32.const 10047))      ;; WSAEAFNOSUPPORT
-            (return (i32.const -1))))
+            (return (i32.const 10047))))
         (if (i32.and (i32.ne (local.get $arg1) (i32.const 1))
                      (i32.ne (local.get $arg1) (i32.const 2)))
           (then
-            (call $vsock_set_error (i32.const 10044))      ;; WSAESOCKTNOSUPPORT
-            (return (i32.const -1))))
+            (return (i32.const 10044))))
         (if (i32.and
               (i32.ne (local.get $arg2) (i32.const 0))
               (i32.ne (local.get $arg2)
@@ -1341,8 +1336,14 @@
                   (then (i32.const 17))                   ;; IPPROTO_UDP
                   (else (i32.const 6)))))                 ;; IPPROTO_TCP
           (then
-            (call $vsock_set_error (i32.const 10043))      ;; WSAEPROTONOSUPPORT
-            (return (i32.const -1))))))
+            (return (i32.const 10043))))))
+    (i32.const 0))
+
+  (func $vsock_create_core (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
+      (param $unpop i32) (result i32)
+    (local $idx i32) (local $rec i32) (local $error i32)
+    (local.set $error (call $vsock_validate_triple (local.get $arg0) (local.get $arg1) (local.get $arg2)))
+    (if (local.get $error) (then (call $vsock_set_error (local.get $error)) (return (i32.const -1))))
     ;; A socket is the first moment a Winsock game needs the room, the way
     ;; DPOPEN is for a DirectPlay one, so a host that asks the person which
     ;; room gets to ask here. Quake II is the case: WSAStartup runs at boot for
@@ -3894,7 +3895,7 @@
   ;; A/W protocol records have identical fixed numeric fields. Only the
   ;; provider catalog identities exposed by WSAEnumProtocols are installed.
   (func $vsock_wsasocket (param $af i32) (param $type i32) (param $protocol i32)
-      (param $info i32) (param $group i32) (param $flags i32) (param $wide i32) (result i32)
+      (param $info i32) (param $group i32) (param $flags i32) (param $wide i32) (param $name_ptr i32) (result i32)
     (local $error i32) (local $id i32) (local $family i32) (local $kind i32) (local $proto i32)
     (block $failed
       (local.set $error (i32.const 10093))
@@ -3902,9 +3903,9 @@
       ;; Only ordinary ungrouped sockets; multipoint providers are absent.
       (local.set $error (i32.const 10022))
       (br_if $failed (i32.ne (local.get $group) (i32.const 0)))
-      ;; Overlapped creation attributes need per-socket I/O state; reject them
-      ;; until implemented, rather than silently creating a different socket.
-      (br_if $failed (i32.ne (local.get $flags) (i32.const 0)))
+      ;; Multipoint attributes have no provider here. OVERLAPPED is valid,
+      ;; but its capability is still unimplemented (checked after transport).
+      (br_if $failed (i32.ne (i32.and (local.get $flags) (i32.const -2)) (i32.const 0)))
       (if (local.get $info) (then
         (local.set $error (i32.const 10014))
         (br_if $failed (i32.eqz (call $vsock_catalog_span_valid (local.get $info)
@@ -3939,6 +3940,9 @@
       (if (i32.eqz (local.get $type)) (then
         (local.set $type (select (i32.const 2) (i32.const 1)
           (i32.or (i32.eq (local.get $protocol) (i32.const 17)) (i32.eq (local.get $af) (i32.const 6)))))))
+      (local.set $error (call $vsock_validate_triple (local.get $af) (local.get $type) (local.get $protocol)))
+      (br_if $failed (local.get $error))
+      (if (local.get $flags) (then (call $crash_unimplemented (local.get $name_ptr))))
       (return (call $vsock_create_core (local.get $af) (local.get $type) (local.get $protocol) (i32.const 28))))
     (call $vsock_set_error (local.get $error)) (i32.const -1))
 
@@ -3949,7 +3953,7 @@
     (local.set $flags (call $gl32 (i32.add (local.get $sp) (i32.const 24))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))
     (local.set $r (call $vsock_wsasocket (local.get $arg0) (local.get $arg1) (local.get $arg2)
-      (local.get $arg3) (local.get $arg4) (local.get $flags) (i32.const 0)))
+      (local.get $arg3) (local.get $arg4) (local.get $flags) (i32.const 0) (local.get $name_ptr)))
     (if (i32.ne (local.get $r) (i32.const -2)) (then (i32.store (global.get $reg_base) (local.get $r)))))
 
   (func $handle_WSASocketW (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
@@ -3959,7 +3963,7 @@
     (local.set $flags (call $gl32 (i32.add (local.get $sp) (i32.const 24))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))
     (local.set $r (call $vsock_wsasocket (local.get $arg0) (local.get $arg1) (local.get $arg2)
-      (local.get $arg3) (local.get $arg4) (local.get $flags) (i32.const 1)))
+      (local.get $arg3) (local.get $arg4) (local.get $flags) (i32.const 1) (local.get $name_ptr)))
     (if (i32.ne (local.get $r) (i32.const -2)) (then (i32.store (global.get $reg_base) (local.get $r)))))
   (func $handle_WSASocket (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
       (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)

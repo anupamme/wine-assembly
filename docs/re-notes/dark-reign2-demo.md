@@ -322,3 +322,23 @@ coverage for this request, before another ordinary replay. Do not fake success
 for raw ICMP or overlapped I/O. No new menu/gameplay screenshot was produced.
 Evidence: scratch/runs/20261011T2311Z-dark-reign2-wsasocket/ (source patch, build,
 unit/negative control, A/B logs, error-buffer trace and API breakpoint).
+
+## Socket capability validation correction (2026-10-11 23:26Z)
+
+The follow-up separates side-effect-free transport validation from allocation
+and applies it before the unsupported OVERLAPPED creation path. The raw ICMP
+request now correctly returns WSAESOCKTNOSUPPORT (10044): this virtual network
+has no raw-socket transport. Valid OVERLAPPED creation on a supported transport
+now fails fast instead of misreporting it as an invalid parameter or silently
+creating a different socket. Ordinary flags-zero TCP/UDP/IPX creation and
+protocol-info selection remain implemented. Raw ICMP and overlapped I/O are
+still not implemented; this is an API prerequisite, not a game fix.
+
+65/65 Winsock checks and full build pass. A/W actual raw-call cases assert10044,
+unsupported family asserts10047, valid unimplemented creation traps, and none
+opens the lobby. Ordinary replay now produces a reviewed fatal dialog:
+"WSASocket: The specified socket type is not supported in this address family."
+The previous Sprintf crash is gone. There is still no menu/gameplay/FPS result.
+Evidence: scratch/runs/20261011T2326Z-dark-reign2-socket-capability/.
+Next work requires real raw ICMP packet semantics and overlapped socket state;
+do not turn either into success solely to get past startup.

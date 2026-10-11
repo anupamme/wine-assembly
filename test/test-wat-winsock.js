@@ -577,7 +577,16 @@ async function main() {
       dv.setUint32(wa(out)+20,0,true);assert.strictEqual(value(wat.test_wsasocket(wide,-1,-1,-1,out,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);
     }
     assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,1,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
-    for(const [group,flags] of [[1,0],[0,1],[0,2]]){assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,group,flags)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);}
+    for(const [group,flags] of [[1,0],[0,2]]){assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,group,flags)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);}
+    let probes=0;hostContext.openLanLink=()=>{probes++;return true;};
+    for(const wide of [0,1]){
+      assert.strictEqual(value(wat.test_wsasocket(wide,2,3,1,0,0,1)),-1,'raw ICMP has no transport provider');
+      assert.strictEqual(wat.test_call_WSAGetLastError(),10044,'unsupported socket type, not invalid OVERLAPPED flag');
+      assert.strictEqual(value(wat.test_wsasocket(wide,99,1,6,0,0,1)),-1);
+      assert.strictEqual(wat.test_call_WSAGetLastError(),10047);
+      assert.throws(()=>wat.test_wsasocket(wide,2,1,6,0,0,1),WebAssembly.RuntimeError,'valid but unimplemented overlapped creation must fail fast');
+    }
+    assert.strictEqual(probes,0,'invalid transport/unimplemented mode never opens lobby');delete hostContext.openLanLink;
     let calls=0;hostContext.openLanLink=()=>{calls++;return false;};const r=wat.test_wsasocket(0,0,2,17,0,0,0);assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(r>>32n),0x300000);assert.strictEqual(calls,1);
     hostContext.openLanLink=()=>true;const opened=wat.test_wsasocket(0,0,2,17,0,0,0);assert(value(opened)>0);assert.strictEqual(Number(opened>>32n),0x30001c);wat.test_call_closesocket(value(opened));delete hostContext.openLanLink;
   });
