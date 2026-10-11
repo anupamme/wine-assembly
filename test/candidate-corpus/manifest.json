@@ -682,6 +682,41 @@
       }
     },
     {
+      "id": "expendable-demo",
+      "name": "Expendable Demo",
+      "kind": "game",
+      "version": "1999 Rage Software PC demo (InstallShield 5 setup, setup.ini 'Expendable Demo' 1.00.000); Direct3D",
+      "executables": [
+        "installed/go.exe",
+        "installed/Expendable.exe"
+      ],
+      "sourcePage": "https://archive.org/details/expendabledemo",
+      "license": "proprietary Rage Games demo: the installer's licence dialog carries no text and the bundled manual (english/Maneng.doc) has the retail END USER LICENCE AGREEMENT, which forbids copying, electronic transfer and network use; no redistribution grant, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/expendabledemo/expendabledemo.zip",
+          "sha1": "fd8c182434fd0604f40c12c638fef3d45c408cba",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "Program Executable Files" },
+        { "type": "copyTree", "from": "installed-extracted/Program_Executable_Files", "into": "installed" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/go.exe"
+      },
+      "cli": {
+        "maxBatches": 4000,
+        "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "rollcage-demo",
       "name": "Rollcage Demo",
       "kind": "game",
