@@ -1,8 +1,9 @@
 # Interstate '76 Arsenal (demo)
 
 Activision, 1998, car combat. The demo is "3D accelerated only" (readme): its
-two missions exist only for the hardware path. Not registered yet: the
-Direct3D renderer exits during init (see Open). NEW-GAME-SOURCE-27-20261011.
+two missions exist only for the hardware path. **Registered as
+`i76_arsenal_demo` (candidate `i76-arsenal-demo`, local only), playable in
+the browser** after the DirectDraw GetCaps fix (2da06701f, see below).
 
 ## Source and layout
 
@@ -37,7 +38,19 @@ Direct3D renderer exits during init (see Open). NEW-GAME-SOURCE-27-20261011.
   main loop calls a NULL error hook `[0x5056b0]` (eip-zero, ~b1284). Esc during
   the movie also ends the process.
 
-## Open: `-d3d t03` exits with code 5
+## Fixed: `-d3d t03` exited with code 5 (our GetCaps)
+
+**Cause (fixed 2da06701f):** the caps-logging function 0x486910 calls
+`IDirectDraw::GetCaps` with two stack DDCAPS whose dwSize it never sets. On
+Windows that is DDERR_INVALIDPARAMS and nothing is written (the log then
+prints stack garbage, which is why the "SELECTED D3D HW DESC" section reads
+"None" -- a red herring). We treated an invalid dwSize as 380 and wrote 380
+bytes, over the return address; the function "returned" into the CRT exit and
+WinMain looked like it returned 5. Found by a block-entry trace of the last
+batch (`--trace-eip-range=0x401000-0x4d0000 --trace-eip-from=1`): the caps
+log's `ret` went straight to 0x4c323f. `test-directdraw-getcaps-size.js`.
+
+The notes below were the investigation before that:
 
 - zdx5draw initializes cleanly through our D3D: DirectDrawEnumerate,
   IDirect3D(v1) EnumDevices probe, SetDisplayMode 640x480x16, flip chain,
@@ -62,7 +75,15 @@ Direct3D renderer exits during init (see Open). NEW-GAME-SOURCE-27-20261011.
   under the same emulator. Also check the garbage DirectDraw driver name in
   the log against our `DirectDrawEnumerateA` callback strings.
 
-## Notes for the registration (once it plays)
+## Route (browser) and controls
+
+- No input needed: logo ~58 s, intro flyover ~69 s, cockpit ~80 s (Chromium).
+  The car starts facing a canyon wall: steer before throttling.
+- Up throttle (the view drops to the dashboard while accelerating), Space
+  fires, S starts the engine. Evidence:
+  `scratch/runs/20261011T2240Z-i76_arsenal_demo-browser-gameplay-w5`.
+
+## Registration notes
 
 - `exe` `Install/Data/Nitro.exe`, `args: '-d3d t03'` (or `p09`), the four
   DLLs in `dlls`, working directory = the data dir.

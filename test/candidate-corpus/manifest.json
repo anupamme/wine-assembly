@@ -847,6 +847,37 @@
       }
     },
     {
+      "id": "i76-arsenal-demo",
+      "name": "Interstate '76 Arsenal Demo",
+      "kind": "game",
+      "version": "1998 Activision PC demo (CD-style tree: Splash front end and InstallShield setup beside a ready-to-run Install\\Data with Nitro.exe, NITRO.ZFS and the ZDX5DRAW Direct3D renderer); one I'76 Gold and one Nitro Pack mission",
+      "executables": [
+        "zip/Arsenal Files/Install/Data/Nitro.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Arsenal_201610",
+      "license": "proprietary Activision demo: no redistribution grant in its readme, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Arsenal_201610/Arsenal.zip",
+          "sha1": "c014b6e81ba1794211cf6b762045d412979345be",
+          "type": "archive",
+          "into": "zip"
+        }
+      ],
+      "browser": {
+        "fileRoot": "zip/Arsenal Files/Install",
+        "exe": "zip/Arsenal Files/Install/Data/Nitro.exe"
+      },
+      "cli": {
+        "maxBatches": 3000,
+        "batchSize": 200000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "battlezone-demo",
       "name": "Battlezone Demo",
       "kind": "game",
