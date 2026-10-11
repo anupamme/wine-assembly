@@ -784,6 +784,53 @@
       }
     },
     {
+      "id": "heretic-2-demo",
+      "name": "Heretic II Demo",
+      "kind": "game",
+      "version": "1998 US demo (Raven Software / Activision), h2_demo_us.exe InstallShield 5 package of 1998-10-22 files",
+      "executables": [
+        "installed/Heretic2.exe"
+      ],
+      "sourcePage": "https://archive.org/details/h2_demo_us",
+      "license": "proprietary commercial demo; the bundled Activision licence (license.txt in _user1.cab) grants personal use of one copy and forbids distributing or copying it without Activision's written consent, so keep it a local ignored fixture and never deploy it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/h2_demo_us/h2_demo_us.exe",
+          "sha1": "d6593f2a1a12e39edd92338f95566e9c360d0c4e",
+          "type": "file",
+          "destination": "sources/h2_demo_us.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/h2_demo_us.exe",
+          "into": "setup"
+        },
+        {
+          "type": "is5Extract",
+          "cab": "setup/data1.cab",
+          "into": "installed"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/Heretic2.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 50000,
+        "dlls": [
+          "installed/quake2.dll",
+          "installed/H2Common.dll"
+        ],
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
