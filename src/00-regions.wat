@@ -628,6 +628,10 @@
     (owner "01-header.wat:$HEAP_SHARED"))
   (region.declare $LOCK_TABLE (size 0x00000200) (align 0x00000010)
     (owner "01-header.wat:$LOCK_TABLE"))
+  ;; The DLL loader lock ($dll_load_lock_begin in 08b-dll-loader.wat): its own
+  ;; 64-byte line, because every line of LOCK_TABLE is already spoken for.
+  (region.declare $DLL_LOAD_LOCK (size 0x00000040) (align 0x00000040)
+    (owner "01-header.wat:$DLL_LOAD_LOCK"))
   (region.declare $CS_TABLE (size 0x00000400) (align 0x00000010)
     (stride 0x4 (count $CS_TABLE_ENTRIES))
     (owner "09a-handlers3-sync.wat:$cs_slot"))

@@ -2435,8 +2435,15 @@
   ;;      for the lock that worker holds, neither ever moves. So these wrap pure
   ;;      table arithmetic — slot allocation — and nothing else.
   ;;   2. Never take two at once, so there is no order to get wrong.
+  ;;      One ordered exception: $DLL_LOAD_LOCK is held while a rebased image
+  ;;      reserves sparse memory, which takes $LOCK_VIRTUAL_MAP inside it. Never
+  ;;      the other way round -- LOCK_VIRTUAL_MAP's sections never load a DLL.
   (global $LOCK_TABLE i32 (region.addr $LOCK_TABLE 0))
   (global $LOCK_TABLE_SIZE i32 (region.size $LOCK_TABLE))
+  ;; Staging, address choice, mapping and the DLL_TABLE row of one DLL load
+  ;; (08b-dll-loader.wat, "The loader lock"). Same layout as a LOCK_TABLE line.
+  (global $DLL_LOAD_LOCK i32 (region.addr $DLL_LOAD_LOCK 0))
+  (global $DLL_LOAD_LOCK_SIZE i32 (region.size $DLL_LOAD_LOCK))
   ;; Every CRITICAL_SECTION the guest has initialised, so that one owned by a
   ;; thread that has ended can be found and released. WASM addresses, not guest
   ;; ones: the release runs from whichever instance notices the exit, and in

@@ -2023,13 +2023,16 @@
             (call $heap_free (local.get $dll_ga))
             (return (i32.const 0))))
         ;; The loader reads the image from the staging buffer, exactly as it
-        ;; does for a LoadLibraryA the host drives.
+        ;; does for a LoadLibraryA the host drives -- and under the same loader
+        ;; lock, since PE_STAGING and the next address are shared with every
+        ;; other thread loading a DLL. load_dll releases it.
+        (call $dll_load_lock_begin)
         (memory.copy (global.get $PE_STAGING) (call $g2w (local.get $bytes_ga))
           (local.get $size))
-        (call $heap_free (local.get $read_ga))
-        (call $heap_free (local.get $bytes_ga))
         (local.set $load_addr (call $next_dll_addr))
         (drop (call $load_dll (local.get $size) (local.get $load_addr)))
+        (call $heap_free (local.get $read_ga))
+        (call $heap_free (local.get $bytes_ga))
         (local.set $dll_index (call $find_loaded_dll (local.get $dll_ga)))
         (if (i32.lt_s (local.get $dll_index) (i32.const 0))
           (then (return (i32.const 0))))))

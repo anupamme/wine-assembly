@@ -13,6 +13,12 @@
 
   ;; Load a DLL from PE_STAGING into guest memory at load_addr.
   ;; Returns DllMain entry point (guest addr), or 0 if none/error.
+  ;; The row this instance's most recent load published, or -1 when it failed.
+  ;; The shared count minus one can already name another thread's row by the
+  ;; time the host reads it, so the host asks for this instead (the address it
+  ;; hands the guest as HMODULE, and the row its module path belongs on).
+  (global $last_loaded_dll_index (mut i32) (i32.const -1))
+  (func (export "get_last_loaded_dll_index") (result i32) (global.get $last_loaded_dll_index))
   (func $load_dll (export "load_dll") (param $size i32) (param $load_addr i32) (result i32)
     (local $pe_off i32) (local $num_sections i32) (local $opt_hdr_size i32)
     (local $section_off i32) (local $i i32) (local $vaddr i32) (local $vsize i32)
@@ -25,12 +31,22 @@
     (local $src i32) (local $dst i32) (local $header_size i32)
     (local $rsrc_rva_d i32) (local $rsrc_size_d i32) (local $rsrc_ptr i32)
     (local $image_size i32) (local $image_end i32) (local $sparse i32)
+    (local $claim_tries i32)
+    (global.set $last_loaded_dll_index (i32.const -1))
+    ;; Staging, address choice, mapping and the row are one critical section
+    ;; ($dll_load_lock_begin). A caller that staged the image already holds the
+    ;; lock; one that did not (unit tests) takes it here. Either way it is
+    ;; released below, before the imports' host round trip and DllMain.
+    (if (i32.ne (i32.atomic.load (global.get $DLL_LOAD_LOCK)) (call $lock_owner_id))
+      (then (call $lock_acquire (global.get $DLL_LOAD_LOCK))))
+    (block $map_fail
 
     ;; Every DLL has entries in three fixed parallel tables. Refuse the load
     ;; before mapping a section when no row remains; the former unchecked 17th
-    ;; load wrote its DLL metadata over DLL_RSRC_TABLE.
+    ;; load wrote its DLL metadata over DLL_RSRC_TABLE. Under the lock, so the
+    ;; check and the claim below cannot be split by another loader.
     (if (i32.ge_u (i32.atomic.load (global.get $DLL_SHARED)) (global.get $DLL_TABLE_CAPACITY))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
 
     ;; Validate the staged file before reading optional/section headers. Without
     ;; these checks a short file can reuse stale bytes left in PE_STAGING by the
@@ -38,27 +54,27 @@
     ;; place as if it were part of this DLL.
     (if (i32.or (i32.lt_u (local.get $size) (i32.const 0x40))
                 (i32.gt_u (local.get $size) (global.get $PE_STAGING_SIZE)))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     (if (i32.ne (i32.load16_u (global.get $PE_STAGING)) (i32.const 0x5A4D))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     (local.set $pe_off (i32.load (i32.add (global.get $PE_STAGING) (i32.const 0x3C))))
     ;; The COFF fields used below reach PE+0x58. Require that much of the file
     ;; before dereferencing them, then require a PE32 optional header through
     ;; the TLS directory fields consumed below.
     (if (i32.or (i32.lt_u (local.get $size) (i32.const 0x58))
                 (i32.gt_u (local.get $pe_off) (i32.sub (local.get $size) (i32.const 0x58))))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     (local.set $pe_off (i32.add (global.get $PE_STAGING) (local.get $pe_off)))
     (if (i32.ne (i32.load (local.get $pe_off)) (i32.const 0x00004550))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     (if (i32.ne (i32.load16_u (i32.add (local.get $pe_off) (i32.const 4))) (i32.const 0x014C))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
 
     (local.set $num_sections (i32.load16_u (i32.add (local.get $pe_off) (i32.const 6))))
     (local.set $opt_hdr_size (i32.load16_u (i32.add (local.get $pe_off) (i32.const 20))))
     (if (i32.or (i32.ne (i32.load16_u (i32.add (local.get $pe_off) (i32.const 24))) (i32.const 0x010B))
                 (i32.lt_u (local.get $opt_hdr_size) (i32.const 172)))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     ;; Headers themselves are copied into the image, so reject a declared
     ;; header extent that escapes either the file or SizeOfImage.
     (local.set $image_size (i32.load (i32.add (local.get $pe_off) (i32.const 80))))
@@ -66,14 +82,14 @@
           (i32.or
             (i32.gt_u (i32.load (i32.add (local.get $pe_off) (i32.const 84))) (local.get $size))
             (i32.gt_u (i32.load (i32.add (local.get $pe_off) (i32.const 84))) (local.get $image_size))))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     (local.set $section_off (i32.add (local.get $pe_off)
       (i32.add (i32.const 24) (local.get $opt_hdr_size))))
     (if (i32.or
           (i32.gt_u (local.get $section_off) (i32.add (global.get $PE_STAGING) (local.get $size)))
           (i32.gt_u (i32.mul (local.get $num_sections) (i32.const 40))
             (i32.sub (i32.add (global.get $PE_STAGING) (local.get $size)) (local.get $section_off))))
-      (then (return (i32.const 0))))
+      (then (br $map_fail)))
     ;; Preflight every section before mapping anything. A truncated raw range is
     ;; malformed input; rejecting it avoids exposing old bytes or partial code.
     (local.set $i (i32.const 0))
@@ -89,14 +105,14 @@
             (i32.gt_u (local.get $vaddr) (i32.load (i32.add (local.get $pe_off) (i32.const 80))))
             (i32.gt_u (local.get $mapped_size)
               (i32.sub (i32.load (i32.add (local.get $pe_off) (i32.const 80))) (local.get $vaddr))))
-        (then (return (i32.const 0))))
+        (then (br $map_fail)))
       (if (i32.and (i32.and (i32.ne (local.get $raw_off) (i32.const 0))
                            (i32.ne (local.get $raw_size) (i32.const 0)))
                    (i32.or
                      (i32.gt_u (local.get $raw_off) (local.get $size))
                      (i32.gt_u (local.get $raw_size)
                        (i32.sub (local.get $size) (local.get $raw_off)))))
-        (then (return (i32.const 0))))
+        (then (br $map_fail)))
       (local.set $section_off (i32.add (local.get $section_off) (i32.const 40)))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $preflight)))
@@ -111,6 +127,7 @@
     ;; PAGE_INDEX_ARENA and the main thread dispatched garbage ops. Rebase such
     ;; an image into a committed sparse reservation instead, as a real loader
     ;; does when the preferred range is taken.
+    (loop $place
     (local.set $image_size (i32.load (i32.add (local.get $pe_off) (i32.const 80))))
     (local.set $image_end (i32.add (local.get $load_addr) (local.get $image_size)))
     (if (i32.or
@@ -124,13 +141,28 @@
         (local.set $image_size
           (i32.and (i32.add (local.get $image_size) (i32.const 0xFFFF)) (i32.const 0xFFFF0000)))
         (local.set $load_addr (call $virtual_reserve_down (local.get $image_size)))
-        (if (i32.eqz (local.get $load_addr)) (then (return (i32.const 0))))
+        (if (i32.eqz (local.get $load_addr)) (then (br $map_fail)))
         (if (i32.eqz (call $virtual_map_commit_protect
               (local.get $load_addr) (local.get $image_size) (i32.const 0x40))) ;; PAGE_EXECUTE_READWRITE
           (then
             (drop (call $virtual_map_release (local.get $load_addr)))
-            (return (i32.const 0))))
+            (br $map_fail)))
         (local.set $sparse (i32.const 1))))
+    ;; Claim the low range before writing a byte of it. The heap lives above
+    ;; the same watermark, and a guest thread's HeapAlloc does not take this
+    ;; lock: claiming only after mapping (as this used to) let a concurrent
+    ;; arena land on the image while it was being copied. If an arena already
+    ;; reached into the candidate, place the image again past it.
+    (if (i32.eqz (local.get $sparse))
+      (then
+        (if (i32.eqz (call $dll_claim_low (local.get $load_addr)
+              (i32.and (i32.add (local.get $image_end) (i32.const 0xFFF)) (i32.const 0xFFFFF000))))
+          (then
+            (local.set $claim_tries (i32.add (local.get $claim_tries) (i32.const 1)))
+            (if (i32.gt_u (local.get $claim_tries) (i32.const 64)) (then (br $map_fail)))
+            (local.set $load_addr (call $next_dll_addr))
+            (br $place)))))
+    )
     (local.set $delta (i32.sub (local.get $load_addr) (local.get $preferred_base)))
 
     ;; Keep the mapped DLL's DOS/PE headers just as $load_pe keeps the
@@ -213,24 +245,19 @@
     (if (i32.ne (local.get $export_rva) (i32.const 0))
       (then (call $parse_exports (local.get $tbl_ptr) (local.get $load_addr) (local.get $export_rva))))
 
+    ;; Publish the row while the lock still orders loaders: the next one reads
+    ;; this row's end for its address and takes the next index. The image range
+    ;; was already claimed from the low heap above.
+    (i32.atomic.store (global.get $DLL_SHARED) (i32.add (local.get $dll_idx) (i32.const 1)))
+    (global.set $last_loaded_dll_index (local.get $dll_idx))
+    ;; Nothing below reads PE_STAGING (the directories are in locals), so the
+    ;; next loader may stage. Release before the imports: resolving an ordinal
+    ;; is a host round trip, and lock rule 1 forbids holding a lock across one.
+    (call $dll_load_lock_end)
+
     ;; Process DLL's own imports (resolve to our thunks)
     (if (i32.ne (local.get $import_rva) (i32.const 0))
       (then (call $process_dll_imports (local.get $load_addr) (local.get $import_rva))))
-
-    (i32.atomic.store (global.get $DLL_SHARED) (i32.add (local.get $dll_idx) (i32.const 1)))
-
-    ;; Push the low heap past this DLL image so allocations don't land on its
-    ;; code. This has to move the PROCESS cursor in shared memory, not $heap_ptr:
-    ;; that global now bounds one instance's private arena, so raising it here
-    ;; would leave every other instance still reserving over the image.
-    (local.set $dst (i32.and
-      (i32.add (i32.add (local.get $load_addr)
-        (i32.load (i32.add (local.get $pe_off) (i32.const 80)))) ;; SizeOfImage
-        (i32.const 0xFFF))
-      (i32.const 0xFFFFF000)))
-    ;; A rebased image owns its own reservation and is nowhere near the low heap.
-    (if (i32.eqz (local.get $sparse))
-      (then (call $heap_reserve_below (local.get $dst))))
 
     ;; Static TLS, after relocation (the directory holds VAs) and before
     ;; DllMain, which may already use __declspec(thread) data.
@@ -238,9 +265,68 @@
       (then (call $static_tls_attach (i32.add (local.get $load_addr) (local.get $tls_rva)))))
 
     ;; Return DllMain entry point
-    (if (result i32) (i32.ne (local.get $entry_rva) (i32.const 0))
-      (then (i32.add (local.get $load_addr) (local.get $entry_rva)))
-      (else (i32.const 0))))
+    (return
+      (if (result i32) (i32.ne (local.get $entry_rva) (i32.const 0))
+        (then (i32.add (local.get $load_addr) (local.get $entry_rva)))
+        (else (i32.const 0)))))
+    ;; $map_fail: nothing was published; let the next loader in.
+    (call $dll_load_lock_end)
+    (i32.const 0))
+
+  ;; ---- The loader lock -------------------------------------------------------
+  ;; PE_STAGING is one buffer for the whole process, and the next DLL address is
+  ;; computed from the last row and the heap watermark, so two guest threads
+  ;; loading at once used to map each other's bytes, pick the same address and
+  ;; write the same DLL_TABLE row (DLL-CONCURRENT-MAPPING). One lock now covers
+  ;; staging, address choice, the claim, mapping and publishing the row:
+  ;;
+  ;;   dll_load_lock_begin  -> host/WinHelp copies the file into PE_STAGING
+  ;;                        -> get_next_dll_addr -> load_dll (maps, publishes,
+  ;;                           releases) -> imports, TLS, DllMain unlocked
+  ;;
+  ;; It is never held across a host import (rule 1): the section is copying and
+  ;; table arithmetic, and load_dll lets go before the imports' ordinal lookups.
+  ;; The one lock taken inside it is LOCK_VIRTUAL_MAP, by a rebase into a sparse
+  ;; reservation; that is a strict order (this one outside, never the reverse --
+  ;; LOCK_VIRTUAL_MAP's sections never reach the loader), the single exception
+  ;; to rule 2. Spinning, like every lock here, so a waiter burns the time the
+  ;; holder spends copying an image -- milliseconds, once per load.
+  (func $dll_load_lock_begin (export "dll_load_lock_begin")
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK)))
+  ;; Let go of the lock whatever its depth, if this instance holds it. load_dll
+  ;; ends every load this way; a host that staged and then failed before calling
+  ;; load_dll calls it to abandon the load.
+  (func $dll_load_lock_end (export "dll_load_lock_end")
+    (if (i32.eq (i32.atomic.load (global.get $DLL_LOAD_LOCK)) (call $lock_owner_id))
+      (then
+        (i32.store (region.addr $DLL_LOAD_LOCK 4) (i32.const 1))
+        (call $lock_release (global.get $DLL_LOAD_LOCK)))))
+
+  ;; Claim [addr, end) of the low span for an image, against the heap: the
+  ;; watermark is the top of everything the heap has handed out. Fails (0) when
+  ;; an arena already reaches into the range, so the caller places the image
+  ;; again. A range wholly below the watermark is a fixed placement the heap
+  ;; never covered, as before, and needs no claim.
+  (func $dll_claim_low (param $addr i32) (param $end i32) (result i32)
+    (local $cursor i32)
+    (block $done (loop $retry
+      (local.set $cursor (i32.atomic.load (global.get $HEAP_SHARED)))
+      (if (i32.le_u (local.get $end) (local.get $cursor)) (then (return (i32.const 1))))
+      (if (i32.gt_u (local.get $cursor)
+            (i32.and (i32.add (local.get $addr) (i32.const 0xFFF)) (i32.const 0xFFFFF000)))
+        (then
+          ;; The heap has never been touched (cursor 0) or sits below: claim.
+          (if (i32.ne (local.get $cursor) (i32.const 0)) (then (return (i32.const 0))))))
+      (br_if $done (i32.eq (local.get $cursor)
+        (i32.atomic.rmw.cmpxchg (global.get $HEAP_SHARED) (local.get $cursor) (local.get $end))))
+      (br $retry)))
+    ;; As $heap_reserve_below does when it moves the cursor: publish the new
+    ;; base and drop this instance's arena so it cannot hand out past the image.
+    (i32.store (region.addr $HEAP_SHARED 4) (local.get $end))
+    (global.set $heap_base (local.get $end))
+    (global.set $heap_ptr (i32.const 0))
+    (global.set $heap_end (i32.const 0))
+    (i32.const 1))
 
   ;; Resolve a live dynamic-library module handle to its DLL_TABLE slot.
   ;; The executable image is deliberately absent: DisableThreadLibraryCalls
