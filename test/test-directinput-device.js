@@ -86,6 +86,9 @@ const extraWat = `
   (func (export "test_di_mouse_seed_overflow") (param $dx i32) (param $dy i32)
     (i32.atomic.store offset=272 (global.get $DI_MOUSE_INPUT_STATE) (local.get $dx))
     (i32.atomic.store offset=276 (global.get $DI_MOUSE_INPUT_STATE) (local.get $dy)))
+  (func (export "test_di_mouse_seed_wheel_overflow") (param $dz i32)
+    (i32.atomic.store offset=280 (global.get $DI_MOUSE_INPUT_STATE) (local.get $dz))
+    (drop (i32.atomic.rmw.add offset=284 (global.get $DI_MOUSE_INPUT_STATE) (local.get $dz))))
   (func (export "test_di_mouse_queue_event") (param $event i32)
     (local $tail i32)
     (local.set $tail (i32.atomic.load offset=12 (global.get $DI_MOUSE_INPUT_STATE)))
@@ -516,6 +519,48 @@ const extraWat = `
   wat.guest_write32(count, 1);
   wat.test_di_mouse_get_data(mouse, data, count, 0);
   assert.deepStrictEqual([wat.guest_read32(data), wat.guest_read32(data + 4) | 0], [12, 0]);
+
+  // The middle button and the wheel. Black & White 2's buffered mouse format
+  // has objects at lZ (8) and rgbButtons[2] (14); before these, neither was
+  // ever reported, through GetDeviceData or GetDeviceState. Queued through
+  // the renderer's own entry points, as a browser middle click and wheel do.
+  const diMemory = renderer.wasmMemory;
+  assert.ok(diMemory, 'harness renderer has the shared memory');
+  assert.ok(renderer._queueDirectInputMouseButton(diMemory, 0x10, true), 'middle press is queued');
+  assert.ok(renderer._queueDirectInputMouseWheel(diMemory, 240), 'two wheel notches away are queued');
+  assert.ok(renderer._queueDirectInputMouseButton(diMemory, 0x10, false), 'middle release is queued');
+  assert.ok(renderer._queueDirectInputMouseWheel(diMemory, -120), 'one notch back is queued');
+  wat.guest_write32(count, 8);
+  assert.strictEqual(wat.test_di_mouse_get_data(mouse, data, count, 0) >>> 0, 0);
+  assert.strictEqual(wat.guest_read32(count), 4, 'four records: press, wheel, release, wheel');
+  assert.deepStrictEqual([0, 16, 32, 48].map(o => [wat.guest_read32(data + o), wat.guest_read32(data + o + 4) | 0]),
+    [[14, 0x80], [8, 240], [14, 0], [8, -120]],
+    'middle edges at rgbButtons[2], wheel deltas at lZ, in the order they happened');
+  // A wheel burst while the ring is nearly full coalesces into the overflow
+  // word and still reaches the guest, after the queued records.
+  wat.test_di_mouse_seed_wheel_overflow(360);
+  wat.guest_write32(count, 4);
+  wat.test_di_mouse_get_data(mouse, 0, count, 1);
+  assert.strictEqual(wat.guest_read32(count), 1, 'count-only peek includes coalesced wheel motion');
+  wat.guest_write32(count, 4);
+  wat.test_di_mouse_get_data(mouse, data, count, 0);
+  assert.deepStrictEqual([wat.guest_read32(count), wat.guest_read32(data), wat.guest_read32(data + 4) | 0],
+    [1, 8, 360], 'coalesced wheel motion is one lZ record');
+  // GetDeviceState: lZ is the wheel since the last poll; rgbButtons[2] the
+  // live middle button.
+  renderer._mouseButtonsMask = 0x10;
+  wat.test_di_mouse_seed_delta(0, 0);
+  assert.strictEqual(wat.test_di_mouse_get_state(mouse, data) >>> 0, 0);
+  assert.deepStrictEqual([wat.guest_read32(data + 8) | 0, wat.guest_read32(data + 12) >>> 0],
+    [480, 0x00800000], 'GetDeviceState: lZ = 240 - 120 + 360, middle button down');
+  assert.strictEqual(wat.test_di_mouse_get_state(mouse, data) >>> 0, 0);
+  assert.strictEqual(wat.guest_read32(data + 8) | 0, 0, 'lZ is consumed by the poll that reads it');
+  renderer._mouseButtonsMask = 0;
+  // The live-state fallback (no queue) also reports a middle edge.
+  wat.guest_write32(count, 4);
+  wat.test_di_mouse_get_data(mouse, data, count, 0);
+  assert.strictEqual(wat.guest_read32(count), 0,
+    'nothing new to report once the middle release was delivered');
 
   // Motion coalesced after a saturated browser ring remains visible after
   // ordinary queued records drain, in X-before-Y order.

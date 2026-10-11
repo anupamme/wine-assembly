@@ -676,7 +676,10 @@
     (owner "10-helpers.wat:$EXTRA_CMDLINE_BUFFER"))
   (region.declare $TLS_NEXT_INDEX_SHARED (size 0x00000040) (align 0x00000100)
     (owner "01-header.wat:$TLS_NEXT_INDEX_SHARED"))
-  (region.declare $DI_MOUSE_INPUT_STATE (size 0x00000118) (align 0x00000100)
+  ;; +0/+4 dx/dy accumulators, +8/+12 ring head/tail, +16..+271 the 64-word
+  ;; event ring, +272/+276 X/Y overflow, +280 wheel overflow, +284 wheel (lZ)
+  ;; accumulator for GetDeviceState callers.
+  (region.declare $DI_MOUSE_INPUT_STATE (size 0x00000120) (align 0x00000100)
     (owner "09a8-handlers-directx.wat:$di_mouse_delta_peek_x"))
   ;; One byte per WND_RECORDS slot: bits 0..1 are the horizontal ESB_* mask,
   ;; bits 2..3 are the vertical mask. Keeping arrow enablement beside, but

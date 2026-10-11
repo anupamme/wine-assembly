@@ -479,14 +479,19 @@
     (i32.atomic.rmw.xchg offset=0 (global.get $DI_MOUSE_INPUT_STATE) (i32.const 0)))
   (func $di_mouse_delta_take_y (result i32)
     (i32.atomic.rmw.xchg offset=4 (global.get $DI_MOUSE_INPUT_STATE) (i32.const 0)))
+  ;; lZ for GetDeviceState callers: wheel motion since the last poll (+284).
+  (func $di_mouse_wheel_take (result i32)
+    (i32.atomic.rmw.xchg offset=284 (global.get $DI_MOUSE_INPUT_STATE) (i32.const 0)))
   (func $di_mouse_event_count (result i32)
     (i32.add
       (i32.sub
         (i32.atomic.load offset=12 (global.get $DI_MOUSE_INPUT_STATE))
         (i32.atomic.load offset=8 (global.get $DI_MOUSE_INPUT_STATE)))
       (i32.add
-        (i32.ne (i32.atomic.load offset=272 (global.get $DI_MOUSE_INPUT_STATE)) (i32.const 0))
-        (i32.ne (i32.atomic.load offset=276 (global.get $DI_MOUSE_INPUT_STATE)) (i32.const 0)))))
+        (i32.add
+          (i32.ne (i32.atomic.load offset=272 (global.get $DI_MOUSE_INPUT_STATE)) (i32.const 0))
+          (i32.ne (i32.atomic.load offset=276 (global.get $DI_MOUSE_INPUT_STATE)) (i32.const 0)))
+        (i32.ne (i32.atomic.load offset=280 (global.get $DI_MOUSE_INPUT_STATE)) (i32.const 0)))))
   (func $di_mouse_event_peek (param $index i32) (result i32)
     (local $head i32) (local $queued i32) (local $delta i32)
     (local.set $head (i32.atomic.load offset=8 (global.get $DI_MOUSE_INPUT_STATE)))
@@ -511,8 +516,16 @@
             (i32.and (local.get $delta) (i32.const 0x0FFFFFFF))))))
         (local.set $index (i32.sub (local.get $index) (i32.const 1)))))
     (local.set $delta (i32.atomic.load offset=276 (global.get $DI_MOUSE_INPUT_STATE)))
-    (if (i32.and (local.get $delta) (i32.eqz (local.get $index)))
-      (then (return (i32.or (i32.const 0x60000000)
+    (if (local.get $delta)
+      (then
+        (if (i32.eqz (local.get $index))
+          (then (return (i32.or (i32.const 0x60000000)
+            (i32.and (local.get $delta) (i32.const 0x0FFFFFFF))))))
+        (local.set $index (i32.sub (local.get $index) (i32.const 1)))))
+    ;; Wheel motion coalesced while the ring was nearly full: type 9.
+    (local.set $delta (i32.atomic.load offset=280 (global.get $DI_MOUSE_INPUT_STATE)))
+    (if (i32.and (i32.ne (local.get $delta) (i32.const 0)) (i32.eqz (local.get $index)))
+      (then (return (i32.or (i32.const 0x90000000)
         (i32.and (local.get $delta) (i32.const 0x0FFFFFFF))))))
     (i32.const 0))
   (func $di_mouse_event_take (result i32)
@@ -537,6 +550,11 @@
       (i32.atomic.rmw.xchg offset=276 (global.get $DI_MOUSE_INPUT_STATE) (i32.const 0)))
     (if (local.get $delta)
       (then (return (i32.or (i32.const 0x60000000)
+        (i32.and (local.get $delta) (i32.const 0x0FFFFFFF))))))
+    (local.set $delta
+      (i32.atomic.rmw.xchg offset=280 (global.get $DI_MOUSE_INPUT_STATE) (i32.const 0)))
+    (if (local.get $delta)
+      (then (return (i32.or (i32.const 0x90000000)
         (i32.and (local.get $delta) (i32.const 0x0FFFFFFF))))))
     (i32.const 0))
 
@@ -10317,6 +10335,9 @@
           (then (i32.store (local.get $wa) (local.get $dx))))
         (if (i32.ge_u (local.get $arg1) (i32.const 8))
           (then (i32.store offset=4 (local.get $wa) (local.get $dy))))
+        ;; lZ: the wheel, from the accumulator lib/renderer-input.js adds to.
+        (if (i32.ge_u (local.get $arg1) (i32.const 12))
+          (then (i32.store offset=8 (local.get $wa) (call $di_mouse_wheel_take))))
         (if (i32.ge_u (local.get $arg1) (i32.const 13))
           (then
             (if (i32.and (local.get $buttons) (i32.const 0x0001))
@@ -10325,6 +10346,11 @@
           (then
             (if (i32.and (local.get $buttons) (i32.const 0x0002))
               (then (i32.store8 offset=13 (local.get $wa) (i32.const 0x80))))))
+        ;; rgbButtons[2]: the middle button (MK_MBUTTON in the host mask).
+        (if (i32.ge_u (local.get $arg1) (i32.const 15))
+          (then
+            (if (i32.and (local.get $buttons) (i32.const 0x0010))
+              (then (i32.store8 offset=14 (local.get $wa) (i32.const 0x80))))))
         ))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
@@ -10368,14 +10394,30 @@
     (local $now i32)
     (local.set $now (call $host_get_ticks))
     (if (i32.and (i32.gt_u (local.get $event) (i32.const 4))
-                 (i32.le_u (local.get $event_type) (i32.const 4)))
+                 (call $di_mouse_event_is_button (local.get $event_type)))
       (then
         (return (i32.sub (local.get $now)
           (i32.and (i32.sub (local.get $now) (local.get $event))
                    (i32.const 0x0FFFFFFF))))))
     (local.get $now))
 
+  ;; Event types: 1/2 left down/up, 3/4 right, 7/8 middle; 5/6/9 are X/Y/wheel.
+  (func $di_mouse_event_is_button (param $event_type i32) (result i32)
+    (i32.or (i32.and (i32.ge_u (local.get $event_type) (i32.const 1))
+                     (i32.le_u (local.get $event_type) (i32.const 4)))
+            (i32.or (i32.eq (local.get $event_type) (i32.const 7))
+                    (i32.eq (local.get $event_type) (i32.const 8)))))
   (func $di_mouse_button_commit_state (param $event i32)
+    (if (i32.eq (local.get $event) (i32.const 7))
+      (then
+        (global.set $di_mouse_data_last_buttons
+          (i32.or (global.get $di_mouse_data_last_buttons) (i32.const 0x10)))
+        (return)))
+    (if (i32.eq (local.get $event) (i32.const 8))
+      (then
+        (global.set $di_mouse_data_last_buttons
+          (i32.and (global.get $di_mouse_data_last_buttons) (i32.const -17)))
+        (return)))
     (if (i32.eq (local.get $event) (i32.const 1))
       (then
         (global.set $di_mouse_data_last_buttons
@@ -10472,8 +10514,9 @@
             (local.get $queued)
             (if (result i32) (i32.eqz (local.get $queued))
               (then
-                (i32.add (i32.ne (i32.and (local.get $diff) (i32.const 1)) (i32.const 0))
-                         (i32.ne (i32.and (local.get $diff) (i32.const 2)) (i32.const 0))))
+                (i32.add (i32.add (i32.ne (i32.and (local.get $diff) (i32.const 1)) (i32.const 0))
+                                  (i32.ne (i32.and (local.get $diff) (i32.const 2)) (i32.const 0)))
+                         (i32.ne (i32.and (local.get $diff) (i32.const 0x10)) (i32.const 0))))
               (else (i32.const 0)))))
         (local.set $requested
           (if (result i32) (local.get $arg3)
@@ -10498,8 +10541,8 @@
         (local.set $commit (i32.eqz (i32.and (local.get $arg4) (i32.const 1))))
         (local.set $delivered (i32.const 0))
 
-        ;; Each packed FIFO word is either button code 1..4 or a signed 28-bit
-        ;; motion delta with type 5 (X) / 6 (Y) in its high nibble.
+        ;; Each packed FIFO word is a button edge (1..4 bare or stamped, 7/8
+        ;; stamped) or a signed 28-bit delta: type 5 X, 6 Y, 9 wheel.
         (local.set $button_index (i32.const 0))
         (block $buttons_done (loop $buttons_loop
           (br_if $buttons_done (i32.ge_u (local.get $button_index) (local.get $queued)))
@@ -10513,6 +10556,7 @@
             (if (result i32) (i32.le_u (local.get $event) (i32.const 4))
               (then (local.get $event))
               (else (i32.shr_u (local.get $event) (i32.const 28)))))
+          ;; DIMOUSESTATE offset: X 0, Y 4, wheel 8, buttons 12/13/14.
           (local.set $ofs
             (if (result i32) (i32.eq (local.get $event_type) (i32.const 5))
               (then (i32.const 0))
@@ -10520,10 +10564,16 @@
                 (if (result i32) (i32.eq (local.get $event_type) (i32.const 6))
                   (then (i32.const 4))
                   (else
-                    (select (i32.const 12) (i32.const 13)
-                      (i32.le_u (local.get $event_type) (i32.const 2))))))))
+                    (if (result i32) (i32.eq (local.get $event_type) (i32.const 9))
+                      (then (i32.const 8))
+                      (else
+                        (if (result i32) (i32.ge_u (local.get $event_type) (i32.const 7))
+                          (then (i32.const 14))
+                          (else
+                            (select (i32.const 12) (i32.const 13)
+                              (i32.le_u (local.get $event_type) (i32.const 2))))))))))))
           (local.set $data
-            (if (result i32) (i32.ge_u (local.get $event_type) (i32.const 5))
+            (if (result i32) (i32.eqz (call $di_mouse_event_is_button (local.get $event_type)))
               (then
                 (i32.shr_s (i32.shl (local.get $event) (i32.const 4)) (i32.const 4)))
               (else
@@ -10550,7 +10600,7 @@
                 (call $di_mouse_event_stamp (local.get $event) (local.get $event_type)))))
           (if (local.get $commit)
             (then
-              (if (i32.le_u (local.get $event_type) (i32.const 4))
+              (if (call $di_mouse_event_is_button (local.get $event_type))
                 (then (call $di_mouse_button_commit_state (local.get $event_type))))
               (global.set $di_mouse_data_sequence
                 (i32.add (global.get $di_mouse_data_sequence) (i32.const 1)))))
@@ -10604,6 +10654,26 @@
                 (global.set $di_mouse_data_last_buttons
                   (i32.or (i32.and (global.get $di_mouse_data_last_buttons) (i32.const -3))
                           (i32.and (local.get $buttons) (i32.const 2))))))))
+        (if (i32.and
+              (i32.and (i32.eqz (local.get $queued))
+                       (i32.lt_u (local.get $delivered) (local.get $requested)))
+                     (i32.ne (i32.and (local.get $diff) (i32.const 0x10)) (i32.const 0)))
+          (then
+            (local.set $data (select (i32.const 0x80) (i32.const 0)
+              (i32.ne (i32.and (local.get $buttons) (i32.const 0x10)) (i32.const 0))))
+            (local.set $ofs (call $di_format_offset (local.get $entry) (i32.const 2) (i32.const 5)))
+            (if (i32.ge_s (local.get $ofs) (i32.const 0))
+              (then
+                (call $di_mouse_data_write (local.get $arg2) (local.get $arg1)
+                  (local.get $delivered) (local.get $ofs) (local.get $data) (call $host_get_ticks))
+                (local.set $delivered (i32.add (local.get $delivered) (i32.const 1)))))
+            (if (local.get $commit)
+              (then
+                (global.set $di_mouse_data_sequence
+                  (i32.add (global.get $di_mouse_data_sequence) (i32.const 1)))
+                (global.set $di_mouse_data_last_buttons
+                  (i32.or (i32.and (global.get $di_mouse_data_last_buttons) (i32.const -17))
+                          (i32.and (local.get $buttons) (i32.const 0x10))))))))
         (if (local.get $arg3)
           (then (call $gs32 (local.get $arg3) (local.get $delivered))))
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))

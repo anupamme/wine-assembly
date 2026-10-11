@@ -1811,8 +1811,9 @@ async function main() {
   //   B:hit-counts[:LABEL]  — print every --count total at this batch; two bracket a fixed window
   //   B:di-keydown:VK      — set DirectInput/GetAsyncKeyState key-down state without WM_KEYDOWN
   //   B:di-keyup:VK         — clear DirectInput/GetAsyncKeyState key-down state without WM_KEYUP
-  //   B:di-mousedown[:BTN]   — press DirectInput mouse button 1 or 2 without moving the cursor
-  //   B:di-mouseup[:BTN]     — release DirectInput mouse button 1 or 2 without moving the cursor
+  //   B:di-mousedown[:BTN]   — press DirectInput mouse button 1, 2 or 3 (middle) without moving the cursor
+  //   B:di-mouseup[:BTN]     — release DirectInput mouse button 1, 2 or 3 without moving the cursor
+  //   B:di-wheel:DELTA       — DirectInput wheel motion (lZ), WHEEL_DELTA units: 120 per notch away, -120 toward
   //   B:click:X:Y           — handleMouseDown+Up at canvas (X,Y)
   //   B:mousedown:X:Y       — handleMouseDown at canvas (X,Y)
   //   B:mouseup:X:Y         — handleMouseUp at canvas (X,Y)
@@ -2230,10 +2231,14 @@ async function main() {
         scheduledInput.push({ batch, action: kind, code: parseInt(parts[2]) });
       } else if (kind === 'di-mousedown' || kind === 'di-mouseup') {
         const button = parts[2] === undefined ? 1 : parseInt(parts[2]);
-        if (button !== 1 && button !== 2) {
-          throw new Error(`${kind} button must be 1 or 2`);
+        if (button !== 1 && button !== 2 && button !== 3) {
+          throw new Error(`${kind} button must be 1, 2 or 3`);
         }
         scheduledInput.push({ batch, action: kind, button });
+      } else if (kind === 'di-wheel') {
+        const delta = parseInt(parts[2]);
+        if (!Number.isFinite(delta) || !delta) throw new Error('di-wheel needs a nonzero DELTA (120 per notch)');
+        scheduledInput.push({ batch, action: kind, delta });
       } else if (kind === 'ime-start') {
         scheduledInput.push({ batch, action: 'ime-start' });
       } else if (kind === 'ime-update' || kind === 'ime-commit') {
@@ -9580,9 +9585,15 @@ async function main() {
         // changes just as they do for renderer.handleKeyDown/handleKeyUp.
         if (renderer._signalDirectInputDevice) renderer._signalDirectInputDevice(1);
         logs.push(`[input] ${ev.action} vk=${ev.code} at batch ${batch}`);
+      } else if (ev.action === 'di-wheel' && renderer) {
+        if (renderer._queueDirectInputMouseWheel) {
+          renderer._queueDirectInputMouseWheel(renderer._pointerInputMemory || renderer.wasmMemory, ev.delta);
+        }
+        if (renderer._signalDirectInputDevice) renderer._signalDirectInputDevice(2);
+        logs.push(`[input] di-wheel ${ev.delta} at batch ${batch}`);
       } else if ((ev.action === 'di-mousedown' || ev.action === 'di-mouseup') && renderer) {
-        const mask = ev.button === 2 ? 0x0002 : 0x0001;
-        const vk = ev.button === 2 ? 0x02 : 0x01;
+        const mask = ev.button === 2 ? 0x0002 : ev.button === 3 ? 0x0010 : 0x0001;
+        const vk = ev.button === 2 ? 0x02 : ev.button === 3 ? 0x04 : 0x01;
         const down = ev.action === 'di-mousedown';
         const wasDown = !!((renderer._mouseButtonsMask || 0) & mask);
         renderer._mouseButtonsMask = down
