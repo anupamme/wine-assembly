@@ -31,7 +31,11 @@ const MIME = {
 };
 
 function startServer() {
-  return startSharedStaticServer({ root: ROOT, mimeTypes: MIME, crossOriginIsolated: true });
+  // A worktree links binaries/ to a shared checkout; without the allowlist the
+  // server 403s viewer.exe and the viewer window never appears.
+  return startSharedStaticServer({ root: ROOT, mimeTypes: MIME, crossOriginIsolated: true,
+    allowedRealRoots: ['binaries', 'test/binaries', 'fonts']
+      .map(dir => path.join(ROOT, dir)).filter(dir => fs.existsSync(dir)) });
 }
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));

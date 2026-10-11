@@ -198,7 +198,10 @@ async function launch(page, index, label) {
 }
 
 (async () => {
-  const server = await startStaticServer({ root: ROOT, mimeTypes: MIME });
+  // A worktree links its corpus to a shared checkout; allow those link targets.
+  const server = await startStaticServer({ root: ROOT, mimeTypes: MIME,
+    allowedRealRoots: ['binaries', 'test/binaries', 'fonts']
+      .map(dir => path.join(ROOT, dir)).filter(dir => fs.existsSync(dir)) });
   const base = `http://127.0.0.1:${server.address().port}`;
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'web-tetrinet-lan-'));
   const browser = await puppeteer.launch({
