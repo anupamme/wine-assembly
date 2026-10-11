@@ -319,3 +319,42 @@ The first longer-click Chrome49470 received SIGKILL coincident with its remote
 launcher45s timeout; controller49458 was explicitly closed07:14:32.616Z. The
 replacement launches with detached child/stdin-out-err files and an immutable1800s
 guard. Never classify this harness failure as a game crash or restart on502 alone.
+
+## Menu first-click, logical frames and audio (2026-10-11, claude:1863)
+
+**Menu repeat-clicks: fixed 22d835d4f.** Disciples II arms a menu button from
+hover, worked out once a frame from the pointer position. A press delivered in
+the same message pump as the move onto the button drew it pressed and did
+nothing. Every first click on a new screen failed, and a second click (the
+pointer already there) worked. Trusted browser clicks with a 1000 ms hold
+failed the same way; the move before the press is what matters, not the press
+length. A phone tap is always such a click. takeInput now holds a press that
+follows a move to a new spot until the move has had an empty poll plus the
+30 ms floor, mirroring the release hold. Browser A/B with instant, no-hover
+clicks: before, Single Player and Load Saga stayed pressed; after, each
+activates on the first click.
+
+Separately, the **day-1 income scroll, the leader-name scroll and the story
+dialogs' red seals need a held press** (a few frames down). A real click (~100
+ms) gives that. ctl.js's instant `click` does not: use `cmd mousedown:X:Y`,
+0.6 s, `cmd mouseup:X:Y`. The quest intro continues with Enter.
+
+**Logical frames: `perf.logicalFrame` = 0x647da0, verifier 0x647df2.** Every
+frame's stack is the WinMain loop 0x401297 -> 0x504700 / 0x4014cc -> screen
+render (indirect, 0x54764e) -> the renderer's end-of-frame virtual 0x647da0
+(vtable slot at 0x6c1af8). That method flushes the dirty lists and calls
+Flip (return site 0x647df2) when page flipping is on. Clear Blt (0x647d7c), ~10
+BltFast and one Flip make up each frame. Browser measurement (bx_deesf22z,
+Threads, headful Chrome): select the leader, plot, confirm the move; over the
+next 29.99 s the counter rose by 822, i.e. **27.4 frames/s**. The window
+covers the walk (Move 20/20 -> 14/20, camera following) and then the leader
+standing at the destination. WinePerf saw 836 presentation events and 946
+uploads in the same window. The page did not report the verifier count
+(metric verifier: false), so the verifier is unconfirmed.
+
+**Audio:** Miles (mss32) streams through DirectSound, not waveOut (0 waveOut
+handles). On the map the page's AudioContext is running at 44.1 kHz with two
+looping DirectSound voices (stereo 16-bit 44.1 kHz, snapshot mode, playing).
+Audibility and quality were not assessed: there was no listener on the boat.
+
+Evidence: scratch/runs/20261011T1800Z-disciples2-input-fps-audio-claude1863.
