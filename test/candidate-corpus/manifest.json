@@ -831,6 +831,45 @@
       }
     },
     {
+      "id": "tachyon-demo",
+      "name": "Tachyon: The Fringe Demo",
+      "kind": "game",
+      "version": "2000 NovaLogic PC demo (first five single-player missions), InstallShield 5 package: Front.exe front end, Tachyon.exe, Hw_d3d.dll / Hw_3dfx.dll renderers, Space.pff data; Direct3D",
+      "executables": [
+        "installed/tachyon/Tachyon.exe",
+        "installed/tachyon/Front.exe"
+      ],
+      "sourcePage": "https://archive.org/details/TachyonTheFringe",
+      "license": "proprietary NovaLogic demo: LICENSE.TXT grants one user's own use and forbids making, selling or transferring reproductions without NovaLogic's written permission, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/TachyonTheFringe/TachyonDemo.zip",
+          "sha1": "6a51db79d5d29c0e6f036b9dd29c2ddfd0a42e70",
+          "type": "archive",
+          "into": "setup"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "is5Extract",
+          "cab": "setup/DATA1.CAB",
+          "into": "installed/tachyon"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/tachyon/Tachyon.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "expendable-demo",
       "name": "Expendable Demo",
       "kind": "game",
