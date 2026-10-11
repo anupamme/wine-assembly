@@ -1470,6 +1470,22 @@ class WineAssembly {
       (ex.is_mm_timer_callback_active() | 0));
   }
 
+  // The guest-main Worker's twin of the cooperative self-SuspendThread park.
+  // SuspendThread(GetCurrentThread()) completes the call and leaves the private
+  // yield 11 (09a0b $handle_SuspendThread): Windows would not run this thread's
+  // next instruction until another thread resumed it. The cooperative loop
+  // skips main while _isMainExecutionSuspended(); the Worker-main loop parks
+  // the slice here instead, and once the thread manager no longer counts main
+  // suspended, consumes the yield so main continues after SuspendThread (as
+  // thread-manager does for a resumed worker thread). True while parked.
+  async _workerMainSelfSuspendParked() {
+    if (!this._workerMainSelfSuspend) return false;
+    if (this._isMainExecutionSuspended()) return true;
+    this._workerMainSelfSuspend = null;
+    await this.guestWorker.callExport('clear_yield');
+    return false;
+  }
+
   _closeSyncHandle(handle) {
     return !!(this.threadManager && this.threadManager.closeSyncHandle &&
       this.threadManager.closeSyncHandle(handle >>> 0));
@@ -5306,6 +5322,12 @@ class WineAssembly {
             self._workerMainIoWait = null;
             await self.guestWorker.callExport('clear_yield');
           }
+          // A main thread that suspended itself (yield 11) runs nothing until
+          // another thread resumes it; its threads keep their turns meanwhile.
+          const selfSuspended = self._workerMainSelfSuspend;
+          if (selfSuspended && await self._workerMainSelfSuspendParked()) {
+            return Object.assign({}, selfSuspended, { blocks: 0, ms: 0 });
+          }
           // A main-thread Sleep(n) holds the guest's main thread until its
           // deadline on the guest clock, exactly as checkMainYield does in
           // cooperative mode. Its threads keep their turns meanwhile.
@@ -5657,6 +5679,12 @@ class WineAssembly {
               ? Math.max(1, r.timerDue) : WineAssembly.MAX_PARK_SLEEP_MS;
           }
           self._workerParkMain(park, perfSliceDoneAt, true);
+        } else if (r.yield === 11) {
+          // Self-SuspendThread on the guest's MAIN thread: park it (runMain's
+          // gate, _workerMainSelfSuspendParked) until another thread resumes
+          // it. Baldur's Gate chapters 1-2 hit the catch-all below here and
+          // stopped ("yield 11 is not supported in worker mode yet").
+          if (!self._workerMainSelfSuspend) self._workerMainSelfSuspend = r;
         } else if (r.yield === 6) {
           // modal_dialog: the single-threaded loop does nothing special here
           // either — the WAT side drives the dialog — so neither does this.
