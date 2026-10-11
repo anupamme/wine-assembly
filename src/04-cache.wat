@@ -2481,7 +2481,7 @@
     ;; whole cache and restart at $eip. The fresh decode will produce
     ;; valid threaded code. This recovers from rare corruption rather
     ;; than trapping with wasm "table index out of bounds".
-    (if (i32.ge_u (local.get $nx_fn) (i32.const 500))
+    (if (i32.ge_u (local.get $nx_fn) (i32.const 501))
       (then
         (return_call $dispatch_bad (local.get $nx_fn))))
     (if (global.get $handler_hist_enabled)

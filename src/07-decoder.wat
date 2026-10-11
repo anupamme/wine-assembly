@@ -2868,6 +2868,17 @@
           (call $publish_block (local.get $start_eip) (local.get $tstart)
                 (i32.add (local.get $start_eip) (i32.const 1))))))
 
+    ;; A statically linked MSVC _ftol body becomes the native conversion and
+    ;; the body's own RET ($ftol_body_at, 10-helpers.wat). The block covers all
+    ;; 39 bytes, so a write to any of them invalidates it like any other block.
+    (if (i32.and (i32.eqz (global.get $code16)) (call $ftol_body_at (local.get $start_eip)))
+      (then
+        (call $te (i32.const 500) (i32.const 0))
+        (call $te (i32.const 41) (i32.const 0))
+        (return
+          (call $publish_block (local.get $start_eip) (local.get $tstart)
+                (i32.add (local.get $start_eip) (i32.const 39))))))
+
     ;; A 16-bit task can only execute inside the selector arena. Landing
     ;; outside it means a far pointer was used as a linear address somewhere,
     ;; and this has to be checked before the zeros test below: the runaway

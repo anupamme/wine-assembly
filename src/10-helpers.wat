@@ -299,6 +299,39 @@
     (if (i32.eqz (global.get $sbh_eip_b))
       (then (global.set $sbh_eip_b (local.get $eip)) (call $chain_bump))))
 
+  ;; Does a statically linked MSVC _ftol start at this EIP? The 39 bytes are
+  ;;   push ebp / mov ebp,esp / add esp,-0Ch / fnstcw [ebp-2] /
+  ;;   mov ax,[ebp-2] / or ah,0Ch / mov [ebp-4],ax / fldcw [ebp-4] /
+  ;;   fistp qword [ebp-0Ch] / fldcw [ebp-2] / mov eax,[ebp-0Ch] /
+  ;;   mov edx,[ebp-8] / leave / ret
+  ;; (with the two FWAITs). An imported _ftol already reaches the native
+  ;; handler through $native_override_export_api_id; a copy linked into the
+  ;; exe or a DLL never did, and ran as an interpreted block per conversion:
+  ;; 14% of Croc 2's block entries, 182k entries of quake2's ref_soft in the
+  ;; 2026-09 census (docs/hot-loop-vocabulary-2026-09.md). Asked once per block
+  ;; decode. Only a body wholly inside one 4KB page is matched, so one
+  ;; translation covers it and no byte the block would not decode is read.
+  (func $ftol_body_at (param $eip i32) (result i32)
+    (local $wa i32)
+    (if (i32.gt_u (i32.and (local.get $eip) (i32.const 0xFFF)) (i32.const 0xFD9))
+      (then (return (i32.const 0))))
+    (local.set $wa (call $g2w (local.get $eip)))
+    (if (i32.ne (i32.load (local.get $wa)) (i32.const 0x83ec8b55)) (then (return (i32.const 0))))
+    (i32.and
+      (i32.and
+        (i32.and
+          (i32.and (i32.eq (i32.load offset=4 (local.get $wa)) (i32.const 0xd99bf4c4))
+                   (i32.eq (i32.load offset=8 (local.get $wa)) (i32.const 0x669bfe7d)))
+          (i32.and (i32.eq (i32.load offset=12 (local.get $wa)) (i32.const 0x80fe458b))
+                   (i32.eq (i32.load offset=16 (local.get $wa)) (i32.const 0x89660ccc))))
+        (i32.and
+          (i32.and (i32.eq (i32.load offset=20 (local.get $wa)) (i32.const 0x6dd9fc45))
+                   (i32.eq (i32.load offset=24 (local.get $wa)) (i32.const 0xf47ddffc)))
+          (i32.and (i32.eq (i32.load offset=28 (local.get $wa)) (i32.const 0x8bfe6dd9))
+                   (i32.eq (i32.load offset=32 (local.get $wa)) (i32.const 0x558bf445)))))
+      (i32.and (i32.eq (i32.load16_u offset=36 (local.get $wa)) (i32.const 0xc9f8))
+               (i32.eq (i32.load8_u offset=38 (local.get $wa)) (i32.const 0xc3)))))
+
   (func $fast_msvc_sbh_scan (result i32)
     (local $wa i32) (local $scan i32) (local $scan_wa i32) (local $page i32)
     (local $first i32) (local $mode i32) (local $match i32)

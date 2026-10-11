@@ -1083,6 +1083,25 @@
       (i32.and (local.get $op) (i32.const 0xF)))
     (dispatch-next))
 
+  ;; 500: the body of a statically linked MSVC _ftol, which the decoder
+  ;; recognises by its exact bytes ($ftol_body_at) and emits as this op followed
+  ;; by RET. The same semantics as the imported override $handle__ftol: pop
+  ;; ST(0), convert with truncation (the body's `or ah,0Ch` + fldcw), restore
+  ;; the caller's control word, return the 64-bit result in EDX:EAX. Not
+  ;; reproduced, as with the import: the body's scratch stores below ESP and
+  ;; the flags its `add esp`/`or ah` leave, both dead in the MSVC calling
+  ;; convention. Croc 2 spends 14% of its block entries in this one body.
+  (func $th_ftol_native (param $op i32)
+    (local $nx_fn i32) (local $nx_op i32)
+    (local $saved_cw i32) (local $value i64)
+    (local.set $saved_cw (global.get $fpu_cw))
+    (global.set $fpu_cw (i32.or (local.get $saved_cw) (i32.const 0x0C00)))
+    (local.set $value (call $fpu_to_i64 (call $fpu_pop)))
+    (global.set $fpu_cw (local.get $saved_cw))
+    (i32.store offset=0 (global.get $reg_base) (i32.wrap_i64 (local.get $value)))
+    (i32.store offset=8 (global.get $reg_base) (i32.wrap_i64 (i64.shr_u (local.get $value) (i64.const 32))))
+    (dispatch-next))
+
   ;; 190: FPU memory op with base+disp — op=(group<<8)|(reg<<4)|base, disp in next word
   (func $th_fpu_mem_ro (param $op i32)
      (local $nx_fn i32) (local $nx_op i32) (call $fpu_exec_mem
