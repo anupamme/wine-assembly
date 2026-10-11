@@ -407,6 +407,7 @@
   (func $dialog_proc_result
     (param $hwnd i32) (param $msg i32) (param $wParam i32) (param $lParam i32)
     (param $handled i32) (result i32)
+    (local $hdc i32)
     (if (local.get $handled)
       (then
         ;; USER's DefDlgProc epilog returns the DLGPROC's own BOOL — not
@@ -490,8 +491,25 @@
         (if (i32.and (call $nc_flags_test (local.get $hwnd)) (i32.const 2))
           (then
             (call $nc_flags_clear (local.get $hwnd) (i32.const 2))
-            (drop (call $host_erase_background
-              (local.get $hwnd) (i32.const 16))))) ;; COLOR_BTNFACE+1
+            ;; DefDlgProc's paint is DefWindowProc's BeginPaint, which sends
+            ;; WM_ERASEBKGND through the window's CURRENT wndproc. A subclassed
+            ;; dialog owns its background there: Hellbender's MFC Quick
+            ;; Configuration dialog draws its 560x420 artwork on erase, and
+            ;; the native fill left it blank grey. Unhandled (0) falls back.
+            (if (i32.and
+                  (i32.ne (call $wnd_table_get (local.get $hwnd)) (global.get $WNDPROC_DIALOG))
+                  (i32.eqz (global.get $code16)))
+              (then
+                (local.set $hdc (call $host_alloc_window_dc (local.get $hwnd) (i32.const 0)))
+                (call $dc_apply_client_clip (local.get $hdc) (local.get $hwnd))
+                (if (i32.eqz (call $wnd_send_message
+                      (local.get $hwnd) (i32.const 0x0014) (local.get $hdc) (i32.const 0)))
+                  (then (drop (call $erase_background_dc
+                    (local.get $hwnd) (local.get $hdc) (i32.const 16)))))
+                (drop (call $host_release_dc (local.get $hdc))))
+              (else
+                (drop (call $host_erase_background
+                  (local.get $hwnd) (i32.const 16))))))) ;; COLOR_BTNFACE+1
         (call $update_clear_hwnd (local.get $hwnd))
         (call $paint_flag_clear_hwnd (local.get $hwnd))
         (return (i32.const 0))))

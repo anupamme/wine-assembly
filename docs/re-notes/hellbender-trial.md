@@ -40,17 +40,39 @@ fire 57 = space, weapon 33).
 
 Evidence: `scratch/runs/20261011T0715Z-hellbender_trial-gameplay-claude1863`.
 
-## Open
+## Quick Configuration (2026-10-11, w5)
 
-- **Quick Configuration artwork.** The six buttons are 132x40 slices of
-  132x160 8-bit DIB sections built from the PODs, then `BitBlt`'d `SRCCOPY`
-  into each button's DC. Their corners show the magenta key colour. The
-  dialog's 560x420 8-bit background DIB (created at the same time) is never
-  drawn, so the top half of the dialog is blank grey. The game calls
-  `GetSysColor(COLOR_BTNFACE)` and `SetDIBColorTable(…, 0, 256, buf)` for
-  each DIB, so the key colour is probably meant to be replaced in the colour
-  table. Not confirmed: the tables are built in stack buffers that one
-  debugger command per run could not capture.
+Evidence: `scratch/runs/20261011T0830Z-hellbender_trial-quickconfig-w5`.
+
+- **Background artwork: fixed.**
+  - The dialog is an MFC CDialog. AfxWndProc subclasses it and hands
+    WM_PAINT back to DefDlgProc with `CallWindowProcA`.
+  - The game draws its 560x420 art in its own WM_ERASEBKGND: one
+    `BitBlt` of 554x393 `SRCCOPY`.
+  - Our native DefDlgProc WM_PAINT filled COLOR_BTNFACE itself, without
+    sending WM_ERASEBKGND to the window's current wndproc, so the top half
+    stayed grey.
+  - It now sends the erase through the subclass, falling back to the fill
+    when the subclass returns 0. Test: `test-dialog-subclass-erase.js`.
+- **Magenta button corners: not an emulator bug, as far as runtime evidence
+  goes.**
+  - Each button is `BitBlt` `SRCCOPY` of 132x40 from a 132x160 8-bit DIB
+    section into the WM_DRAWITEM DC.
+  - The corner pixels are index 0xCC (204). `--trace-api-mem` shows every
+    colour table the game passes to `SetDIBColorTable` keeps entry 204 =
+    RGB(255,0,255), as does the `CreatePalette` LOGPALETTE.
+  - The game calls no SetWindowRgn, mask blit, TransparentBlt or
+    region/clip API on the dialog.
+  - It looks the same with `desktopColorDepth: 8`. There the game does take
+    its palette-device branch: `ResizePalette(256)` plus `SetPaletteEntries`
+    from the system palette, instead of `ResizePalette(0)` on our 32-bpp
+    desktop.
+  - That 8-bit desktop also drew a worse title bar, so it is not
+    registered.
+  - The `GetSysColor` calls are MFC's startup colour cache, not a key
+    replacement.
+
+## Open
 - **Idle repaint flood.** The dialog `InvalidateRect`s hwnd 0x10016 and loops
   on PeekMessage: about 37M API calls over 1500 idle batches.
 - Not looked at: the Direct3D renderer (`useDirect3D=1`), DISPDIB / WinG
