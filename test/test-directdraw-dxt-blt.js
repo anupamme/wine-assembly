@@ -47,6 +47,15 @@ const extraWat = String.raw`
       (i32.const 0) (i32.const 0))
     (i32.load offset=0 (global.get $reg_base)))
 
+  (func (export "test_dxt_blt_fast") (param $dst i32) (param $src i32)
+      (param $x i32) (param $y i32) (param $rect i32) (result i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.const ${ESP}))
+    (call $gs32 (i32.const ${ESP + 24}) (i32.const 0x10))
+    (call $handle_IDirectDrawSurface_BltFast
+      (local.get $dst) (local.get $x) (local.get $y) (local.get $src)
+      (local.get $rect) (i32.const 0))
+    (i32.load offset=0 (global.get $reg_base)))
+
   (func (export "test_dxt_lock") (param $surface i32) (param $ddsd i32) (result i32)
     (i32.store offset=16 (global.get $reg_base) (i32.const ${ESP}))
     (call $handle_IDirectDrawSurface_Lock
@@ -114,6 +123,7 @@ function refDecode(kind, bytes, w, h) {
 }
 const pack4444 = ([a, r, g, b]) => ((a >> 4) << 12) | ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
 const pack8888 = ([a, r, g, b]) => ((a << 24) | (r << 16) | (g << 8) | b) >>> 0;
+const pack565 = ([a, r, g, b]) => ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
 
 (async () => {
   const { exports: e, memory } = await bootRenderHarness({ extraWat, fonts: 'none' });
@@ -165,18 +175,33 @@ const pack8888 = ([a, r, g, b]) => ((a << 24) | (r << 16) | (g << 8) | b) >>> 0;
     mem().set(bytes, bits);
     const ref = refDecode(kind, bytes, w, h);
 
-    for (const [dbpp, dfmt, pack] of [[16, 4, pack4444], [32, 5, pack8888]]) {
-      const pitch = w * (dbpp / 8);
+    for (const method of ['test_dxt_blt', 'test_dxt_blt_fast'])
+    for (const [dbpp, dfmt, pack] of [[16, 1, pack565], [16, 4, pack4444], [32, 5, pack8888]]) {
+      const pitch = w * (dbpp / 8) + 8;
       const dst = e.test_dxt_surface_new(w, h, dbpp, pitch, dfmt) >>> 0;
-      assert.strictEqual(e.test_dxt_blt(dst, src), 0, 'Blt succeeds');
+      assert.strictEqual(e[method](dst, src), 0, method + ' succeeds');
       const dbits = e.test_dxt_bits(dst) >>> 0;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const off = dbits + y * pitch + x * (dbpp / 8);
         const got = dbpp === 16 ? dv().getUint16(off, true) : dv().getUint32(off, true);
         const want = pack(ref[y * w + x]);
         assert.strictEqual(got, want,
-          `kind ${kind} ${w}x${h} -> ${dbpp}bpp texel (${x},${y}): got 0x${got.toString(16)} want 0x${want.toString(16)}`);
+          `${method} kind ${kind} ${w}x${h} -> ${dbpp}bpp texel (${x},${y}): got 0x${got.toString(16)} want 0x${want.toString(16)}`);
       }
+      if (method === 'test_dxt_blt_fast') {
+        mem().fill(0xa5, dbits, dbits + pitch * h);
+        const rectWA = e.guest_to_wasm(scratch) >>> 0;
+        [1, 1, w - 1, h - 1].forEach((v, i) => dv().setInt32(rectWA + i * 4, v, true));
+        assert.strictEqual(e.test_dxt_blt_fast(dst, src, 1, 0, scratch), 0);
+        for (let y = 0; y < h; y++) for (let x = 0; x < pitch / (dbpp / 8); x++) {
+          const off = dbits + y * pitch + x * (dbpp / 8);
+          const got = dbpp === 16 ? dv().getUint16(off, true) : dv().getUint32(off, true);
+          const touched = x >= 1 && x < w - 1 && y < h - 2;
+          const want = touched ? pack(ref[(y + 1) * w + x]) : dbpp === 16 ? 0xa5a5 : 0xa5a5a5a5;
+          assert.strictEqual(got, want, `BltFast rectangle/padding ${kind}/${dfmt} (${x},${y})`);
+        }
+      }
+      assert.deepStrictEqual(Array.from(mem().slice(bits, bits + bytes.length)), Array.from(bytes), 'source blocks unchanged');
     }
   }
   console.log('PASS  DirectDraw DXT1/3/5 surfaces: FourCC mapping, LINEARSIZE desc, Blt decompression to ARGB4444/8888');

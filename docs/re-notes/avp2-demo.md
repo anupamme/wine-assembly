@@ -1,5 +1,27 @@
 # Aliens versus Predator 2 single-player demo
 
+## BltFast compressed upload defect (11 October 2026)
+
+Retained traces identify BltFast uploads from temporary surfaces442/444/497
+to textures441/443/496. A bounded host-only observer on bx_g3cm9v9z confirms
+source format kinds9/11/7 (DXT3/DXT5/DXT1) and destination kinds1/4/1
+(RGB565/ARGB4444/RGB565). The temporary sources are freed immediately after
+copying. This explains why the earlier surviving-surface census saw no DXT.
+Blt had decompression, but BltFast copied compressed block bytes as pixels.
+
+The candidate decodes into destination-format scratch storage before the
+existing rectangle copy, with an explicit allocation-failure return. Real-WAT
+pixel tests fail on the unchanged implementation and pass after the fix.
+Expanded coverage includes RGB565, ARGB4444/8888, non-block-aligned sizes,
+source rectangles, destination offsets/padding and unchanged source blocks.
+The original Marine-menu model is visibly textured after the fix (reviewed).
+Evidence: scratch/runs/20261011T0835Z-avp2-bltfast-dxt.
+
+This was a rebuilt retained diagnostic source, not current-main qualification.
+The restored snapshot lacked build outputs, stdole2.tlb and pngjs; those were
+restored remotely before the successful capture. Earlier failed harness
+attempts are not game failures. Gameplay validation is still pending.
+
 Local original installer:
 `test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe`,
 165836576 bytes, SHA256

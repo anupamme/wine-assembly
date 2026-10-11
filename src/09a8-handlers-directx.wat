@@ -5630,6 +5630,28 @@
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))
         (return)))
+    ;; Like Blt, BltFast must decode compressed staging surfaces before a
+    ;; copy into ordinary pixels (AVP2 uploads DXT1/3/5 through this route).
+    ;; Decode the whole source so source rectangles retain pixel coordinates.
+    (if (i32.and
+          (call $dx_fmt_is_dxt (call $dx_surf_fmt_get (local.get $src_entry)))
+          (i32.and
+            (i32.eqz (call $dx_fmt_is_dxt (call $dx_surf_fmt_get (local.get $dst_entry))))
+            (i32.or (i32.eq (local.get $bps) (i32.const 2))
+                    (i32.eq (local.get $bps) (i32.const 4)))))
+      (then
+        (local.set $src_pitch (i32.mul (local.get $src_full_w) (local.get $bps)))
+        (local.set $src_dib (call $dx_dxt_scratch_get
+          (i32.mul (local.get $src_pitch) (local.get $src_full_h))))
+        (if (i32.eqz (local.get $src_dib))
+          (then
+            (i32.store offset=0 (global.get $reg_base) (i32.const 0x8876017c))
+            (i32.store offset=16 (global.get $reg_base)
+              (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))
+            (return)))
+        (call $dx_dxt_decode_to (local.get $src_entry) (local.get $dst_entry)
+          (local.get $src_dib) (local.get $src_pitch)
+          (i32.mul (local.get $bps) (i32.const 8)))))
     ;; DDBLTFAST_SRCCOLORKEY = 0x1, DDBLTFAST_DESTCOLORKEY = 0x2
     (if (i32.and (local.get $trans) (i32.const 0x01))
       (then
