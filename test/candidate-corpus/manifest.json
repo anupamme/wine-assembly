@@ -913,6 +913,37 @@
       }
     },
     {
+      "id": "trespasser-demo",
+      "name": "Trespasser Demo",
+      "kind": "game",
+      "version": "1998 DreamWorks Interactive PC demo (zip of a ready-to-run tree: demo/trespass.exe, SMACKW32.DLL, data); Direct3D (DirectX 6) or software",
+      "executables": [
+        "installed/demo/trespass.exe"
+      ],
+      "sourcePage": "https://archive.org/details/trespasser_201401",
+      "license": "proprietary DreamWorks Interactive demo: the readme carries no redistribution grant, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/trespasser_201401/trespasser.zip",
+          "sha1": "5d847447cf84041d35c849757fa2e9ee30b086eb",
+          "type": "archive",
+          "into": "installed"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/demo/trespass.exe"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "expendable-demo",
       "name": "Expendable Demo",
       "kind": "game",

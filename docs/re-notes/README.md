@@ -118,6 +118,7 @@ room have to share a wall clock: [blobby-volley.md](blobby-volley.md).
 | Rayman 2 demo (Ubi.ini renderer, thread thunk sync, CREATESTRUCT scratch over the PE header) | [rayman2-demo.md](rayman2-demo.md) |
 | Incoming demo (Rage, Direct3D; zip tree, menu-to-turret route, in-game key chart) | [incoming-demo.md](incoming-demo.md) |
 | Tachyon: The Fringe demo (NovaLogic, Direct3D; IS5 cab, registry D3D cfg, menu-to-cockpit route) | [tachyon-demo.md](tachyon-demo.md) |
+| Trespasser demo (DreamWorks Interactive, Direct3D; msvcirt, reserved-page commits, menu-to-level route) | [trespasser-demo.md](trespasser-demo.md) |
 | Battlezone demo (Activision, Direct3D; vendor DLLs, sub-1 MB heap fragmentation, INI .trn eager, keypad bindings) | [battlezone-demo.md](battlezone-demo.md) |
 | Evolva demo (Direct3D 7; IS5 cab groups, ImageLoader COM self-registration, HKLM XxxDir paths, SearchPath lists, DirectInput COM, vertex-fog specular) | [evolva-demo.md](evolva-demo.md) |
 | Kingpin Demo (Quake II engine GL, loopback timeouts during a slow level load) | [kingpin-demo.md](kingpin-demo.md) |
