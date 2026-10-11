@@ -172,3 +172,13 @@ reaches the corridor and W movement, with the final canvas reviewed.
 `browser-menu.png` shows the actual registered emulator-handler route in
 Chrome 152 with default Threads and file policy reaching the menu. No browser
 gameplay/FPS/audio qualification follows from that menu capture alone.
+
+The subsequent `browser-play.js` run uses the same private emulator handler,
+default Threads/lazy policy and normal pointer/keyboard input. Reviewed
+`browser-play-before.png` shows the training corridor; holding W for three
+seconds yields `browser-play-after.png` near the doors and the Ramsey
+Recruitment Center caption. This establishes browser player movement too.
+The browser and private server closed after capture. Audio is not qualified
+(autoplay warnings occurred before user gestures, and headless Chrome mutes
+output); no logical FPS counter was measured. Registration `2b27aa2a8` and
+the prerequisite fixes still require main integration, not user approval.

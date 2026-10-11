@@ -108,3 +108,20 @@ The fresh fork lacks native comctl32.dll, unlike the prior controlled run;
 both exhibit the same final crash, but this is not a new DLL equivalence test.
 Next locate the first transfer into the EXE string area after configuration
 save; no specific API or stack-cleanup fault is established yet.
+
+## Modal stack imbalance isolated (2026-10-11 16:05Z)
+
+The single-address traces in run1547Z narrow that fault. Entry into
+Video_D3D original `0x10002690` (runtime `0x01172690`) has ESP `0x074ff2e8`
+and return address `0x004a9a0e`. Before the five-argument indirect dialog call,
+at original `0x10002711`, ESP is `0x074feeb4`, matching its 0x42c local frame
+and two saved registers. After that call, original `0x10002728` receives
+EAX=1 but ESP is `0x074fee94`: **32 bytes below the pre-call value**.
+
+The subsequent save function epilogue at original `0x100027bd` eventually
+returns to `0x0052be74` (a string), captured directly in `data-entry.log`.
+This establishes that the imbalance is already present after the modal call,
+before the final configuration save. It does not establish which nested pump,
+callback or cleanup operation introduced it. Next inspect this nested
+DialogBoxIndirectParamA frame and its return, with a focused regression;
+do not patch the guest return address or compensate with an arbitrary ESP bump.
