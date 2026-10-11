@@ -274,18 +274,21 @@ function runPostExtract(candidate, destination) {
         encoding: 'utf8',
         maxBuffer: 16 * 1024 * 1024,
       });
-      // No unshield on this host (the ops box has none): tools/is5-extract.js
-      // reads InstallShield 5 cabs and its --group writes unshield's layout,
-      // so the manifest's later copy steps find the same paths.
-      if (result.error && result.error.code === 'ENOENT') {
+      // No unshield on this host (the ops box has none), or unshield failed:
+      // tools/is5-extract.js reads InstallShield 5 cabs and its --group writes
+      // unshield's layout, so the manifest's later copy steps find the same
+      // paths. unshield 1.5 exits 1 on files split across volumes -- the
+      // Requiem demo's 4.3 MB Art\HW\ReqArt3D.art and maps\demopp3.jam span
+      // data1..data5.cab -- which is5-extract joins.
+      const unshieldMissing = result.error && result.error.code === 'ENOENT';
+      if (unshieldMissing || result.status !== 0) {
         result = spawnSync(process.execPath, [
           path.join(ROOT, 'tools', 'is5-extract.js'), cab, `--group=${step.group}`, `--out=${into}`,
         ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
       }
       if (result.status !== 0) {
-        const unavailable = result.error && result.error.code === 'ENOENT';
         const detail = `${result.stdout || ''}\n${result.stderr || ''}`.trim().split('\n').slice(-8).join('\n');
-        throw new Error(`InstallShield extraction failed (${unavailable ? 'unshield unavailable' : `exit ${result.status}`})${detail ? `:\n${detail}` : ''}`);
+        throw new Error(`InstallShield extraction failed (${unshieldMissing ? 'unshield unavailable; ' : 'unshield failed; '}is5-extract exit ${result.status})${detail ? `:\n${detail}` : ''}`);
       }
     } else if (step.type === 'is3Extract') {
       // InstallShield 3 DATA.Z (1996-98 installers); 7z and unshield refuse it.
