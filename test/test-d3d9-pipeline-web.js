@@ -284,7 +284,12 @@ const { compileSrcWasm } = require('./compile-src');
       const cubeMipPixel=px((8*16+8));
       calls.push(e.sampler_state(device,4,0xff123456),e.sampler_state(device,8,0xbf400000),e.sampler_state(device,9,1));
       const badMipBias=e.sampler_state(device,8,0x7fc00000)>>>0;
+      // One visible level makes bias/MAXMIPLEVEL neutral when MIN and MAG
+      // agree (e24a8bcfb), so split them: bias can then pick min against mag,
+      // which WebGL cannot express. MINFILTER (6) LINEAR, then back to POINT.
+      e.sampler_state(device,6,2);
       const unsupportedMipState=e.DrawPrimitiveUP(device,4,1,vptr,28)>>>0;
+      e.sampler_state(device,6,1);
       // Reset both guest resource/sampler state after submission: retained draw
       // metadata must still describe the earlier SetLOD and float-bit states.
       e.cube_lod(cube,0);
