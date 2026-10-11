@@ -715,6 +715,42 @@
       }
     },
     {
+      "id": "monster-truck-madness2-trial",
+      "name": "Monster Truck Madness 2 Trial",
+      "kind": "game",
+      "version": "1998 trial (Terminal Reality / Microsoft), MtM2trial.EXE self-extractor of 1998-04/05 files",
+      "executables": [
+        "installed/Monsterx.exe"
+      ],
+      "sourcePage": "https://archive.org/details/MonsterTruckMadness2_1020",
+      "license": "Microsoft trial EULA (eula.txt, shipped in the package): 'You may reproduce and distribute copies of the SOFTWARE PRODUCT; provided that a) each copy shall be a true and complete copy, including all copyright and trademark notices; b) each copy shall be accompanied by a copy of this EULA; and c) such distribution shall not be for commercial purposes.' Kept localOnly until a deployment decision is made",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/MonsterTruckMadness2_1020/MtM2trial.zip",
+          "sha1": "d12c783aab1f9b88834c43879560c5d08eee8966",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        { "type": "extractArchive", "archive": "MtM2trial.EXE", "into": "installed" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/Monsterx.exe"
+      },
+      "cli": {
+        "maxBatches": 1000,
+        "batchSize": 50000,
+        "dlls": [
+          "installed/Trid3d.dll"
+        ],
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "quake-2-demo-installer",
       "name": "Quake II Demo",
       "kind": "installer",
