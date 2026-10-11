@@ -10086,6 +10086,20 @@ async function main() {
         if (ms > 0) await new Promise(r => setTimeout(r, ms));
       }
       await awaitMainRenderPark();
+      // A main thread parked in GetMessage is otherwise resumed only by the
+      // checkMainYield() after run(), so the input this batch just injected
+      // was taken at the batch's END and everything it led to ran in the next
+      // batch -- beside that batch's own scripted events. A click's posted
+      // follow-ups then lost to the next press (hardware before posted):
+      // Paint's tool buttons PostMessage the click to the toolbox, whose
+      // release arrived after the canvas press and stole its capture. Resume
+      // here, after injection, so a batch's input runs in that batch. Flush
+      // first: the [input] markers are buffered, and output the guest prints
+      // directly (--trace-host) while handling that input must follow them.
+      flushLogs();
+      if (instance.exports.get_yield_reason && instance.exports.get_yield_reason() === 7) {
+        threadManager.checkMainYield();
+      }
       if (!mainExecutionSuspended()) instance.exports.run(BATCH_SIZE);
       else if (instance.exports.get_yield_reason() === 16) renderParkStats.skippedBatches++;
     } catch (e) {
