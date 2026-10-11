@@ -10976,6 +10976,23 @@ if (VERBOSE) {
         }
       }
       console.log('cache: full clears', parts.join('  '));
+      // The rest of this report is the MAIN instance's counters. A game whose
+      // loop runs on a worker (Hype) does its decoding there, so the same
+      // counters are printed per thread: decodes, live-block evictions, page
+      // compiles and code-write invalidations, which together say whether a
+      // worker re-decodes because it overflows, aliases, or writes its code.
+      if (threadManager && instance.exports.get_cache_stores) {
+        for (const [, t] of threadManager.threads) {
+          const x = t.instance && t.instance.exports;
+          if (!x || !x.get_cache_stores) continue;
+          console.log(`cache[T${t.tid}]: block decodes ${x.get_cache_stores()}`
+            + ` evicted-live ${x.get_cache_evicts()}`
+            + (x.get_page_compiles ? ` | pages compiled ${x.get_page_compiles()}` : '')
+            + (x.get_page_index_evicts ? ` index-arena-full ${x.get_page_index_evicts()}` : '')
+            + (x.get_cache_invals ? ` | invalidations ${x.get_cache_invals()} dropped ${x.get_cache_inval_hits()}`
+              + ` last ${hex(x.get_cache_inval_page())}` : ''));
+        }
+      }
       if (instance.exports.get_cache_stores) {
         console.log('cache: block decodes', instance.exports.get_cache_stores(),
           'of which evicted a live block', instance.exports.get_cache_evicts());
