@@ -4009,7 +4009,7 @@
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
       "packages": [],
-      "manual": "Verify messiahdemo.exe (104219648 bytes, SHA-1 4b03de968e89c68ed2f34f856cc2190a63f9836b). Extract the WinZip SFX with 7z, then data1.cab with unshield. Copy Program_Executable_Files contents into game/, retaining pc/ and all 300 files. MessiahD3D.exe SHA-256 must be 1f622eca30b2554b61a41aa2ef33f07d42a1fd10493b754fbfc51ded5e4500a3. Run --id=messiah-demo --prepare. Requires Z16 format correction3a4fcf883; documented +! menu workaround prevents white menu after device reset. Initial MCI warning requires ordinary OK. Menu verified, gameplay pending; see docs/re-notes/messiah-demo.md.",
+      "manual": "Verify messiahdemo.exe (104219648 bytes, SHA-1 4b03de968e89c68ed2f34f856cc2190a63f9836b). Extract the WinZip SFX with 7z, then data1.cab with unshield. Copy Program_Executable_Files contents into game/, retaining pc/ and all 300 files. MessiahD3D.exe SHA-256 must be 1f622eca30b2554b61a41aa2ef33f07d42a1fd10493b754fbfc51ded5e4500a3. Run --id=messiah-demo --prepare. Requires Z16 format correction3a4fcf883; documented +! menu workaround prevents white menu after device reset. Initial MCI warning requires ordinary OK. CLI and Chromium keyboard/touch gameplay reviewed; audio/FPS/device testing remains open. See docs/re-notes/messiah-demo.md.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/MessiahD3D.exe"
