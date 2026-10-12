@@ -3844,6 +3844,49 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "oni-demo",
+      "name": "Oni Demo (Legacy)",
+      "kind": "game",
+      "version": "Community demo repack, original Win98/ME executable",
+      "executables": [
+        "game/Oni.exe"
+      ],
+      "sourcePage": "https://mods.oni2.net/node/335",
+      "license": "Proprietary demo community repack; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://mods.oni2.net/system/files/Oni%20Demo.zip",
+          "sha1": "d5e687481a2a11b147636ab73fce980717773d8c",
+          "type": "archive",
+          "into": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "archive/Older Oni apps/Windows 98-ME",
+          "into": "game"
+        },
+        {
+          "type": "copyTree",
+          "from": "archive/GameDataFolderX",
+          "into": "game/GameDataFolder"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/Oni.exe"
+      },
+      "cli": {
+        "maxBatches": 85000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
