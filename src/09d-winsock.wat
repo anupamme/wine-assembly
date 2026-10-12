@@ -2275,6 +2275,7 @@
   (func $handle_recvfrom (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
                          (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $from_len i32) (local $r i32)
+    (if (local.get $arg3) (then (call $crash_unimplemented (local.get $name_ptr))))
     (local.set $from_len (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))
     (local.set $r (call $vsock_recvfrom_core (local.get $arg0) (local.get $arg1) (local.get $arg2)
@@ -2416,6 +2417,11 @@
         (call $vsock_set_error (i32.const 10038))
         (return (i32.const -1))))
     (local.set $rec (call $vsock_rec (local.get $idx)))
+    ;; Raw ICMP keeps datagram boundaries and its IPv4 header. It needs no
+    ;; stream connection; propagate the caller's frame size when parking.
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (return (call $vsock_recvfrom_core (local.get $arg0) (local.get $arg1) (local.get $arg2)
+        (i32.const 0) (i32.const 0) (local.get $unpop)))))
     (call $vsock_read_reenable (local.get $idx))
     (call $vsock_pump)
     (if (i32.ne (load.field VSock state (local.get $rec)) (i32.const 4))
@@ -2453,6 +2459,7 @@
   (func $handle_recv (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
       (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $r i32)
+    (if (local.get $arg3) (then (call $crash_unimplemented (local.get $name_ptr))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
     (local.set $r (call $vsock_recv_core (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 20)))
     (if (i32.ne (local.get $r) (i32.const -2))

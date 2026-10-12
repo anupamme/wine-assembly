@@ -692,6 +692,30 @@ async function main() {
     assert.strictEqual(wat.test_raw_recv(any,out,100,0,0),-1);
     assert.strictEqual(wat.test_call_WSAGetLastError(),10035);
     while(wat.test_raw_take(bound,out)){} // drain the other fanout recipient
+    const handle=wat.test_raw_handle(any);
+    receive();receive();
+    assert.throws(()=>wat.test_call_recv(handle,out,100,2),WebAssembly.RuntimeError);
+    assert.throws(()=>wat.test_call_recvfrom(handle,out,100,2,0,0),WebAssembly.RuntimeError);
+    assert.strictEqual(queued(),58,'unsupported PEEK never consumes');
+    assert.strictEqual(wat.test_call_recv(handle,out,100,0),29);
+    assert.deepStrictEqual(Buffer.from(readBuf(out,29)),packet);assert.strictEqual(queued(),29);
+    assert.strictEqual(wat.test_call_recvfrom(handle,out,100,0,from,fromlen),29);
+    assert.deepStrictEqual(Buffer.from(readBuf(out,29)),packet);assert.strictEqual(queued(),0);
+    const desc=buf(16),part=buf(24),count=buf(4),flags=buf(4),dv=new DataView(memory.buffer);
+    const set=(p,n)=>dv.setUint32(wa(p),n,true),get=p=>dv.getUint32(wa(p),true);
+    set(desc,5);set(desc+4,out);set(desc+8,24);set(desc+12,part);set(flags,0);set(count,0x1234);
+    receive();let result=wat.test_wsarecv(handle,desc,2,count,flags,0);
+    assert.strictEqual(Number(BigInt.asIntN(32,result)),0);assert.strictEqual(get(count),29);
+    assert.deepStrictEqual(Buffer.from([...readBuf(out,5),...readBuf(part,24)]),packet);
+    receive();set(desc+8,2);set(count,0x1234);result=wat.test_wsarecv(handle,desc,2,count,flags,0);
+    assert.strictEqual(Number(BigInt.asIntN(32,result)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10040);
+    assert.deepStrictEqual(Buffer.from([...readBuf(out,5),...readBuf(part,2)]),packet.subarray(0,7));
+    assert.strictEqual(get(count),0x1234);assert.strictEqual(queued(),0);
+    set(nonblock,0);wat.test_call_ioctlsocket(handle,FIONBIO,nonblock);
+    result=wat.test_wsarecv(handle,desc,2,count,flags,0);
+    assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(result>>32n),0x300000,'raw WSARecv restores entire frame');
+    set(nonblock,1);wat.test_call_ioctlsocket(handle,FIONBIO,nonblock);
+    while(wat.test_raw_take(bound,out)){}
     const {LoopbackSegment,describeFrame}=require('../lib/vlan-wire');
     const segment=new LoopbackSegment(),sender=segment.attach(),receiver=segment.attach();
     const frame=Buffer.alloc(28+packet.length);

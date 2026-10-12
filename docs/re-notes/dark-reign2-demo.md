@@ -420,3 +420,17 @@ Raw creation, send routing, recv/WSARecv stream-path delegation, receive flags
 and overlapped state remain unfinished; the ordinary game still stops at the
 unsupported raw socket dialog. No new gameplay capture is implied. Evidence:
 scratch/runs/20261011T2357Z-dark-reign2-raw-receive/.
+
+### Raw receive dispatch (2026-10-12)
+
+recv now delegates internal raw records to the datagram core rather than
+requiring a connected stream and reading private queue headers. WSARecv inherits
+that route, including multi-buffer scatter, truncated-prefix delivery and
+restoring its entire 32-byte call frame on a blocking wait. recv and recvfrom
+now fail fast for unsupported nonzero flags before consuming data, matching
+WSARecv's existing policy; MSG_PEEK must not silently drain the queue.
+
+Regression cases use the real recv/recvfrom dispatch wrappers and WSARecv API
+dispatch with seeded raw records. Raw creation, send/echo routing, WSARecvFrom
+flag/scatter validation and overlapped completion remain pending. No new game
+replay. Evidence: scratch/runs/20261012T0001Z-dark-reign2-recv-dispatch/.
