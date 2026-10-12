@@ -71,7 +71,9 @@ const extraWat=String.raw`
         if(z) {
           assert.strictEqual(e.guest_read32(pf+4),0x400);
           assert.strictEqual(e.guest_read32(pf+12),16);
-          assert.strictEqual(e.guest_read32(pf+16),0xffff);
+          assert.strictEqual(e.guest_read32(pf+16),0,'Z16 has no stencil bits');
+          assert.strictEqual(e.guest_read32(pf+20),0xffff,'Z16 depth mask');
+          assert.strictEqual(e.guest_read32(pf+24),0,'Z16 has no stencil mask');
         } else {
           assert.deepStrictEqual([4,12,16,20,24,28].map(n=>e.guest_read32(pf+n)>>>0),expected[i]);
         }

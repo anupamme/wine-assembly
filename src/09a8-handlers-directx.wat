@@ -3452,7 +3452,9 @@
         (i32.store (local.get $payload) (i32.const 32))
         (i32.store offset=4 (local.get $payload) (i32.const 0x400))
         (i32.store offset=12 (local.get $payload) (i32.const 16))
-        (i32.store offset=16 (local.get $payload) (i32.const 0xFFFF)))
+        ;; DDPIXELFORMAT +16 is dwStencilBitDepth (zero for Z16).
+        ;; The depth mask occupies dwZBitMask at +20.
+        (i32.store offset=20 (local.get $payload) (i32.const 0xFFFF)))
       (else
         (if (local.get $kind)
           (then (call $d3d_fill_texture_desc (local.get $format) (i32.load offset=16 (local.get $wa))))
