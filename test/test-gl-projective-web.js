@@ -38,7 +38,7 @@ const guard=setTimeout(()=>{if(browser)browser.process().kill('SIGKILL');process
     const vertices=[];
     for(const[x,y]of[[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]]){
      const w=x<0?wl:wr;
-     vertices.push(x*w,y*w,0, 1,1,1,1, (x+1)/2,0.5, 0,0,1, (x+1)/2,0.5, w);
+     vertices.push(x*w,y*w,0, 1,1,1,1, (x+1)/2,0.5, 0,0,1, (x+1)/2,0.5, w, 0,1,0,1);
     }
     f.enqueuePacked(G.TRIANGLES,new Float32Array(vertices));f.flushPendingDraw();
     const row=new Uint8Array(64*4);g.readPixels(0,32,64,1,g.RGBA,g.UNSIGNED_BYTE,row);

@@ -136,7 +136,6 @@
   ;; which is the order the WebGL frontend's fragment shader has.
   ;; Unit0 triangle texture Q/w, separate from position 1/w. Enabled only
   ;; around a GL triangle draw; D3D spans retain their supplied denominator.
-  (global $gl_sw_triangle_texq (mut i32) (i32.const 0))
   (global $rast_t0_q_on (mut i32) (i32.const 0))
   (global $rast_t0_qa (mut f32) (f32.const 0))
   (global $rast_t0_qb (mut f32) (f32.const 0))
@@ -1855,48 +1854,36 @@
       (br_if $lp (i32.lt_u (local.get $i) (i32.const 16))))
     (i32.const 1))
 
-  ;; (s, t, 0, 1) through the column-major texture matrix, projected by q.
-  ;; Legacy line/point path: per-vertex divide is exact for affine matrices.
-  ;; Projective lines still need a separate interpolated texture denominator.
-  ;; The (s, t) pair at $p through texture matrix $m, in place.
-  (func $gl_sw_tex_transform (param $m i32) (param $p i32)
-    (local $s f32) (local $t f32) (local $q f32)
-    (local.set $s (f32.load (local.get $p)))
-    (local.set $t (f32.load offset=4 (local.get $p)))
-    (local.set $q (f32.add (f32.add
-      (f32.mul (f32.load offset=12 (local.get $m)) (local.get $s))
-      (f32.mul (f32.load offset=28 (local.get $m)) (local.get $t)))
-      (f32.load offset=60 (local.get $m))))
-    (if (f32.eq (local.get $q) (f32.const 0)) (then (local.set $q (f32.const 1))))
-    (f32.store (local.get $p) (f32.div (f32.add (f32.add
-      (f32.mul (f32.load (local.get $m)) (local.get $s))
-      (f32.mul (f32.load offset=16 (local.get $m)) (local.get $t)))
-      (f32.load offset=48 (local.get $m))) (local.get $q)))
-    (f32.store offset=4 (local.get $p) (f32.div (f32.add (f32.add
-      (f32.mul (f32.load offset=4 (local.get $m)) (local.get $s))
-      (f32.mul (f32.load offset=20 (local.get $m)) (local.get $t)))
-      (f32.load offset=52 (local.get $m))) (local.get $q))))
-
-  ;; Triangles keep S/T/Q homogeneous until the fragment sampler. Dividing
-  ;; before clipping/interpolation gives an affine approximation instead.
+  ;; The full (s, t, r, q) -- s, t at $p, r and q given -- through the
+  ;; column-major texture matrix $m, kept homogeneous: S and T replace s and t
+  ;; at $p and Q goes to $qp. Every primitive divides per fragment (triangles
+  ;; and lines interpolate S/w, T/w and Q/w; a point's one sample divides
+  ;; once), so neither a projective matrix nor glTexCoord4f's q is reduced to
+  ;; an affine approximation by dividing at the vertices.
   (func $gl_sw_tex_transform_homogeneous (param $m i32) (param $p i32) (param $qp i32)
+      (param $r f32) (param $q f32)
     (local $s f32) (local $t f32)
     (local.set $s (f32.load (local.get $p)))
     (local.set $t (f32.load offset=4 (local.get $p)))
-    (f32.store (local.get $qp) (f32.add (f32.add
-      (f32.mul (f32.load offset=12 (local.get $m)) (local.get $s))
-      (f32.mul (f32.load offset=28 (local.get $m)) (local.get $t)))
-      (f32.load offset=60 (local.get $m))))
-    (f32.store (local.get $p) (f32.add (f32.add
-      (f32.mul (f32.load (local.get $m)) (local.get $s))
-      (f32.mul (f32.load offset=16 (local.get $m)) (local.get $t)))
-      (f32.load offset=48 (local.get $m))))
-    (f32.store offset=4 (local.get $p) (f32.add (f32.add
-      (f32.mul (f32.load offset=4 (local.get $m)) (local.get $s))
-      (f32.mul (f32.load offset=20 (local.get $m)) (local.get $t)))
-      (f32.load offset=52 (local.get $m)))))
+    (f32.store (local.get $qp) (call $gl_sw_mtx_row (local.get $m) (i32.const 12)
+      (local.get $s) (local.get $t) (local.get $r) (local.get $q)))
+    (f32.store (local.get $p) (call $gl_sw_mtx_row (local.get $m) (i32.const 0)
+      (local.get $s) (local.get $t) (local.get $r) (local.get $q)))
+    (f32.store offset=4 (local.get $p) (call $gl_sw_mtx_row (local.get $m) (i32.const 4)
+      (local.get $s) (local.get $t) (local.get $r) (local.get $q))))
 
-  ;; One 60-byte GL vertex at $src into clip record $k: transformed, texture
+  ;; One row of column-major $m (row byte offset $row: 0, 4, 8, 12) times
+  ;; (s, t, r, q).
+  (func $gl_sw_mtx_row (param $m i32) (param $row i32)
+      (param $s f32) (param $t f32) (param $r f32) (param $q f32) (result f32)
+    (local.set $m (i32.add (local.get $m) (local.get $row)))
+    (f32.add
+      (f32.add (f32.mul (f32.load (local.get $m)) (local.get $s))
+               (f32.mul (f32.load offset=16 (local.get $m)) (local.get $t)))
+      (f32.add (f32.mul (f32.load offset=32 (local.get $m)) (local.get $r))
+               (f32.mul (f32.load offset=48 (local.get $m)) (local.get $q)))))
+
+  ;; One 76-byte GL vertex at $src into clip record $k: transformed, texture
   ;; matrix applied, lit or its colour copied. Returns 1 when it is on the
   ;; inside of the near plane, | 2 when on the inside of the far one.
   (func $gl_sw_xform_vertex (param $mvp i32) (param $src i32) (param $k i32) (result i32)
@@ -1915,24 +1902,24 @@
     (f32.store offset=20 (local.get $clip) (f32.load offset=32 (local.get $src)))
     (if (global.get $gl_sw_sphere)
       (then (call $gl_sw_sphere_map (local.get $src) (local.get $clip))))
-    (f32.store offset=48 (local.get $clip) (f32.const 1))
+    ;; Without a texture matrix Q is the vertex's own q (vertex +64: 1 unless
+    ;; glTexCoord4f set it); with one, the matrix takes the full (s, t, r, q).
+    (f32.store offset=48 (local.get $clip) (f32.load offset=64 (local.get $src)))
     (if (global.get $gl_sw_texmtx)
-      (then
-        (if (global.get $gl_sw_triangle_texq)
-          (then (call $gl_sw_tex_transform_homogeneous (global.get $gl_sw_texmtx)
-            (i32.add (local.get $clip) (i32.const 16))
-            (i32.add (local.get $clip) (i32.const 48))))
-          (else (call $gl_sw_tex_transform (global.get $gl_sw_texmtx)
-            (i32.add (local.get $clip) (i32.const 16)))))))
-    ;; Unit 1's S/T (vertex +48) and matrix Q ride in the clip record,
-    ;; so clipping interpolates all three with everything else.
+      (then (call $gl_sw_tex_transform_homogeneous (global.get $gl_sw_texmtx)
+        (i32.add (local.get $clip) (i32.const 16))
+        (i32.add (local.get $clip) (i32.const 48))
+        (f32.load offset=60 (local.get $src)) (f32.load offset=64 (local.get $src)))))
+    ;; Unit 1's S/T (vertex +48) and Q (r, q at +68, +72) ride in the clip
+    ;; record, so clipping interpolates all three with everything else.
     (f32.store offset=40 (local.get $clip) (f32.load offset=48 (local.get $src)))
     (f32.store offset=44 (local.get $clip) (f32.load offset=52 (local.get $src)))
-    (f32.store offset=52 (local.get $clip) (f32.const 1))
+    (f32.store offset=52 (local.get $clip) (f32.load offset=72 (local.get $src)))
     (if (global.get $gl_sw_texmtx1)
       (then (call $gl_sw_tex_transform_homogeneous (global.get $gl_sw_texmtx1)
         (i32.add (local.get $clip) (i32.const 40))
-        (i32.add (local.get $clip) (i32.const 52)))))
+        (i32.add (local.get $clip) (i32.const 52))
+        (f32.load offset=68 (local.get $src)) (f32.load offset=72 (local.get $src)))))
     (if (global.get $gl_sw_lit)
       (then (call $gl_sw_light_vertex (local.get $src) (i32.add (local.get $clip) (i32.const 24))))
       (else (call $memcpy (i32.add (local.get $clip) (i32.const 24))
@@ -1953,11 +1940,10 @@
     (local $k i32) (local $bits i32)
     (local $inside i32) (local $n i32)
     (local $far_in i32) (local $poly i32)
-    (global.set $gl_sw_triangle_texq (i32.const 1))
     (local.set $k (i32.const 0))
     (loop $lp
       (local.set $bits (call $gl_sw_xform_vertex (local.get $mvp)
-        (i32.add (local.get $v0) (i32.mul (local.get $k) (i32.const 60))) (local.get $k)))
+        (i32.add (local.get $v0) (i32.mul (local.get $k) (i32.const 76))) (local.get $k)))
       (if (i32.and (local.get $bits) (i32.const 1))
         (then (local.set $inside (i32.or (local.get $inside)
           (i32.shl (i32.const 1) (local.get $k))))))
@@ -2325,17 +2311,17 @@
   ;; Texture unit 1 for the triangle whose clip records are $c0..$c2 and
   ;; whose screen records are 0..2, when TEXTURE_2D is on there and its
   ;; binding has an image. Unit 1 with no image is skipped, as GL does.
-  (func $gl_sw_t1_setup (param $c0 i32) (param $c1 i32) (param $c2 i32)
+  ;; Unit 1's texture and sampler for the primitive about to be drawn; 0 when
+  ;; unit 1 is off or its binding has no image, and it is then skipped.
+  (func $gl_sw_t1_bind (result i32)
     (local $caps i32) (local $slot i32) (local $flags i32)
-    (local $s0 i32) (local $s1 i32) (local $s2 i32)
-    (local $q0 f32) (local $q1 f32) (local $q2 f32)
     (local.set $caps (i32.load (global.get $gl_sw_st)))
-    (if (i32.eqz (i32.and (local.get $caps) (i32.const 0x80000))) (then (return)))
+    (if (i32.eqz (i32.and (local.get $caps) (i32.const 0x80000))) (then (return (i32.const 0))))
     (local.set $slot (call $gl_sw_tex_slot (global.get $gl_sw_other_bound)))
-    (if (i32.eqz (local.get $slot)) (then (return)))
-    (if (i32.eqz (i32.load (local.get $slot))) (then (return)))
+    (if (i32.eqz (local.get $slot)) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.load (local.get $slot))) (then (return (i32.const 0))))
     (global.set $rast_t1_entry (call $dx_from_this (i32.load (local.get $slot))))
-    (if (i32.eqz (global.get $rast_t1_entry)) (then (return)))
+    (if (i32.eqz (global.get $rast_t1_entry)) (then (return (i32.const 0))))
     (local.set $flags (call $gl_sw_draw_flags (local.get $slot) (i32.const 1)))
     (global.set $rast_t1_addr_u (call $gl_sw_flags_address (local.get $flags) (i32.const 2)))
     (global.set $rast_t1_addr_v (call $gl_sw_flags_address (local.get $flags) (i32.const 4)))
@@ -2343,6 +2329,67 @@
     (global.set $rast_t1_linear (i32.and (local.get $flags) (i32.const 1)))
     (global.set $rast_t1_op (select (i32.const 2) (i32.const 4)
       (i32.ne (i32.and (local.get $caps) (i32.const 0x100000)) (i32.const 0))))
+    (i32.const 1))
+
+  ;; Unit 1 along the line from screen record 0 to 1 (clip records $a, $b),
+  ;; or at the single point in screen record 0 when $b is 0. Each plane is
+  ;; constant across the line and runs along it -- the plane $gl_sw_fog_line
+  ;; builds -- over S*rhw, T*rhw and Q*rhw, so the span's per-pixel
+  ;; S/Q, T/Q is perspective-correct and projective along the line.
+  (func $gl_sw_t1_line_setup (param $a i32) (param $b i32)
+    (local $s0 i32) (local $s1 i32) (local $qa f32) (local $qb f32)
+    (if (i32.eqz (call $gl_sw_t1_bind)) (then (return)))
+    (local.set $s0 (call $gl_sw_screen_at (i32.const 0)))
+    (local.set $qa (f32.load offset=12 (local.get $s0)))
+    (if (local.get $b)
+      (then
+        (local.set $s1 (call $gl_sw_screen_at (i32.const 1)))
+        (local.set $qb (f32.load offset=12 (local.get $s1))))
+      (else (local.set $b (local.get $a)) (local.set $s1 (local.get $s0)) (local.set $qb (local.get $qa))))
+    (call $gl_sw_line_plane (local.get $s0) (local.get $s1)
+      (f32.mul (f32.load offset=52 (local.get $a)) (local.get $qa))
+      (f32.mul (f32.load offset=52 (local.get $b)) (local.get $qb)))
+    (global.set $rast_t1_qa (global.get $rast_pa))
+    (global.set $rast_t1_qb (global.get $rast_pb))
+    (global.set $rast_t1_qc (global.get $rast_pc))
+    (call $gl_sw_line_plane (local.get $s0) (local.get $s1)
+      (f32.mul (f32.load offset=40 (local.get $a)) (local.get $qa))
+      (f32.mul (f32.load offset=40 (local.get $b)) (local.get $qb)))
+    (global.set $rast_t1_ua (global.get $rast_pa))
+    (global.set $rast_t1_ub (global.get $rast_pb))
+    (global.set $rast_t1_uc (global.get $rast_pc))
+    (call $gl_sw_line_plane (local.get $s0) (local.get $s1)
+      (f32.mul (f32.load offset=44 (local.get $a)) (local.get $qa))
+      (f32.mul (f32.load offset=44 (local.get $b)) (local.get $qb)))
+    (global.set $rast_t1_va (global.get $rast_pa))
+    (global.set $rast_t1_vb (global.get $rast_pb))
+    (global.set $rast_t1_vc (global.get $rast_pc))
+    (global.set $rast_t1_on (i32.const 1)))
+
+  ;; The plane through screen records $sa and $sb with values $va, $vb there:
+  ;; its gradient runs along the segment and it is flat across it. One
+  ;; record, or two at the same pixel, give the constant $va.
+  (func $gl_sw_line_plane (param $sa i32) (param $sb i32) (param $va f32) (param $vb f32)
+    (local $dx f32) (local $dy f32) (local $l2 f32) (local $dv f32)
+    (local.set $dx (f32.convert_i32_s (i32.sub (i32.load (local.get $sb)) (i32.load (local.get $sa)))))
+    (local.set $dy (f32.convert_i32_s (i32.sub (i32.load offset=4 (local.get $sb)) (i32.load offset=4 (local.get $sa)))))
+    (local.set $l2 (f32.add (f32.mul (local.get $dx) (local.get $dx)) (f32.mul (local.get $dy) (local.get $dy))))
+    (local.set $dv (f32.sub (local.get $vb) (local.get $va)))
+    (if (f32.eq (local.get $l2) (f32.const 0))
+      (then
+        (global.set $rast_pa (f32.const 0))
+        (global.set $rast_pb (f32.const 0)))
+      (else
+        (global.set $rast_pa (f32.div (f32.mul (local.get $dv) (local.get $dx)) (local.get $l2)))
+        (global.set $rast_pb (f32.div (f32.mul (local.get $dv) (local.get $dy)) (local.get $l2)))))
+    (global.set $rast_pc (f32.sub (local.get $va)
+      (f32.add (f32.mul (global.get $rast_pa) (f32.convert_i32_s (i32.load (local.get $sa))))
+               (f32.mul (global.get $rast_pb) (f32.convert_i32_s (i32.load offset=4 (local.get $sa))))))))
+
+  (func $gl_sw_t1_setup (param $c0 i32) (param $c1 i32) (param $c2 i32)
+    (local $s0 i32) (local $s1 i32) (local $s2 i32)
+    (local $q0 f32) (local $q1 f32) (local $q2 f32)
+    (if (i32.eqz (call $gl_sw_t1_bind)) (then (return)))
     (local.set $s0 (call $gl_sw_screen_at (i32.const 0)))
     (local.set $s1 (call $gl_sw_screen_at (i32.const 1)))
     (local.set $s2 (call $gl_sw_screen_at (i32.const 2)))
@@ -2493,7 +2540,10 @@
     (call $gl_sw_mip_select)
     ;; Unit0's numerator remains S/w,T/w in the shared rasterizer. Its
     ;; denominator is the independent texture Q/w plane, never vertex w.
-    (if (global.get $gl_sw_texmtx) (then
+    (if (i32.or (i32.ne (global.get $gl_sw_texmtx) (i32.const 0))
+          (i32.or (f32.ne (f32.load offset=48 (local.get $c0)) (f32.const 1))
+            (i32.or (f32.ne (f32.load offset=48 (local.get $c1)) (f32.const 1))
+              (f32.ne (f32.load offset=48 (local.get $c2)) (f32.const 1))))) (then
       (call $rast_plane
         (i32.load (local.get $s0)) (i32.load offset=4 (local.get $s0))
         (f32.mul (f32.load offset=48 (local.get $c0)) (f32.load offset=12 (local.get $s0)))
@@ -2548,6 +2598,9 @@
   ;; rhw, u*rhw and v*rhw are linear in screen space, so u and v come out
   ;; perspective-correct; depth, colour and fog are lerped as the triangle
   ;; walker lerps them.
+  ;; With a projective texture Q the screen records carry homogeneous S and T
+  ;; (divided by nothing), and $gl_sw_line sets unit 0's Q plane along the
+  ;; line, so the span divides S*rhw by Q*rhw at every pixel.
   (func $gl_sw_line_at (param $dst i32) (param $t f32)
     (local $a i32) (local $b i32) (local $qa f32) (local $qb f32) (local $q f32)
     (local.set $a (call $gl_sw_screen_at (i32.const 0)))
@@ -2623,6 +2676,12 @@
   ;; goes out as one span per run of pixels on a row, widened by repeating
   ;; the run on neighbouring rows; a y-major one as one span per row,
   ;; widened sideways.
+  ;; After a line or point: no fog plane, no unit 0 Q plane, no unit 1 planes.
+  (func $gl_sw_prim_done
+    (global.set $rast_fog_on (i32.const 0))
+    (global.set $rast_t0_q_on (i32.const 0))
+    (global.set $rast_t1_on (i32.const 0)))
+
   (func $gl_sw_line (param $mvp i32) (param $vp i32) (param $v0 i32)
     (local $a i32) (local $b i32) (local $far i32) (local $da f32) (local $db f32)
     (local $xa i32) (local $ya i32) (local $dx i32) (local $dy i32) (local $n i32)
@@ -2630,10 +2689,9 @@
     (local $i i32) (local $hi i32) (local $minor i32) (local $row i32) (local $run i32)
     (local $j i32) (local $c0 i32) (local $c1 i32) (local $p i32) (local $q i32)
     (local $xmajor i32) (local $col i32)
-    (global.set $gl_sw_triangle_texq (i32.const 0))
     (drop (call $gl_sw_xform_vertex (local.get $mvp) (local.get $v0) (i32.const 0)))
     (drop (call $gl_sw_xform_vertex (local.get $mvp)
-      (i32.add (local.get $v0) (i32.const 60)) (i32.const 1)))
+      (i32.add (local.get $v0) (i32.const 76)) (i32.const 1)))
     ;; GL_FLAT: a line's provoking vertex is its second.
     (if (i32.eq (global.get $gl_shade_model) (i32.const 0x1D00))
       (then (call $memcpy (i32.add (call $gl_sw_clip_at (i32.const 0)) (i32.const 24))
@@ -2671,6 +2729,20 @@
     (global.set $gl_sw_lines (i32.add (global.get $gl_sw_lines) (i32.const 1)))
     (if (i32.and (i32.load (global.get $gl_sw_st)) (i32.const 64))
       (then (call $gl_sw_fog_line)))
+    ;; Unit 0's texture Q (clip +48, after clipping) as a plane along the
+    ;; line over Q*rhw: the span's per-pixel denominator. Q = 1 at both ends
+    ;; is the plain perspective divide, and needs no plane.
+    (if (i32.or (f32.ne (f32.load offset=48 (local.get $a)) (f32.const 1))
+                (f32.ne (f32.load offset=48 (local.get $b)) (f32.const 1)))
+      (then
+        (call $gl_sw_line_plane (call $gl_sw_screen_at (i32.const 0)) (call $gl_sw_screen_at (i32.const 1))
+          (f32.mul (f32.load offset=48 (local.get $a)) (f32.load offset=12 (call $gl_sw_screen_at (i32.const 0))))
+          (f32.mul (f32.load offset=48 (local.get $b)) (f32.load offset=12 (call $gl_sw_screen_at (i32.const 1)))))
+        (global.set $rast_t0_qa (global.get $rast_pa))
+        (global.set $rast_t0_qb (global.get $rast_pb))
+        (global.set $rast_t0_qc (global.get $rast_pc))
+        (global.set $rast_t0_q_on (i32.const 1))))
+    (call $gl_sw_t1_line_setup (local.get $a) (local.get $b))
     (local.set $xa (i32.load (call $gl_sw_screen_at (i32.const 0))))
     (local.set $ya (i32.load offset=4 (call $gl_sw_screen_at (i32.const 0))))
     (local.set $dx (i32.sub (i32.load (call $gl_sw_screen_at (i32.const 1))) (local.get $xa)))
@@ -2682,7 +2754,7 @@
     (local.set $n (select (i32.mul (local.get $dx) (local.get $sx))
                           (i32.mul (local.get $dy) (local.get $sy)) (local.get $xmajor)))
     ;; Zero length: the diamond-exit rule leaves it with no pixels at all.
-    (if (i32.eqz (local.get $n)) (then (global.set $rast_fog_on (i32.const 0)) (return)))
+    (if (i32.eqz (local.get $n)) (then (call $gl_sw_prim_done) (return)))
     (local.set $w (call $gl_sw_pixels (global.get $gl_sw_line_width)))
     (local.set $off (i32.shr_s (i32.sub (local.get $w) (i32.const 1)) (i32.const 1)))
     (local.set $p (call $gl_sw_screen_at (i32.const 2)))
@@ -2695,7 +2767,7 @@
     (local.set $i (i32.and (local.get $range) (i32.const 0xFFFF)))
     (local.set $hi (i32.shr_u (local.get $range) (i32.const 16)))
     (if (i32.gt_s (local.get $i) (local.get $hi))
-      (then (global.set $rast_fog_on (i32.const 0)) (return)))
+      (then (call $gl_sw_prim_done) (return)))
     (if (local.get $xmajor)
       (then
         ;; Runs: step $run is where the current row's run started.
@@ -2746,13 +2818,12 @@
             (i32.add (i32.sub (local.get $col) (local.get $off)) (local.get $w)) (local.get $p))
           (local.set $i (i32.add (local.get $i) (i32.const 1)))
           (br_if $step (i32.le_s (local.get $i) (local.get $hi))))))
-    (global.set $rast_fog_on (i32.const 0)))
+    (call $gl_sw_prim_done))
 
   ;; One point: a square of glPointSize pixels centred on the vertex, every
   ;; pixel taking the vertex's colour, depth and texture coordinate.
   (func $gl_sw_point (param $mvp i32) (param $vp i32) (param $v0 i32)
     (local $r i32) (local $x i32) (local $y i32) (local $size i32) (local $off i32) (local $j i32)
-    (global.set $gl_sw_triangle_texq (i32.const 0))
     (if (i32.ne (call $gl_sw_xform_vertex (local.get $mvp) (local.get $v0) (i32.const 0)) (i32.const 3))
       (then
         (global.set $gl_sw_clipped (i32.add (global.get $gl_sw_clipped) (i32.const 1)))
@@ -2766,6 +2837,15 @@
       (then (call $gl_sw_shift_screen (i32.const 1))))
     (global.set $gl_sw_points (i32.add (global.get $gl_sw_points) (i32.const 1)))
     (local.set $r (call $gl_sw_screen_at (i32.const 0)))
+    ;; A point has one texture sample: unit 0's S/Q, T/Q exactly, and unit
+    ;; 1's from constant planes.
+    (if (f32.ne (f32.load offset=48 (call $gl_sw_clip_at (i32.const 0))) (f32.const 0))
+      (then
+        (f32.store offset=16 (local.get $r) (f32.div (f32.load offset=16 (local.get $r))
+          (f32.load offset=48 (call $gl_sw_clip_at (i32.const 0)))))
+        (f32.store offset=20 (local.get $r) (f32.div (f32.load offset=20 (local.get $r))
+          (f32.load offset=48 (call $gl_sw_clip_at (i32.const 0)))))))
+    (call $gl_sw_t1_line_setup (call $gl_sw_clip_at (i32.const 0)) (i32.const 0))
     (if (i32.and (i32.load (global.get $gl_sw_st)) (i32.const 64))
       (then
         (global.set $rast_fog_a (f32.const 0))
@@ -2782,7 +2862,7 @@
         (local.get $x) (local.get $r) (i32.add (local.get $x) (local.get $size)) (local.get $r))
       (local.set $j (i32.add (local.get $j) (i32.const 1)))
       (br_if $rows (i32.lt_s (local.get $j) (local.get $size))))
-    (global.set $rast_fog_on (i32.const 0)))
+    (call $gl_sw_prim_done))
 
   ;; Called from $gl_packed_finish once a packed draw record is complete.
   ;; That is the one funnel every immediate-mode and vertex-array path goes
@@ -2859,7 +2939,7 @@
     (local.set $i (i32.const 0))
     (block $done (loop $lp
       (br_if $done (i32.gt_u (i32.add (local.get $i) (local.get $step)) (local.get $vertices)))
-      (local.set $v (i32.add (local.get $base) (i32.mul (local.get $i) (i32.const 60))))
+      (local.set $v (i32.add (local.get $base) (i32.mul (local.get $i) (i32.const 76))))
       (if (i32.eq (local.get $step) (i32.const 3))
         (then (call $gl_sw_triangle (local.get $mvp) (local.get $vp) (local.get $v)))
         (else (if (i32.eq (local.get $step) (i32.const 2))
@@ -3042,7 +3122,7 @@
     (i32.store offset=4 (local.get $d) (i32.const 1040))
     (i32.store offset=8 (local.get $d) (local.get $start))
     (i32.store offset=12 (local.get $d)
-      (i32.add (i32.mul (local.get $vertices) (i32.const 60)) (i32.const 32)))
+      (i32.add (i32.mul (local.get $vertices) (i32.const 76)) (i32.const 32)))
     (if (i32.eqz (call $host_gpu_gl_call (i32.const 0x20005) (local.get $d) (i32.const 0)))
       (then
         (global.set $gl_sw_worker_ok (i32.const 2))
@@ -3118,7 +3198,7 @@
     (local.set $step (select (i32.const 1)
       (select (i32.const 2) (i32.const 3) (i32.eq (local.get $mode) (i32.const 1)))
       (i32.eqz (local.get $mode))))
-    (local.set $n (i32.div_u (i32.load offset=20 (local.get $rec)) (i32.const 60)))
+    (local.set $n (i32.div_u (i32.load offset=20 (local.get $rec)) (i32.const 76)))
     (call $gl_sw_draw (local.get $rec) (local.get $n) (local.get $step))
     (i32.const 1))
 
@@ -3195,22 +3275,38 @@
   ;; of the lowering and prove nothing about the hook; this goes through
   ;; $gl_packed_begin/$gl_packed_finish, which is where production draws
   ;; arrive.
+  ;; These two take the original 15-float (60-byte) vertex and widen it with
+  ;; r = 0, q = 1 for both units, the values every two-component call gives.
   (func $gl_sw_export_emit_triangles (export "gl_sw_emit_triangles")
       (param $src i32) (param $vertices i32)
-    (local $start i32)
-    (if (i32.eqz (local.get $vertices)) (then (return)))
-    (local.set $start (call $gl_packed_begin (i32.const 4)))
-    (call $memcpy (i32.add (local.get $start) (i32.const 32))
-      (local.get $src) (i32.mul (local.get $vertices) (i32.const 60)))
-    (call $gl_packed_finish (local.get $start) (local.get $vertices)))
+    (call $gl_sw_export_emit_packed (local.get $src) (local.get $vertices) (i32.const 4)))
   ;; The same for any packed mode: 0 points, 1 lines, 4 triangles.
   (func $gl_sw_export_emit_packed (export "gl_sw_emit_packed")
+      (param $src i32) (param $vertices i32) (param $mode i32)
+    (local $start i32) (local $i i32) (local $d i32)
+    (if (i32.eqz (local.get $vertices)) (then (return)))
+    (local.set $start (call $gl_packed_begin (local.get $mode)))
+    (block $done (loop $each
+      (br_if $done (i32.ge_u (local.get $i) (local.get $vertices)))
+      (local.set $d (i32.add (local.get $start)
+        (i32.add (i32.const 32) (i32.mul (local.get $i) (i32.const 76)))))
+      (call $memcpy (local.get $d)
+        (i32.add (local.get $src) (i32.mul (local.get $i) (i32.const 60))) (i32.const 60))
+      (f32.store offset=60 (local.get $d) (f32.const 0))
+      (f32.store offset=64 (local.get $d) (f32.const 1))
+      (f32.store offset=68 (local.get $d) (f32.const 0))
+      (f32.store offset=72 (local.get $d) (f32.const 1))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br $each)))
+    (call $gl_packed_finish (local.get $start) (local.get $vertices)))
+  ;; Full 19-float (76-byte) vertices, r and q included.
+  (func $gl_sw_export_emit_packed19 (export "gl_sw_emit_packed19")
       (param $src i32) (param $vertices i32) (param $mode i32)
     (local $start i32)
     (if (i32.eqz (local.get $vertices)) (then (return)))
     (local.set $start (call $gl_packed_begin (local.get $mode)))
     (call $memcpy (i32.add (local.get $start) (i32.const 32))
-      (local.get $src) (i32.mul (local.get $vertices) (i32.const 60)))
+      (local.get $src) (i32.mul (local.get $vertices) (i32.const 76)))
     (call $gl_packed_finish (local.get $start) (local.get $vertices)))
 
   ;; Feed one GL call to the state observer, exactly as the encoder does, so a

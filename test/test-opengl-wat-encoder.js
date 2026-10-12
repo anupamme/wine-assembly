@@ -311,6 +311,50 @@ async function main() {
     gl.call(11);
   });
 
+  // glTexCoord4f/4fv and glMultiTexCoord4fARB/4fvARB: r and q ride in packed
+  // floats 15..18. Every two-component form puts them back to (0, 1), the
+  // attribute stack and context switches keep them, and 3/4-component arrays
+  // supply them (and DrawArrays restores the caller's afterwards).
+  parity('state: projective texture coordinates r and q on both units', (gl, mem) => {
+    const view = new DataView(mem.buffer);
+    const dataWa = translateGuest(DATA);
+    [0.25, 0.5, -1.5, 3].forEach((v, i) => view.setFloat32(dataWa + i * 4, v, true));
+    const point = value => {
+      gl.call(21, [0]); gl.call(30, [f32(value), f32(2), f32(3)]); gl.call(22);
+    };
+    gl.call(120, [f32(0.1), f32(0.2), f32(0.3), f32(2.5)]); point(1);
+    gl.call(121, [DATA]); point(2);
+    gl.call(122, [0x84C1, f32(1), f32(2), f32(-3), f32(4)]); point(3);
+    gl.call(123, [0x84C1, DATA]); point(4);
+    gl.call(122, [0x84C2, f32(9), f32(9), f32(9), f32(9)]); point(5);  // no unit 2
+    gl.call(76, [0xFFFFFFFF]);
+    gl.call(28, [f32(0.5), f32(0.5)]); point(6);              // r, q -> 0, 1
+    gl.call(107, [0x84C1, f32(0.5), f32(0.5)]); point(7);
+    gl.call(77); point(8);                                      // back to 4f state
+    gl.call(95, [DATA]); point(9);
+    gl.call(117, [0x84C1, DATA]); point(10);
+    gl.call(120, [f32(1), f32(1), f32(7), f32(-2)]);
+    assert.strictEqual(gl.call(51, [0x4321, 0xC001]), 1); point(11);   // fresh context: defaults
+    gl.call(121, [DATA]);
+    assert.strictEqual(gl.call(51, [0x1234, 0xC002]), 1); point(12);   // first context's q
+    assert.strictEqual(gl.call(51, [0x4321, 0xC001]), 1); point(13);
+    const vertex = DATA + 0x100, tex = DATA + 0x200;
+    for (let i = 0; i < 3; i++) {
+      [i, i + 1, 0].forEach((v, c) => view.setFloat32(translateGuest(vertex) + i * 12 + c * 4, v, true));
+      [i / 3, 0.5, i - 1, i + 1].forEach((v, c) => view.setFloat32(translateGuest(tex) + i * 16 + c * 4, v, true));
+    }
+    gl.call(88, [3, 0x1406, 12, vertex]);
+    gl.call(86, [0x8074]); gl.call(86, [0x8078]);
+    for (const size of [4, 3, 2]) {
+      gl.call(100, [size, 0x1406, 16, tex]);
+      gl.call(108, [0x0004, 0, 3]);
+    }
+    gl.call(106, [0x84C1]); gl.call(100, [4, 0x1406, 16, tex]); gl.call(86, [0x8078]);
+    gl.call(108, [0x0004, 0, 3]);
+    point(14);                                                  // caller's q restored
+    gl.call(11);
+  });
+
   parity('arrays: typed strided client arrays and indexed draw', (gl, mem) => {
     const view = new DataView(mem.buffer);
     const vertex = DATA + 0x100, normal = DATA + 0x200, color = DATA + 0x280;

@@ -298,6 +298,9 @@ const gpuApis = new Map([
   ['glMultiTexCoord2fvARB', 2],
   // MDK2 draws projective vertices; w rides in the packed vertex.
   ['glVertex4f', 4], ['glVertex4fv', 1],
+  // Oni's projective texture coordinates; r and q ride in the packed vertex.
+  ['glTexCoord4f', 4], ['glTexCoord4fv', 1],
+  ['glMultiTexCoord4fARB', 5], ['glMultiTexCoord4fvARB', 2],
 ]);
 const gpuApiOrder = [...gpuApis.keys()];
 

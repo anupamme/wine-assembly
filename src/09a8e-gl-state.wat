@@ -30,11 +30,11 @@
         (local.set $guest (call $heap_alloc (i32.const 12)))
         (if (i32.eqz (local.get $guest)) (then (unreachable)))
         (local.set $p (call $g2w (local.get $guest)))
-        (local.set $guest (call $heap_alloc (i32.const 160)))
+        (local.set $guest (call $heap_alloc (i32.const 176)))
         (if (i32.eqz (local.get $guest)) (then
           (call $heap_free (call $w2g (local.get $p))) (unreachable)))
         (local.set $state (call $g2w (local.get $guest)))))
-    (memory.fill (local.get $state) (i32.const 0) (i32.const 160))
+    (memory.fill (local.get $state) (i32.const 0) (i32.const 176))
     (i32.store (local.get $p) (local.get $context))
     (i32.store offset=4 (local.get $p) (global.get $gl_state_contexts))
     (i32.store offset=8 (local.get $p) (local.get $state))
@@ -80,13 +80,19 @@
     (i32.store offset=132 (local.get $p) (global.get $gl_tp1_guest))
     (i32.store offset=136 (local.get $p) (global.get $gl_state_attrib_head))
     (i32.store offset=140 (local.get $p) (global.get $gl_state_attrib_depth))
-    (i32.store offset=144 (local.get $p) (global.get $gl_state_pointer_bits)))
+    (i32.store offset=144 (local.get $p) (global.get $gl_state_pointer_bits))
+    (f32.store offset=148 (local.get $p) (global.get $gl_tex_r))
+    (f32.store offset=152 (local.get $p) (global.get $gl_tex_q))
+    (f32.store offset=156 (local.get $p) (global.get $gl_tex1_r))
+    (f32.store offset=160 (local.get $p) (global.get $gl_tex1_q)))
 
   (func $gl_state_defaults
     (global.set $gl_color_r (f32.const 1)) (global.set $gl_color_g (f32.const 1))
     (global.set $gl_color_b (f32.const 1)) (global.set $gl_color_a (f32.const 1))
     (global.set $gl_tex_s (f32.const 0)) (global.set $gl_tex_t (f32.const 0))
     (global.set $gl_tex1_s (f32.const 0)) (global.set $gl_tex1_t (f32.const 0))
+    (global.set $gl_tex_r (f32.const 0)) (global.set $gl_tex_q (f32.const 1))
+    (global.set $gl_tex1_r (f32.const 0)) (global.set $gl_tex1_q (f32.const 1))
     (global.set $gl_normal_x (f32.const 0)) (global.set $gl_normal_y (f32.const 0))
     (global.set $gl_normal_z (f32.const 1)) (global.set $gl_shade_model (i32.const 0x1D01))
     (global.set $gl_client_bits (i32.const 0)) (global.set $gl_client_tex_unit (i32.const 0))
@@ -138,7 +144,11 @@
       (global.set $gl_tp1_guest (i32.load offset=132 (local.get $p)))
       (global.set $gl_state_attrib_head (i32.load offset=136 (local.get $p)))
       (global.set $gl_state_attrib_depth (i32.load offset=140 (local.get $p)))
-      (global.set $gl_state_pointer_bits (i32.load offset=144 (local.get $p)))))
+      (global.set $gl_state_pointer_bits (i32.load offset=144 (local.get $p)))
+      (global.set $gl_tex_r (f32.load offset=148 (local.get $p)))
+      (global.set $gl_tex_q (f32.load offset=152 (local.get $p)))
+      (global.set $gl_tex1_r (f32.load offset=156 (local.get $p)))
+      (global.set $gl_tex1_q (f32.load offset=160 (local.get $p)))))
     (global.set $gl_current_context (local.get $context))
   )
 
@@ -170,7 +180,7 @@
             (else (global.set $gl_state_contexts (local.get $next))))
           (local.set $state (i32.load offset=8 (local.get $node)))
           (call $gl_state_free_attribs (i32.load offset=136 (local.get $state)))
-          (memory.fill (local.get $state) (i32.const 0) (i32.const 160))
+          (memory.fill (local.get $state) (i32.const 0) (i32.const 176))
           (i32.store offset=4 (local.get $node) (global.get $gl_state_free_contexts))
           (global.set $gl_state_free_contexts (local.get $node))
           (br $done)))
@@ -286,7 +296,14 @@
       (global.set $gl_tex_s (call $gl_array_read_or_zero (local.get $p) (global.get $gl_tp0_type)))
       (if (i32.gt_u (global.get $gl_tp0_size) (i32.const 1))
         (then (global.set $gl_tex_t (call $gl_array_read_or_zero (i32.add (local.get $p) (local.get $b)) (global.get $gl_tp0_type))))
-        (else (global.set $gl_tex_t (f32.const 0))))))
+        (else (global.set $gl_tex_t (f32.const 0))))
+      ;; Missing components take GL's defaults, r = 0 and q = 1.
+      (if (i32.gt_u (global.get $gl_tp0_size) (i32.const 2))
+        (then (global.set $gl_tex_r (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 2))) (global.get $gl_tp0_type))))
+        (else (global.set $gl_tex_r (f32.const 0))))
+      (if (i32.gt_u (global.get $gl_tp0_size) (i32.const 3))
+        (then (global.set $gl_tex_q (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 3))) (global.get $gl_tp0_type))))
+        (else (global.set $gl_tex_q (f32.const 1))))))
     (if (i32.and (i32.ne (i32.and (global.get $gl_client_bits) (i32.const 16)) (i32.const 0))
         (i32.and (i32.ne (i32.and (global.get $gl_state_pointer_bits) (i32.const 16)) (i32.const 0))
           (i32.ne (call $gl_array_type_bytes (global.get $gl_tp1_type)) (i32.const 0)))) (then
@@ -296,7 +313,13 @@
       (global.set $gl_tex1_s (call $gl_array_read_or_zero (local.get $p) (global.get $gl_tp1_type)))
       (if (i32.gt_u (global.get $gl_tp1_size) (i32.const 1))
         (then (global.set $gl_tex1_t (call $gl_array_read_or_zero (i32.add (local.get $p) (local.get $b)) (global.get $gl_tp1_type))))
-        (else (global.set $gl_tex1_t (f32.const 0))))))
+        (else (global.set $gl_tex1_t (f32.const 0))))
+      (if (i32.gt_u (global.get $gl_tp1_size) (i32.const 2))
+        (then (global.set $gl_tex1_r (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 2))) (global.get $gl_tp1_type))))
+        (else (global.set $gl_tex1_r (f32.const 0))))
+      (if (i32.gt_u (global.get $gl_tp1_size) (i32.const 3))
+        (then (global.set $gl_tex1_q (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 3))) (global.get $gl_tp1_type))))
+        (else (global.set $gl_tex1_q (f32.const 1))))))
     (if (i32.and (i32.ne (i32.and (global.get $gl_client_bits) (i32.const 1)) (i32.const 0))
         (i32.and (i32.ne (i32.and (global.get $gl_state_pointer_bits) (i32.const 1)) (i32.const 0))
           (i32.ne (call $gl_array_type_bytes (global.get $gl_vp_type)) (i32.const 0)))) (then
@@ -316,6 +339,30 @@
         (if (result f32) (i32.gt_u (global.get $gl_vp_size) (i32.const 3))
           (then (call $gl_array_read_or_zero (i32.add (local.get $p) (i32.mul (local.get $b) (i32.const 3))) (global.get $gl_vp_type)))
           (else (f32.const 1)))))))
+
+  ;; Texture unit $unit's (s, t, r, q) from four f32 at wasm $p; a unit other
+  ;; than 0 or 1 is ignored, as glMultiTexCoord2fARB ignores it.
+  (func $gl_state_set_tex4 (param $unit i32) (param $p i32)
+    (if (i32.eqz (local.get $unit)) (then
+      (global.set $gl_tex_s (f32.load (local.get $p))) (global.set $gl_tex_t (f32.load offset=4 (local.get $p)))
+      (global.set $gl_tex_r (f32.load offset=8 (local.get $p))) (global.set $gl_tex_q (f32.load offset=12 (local.get $p)))))
+    (if (i32.eq (local.get $unit) (i32.const 1)) (then
+      (global.set $gl_tex1_s (f32.load (local.get $p))) (global.set $gl_tex1_t (f32.load offset=4 (local.get $p)))
+      (global.set $gl_tex1_r (f32.load offset=8 (local.get $p))) (global.set $gl_tex1_q (f32.load offset=12 (local.get $p))))))
+
+  ;; The same from a guest vector, gathered into scratch first: sixteen
+  ;; bytes may straddle a page that $g2w resolves somewhere else.
+  (func $gl_state_set_tex4_guest (param $unit i32) (param $ga i32)
+    (local $tmp i32)
+    (local.set $tmp (global.get $gl_state_vec4))
+    (if (i32.eqz (local.get $tmp)) (then
+      (local.set $tmp (call $heap_alloc (i32.const 16)))
+      (if (i32.eqz (local.get $tmp)) (then (unreachable)))
+      (local.set $tmp (call $g2w (local.get $tmp)))
+      (global.set $gl_state_vec4 (local.get $tmp))))
+    (call $gl_copy_from_guest (local.get $tmp) (local.get $ga) (i32.const 16))
+    (call $gl_state_set_tex4 (local.get $unit) (local.get $tmp)))
+  (global $gl_state_vec4 (mut i32) (i32.const 0))
 
   (func $gl_state_intercept (param $op i32) (param $stack i32) (result i32)
     (local $a i32) (local $unit i32) (local $i i32) (local $count i32) (local $p i32) (local $b i32)
@@ -357,11 +404,32 @@
       (global.set $gl_color_g (f32.div (f32.convert_i32_u (i32.and (i32.load offset=8 (local.get $stack)) (i32.const 255))) (f32.const 255)))
       (global.set $gl_color_b (f32.div (f32.convert_i32_u (i32.and (i32.load offset=12 (local.get $stack)) (i32.const 255))) (f32.const 255)))
       (global.set $gl_color_a (f32.const 1)) (return (i32.const 1))))
+    ;; Two-component texture coordinates leave r = 0 and q = 1, as GL defines.
     (if (i32.eq (local.get $op) (i32.const 28)) (then
-      (global.set $gl_tex_s (f32.load offset=4 (local.get $stack))) (global.set $gl_tex_t (f32.load offset=8 (local.get $stack))) (return (i32.const 1))))
+      (global.set $gl_tex_s (f32.load offset=4 (local.get $stack))) (global.set $gl_tex_t (f32.load offset=8 (local.get $stack)))
+      (global.set $gl_tex_r (f32.const 0)) (global.set $gl_tex_q (f32.const 1)) (return (i32.const 1))))
     (if (i32.eq (local.get $op) (i32.const 95)) (then
       (local.set $p (call $g2w (i32.load offset=4 (local.get $stack))))
-      (global.set $gl_tex_s (f32.load (local.get $p))) (global.set $gl_tex_t (f32.load offset=4 (local.get $p))) (return (i32.const 1))))
+      (global.set $gl_tex_s (f32.load (local.get $p))) (global.set $gl_tex_t (f32.load offset=4 (local.get $p)))
+      (global.set $gl_tex_r (f32.const 0)) (global.set $gl_tex_q (f32.const 1)) (return (i32.const 1))))
+    ;; 120 glTexCoord4f(s, t, r, q) / 121 glTexCoord4fv(v): Oni's projective
+    ;; coordinates. q rides in the packed vertex; the rasterizers interpolate
+    ;; s/w, t/w and q/w and divide per fragment.
+    (if (i32.eq (local.get $op) (i32.const 120)) (then
+      (call $gl_state_set_tex4 (i32.const 0) (i32.add (local.get $stack) (i32.const 4)))
+      (return (i32.const 1))))
+    (if (i32.eq (local.get $op) (i32.const 121)) (then
+      (call $gl_state_set_tex4_guest (i32.const 0) (i32.load offset=4 (local.get $stack)))
+      (return (i32.const 1))))
+    ;; 122 glMultiTexCoord4fARB(target, s, t, r, q) / 123 ...4fvARB(target, v).
+    (if (i32.eq (local.get $op) (i32.const 122)) (then
+      (call $gl_state_set_tex4 (i32.sub (i32.load offset=4 (local.get $stack)) (i32.const 0x84C0))
+        (i32.add (local.get $stack) (i32.const 8)))
+      (return (i32.const 1))))
+    (if (i32.eq (local.get $op) (i32.const 123)) (then
+      (call $gl_state_set_tex4_guest (i32.sub (i32.load offset=4 (local.get $stack)) (i32.const 0x84C0))
+        (i32.load offset=8 (local.get $stack)))
+      (return (i32.const 1))))
     (if (i32.eq (local.get $op) (i32.const 63)) (then
       (global.set $gl_normal_x (f32.load offset=4 (local.get $stack))) (global.set $gl_normal_y (f32.load offset=8 (local.get $stack)))
       (global.set $gl_normal_z (f32.load offset=12 (local.get $stack))) (return (i32.const 1))))
@@ -372,8 +440,10 @@
     (if (i32.eq (local.get $op) (i32.const 107)) (then
       (local.set $unit (i32.sub (i32.load offset=4 (local.get $stack)) (i32.const 0x84C0)))
       (if (i32.eq (local.get $unit) (i32.const 1))
-        (then (global.set $gl_tex1_s (f32.load offset=8 (local.get $stack))) (global.set $gl_tex1_t (f32.load offset=12 (local.get $stack))))
-        (else (if (i32.eqz (local.get $unit)) (then (global.set $gl_tex_s (f32.load offset=8 (local.get $stack))) (global.set $gl_tex_t (f32.load offset=12 (local.get $stack)))))))
+        (then (global.set $gl_tex1_s (f32.load offset=8 (local.get $stack))) (global.set $gl_tex1_t (f32.load offset=12 (local.get $stack)))
+          (global.set $gl_tex1_r (f32.const 0)) (global.set $gl_tex1_q (f32.const 1)))
+        (else (if (i32.eqz (local.get $unit)) (then (global.set $gl_tex_s (f32.load offset=8 (local.get $stack))) (global.set $gl_tex_t (f32.load offset=12 (local.get $stack)))
+          (global.set $gl_tex_r (f32.const 0)) (global.set $gl_tex_q (f32.const 1))))))
       (return (i32.const 1))))
     ;; 117 glMultiTexCoord2fvARB(target, v): 107 with the pair behind a
     ;; pointer (Soldier of Fortune's ref_gl draws its lightmap pass with it).
@@ -381,8 +451,10 @@
       (local.set $unit (i32.sub (i32.load offset=4 (local.get $stack)) (i32.const 0x84C0)))
       (local.set $p (call $g2w (i32.load offset=8 (local.get $stack))))
       (if (i32.eq (local.get $unit) (i32.const 1))
-        (then (global.set $gl_tex1_s (f32.load (local.get $p))) (global.set $gl_tex1_t (f32.load offset=4 (local.get $p))))
-        (else (if (i32.eqz (local.get $unit)) (then (global.set $gl_tex_s (f32.load (local.get $p))) (global.set $gl_tex_t (f32.load offset=4 (local.get $p)))))))
+        (then (global.set $gl_tex1_s (f32.load (local.get $p))) (global.set $gl_tex1_t (f32.load offset=4 (local.get $p)))
+          (global.set $gl_tex1_r (f32.const 0)) (global.set $gl_tex1_q (f32.const 1)))
+        (else (if (i32.eqz (local.get $unit)) (then (global.set $gl_tex_s (f32.load (local.get $p))) (global.set $gl_tex_t (f32.load offset=4 (local.get $p)))
+          (global.set $gl_tex_r (f32.const 0)) (global.set $gl_tex_q (f32.const 1))))))
       (return (i32.const 1))))
     (if (i32.or (i32.eq (local.get $op) (i32.const 29)) (i32.eq (local.get $op) (i32.const 30))) (then
       (local.set $z (f32.const 0))
@@ -415,7 +487,7 @@
         (f32.load offset=8 (local.get $p)) (f32.load offset=12 (local.get $p)))
       (return (i32.const 1))))
     (if (i32.eq (local.get $op) (i32.const 76)) (then
-      (local.set $a (call $heap_alloc (i32.const 52)))
+      (local.set $a (call $heap_alloc (i32.const 68)))
       (if (i32.eqz (local.get $a)) (then (unreachable)))
       (local.set $p (call $g2w (local.get $a)))
         (i32.store (local.get $p) (global.get $gl_state_attrib_head))
@@ -425,6 +497,8 @@
         (f32.store offset=28 (local.get $p) (global.get $gl_tex1_s)) (f32.store offset=32 (local.get $p) (global.get $gl_tex1_t))
         (f32.store offset=36 (local.get $p) (global.get $gl_normal_x)) (f32.store offset=40 (local.get $p) (global.get $gl_normal_y))
         (f32.store offset=44 (local.get $p) (global.get $gl_normal_z)) (i32.store offset=48 (local.get $p) (global.get $gl_shade_model))
+        (f32.store offset=52 (local.get $p) (global.get $gl_tex_r)) (f32.store offset=56 (local.get $p) (global.get $gl_tex_q))
+        (f32.store offset=60 (local.get $p) (global.get $gl_tex1_r)) (f32.store offset=64 (local.get $p) (global.get $gl_tex1_q))
         (global.set $gl_state_attrib_head (local.get $p))
         (global.set $gl_state_attrib_depth (i32.add (global.get $gl_state_attrib_depth) (i32.const 1)))
       (return (i32.const 0))))
@@ -439,6 +513,8 @@
         (global.set $gl_tex1_s (f32.load offset=28 (local.get $p))) (global.set $gl_tex1_t (f32.load offset=32 (local.get $p)))
         (global.set $gl_normal_x (f32.load offset=36 (local.get $p))) (global.set $gl_normal_y (f32.load offset=40 (local.get $p)))
         (global.set $gl_normal_z (f32.load offset=44 (local.get $p))) (global.set $gl_shade_model (i32.load offset=48 (local.get $p)))
+        (global.set $gl_tex_r (f32.load offset=52 (local.get $p))) (global.set $gl_tex_q (f32.load offset=56 (local.get $p)))
+        (global.set $gl_tex1_r (f32.load offset=60 (local.get $p))) (global.set $gl_tex1_q (f32.load offset=64 (local.get $p)))
         (call $heap_free (call $w2g (local.get $p)))))
       (return (i32.const 0))))
     (if (i32.or (i32.eq (local.get $op) (i32.const 86)) (i32.eq (local.get $op) (i32.const 99))) (then
@@ -548,7 +624,7 @@
       (local.set $next (i32.load offset=4 (local.get $node)))
       (local.set $state (i32.load offset=8 (local.get $node)))
       (call $gl_state_free_attribs (i32.load offset=136 (local.get $state)))
-      (memory.fill (local.get $state) (i32.const 0) (i32.const 160))
+      (memory.fill (local.get $state) (i32.const 0) (i32.const 176))
       (i32.store offset=4 (local.get $node) (global.get $gl_state_free_contexts))
       (global.set $gl_state_free_contexts (local.get $node))
       (local.set $node (local.get $next))

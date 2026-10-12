@@ -28,7 +28,7 @@ const GL_TEXTURE_2D = 0x0DE1;
 const RED = 0xFFFF0000, BLUE = 0xFF0000FF;
 
 async function main() {
-  assert.strictEqual(VERTEX_FLOATS, 15, 'w is the 15th float of a packed vertex');
+  assert.strictEqual(VERTEX_FLOATS, 19, 'w is the 15th float of a packed vertex, r/q of both units follow');
   const { exports: e, memory } = await bootRenderHarness();
   const guestBase = e.get_guest_base() >>> 0, imageBase = e.get_image_base() >>> 0;
   const toWasm = guest => guestBase + (guest >>> 0) - imageBase;
@@ -72,8 +72,9 @@ async function main() {
         f.set([x * w, y * w, (y < 0 ? bottomZ * w : 0), 1, 1, 1, 1, (x + 1) / 2, 0.5]);
         f[12] = (x + 1) / 2; f[13] = 0.5;
         f[14] = w;
+        f[16] = 1; f[18] = 1;  // q of both units
       });
-      e.gl_sw_emit_triangles(verts, 3);
+      e.gl_sw_emit_packed19(verts, 3, 4);
     };
     tri([[-1, -1], [1, -1], [1, 1]]);
     tri([[-1, -1], [1, 1], [-1, 1]]);
