@@ -1103,6 +1103,15 @@
       (if (i32.ne (call $bswap32 (i32.load offset=16 (local.get $packet))) (local.get $dip))
         (then (return (i32.const 1))))
       (drop (call $vsock_raw_ingress (local.get $packet) (local.get $plen)))
+      ;; The IP stack answers requests only for an address it owns. A full
+      ;; outbound datagram queue may drop this response; never stall ingress.
+      (if (i32.and (i32.ne (local.get $dip) (i32.const 0))
+            (call $vsock_addr_in_room (local.get $sip))) (then
+        (if (call $vsock_icmp_echo_reply (local.get $packet) (local.get $plen)
+              (local.get $packet) (global.get $VLN_MAX_PAYLOAD) (i32.const 0)) (then
+          (drop (call $vsock_emit (i32.const 9) (local.get $dip) (i32.const 0)
+            (local.get $sip) (i32.const 0)
+            (i32.add (global.get $vsock_frame_buf) (global.get $VLN_HDR)) (local.get $plen)))))))
       (return (i32.const 1))))
     (if (i32.eq (local.get $type) (i32.const 6))
       (then
@@ -2193,6 +2202,15 @@
     (i32.store8 offset=10 (local.get $wa) (i32.shr_u (local.get $sum) (i32.const 8)))
     (i32.store8 offset=11 (local.get $wa) (local.get $sum))
     (call $guest_memmove (i32.add (local.get $p) (i32.const 20)) (local.get $buf) (local.get $len))
+    ;; Loopback and our own room address do not go through a remote peer.
+    ;; Deliver the original request first, then any actual stack echo reply.
+    (if (call $vsock_is_local_addr (local.get $dip)) (then
+      (drop (call $vsock_raw_ingress (local.get $wa) (local.get $n)))
+      (if (call $vsock_icmp_echo_reply (local.get $wa) (local.get $n)
+            (local.get $wa) (local.get $n) (i32.const 0)) (then
+        (drop (call $vsock_raw_ingress (local.get $wa) (local.get $n)))))
+      (call $heap_free (local.get $p))
+      (return (local.get $len))))
     (local.set $sent (call $vsock_emit (i32.const 9) (local.get $sip) (i32.const 0)
       (local.get $dip) (i32.const 0) (local.get $p) (local.get $n)))
     (call $heap_free (local.get $p))

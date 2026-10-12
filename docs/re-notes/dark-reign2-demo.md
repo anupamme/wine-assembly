@@ -467,3 +467,18 @@ boundary, invalid arguments, full-wire nonblocking error and blocking retry.
 Public raw socket creation remains gated; echo response routing, connected
 send/WSASend and overlapped semantics are not complete. No ordinary game replay.
 Evidence: scratch/runs/20261012T0013Z-dark-reign2-raw-send/.
+
+### Echo routing (2026-10-12)
+
+Valid echo requests addressed to a local IP now produce a real stack reply.
+Room ingress delivers the original packet to matching raw queues first, then
+builds the reply in its private frame buffer and sends it back to the source.
+Malformed checksums, foreign destinations and non-request ICMP do not generate
+responses. A full outbound datagram queue can drop an echo reply without
+stalling ingress. No absent remote host is synthesized.
+
+Raw sendto to loopback or the process's own room address directly delivers the
+request and reply locally; no wire endpoint is required. Tests verify both
+routes, checksums, unchanged queued request/payload and no reply loop. Raw
+creation, connected send/WSASend and overlapped semantics still gate DR2 replay.
+Evidence: scratch/runs/20261012T0016Z-dark-reign2-echo/.

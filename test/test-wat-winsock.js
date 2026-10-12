@@ -755,6 +755,19 @@ async function main() {
     try {
       sender.send(frame);wat.vlan_pump();assert.strictEqual(receiver.pending,0);
       for(const i of [any,bound]){assert.strictEqual(wat.test_raw_take(i,out),41);assert.deepStrictEqual(Buffer.from(new Uint8Array(memory.buffer,wa(out)+12,29)),packet);}
+      const request=Buffer.from(packet);request[20]=8;seal(request);
+      const echoFrame=Buffer.from(frame);request.copy(echoFrame,28);sender.send(echoFrame);wat.vlan_pump();
+      assert.strictEqual(sender.pending,1,'local stack replies to room echo request');
+      const reply=Buffer.from(sender.peek()),replyIP=reply.subarray(28);sender.commit();
+      assert.strictEqual(reply.readUInt32LE(8),local);assert.strictEqual(reply.readUInt32LE(16),remote);
+      assert.strictEqual(replyIP[20],0);assert.deepStrictEqual(replyIP.subarray(24),request.subarray(24));
+      assert.strictEqual(checksum(replyIP.subarray(0,20)),0);assert.strictEqual(checksum(replyIP.subarray(20)),0);
+      for(const i of [any,bound]){assert.strictEqual(wat.test_raw_take(i,out),41);
+        assert.deepStrictEqual(Buffer.from(readBuf(out+12,29)),request,'response construction must not alter queued request');}
+      const corruptEcho=Buffer.from(echoFrame);corruptEcho[56]^=1;sender.send(corruptEcho);wat.vlan_pump();
+      assert.strictEqual(sender.pending,0,'bad checksum never generates a reply');
+      const foreignEcho=Buffer.from(echoFrame);foreignEcho.writeUInt32LE(0x0a000008,16);
+      sender.send(foreignEcho);wat.vlan_pump();assert.strictEqual(sender.pending,0,'foreign destination never generates a reply');
       for(const [offset,value]of [[8,remote+1],[16,0x7f000002],[12,7],[20,7]]){
         const bad=Buffer.from(frame);bad.writeUInt32LE(value,offset);sender.send(bad);
       }
@@ -778,7 +791,7 @@ async function main() {
 
   check('raw sendto emits bounded IPv4 envelopes and preserves wire backpressure', () => {
     wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
-    const s=wat.test_raw_handle(wat.test_raw_seed(0x0a000001,0,3));setNonblocking(s,true);
+    const rawIndex=wat.test_raw_seed(0x0a000001,0,3),s=wat.test_raw_handle(rawIndex);setNonblocking(s,true);
     const {LoopbackSegment}=require('../lib/vlan-wire'),segment=new LoopbackSegment();
     const sender=segment.attach(),receiver=segment.attach();hostContext.vlanWire=sender;
     const body=Buffer.from([8,0,0,0,0x12,0x34,0,1,0x51]);
@@ -808,6 +821,18 @@ async function main() {
       assert.strictEqual(send(),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10035);
       setNonblocking(s,false);send();assert.strictEqual(wat.get_yield_reason(),8);
       sender.send=originalSend;assert.strictEqual(send(),9);assert.strictEqual(receiver.pending,1);
+      receiver.commit();
+      const echo=Buffer.from(body);echo.writeUInt16BE(wat.test_checksum(buf(echo),echo.length),2);
+      assert.strictEqual(send(buf(echo),echo.length,sockaddr(ROOM_HOST,0)),9);
+      assert.strictEqual(receiver.pending,0,'local echo never leaves the process');
+      const output=buf(100);
+      assert.strictEqual(wat.test_raw_recv(rawIndex,output,100,0,0),29);
+      assert.strictEqual(readBuf(output+20,1)[0],8);
+      assert.strictEqual(wat.test_raw_recv(rawIndex,output,100,0,0),29);
+      assert.strictEqual(readBuf(output+20,1)[0],0);
+      assert.strictEqual(wat.test_checksum(output+20,9),0);
+      assert.deepStrictEqual(Buffer.from(readBuf(output+24,5)),echo.subarray(4));
+      assert.strictEqual(wat.test_raw_ready(rawIndex),0,'echo reply does not loop');
     } finally {delete hostContext.vlanWire;wat.test_vsock_reset();}
   });
 
