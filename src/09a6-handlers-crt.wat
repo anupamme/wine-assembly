@@ -2402,6 +2402,44 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
   )
 
+  ;; _putenv("NAME=value") -- cdecl. Sets the variable in the process
+  ;; environment block getenv and GetEnvironmentVariable read; "NAME=" (empty
+  ;; value) removes it, as msvcrt does. 0 on success, -1 when there is no '='
+  ;; or no name before it, or the block is full. Slave Zero calls it at startup.
+  (func $handle__putenv (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $len i32) (local $eq i32) (local $copy i32) (local $ok i32)
+    (local.set $ok (i32.const -1))
+    (if (local.get $arg0)
+      (then
+        (local.set $len (call $guest_strlen (local.get $arg0)))
+        (local.set $eq (i32.const 0))
+        (block $found (loop $scan
+          (br_if $found (i32.ge_u (local.get $eq) (local.get $len)))
+          (br_if $found (i32.eq (call $gl8 (i32.add (local.get $arg0) (local.get $eq))) (i32.const 0x3D)))
+          (local.set $eq (i32.add (local.get $eq) (i32.const 1)))
+          (br $scan)))
+        ;; A copy, split at the '=': the caller's string is left untouched.
+        (if (i32.and (i32.lt_u (local.get $eq) (local.get $len))
+                     (i32.ne (local.get $eq) (i32.const 0)))
+          (then
+            (local.set $copy (call $heap_alloc (i32.add (local.get $len) (i32.const 1))))
+            (if (local.get $copy)
+              (then
+                (call $memcpy (call $g2w (local.get $copy)) (call $g2w (local.get $arg0))
+                  (i32.add (local.get $len) (i32.const 1)))
+                (call $gs8 (i32.add (local.get $copy) (local.get $eq)) (i32.const 0))
+                (if (call $env_set (local.get $copy)
+                      (select
+                        (i32.add (local.get $copy) (i32.add (local.get $eq) (i32.const 1)))
+                        (i32.const 0)
+                        (i32.lt_u (i32.add (local.get $eq) (i32.const 1)) (local.get $len)))
+                      (i32.const 0))
+                  (then (local.set $ok (i32.const 0))))
+                (call $heap_free (local.get $copy))))))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $ok))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+  )
+
   ;; A WIN32_FIND_DATA FILETIME (100ns since 1601) at guest $p as a time_t:
   ;; -1 when it predates 1970, as msvcrt reports it, and 0 for a FILETIME of
   ;; 0, which is how the VFS leaves a time it does not record.

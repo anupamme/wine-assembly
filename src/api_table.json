@@ -38782,5 +38782,12 @@
     "nargs": 6,
     "convention": "stdcall",
     "hash": 1847186435
+  },
+  {
+    "id": 4556,
+    "name": "_putenv",
+    "nargs": 1,
+    "convention": "cdecl",
+    "hash": 3240813966
   }
 ]
