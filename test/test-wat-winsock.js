@@ -796,7 +796,8 @@ async function main() {
 
   check('raw bind ignores ports, rejects foreign sources and reports write readiness', () => {
     wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
-    const a=wat.test_raw_handle(wat.test_raw_seed(0,0,3)),b=wat.test_raw_handle(wat.test_raw_seed(0,0,3));
+    const a=Number(BigInt.asIntN(32,wat.test_wsasocket(0,2,3,1,0,0,0))),b=Number(BigInt.asIntN(32,wat.test_wsasocket(1,2,3,1,0,0,0)));
+    assert(a>0 && b>0,'A/W create real synchronous raw sockets');
     const writable=s=>wat.test_call_select(0,0,fdset([s]),0,timeval(0,0));
     assert.strictEqual(writable(a),1);
     assert.strictEqual(wat.test_call_bind(a,sockaddr('10.0.0.9',77),16),-1);
@@ -809,6 +810,13 @@ async function main() {
     assert.strictEqual(writable(a),1);assert.strictEqual(wat.test_call_listen(a,5),-1);
     assert.strictEqual(wat.test_call_WSAGetLastError(),10045);assert.strictEqual(writable(a),1);
     assert.strictEqual(wat.test_call_connect(a,sockaddr(ROOM_HOST,0),16),0);assert.strictEqual(writable(a),1);
+    const request=buf([8,0,0,0,0x12,0x34,0,1]);
+    new DataView(memory.buffer).setUint16(wa(request)+2,wat.test_checksum(request,8),false);
+    assert.strictEqual(wat.test_call_send(a,request,8,0),8);
+    const packet=buf(64);
+    assert.strictEqual(wat.test_call_recv(a,packet,64,0),28);assert.strictEqual(readBuf(packet+20,1)[0],8);
+    assert.strictEqual(wat.test_call_recv(a,packet,64,0),28);assert.strictEqual(readBuf(packet+20,1)[0],0);
+    assert.strictEqual(wat.test_checksum(packet+20,8),0,'public socket completes real local echo');
     wat.test_call_shutdown(a,SD_SEND);assert.strictEqual(writable(a),0);
     wat.test_vsock_reset();
   });
@@ -898,8 +906,9 @@ async function main() {
     for(const [group,flags] of [[1,0],[0,2]]){assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,group,flags)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);}
     let probes=0;hostContext.openLanLink=()=>{probes++;return true;};
     for(const wide of [0,1]){
-      assert.strictEqual(value(wat.test_wsasocket(wide,2,3,1,0,0,1)),-1,'raw ICMP has no transport provider');
-      assert.strictEqual(wat.test_call_WSAGetLastError(),10044,'unsupported socket type, not invalid OVERLAPPED flag');
+      assert.throws(()=>wat.test_wsasocket(wide,2,3,1,0,0,1),WebAssembly.RuntimeError,'raw OVERLAPPED creation remains fail-fast');
+      assert.strictEqual(value(wat.test_wsasocket(wide,2,3,6,0,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10043);
+      assert.strictEqual(value(wat.test_wsasocket(wide,2,4,0,0,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10044);
       assert.strictEqual(value(wat.test_wsasocket(wide,99,1,6,0,0,1)),-1);
       assert.strictEqual(wat.test_call_WSAGetLastError(),10047);
       assert.throws(()=>wat.test_wsasocket(wide,2,1,6,0,0,1),WebAssembly.RuntimeError,'valid but unimplemented overlapped creation must fail fast');
@@ -1122,7 +1131,7 @@ async function main() {
     assert.strictEqual(wat.test_call_socket(23, SOCK_STREAM, 0) | 0, INVALID_SOCKET);
     assert.strictEqual(wat.test_call_WSAGetLastError() | 0, WSAEAFNOSUPPORT);
     assert.notStrictEqual(wat.test_call_socket(AF_INET, SOCK_DGRAM, 17) | 0, INVALID_SOCKET);
-    assert.strictEqual(wat.test_call_socket(AF_INET, 3, 0) | 0, INVALID_SOCKET);
+    assert.strictEqual(wat.test_call_socket(AF_INET, 4, 0) | 0, INVALID_SOCKET);
     assert.strictEqual(wat.test_call_WSAGetLastError() | 0, WSAESOCKTNOSUPPORT);
   });
 

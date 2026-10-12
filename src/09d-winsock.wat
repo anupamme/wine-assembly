@@ -1482,6 +1482,11 @@
         (if (i32.ne (local.get $arg0) (i32.const 2))      ;; AF_INET
           (then
             (return (i32.const 10047))))
+        ;; The virtual raw provider carries ICMP only, with the IP envelope
+        ;; supplied by our stack. Other raw protocols have no route here.
+        (if (i32.eq (local.get $arg1) (i32.const 3)) (then
+          (if (i32.eq (local.get $arg2) (i32.const 1)) (then (return (i32.const 0))))
+          (return (i32.const 10043))))
         (if (i32.and (i32.ne (local.get $arg1) (i32.const 1))
                      (i32.ne (local.get $arg1) (i32.const 2)))
           (then

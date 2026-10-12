@@ -512,3 +512,16 @@ listen rejection and select before/after connect and shutdown. This matches
 the existing datagram readiness model; host wire backpressure can still cause
 an individual send to wait. Public raw allocation and overlapped state remain
 pending. Evidence: scratch/runs/20261012T0027Z-dark-reign2-raw-bind/.
+
+### Synchronous raw allocation (2026-10-12)
+
+AF_INET/SOCK_RAW/IPPROTO_ICMP is now accepted by the transport validator, so
+WSASocketA/W with flags zero can create real raw records. Other raw protocols
+remain rejected with WSAEPROTONOSUPPORT. Tests create both A/W sockets, bind,
+connect, send an echo request and receive the full IPv4 request/reply through
+public dispatch, without seeding records.
+
+This does not enable OVERLAPPED creation: the exact DR2 flags=1 call still
+fails fast at that capability check, now after successful transport validation.
+No ordinary replay or gameplay claim. Evidence:
+scratch/runs/20261012T0033Z-dark-reign2-raw-allocation/.
