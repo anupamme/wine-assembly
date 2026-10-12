@@ -3919,6 +3919,31 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "rage-of-mages2-demo",
+      "name": "Rage of Mages II: Necromancer Demo",
+      "kind": "game",
+      "version": "15 May 1999 demo, GameStar September 1999 disc",
+      "executables": [
+        "game/ROM2.EXE"
+      ],
+      "sourcePage": "https://archive.org/details/gsscda1999",
+      "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Copy the game files from DEMOS/RAGE2 on gsscda1999/1999-09/GS0999.iso (Archive metadata SHA-1 74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44) into game/, preserving ROM2.EXE, SCENARIO.DLL, SMACKW32.DLL and all RES/DAT/SAV files. ROM2.EXE must have SHA-256 c163964fca7f15958c53c29cef2fe4db4add639a95a3936453f87ccda874ae4b. Run --id=rage-of-mages2-demo --prepare. See docs/re-notes/rage-of-mages2-demo.md; the separate RageofMagesIINecromancer_1020 nested installer is damaged.",
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/ROM2.EXE"
+      },
+      "cli": {
+        "maxBatches": 17000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
