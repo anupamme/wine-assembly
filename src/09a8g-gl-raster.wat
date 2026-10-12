@@ -836,16 +836,17 @@
   ;; Scratch: +0 the MVP, +64 one object-space vec4, +128 three screen
   ;; records, +256 three clip records, +512 up to four near-clipped ones,
   ;; +0x300 the default viewport $gl_sw_consume substitutes when none is
-  ;; set, +0x680 up to five far-clipped records (ends at 0x798, inside 0x800).
-  ;; Clip record, 56 bytes: +0 x, +4 y, +8 z, +12 w, +16 u, +20 v, then
-  ;; r, g, b, a at +24..+36, unit 1's u, v at +40, +44 -- all f32, so
-  ;; q0/q1 at +48/+52; clipping lerps fourteen floats alike.
+  ;; set, +0x680 up to five far-clipped records (ends at 0x7AC, inside 0x800).
+  ;; Clip record, 60 bytes: +0 x, +4 y, +8 z, +12 w, +16 u, +20 v, then
+  ;; r, g, b, a at +24..+36, unit 1's u, v at +40, +44, q0/q1 at +48/+52
+  ;; and the eye-space fog distance at +56 -- all f32, so clipping lerps
+  ;; fifteen floats alike.
   (func $gl_sw_clip_at (param $k i32) (result i32)
     (i32.add (global.get $gl_sw_scratch)
-      (i32.add (i32.const 256) (i32.mul (local.get $k) (i32.const 56)))))
+      (i32.add (i32.const 256) (i32.mul (local.get $k) (i32.const 60)))))
   (func $gl_sw_poly_at (param $k i32) (result i32)
     (i32.add (global.get $gl_sw_scratch)
-      (i32.add (i32.const 512) (i32.mul (local.get $k) (i32.const 56)))))
+      (i32.add (i32.const 512) (i32.mul (local.get $k) (i32.const 60)))))
   ;; Signed distance to GL's near clip plane, z >= -w.
   (func $gl_sw_near_d (param $c i32) (result f32)
     (f32.add (f32.load offset=8 (local.get $c)) (f32.load offset=12 (local.get $c))))
@@ -868,7 +869,7 @@
           (f32.mul (f32.sub (f32.load (i32.add (local.get $b) (local.get $i))) (local.get $x))
                    (local.get $t))))
       (local.set $i (i32.add (local.get $i) (i32.const 4)))
-      (br_if $lp (i32.lt_u (local.get $i) (i32.const 56)))))
+      (br_if $lp (i32.lt_u (local.get $i) (i32.const 60)))))
   ;; Per-vertex screen record, 32 bytes: +0 x, +4 y (i32), +8 z, +12 rhw,
   ;; +16 u, +20 v (f32), +24 colour (0xAARRGGBB).
   (func $gl_sw_screen_at (param $k i32) (result i32)
@@ -1883,6 +1884,26 @@
       (f32.add (f32.mul (f32.load offset=32 (local.get $m)) (local.get $r))
                (f32.mul (f32.load offset=48 (local.get $m)) (local.get $q)))))
 
+  ;; GL's fog coordinate: the eye-space distance |z_e / w_e| of the object
+  ;; point at $p, through the modelview matrix $gl_sw_mv. Clip w equals it
+  ;; only under a perspective projection; an orthographic one gives w = 1
+  ;; for every vertex, and Oni's menu (glOrtho, linear fog 0.975..1) came
+  ;; out entirely fog-coloured gray while WebGL drew it clear.
+  (global $gl_sw_mv (mut i32) (i32.const 0))
+  (func $gl_sw_eye_distance (param $p i32) (result f32)
+    (local $ze f32) (local $we f32) (local $x f32) (local $y f32) (local $z f32) (local $w f32)
+    (local.set $x (f32.load (local.get $p)))
+    (local.set $y (f32.load offset=4 (local.get $p)))
+    (local.set $z (f32.load offset=8 (local.get $p)))
+    (local.set $w (f32.load offset=12 (local.get $p)))
+    (local.set $ze (call $gl_sw_mtx_row (global.get $gl_sw_mv) (i32.const 8)
+      (local.get $x) (local.get $y) (local.get $z) (local.get $w)))
+    (local.set $we (call $gl_sw_mtx_row (global.get $gl_sw_mv) (i32.const 12)
+      (local.get $x) (local.get $y) (local.get $z) (local.get $w)))
+    (if (f32.ne (local.get $we) (f32.const 0))
+      (then (local.set $ze (f32.div (local.get $ze) (local.get $we)))))
+    (f32.abs (local.get $ze)))
+
   ;; One 76-byte GL vertex at $src into clip record $k: transformed, texture
   ;; matrix applied, lit or its colour copied. Returns 1 when it is on the
   ;; inside of the near plane, | 2 when on the inside of the far one.
@@ -1898,6 +1919,7 @@
       (f32.load offset=56 (local.get $src)))
     (local.set $clip (call $gl_sw_clip_at (local.get $k)))
     (call $gl_mtx_transform4 (local.get $clip) (local.get $mvp) (local.get $tmp))
+    (f32.store offset=56 (local.get $clip) (call $gl_sw_eye_distance (local.get $tmp)))
     (f32.store offset=16 (local.get $clip) (f32.load offset=28 (local.get $src)))
     (f32.store offset=20 (local.get $clip) (f32.load offset=32 (local.get $src)))
     (if (global.get $gl_sw_sphere)
@@ -1988,8 +2010,8 @@
     (block $done (loop $fan
       (br_if $done (i32.ge_s (i32.add (local.get $k) (i32.const 1)) (local.get $n)))
       (call $gl_sw_emit (local.get $vp) (local.get $poly)
-        (i32.add (local.get $poly) (i32.mul (local.get $k) (i32.const 56)))
-        (i32.add (local.get $poly) (i32.mul (i32.add (local.get $k) (i32.const 1)) (i32.const 56))))
+        (i32.add (local.get $poly) (i32.mul (local.get $k) (i32.const 60)))
+        (i32.add (local.get $poly) (i32.mul (i32.add (local.get $k) (i32.const 1)) (i32.const 60))))
       (local.set $k (i32.add (local.get $k) (i32.const 1)))
       (br $fan))))
 
@@ -2001,21 +2023,21 @@
     (local $k i32) (local $m i32) (local $a i32) (local $b i32)
     (local $da f32) (local $db f32)
     (loop $edge
-      (local.set $a (i32.add (local.get $src) (i32.mul (local.get $k) (i32.const 56))))
+      (local.set $a (i32.add (local.get $src) (i32.mul (local.get $k) (i32.const 60))))
       (local.set $b (i32.add (local.get $src) (i32.mul
         (select (i32.const 0) (i32.add (local.get $k) (i32.const 1))
           (i32.eq (i32.add (local.get $k) (i32.const 1)) (local.get $n)))
-        (i32.const 56))))
+        (i32.const 60))))
       (local.set $da (call $gl_sw_plane_d (local.get $a) (local.get $far)))
       (local.set $db (call $gl_sw_plane_d (local.get $b) (local.get $far)))
       (if (f32.ge (local.get $da) (f32.const 0))
         (then
-          (call $memcpy (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 56)))
-            (local.get $a) (i32.const 56))
+          (call $memcpy (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 60)))
+            (local.get $a) (i32.const 60))
           (local.set $m (i32.add (local.get $m) (i32.const 1)))))
       (if (i32.ne (f32.ge (local.get $da) (f32.const 0)) (f32.ge (local.get $db) (f32.const 0)))
         (then
-          (call $gl_sw_lerp_into (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 56)))
+          (call $gl_sw_lerp_into (i32.add (local.get $dst) (i32.mul (local.get $m) (i32.const 60)))
             (local.get $a) (local.get $b)
             (f32.div (local.get $da) (f32.sub (local.get $da) (local.get $db))))
           (local.set $m (i32.add (local.get $m) (i32.const 1)))))
@@ -2177,12 +2199,11 @@
     ;; record keeps them twelve bytes further on.
     (i32.store offset=24 (local.get $out)
       (call $gl_sw_color (i32.add (local.get $c) (i32.const 12))))
-    ;; Fog distance: for a perspective projection clip w IS -z_eye, the eye
-    ;; depth GL's fog coordinate is. (An orthographic draw has w = 1 and is
-    ;; fogged as if at distance 1, which near-plane-0 fog barely touches.)
+    ;; Fog distance: the eye-space |z| the clip record carries (+56). Clip w
+    ;; is the same number only under a perspective projection.
     (if (i32.and (i32.load (global.get $gl_sw_st)) (i32.const 64))
       (then (f32.store offset=28 (local.get $out)
-        (call $gl_sw_fog_factor (f32.abs (f32.load offset=12 (local.get $c)))))))
+        (call $gl_sw_fog_factor (f32.load offset=56 (local.get $c))))))
     (i32.const 1))
 
   ;; ---- the raster state every primitive shares ---------------------------
@@ -2909,6 +2930,7 @@
     (call $gl_mtx_mul_into (local.get $mvp)
       (call $gl_mtx_stack_top (local.get $b) (i32.const 1))
       (call $gl_mtx_stack_top (local.get $b) (i32.const 0)))
+    (global.set $gl_sw_mv (call $gl_mtx_stack_top (local.get $b) (i32.const 0)))
     (global.set $gl_sw_lit (i32.ne (i32.and (i32.load (global.get $gl_sw_st))
       (i32.const 128)) (i32.const 0)))
     (global.set $gl_sw_sphere (i32.and
