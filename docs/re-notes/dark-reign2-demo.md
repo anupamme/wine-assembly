@@ -498,3 +498,17 @@ gathered payload, oversize rejection, full-frame retry and shutdown. Public
 raw allocation and OVERLAPPED socket/operation state remain unfinished; no
 ordinary DR2 replay yet. Evidence:
 scratch/runs/20261012T0022Z-dark-reign2-connected-raw/.
+
+### Raw binding and readiness (2026-10-12)
+
+Raw bind is an address filter: port numbers are ignored and multiple raw
+sockets may bind the same address. INADDR_ANY remains a wildcard for receive;
+explicit sources must be owned by this process. Raw listen returns
+WSAEOPNOTSUPP. Write readiness accepts open unbound/bound/connected raw sockets
+without requiring a stream peer, and clears after send shutdown.
+
+Tests exercise bind collisions, wildcard getsockname, foreign-source rejection,
+listen rejection and select before/after connect and shutdown. This matches
+the existing datagram readiness model; host wire backpressure can still cause
+an individual send to wait. Public raw allocation and overlapped state remain
+pending. Evidence: scratch/runs/20261012T0027Z-dark-reign2-raw-bind/.

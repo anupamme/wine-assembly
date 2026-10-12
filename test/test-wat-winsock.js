@@ -794,6 +794,25 @@ async function main() {
     wat.test_vsock_reset();assert.strictEqual(receive(),0,'closed sockets receive nothing');
   });
 
+  check('raw bind ignores ports, rejects foreign sources and reports write readiness', () => {
+    wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
+    const a=wat.test_raw_handle(wat.test_raw_seed(0,0,3)),b=wat.test_raw_handle(wat.test_raw_seed(0,0,3));
+    const writable=s=>wat.test_call_select(0,0,fdset([s]),0,timeval(0,0));
+    assert.strictEqual(writable(a),1);
+    assert.strictEqual(wat.test_call_bind(a,sockaddr('10.0.0.9',77),16),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10049);
+    for(const s of [a,b])assert.strictEqual(wat.test_call_bind(s,sockaddr('0.0.0.0',77),16),0,'raw binds do not collide on ports');
+    const name=buf(16),len=buf([16,0,0,0]);
+    assert.strictEqual(wat.test_call_getsockname(a,name,len),0);
+    const address=Buffer.from(readBuf(name,16));assert.strictEqual(address.readUInt16BE(2),0);
+    assert.strictEqual(address.readUInt32BE(4),0,'wildcard receive filter survives bind');
+    assert.strictEqual(writable(a),1);assert.strictEqual(wat.test_call_listen(a,5),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10045);assert.strictEqual(writable(a),1);
+    assert.strictEqual(wat.test_call_connect(a,sockaddr(ROOM_HOST,0),16),0);assert.strictEqual(writable(a),1);
+    wat.test_call_shutdown(a,SD_SEND);assert.strictEqual(writable(a),0);
+    wat.test_vsock_reset();
+  });
+
   check('raw sendto emits bounded IPv4 envelopes and preserves wire backpressure', () => {
     wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
     const rawIndex=wat.test_raw_seed(0x0a000001,0,3),s=wat.test_raw_handle(rawIndex);setNonblocking(s,true);

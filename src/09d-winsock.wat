@@ -693,6 +693,12 @@
   (func $vsock_write_ready (param $idx i32) (result i32)
     (local $rec i32) (local $peer i32)
     (local.set $rec (call $vsock_rec (local.get $idx)))
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (if (i32.and (load.field VSock flags (local.get $rec)) (i32.const 2))
+        (then (return (i32.const 0))))
+      (return (i32.or (i32.eq (load.field VSock state (local.get $rec)) (i32.const 1))
+          (i32.or (i32.eq (load.field VSock state (local.get $rec)) (i32.const 2))
+            (i32.eq (load.field VSock state (local.get $rec)) (i32.const 4)))))))
     (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 2))
       (then (return (i32.or
         (i32.eq (load.field VSock state (local.get $rec)) (i32.const 1))
@@ -1548,6 +1554,16 @@
         (return)))
     (local.set $ip (global.get $vsock_sa_ip))
     (local.set $port (global.get $vsock_sa_port))
+    ;; Raw sockets bind an address filter, never reserve a TCP/UDP port.
+    ;; Only this process's addresses can be used as an outbound source.
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (if (i32.eqz (call $vsock_is_local_addr (local.get $ip))) (then
+        (call $vsock_set_error (i32.const 10049))
+        (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+      (store.field VSock local_ip (local.get $rec) (local.get $ip))
+      (store.field VSock local_port (local.get $rec) (i32.const 0))
+      (store.field VSock state (local.get $rec) (i32.const 2))
+      (i32.store (global.get $reg_base) (i32.const 0)) (return)))
     ;; INADDR_ANY binds the room address; anything else must be in-room.
     (if (i32.and (i32.ne (local.get $ip) (i32.const 0))
                  (i32.eqz (call $vsock_addr_in_room (local.get $ip))))
@@ -1590,6 +1606,9 @@
         (return)))
     (local.set $rec (call $vsock_rec (local.get $idx)))
     ;; A listener must already own an address.
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (call $vsock_set_error (i32.const 10045)) ;; WSAEOPNOTSUPP
+      (i32.store (global.get $reg_base) (i32.const -1)) (return)))
     (if (i32.ne (load.field VSock state (local.get $rec)) (i32.const 2))
       (then
         (call $vsock_set_error (i32.const 10022))
