@@ -3998,6 +3998,31 @@
       }
     },
     {
+      "id": "thief2-demo",
+      "name": "Thief II: The Metal Age Demo",
+      "kind": "game",
+      "version": "1999 official demo",
+      "executables": [
+        "game/thf2demo.exe"
+      ],
+      "sourcePage": "https://archive.org/details/ThiefIiTheMetalAgeDemo",
+      "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Verify thief2.exe (136880529 bytes, SHA-1 e812b6d8a41c7755f87e1e17bf8e7ef11a57de5a), extract with 7z and copy thf2demo/ contents into game/. thf2demo.exe SHA-256: 5e5f831ba549081c35e592afaa540f336f76c828a996b4fcb74edef46beba942. Reconstruct installer DARKINST.CFG with install_path, resname_base, load_path and script_module_path each C:\\; movie_path C:\\MOVIES; language english (one setting per line). These keys and language appear in original SETUP.ins. Run --id=thief2-demo --prepare. No executable patch. Registered CLI reaches 3D mission; browser input/touch validation pending. See docs/re-notes/thief2-demo.md.",
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/thf2demo.exe"
+      },
+      "cli": {
+        "maxBatches": 10000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "messiah-demo",
       "name": "Messiah Demo",
       "kind": "game",
