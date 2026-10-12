@@ -449,3 +449,21 @@ storage, unsupported flags and overlapped mode without consumption, scatter,
 truncation, source address and frame restoration. Public raw creation and
 send/echo/overlapped implementation still remain before ordinary DR2 replay.
 Evidence: scratch/runs/20261012T0007Z-dark-reign2-wsarecvfrom/.
+
+### Raw send transport (2026-10-12)
+
+sendto on an internal raw record now wraps the caller's ICMP message in an
+IPv4 header (TTL64, DF, protocol1, valid header checksum) and emits VLN1 type9
+with zero port fields. The caller's ICMP checksum and payload are preserved.
+The 4096-byte frame payload leaves 4076 bytes for the ICMP message; larger
+messages fail with WSAEMSGSIZE rather than silently truncating. Bad spans,
+short messages, addresses outside the virtual room and shutdown sends fail.
+The temporary packet is freed before either returning or parking on wire
+backpressure. Nonzero sendto flags fail fast.
+
+Tests use real sendto dispatch and two loopback endpoints, checking the complete
+wire/header identity, header checksum, unchanged ICMP payload, maximum-size
+boundary, invalid arguments, full-wire nonblocking error and blocking retry.
+Public raw socket creation remains gated; echo response routing, connected
+send/WSASend and overlapped semantics are not complete. No ordinary game replay.
+Evidence: scratch/runs/20261012T0013Z-dark-reign2-raw-send/.

@@ -776,6 +776,41 @@ async function main() {
     wat.test_vsock_reset();assert.strictEqual(receive(),0,'closed sockets receive nothing');
   });
 
+  check('raw sendto emits bounded IPv4 envelopes and preserves wire backpressure', () => {
+    wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
+    const s=wat.test_raw_handle(wat.test_raw_seed(0x0a000001,0,3));setNonblocking(s,true);
+    const {LoopbackSegment}=require('../lib/vlan-wire'),segment=new LoopbackSegment();
+    const sender=segment.attach(),receiver=segment.attach();hostContext.vlanWire=sender;
+    const body=Buffer.from([8,0,0,0,0x12,0x34,0,1,0x51]);
+    const p=buf(body),to=sockaddr('10.0.0.9',99);
+    const send=(ptr=p,len=body.length,addr=to)=>wat.test_call_sendto(s,ptr,len,0,addr,16);
+    try {
+      assert.strictEqual(send(),9);assert.strictEqual(receiver.pending,1);
+      const frame=Buffer.from(receiver.peek()),ip=frame.subarray(28);
+      assert.strictEqual(frame.readUInt32LE(4),9);assert.strictEqual(frame.readUInt32LE(8),0x0a000001);
+      assert.strictEqual(frame.readUInt32LE(12),0);assert.strictEqual(frame.readUInt32LE(16),0x0a000009);
+      assert.strictEqual(frame.readUInt32LE(20),0);assert.strictEqual(frame.readUInt32LE(24),29);
+      assert.strictEqual(ip[0],0x45);assert.strictEqual(ip.readUInt16BE(2),29);
+      assert.strictEqual(ip.readUInt16BE(6),0x4000);assert.strictEqual(ip[8],64);assert.strictEqual(ip[9],1);
+      assert.strictEqual(ip.readUInt32BE(12),0x0a000001);assert.strictEqual(ip.readUInt32BE(16),0x0a000009);
+      assert.strictEqual(wat.test_checksum(buf(ip.subarray(0,20)),20),0);
+      assert.deepStrictEqual(ip.subarray(20),body,'caller ICMP checksum and payload are preserved');receiver.commit();
+      for(const [ptr,n,addr,error] of [[0,9,to,10014],[p,-1,to,10022],[p,7,to,10022],
+        [p,4077,to,10040],[p,9,0,10014],[p,9,sockaddr('8.8.8.8',0),10051]]){
+        assert.strictEqual(send(ptr,n,addr),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),error);
+        assert.strictEqual(receiver.pending,0);
+      }
+      const large=buf(4076);assert.strictEqual(send(large,4076),4076);
+      assert.strictEqual(receiver.peek().length,28+4096);receiver.commit();
+      assert.throws(()=>wat.test_call_sendto(s,p,9,1,to,16),WebAssembly.RuntimeError);
+      assert.strictEqual(receiver.pending,0);
+      const originalSend=sender.send.bind(sender);sender.send=()=>false;
+      assert.strictEqual(send(),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10035);
+      setNonblocking(s,false);send();assert.strictEqual(wat.get_yield_reason(),8);
+      sender.send=originalSend;assert.strictEqual(send(),9);assert.strictEqual(receiver.pending,1);
+    } finally {delete hostContext.vlanWire;wat.test_vsock_reset();}
+  });
+
   check('WSASocket validates catalog selections and parks the full creation frame', () => {
     wat.test_vsock_reset();const value=r=>Number(BigInt.asIntN(32,r));
     assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10093);

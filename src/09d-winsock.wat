@@ -2150,6 +2150,58 @@
   ;; stdcall frame (already popped), handed to $vsock_block when a blocking
   ;; socket has to wait. Returns the byte count, -1 with the WSA error set, or
   ;; -2 when the call parked and the caller must leave EAX alone.
+  ;; Raw ICMP without IP_HDRINCL: caller supplies the ICMP message (including
+  ;; its checksum), we supply an IPv4 envelope and never truncate it to fit.
+  ;; Public raw allocation remains gated until completion semantics are ready.
+  (func $vsock_raw_sendto (param $idx i32) (param $buf i32) (param $len i32)
+      (param $to i32) (param $to_len i32) (param $unpop i32) (result i32)
+    (local $rec i32) (local $dip i32) (local $sip i32) (local $p i32)
+    (local $wa i32) (local $n i32) (local $sum i32) (local $sent i32)
+    (local.set $rec (call $vsock_rec (local.get $idx)))
+    (if (i32.lt_s (local.get $len) (i32.const 8)) (then
+      (call $vsock_set_error (i32.const 10022)) (return (i32.const -1))))
+    (if (i32.gt_u (local.get $len) (i32.sub (global.get $VLN_MAX_PAYLOAD) (i32.const 20))) (then
+      (call $vsock_set_error (i32.const 10040)) (return (i32.const -1))))
+    (if (i32.or (i32.eqz (call $vsock_catalog_span_valid (local.get $buf) (local.get $len)))
+          (i32.or (i32.lt_s (local.get $to_len) (i32.const 16))
+            (i32.eqz (call $vsock_catalog_span_valid (local.get $to) (i32.const 16))))) (then
+      (call $vsock_set_error (i32.const 10014)) (return (i32.const -1))))
+    (if (i32.eqz (call $vsock_read_sockaddr (local.get $to) (local.get $to_len) (i32.const 2))) (then
+      (call $vsock_set_error (i32.const 10047)) (return (i32.const -1))))
+    (local.set $dip (global.get $vsock_sa_ip))
+    (if (i32.or (i32.eqz (local.get $dip)) (i32.eqz (call $vsock_addr_in_room (local.get $dip)))) (then
+      (call $vsock_set_error (i32.const 10051)) (return (i32.const -1))))
+    (if (i32.and (load.field VSock flags (local.get $rec)) (i32.const 2)) (then
+      (call $vsock_set_error (i32.const 10058)) (return (i32.const -1))))
+    (local.set $sip (load.field VSock local_ip (local.get $rec)))
+    (if (i32.eqz (local.get $sip)) (then (local.set $sip (global.get $vsock_local_ip))))
+    (local.set $n (i32.add (local.get $len) (i32.const 20)))
+    (local.set $p (call $heap_alloc (local.get $n)))
+    (if (i32.eqz (local.get $p)) (then
+      (call $vsock_set_error (i32.const 10055)) (return (i32.const -1))))
+    (local.set $wa (call $g2w (local.get $p)))
+    (memory.fill (local.get $wa) (i32.const 0) (i32.const 20))
+    (i32.store8 (local.get $wa) (i32.const 0x45))
+    (i32.store8 offset=2 (local.get $wa) (i32.shr_u (local.get $n) (i32.const 8)))
+    (i32.store8 offset=3 (local.get $wa) (local.get $n))
+    (i32.store8 offset=6 (local.get $wa) (i32.const 0x40)) ;; DF; no fragmentation
+    (i32.store8 offset=8 (local.get $wa) (i32.const 64))
+    (i32.store8 offset=9 (local.get $wa) (i32.const 1))
+    (i32.store offset=12 (local.get $wa) (call $bswap32 (local.get $sip)))
+    (i32.store offset=16 (local.get $wa) (call $bswap32 (local.get $dip)))
+    (local.set $sum (call $vsock_inet_checksum (local.get $wa) (i32.const 20)))
+    (i32.store8 offset=10 (local.get $wa) (i32.shr_u (local.get $sum) (i32.const 8)))
+    (i32.store8 offset=11 (local.get $wa) (local.get $sum))
+    (call $guest_memmove (i32.add (local.get $p) (i32.const 20)) (local.get $buf) (local.get $len))
+    (local.set $sent (call $vsock_emit (i32.const 9) (local.get $sip) (i32.const 0)
+      (local.get $dip) (i32.const 0) (local.get $p) (local.get $n)))
+    (call $heap_free (local.get $p))
+    (if (i32.eqz (local.get $sent)) (then
+      (if (i32.eqz (load.field VSock mode (local.get $rec))) (then
+        (call $vsock_block (local.get $unpop)) (return (i32.const -2))))
+      (call $vsock_set_error (i32.const 10035)) (return (i32.const -1))))
+    (local.get $len))
+
   (func $vsock_sendto_core (param $s i32) (param $buf i32) (param $len i32)
       (param $to i32) (param $to_len i32) (param $unpop i32) (result i32)
     (local $idx i32) (local $rec i32) (local $dip i32) (local $dport i32)
@@ -2157,6 +2209,9 @@
     (if (i32.lt_s (local.get $idx) (i32.const 0))
       (then (call $vsock_set_error (i32.const 10038)) (return (i32.const -1))))
     (local.set $rec (call $vsock_rec (local.get $idx)))
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (return (call $vsock_raw_sendto (local.get $idx) (local.get $buf) (local.get $len)
+        (local.get $to) (local.get $to_len) (local.get $unpop)))))
     (if (i32.ne (load.field VSock type (local.get $rec)) (i32.const 2))
       (then (call $vsock_set_error (i32.const 10044)) (return (i32.const -1))))
     (if (i32.eqz (call $vsock_read_sockaddr (local.get $to) (local.get $to_len)
@@ -2206,6 +2261,7 @@
   (func $handle_sendto (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
                        (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $to_len i32) (local $r i32)
+    (if (local.get $arg3) (then (call $crash_unimplemented (local.get $name_ptr))))
     (local.set $to_len (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)))
     (local.set $r (call $vsock_sendto_core (local.get $arg0) (local.get $arg1) (local.get $arg2)
