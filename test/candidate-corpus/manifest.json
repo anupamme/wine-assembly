@@ -4073,6 +4073,31 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "nocturne-demo",
+      "name": "Nocturne Demo",
+      "kind": "game",
+      "version": "1999 official Chapter 6 demo",
+      "executables": [
+        "game/nocturne.exe"
+      ],
+      "sourcePage": "https://archive.org/details/NocturneDemo",
+      "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Verify NocturneDemo.zip (84965751 bytes, SHA-1 b56df8ca1a91a21803482897748c46d6678a5866), unpack and extract installer with unshield. Copy Program_Executable_Files contents into game/, then copy System_Files contents into game/ preserving system/nocturne.ini and system/RENDER.INI. Run --id=nocturne-demo --prepare. Keep original startup/calibration: Space clears intro and swap warning; choose Volume 3 Windy City Massacre, Chapter 6 Crescent Theater. CLI and registered Chrome keyboard walking/firing verified. Use ordinary held menu keys; near-instant automation presses may not be sampled. Touch, brightness, audio and FPS validation pending. See docs/re-notes/nocturne-demo.md.",
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/nocturne.exe"
+      },
+      "cli": {
+        "maxBatches": 75000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
