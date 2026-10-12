@@ -1620,6 +1620,26 @@
         (i32.store offset=0 (global.get $reg_base) (i32.const -1))
         (return)))
     (local.set $rec (call $vsock_rec (local.get $idx)))
+    ;; Raw connect selects a destination/source filter, not a TCP handshake.
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (if (i32.or (i32.lt_s (local.get $arg2) (i32.const 16))
+            (i32.eqz (call $vsock_catalog_span_valid (local.get $arg1) (i32.const 16)))) (then
+        (call $vsock_set_error (i32.const 10014))
+        (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+      (if (i32.eqz (call $vsock_read_sockaddr (local.get $arg1) (local.get $arg2) (i32.const 2))) (then
+        (call $vsock_set_error (i32.const 10047))
+        (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+      (local.set $ip (global.get $vsock_sa_ip))
+      (if (i32.eqz (call $vsock_addr_in_room (local.get $ip))) (then
+        (call $vsock_set_error (i32.const 10051))
+        (i32.store (global.get $reg_base) (i32.const -1)) (return)))
+      (if (i32.eqz (load.field VSock local_ip (local.get $rec))) (then
+        (store.field VSock local_ip (local.get $rec) (global.get $vsock_local_ip))))
+      (store.field VSock remote_ip (local.get $rec) (local.get $ip))
+      (store.field VSock remote_port (local.get $rec) (i32.const 0))
+      (store.field VSock peer (local.get $rec) (i32.const -1))
+      (store.field VSock state (local.get $rec) (i32.const 4))
+      (i32.store (global.get $reg_base) (i32.const 0)) (return)))
     (call $vsock_pump)
     ;; Re-entry: a SYN is already outstanding for this socket, either
     ;; because a blocking connect parked here or because a nonblocking one
@@ -2042,6 +2062,16 @@
       (then
         (call $vsock_set_error (i32.const 10057))          ;; WSAENOTCONN
         (return (i32.const -1))))
+    (if (i32.eq (load.field VSock type (local.get $rec)) (i32.const 3)) (then
+      (local.set $hold (call $heap_alloc (i32.const 16)))
+      (if (i32.eqz (local.get $hold)) (then
+        (call $vsock_set_error (i32.const 10055)) (return (i32.const -1))))
+      (call $vsock_write_sockaddr (local.get $hold) (i32.const 0)
+        (load.field VSock remote_ip (local.get $rec)) (i32.const 0))
+      (local.set $n (call $vsock_raw_sendto (local.get $idx) (local.get $arg1) (local.get $arg2)
+        (local.get $hold) (i32.const 16) (local.get $unpop)))
+      (call $heap_free (local.get $hold))
+      (return (local.get $n))))
     (if (i32.and (load.field VSock flags (local.get $rec)) (i32.const 2))
       (then
         (call $vsock_set_error (i32.const 10058))          ;; WSAESHUTDOWN
@@ -2150,6 +2180,7 @@
   (func $handle_send (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
       (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $r i32)
+    (if (local.get $arg3) (then (call $crash_unimplemented (local.get $name_ptr))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
     (local.set $r (call $vsock_send_core (local.get $arg0) (local.get $arg1) (local.get $arg2) (i32.const 20)))
     (if (i32.ne (local.get $r) (i32.const -2))
@@ -4095,8 +4126,10 @@
       (local.set $error (i32.const 10038))
       (local.set $idx (call $vsock_index (local.get $arg0)))
       (br_if $failed (i32.lt_s (local.get $idx) (i32.const 0)))
-      ;; Connected datagram state is not implemented by this slice.
-      (if (i32.ne (load.field VSock type (call $vsock_rec (local.get $idx))) (i32.const 1))
+      ;; Connected UDP remains unsupported; raw ICMP is one bounded message.
+      (if (i32.and
+            (i32.ne (load.field VSock type (call $vsock_rec (local.get $idx))) (i32.const 1))
+            (i32.ne (load.field VSock type (call $vsock_rec (local.get $idx))) (i32.const 3)))
         (then (call $crash_unimplemented (local.get $name_ptr))))
       (local.set $error (i32.const 10022))
       (br_if $failed (i32.or (i32.eqz (local.get $arg2)) (i32.gt_u (local.get $arg2) (i32.const 16))))
@@ -4117,6 +4150,9 @@
         (br_if $validate (i32.lt_u (local.get $i) (local.get $arg2))))
       (local.set $error (i32.const 10022))
       (br_if $failed (i32.gt_u (global.get $wsasend_progress) (local.get $total)))
+      (if (i32.eq (load.field VSock type (call $vsock_rec (local.get $idx))) (i32.const 3)) (then
+        (local.set $error (i32.const 10040))
+        (br_if $failed (i32.gt_u (local.get $total) (i32.sub (global.get $VLN_MAX_PAYLOAD) (i32.const 20))))))
       (loop $send
         (local.set $chunk (i32.sub (local.get $total) (global.get $wsasend_progress)))
         (if (i32.gt_u (local.get $chunk) (global.get $VSOCK_RX_CAP))

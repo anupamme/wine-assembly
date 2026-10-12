@@ -57,6 +57,11 @@ async function main() {
       (call $vsock_raw_ingress (call $g2w (local.get $p)) (local.get $n)))
     (func (export "test_raw_ready") (param $i i32) (result i32) (call $vsock_read_ready (local.get $i)))
     (func (export "test_raw_handle") (param $i i32) (result i32) (call $vsock_handle (local.get $i)))
+    (func (export "test_call_getpeername") (param $s i32) (param $p i32) (param $n i32) (result i32)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $handle_getpeername (local.get $s) (local.get $p) (local.get $n)
+        (i32.const 0) (i32.const 0) (i32.const 0))
+      (i32.load (global.get $reg_base)))
     (func (export "test_raw_recv") (param $i i32) (param $p i32) (param $n i32)
         (param $from i32) (param $fromlen i32) (result i32)
       (call $vsock_recvfrom_core (call $vsock_handle (local.get $i))
@@ -798,6 +803,7 @@ async function main() {
     const p=buf(body),to=sockaddr('10.0.0.9',99);
     const send=(ptr=p,len=body.length,addr=to)=>wat.test_call_sendto(s,ptr,len,0,addr,16);
     try {
+      assert.strictEqual(wat.test_call_send(s,p,9,0),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10057);
       assert.strictEqual(send(),9);assert.strictEqual(receiver.pending,1);
       const frame=Buffer.from(receiver.peek()),ip=frame.subarray(28);
       assert.strictEqual(frame.readUInt32LE(4),9);assert.strictEqual(frame.readUInt32LE(8),0x0a000001);
@@ -833,6 +839,30 @@ async function main() {
       assert.strictEqual(wat.test_checksum(output+20,9),0);
       assert.deepStrictEqual(Buffer.from(readBuf(output+24,5)),echo.subarray(4));
       assert.strictEqual(wat.test_raw_ready(rawIndex),0,'echo reply does not loop');
+      assert.strictEqual(wat.test_call_connect(s,to,16),0);assert.strictEqual(receiver.pending,0,'raw connect sends no SYN');
+      const peer=buf(16),peerlen=buf([16,0,0,0]);
+      assert.strictEqual(wat.test_call_getpeername(s,peer,peerlen),0);
+      assert.strictEqual(Buffer.from(readBuf(peer,16)).readUInt32BE(4),0x0a000009);
+      assert.strictEqual(wat.test_call_send(s,p,9,0),9);assert.strictEqual(receiver.pending,1);receiver.commit();
+      const desc=buf(16),count=buf(4),dv=new DataView(memory.buffer),set=(ptr,n)=>dv.setUint32(wa(ptr),n,true);
+      set(desc,4);set(desc+4,p);set(desc+8,5);set(desc+12,p+4);set(count,0x1234);
+      let r=wat.test_wsasend(s,desc,2,count);assert.strictEqual(Number(BigInt.asIntN(32,r)),0);
+      assert.strictEqual(dv.getUint32(wa(count),true),9);assert.strictEqual(receiver.pending,1);
+      assert.deepStrictEqual(Buffer.from(receiver.peek()).subarray(48),body);receiver.commit();
+      set(desc,4076);set(desc+4,large);set(desc+8,1);
+      r=wat.test_wsasend(s,desc,2,count);assert.strictEqual(Number(BigInt.asIntN(32,r)),-1);
+      assert.strictEqual(wat.test_call_WSAGetLastError(),10040);assert.strictEqual(receiver.pending,0,'oversize gather never splits');
+      set(desc,4);set(desc+4,p);set(desc+8,5);sender.send=()=>false;set(count,0x1234);
+      r=wat.test_wsasend(s,desc,2,count);assert.strictEqual(wat.get_yield_reason(),8);
+      assert.strictEqual(Number(r>>32n),0x300000);assert.strictEqual(dv.getUint32(wa(count),true),0x1234);
+      sender.send=originalSend;r=wat.test_wsasend(s,desc,2,count);
+      assert.strictEqual(Number(BigInt.asIntN(32,r)),0);assert.strictEqual(receiver.pending,1);receiver.commit();
+      assert.strictEqual(wat.test_call_connect(s,sockaddr('8.8.8.8',0),16),-1);
+      assert.strictEqual(wat.test_call_send(s,p,9,0),9,'failed reconnect preserves old destination');receiver.commit();
+      assert.strictEqual(wat.test_call_connect(s,sockaddr('10.0.0.8',0),16),0);
+      assert.strictEqual(wat.test_call_send(s,p,9,0),9);assert.strictEqual(Buffer.from(receiver.peek()).readUInt32LE(16),0x0a000008);receiver.commit();
+      wat.test_call_shutdown(s,SD_SEND);assert.strictEqual(wat.test_call_send(s,p,9,0),-1);
+      assert.strictEqual(wat.test_call_WSAGetLastError(),10058);assert.strictEqual(receiver.pending,0,'raw shutdown sends no FIN');
     } finally {delete hostContext.vlanWire;wat.test_vsock_reset();}
   });
 

@@ -482,3 +482,19 @@ request and reply locally; no wire endpoint is required. Tests verify both
 routes, checksums, unchanged queued request/payload and no reply loop. Raw
 creation, connected send/WSASend and overlapped semantics still gate DR2 replay.
 Evidence: scratch/runs/20261012T0016Z-dark-reign2-echo/.
+
+### Connected raw send (2026-10-12)
+
+Raw connect now selects a room destination and receive-source filter without
+sending TCP SYN or assigning a stream peer. Reconnect updates the destination;
+a rejected address leaves the prior destination intact. send delegates to the
+raw packet transport, and non-overlapped WSASend gathers one complete packet.
+An oversized gather fails before sending, never splits into stream chunks.
+Temporary address/packet buffers are freed before a blocking retry. Raw
+shutdown has no stream peer and sends no TCP FIN.
+
+Regression cases check unconnected send, peer address, connect/reconnect,
+gathered payload, oversize rejection, full-frame retry and shutdown. Public
+raw allocation and OVERLAPPED socket/operation state remain unfinished; no
+ordinary DR2 replay yet. Evidence:
+scratch/runs/20261012T0022Z-dark-reign2-connected-raw/.
