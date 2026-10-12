@@ -434,3 +434,18 @@ Regression cases use the real recv/recvfrom dispatch wrappers and WSARecv API
 dispatch with seeded raw records. Raw creation, send/echo routing, WSARecvFrom
 flag/scatter validation and overlapped completion remain pending. No new game
 replay. Evidence: scratch/runs/20261012T0001Z-dark-reign2-recv-dispatch/.
+
+### WSARecvFrom validation and scatter (2026-10-12)
+
+WSARecvFrom now checks startup/socket identity, result pointers, flags, the
+entire WSABUF array and its destination spans, aggregate length overflow and
+optional source-address storage before consuming data. Allocation is bounded
+by the receive capacity. A truncated datagram scatters the copied prefix before
+returning WSAEMSGSIZE. Unsupported flags/completion modes fail fast, and a
+blocking retry restores all 40 bytes of the call frame.
+
+Raw-record regression cases cover invalid later buffers, short source-address
+storage, unsupported flags and overlapped mode without consumption, scatter,
+truncation, source address and frame restoration. Public raw creation and
+send/echo/overlapped implementation still remain before ordinary DR2 replay.
+Evidence: scratch/runs/20261012T0007Z-dark-reign2-wsarecvfrom/.

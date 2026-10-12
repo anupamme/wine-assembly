@@ -92,6 +92,17 @@ async function main() {
         (local.get $s) (local.get $b) (local.get $c) (local.get $n) (local.get $f) (i32.const 0))
       (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
         (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
+    (func (export "test_wsarecvfrom") (param $s i32) (param $b i32) (param $c i32) (param $n i32) (param $f i32) (param $over i32) (param $from i32) (param $fromlen i32) (result i64)
+      (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
+      (call $gs32 (i32.const 0x00300020) (local.get $over))
+      (call $gs32 (i32.const 0x00300024) (i32.const 0))
+      (call $gs32 (i32.const 0x00300018) (local.get $from))
+      (call $gs32 (i32.const 0x0030001c) (local.get $fromlen))
+      (global.set $yield_reason (i32.const 0))
+      (call $dispatch_api_table (call $lookup_api_id "WSARecvFrom")
+        (local.get $s) (local.get $b) (local.get $c) (local.get $n) (local.get $f) (i32.const 0))
+      (i64.or (i64.extend_i32_u (i32.load (global.get $reg_base)))
+        (i64.shl (i64.extend_i32_u (i32.load offset=16 (global.get $reg_base))) (i64.const 32))))
     (func (export "test_send_core_frame") (param $s i32) (param $p i32) (param $n i32) (param $frame i32) (result i64)
       (local $r i32)
       (global.set $yield_reason (i32.const 0))
@@ -714,6 +725,25 @@ async function main() {
     set(nonblock,0);wat.test_call_ioctlsocket(handle,FIONBIO,nonblock);
     result=wat.test_wsarecv(handle,desc,2,count,flags,0);
     assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(result>>32n),0x300000,'raw WSARecv restores entire frame');
+    set(nonblock,1);wat.test_call_ioctlsocket(handle,FIONBIO,nonblock);
+    // WSARecvFrom validates all buffers before consuming, including sockaddr.
+    const recvfrom=()=>wat.test_wsarecvfrom(handle,desc,2,count,flags,0,from,fromlen);
+    receive();set(desc+12,0);result=recvfrom();
+    assert.strictEqual(Number(BigInt.asIntN(32,result)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10014);
+    assert.strictEqual(queued(),29);set(desc+12,part);
+    putlen(8);result=recvfrom();assert.strictEqual(Number(BigInt.asIntN(32,result)),-1);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10014);assert.strictEqual(queued(),29);putlen(16);
+    set(flags,2);assert.throws(recvfrom,WebAssembly.RuntimeError);set(flags,0);assert.strictEqual(queued(),29);
+    assert.throws(()=>wat.test_wsarecvfrom(handle,desc,2,count,flags,1,from,fromlen),WebAssembly.RuntimeError);
+    assert.strictEqual(queued(),29);result=recvfrom();
+    assert.strictEqual(Number(BigInt.asIntN(32,result)),-1);assert.strictEqual(Number(result>>32n),0x300028);
+    assert.strictEqual(wat.test_call_WSAGetLastError(),10040);assert.strictEqual(queued(),0);
+    assert.deepStrictEqual(Buffer.from([...readBuf(out,5),...readBuf(part,2)]),packet.subarray(0,7));
+    receive();set(desc+8,24);result=recvfrom();assert.strictEqual(Number(BigInt.asIntN(32,result)),0);
+    assert.strictEqual(get(count),29);assert.deepStrictEqual(Buffer.from([...readBuf(out,5),...readBuf(part,24)]),packet);
+    assert.strictEqual(Buffer.from(readBuf(from,16)).readUInt32BE(4),remote);
+    set(nonblock,0);wat.test_call_ioctlsocket(handle,FIONBIO,nonblock);result=recvfrom();
+    assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(result>>32n),0x300000,'raw WSARecvFrom restores 40-byte frame');
     set(nonblock,1);wat.test_call_ioctlsocket(handle,FIONBIO,nonblock);
     while(wat.test_raw_take(bound,out)){}
     const {LoopbackSegment,describeFrame}=require('../lib/vlan-wire');
