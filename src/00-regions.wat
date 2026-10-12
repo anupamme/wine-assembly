@@ -922,7 +922,7 @@
   (region.declare $LOCAL_POST_QUEUES (size 0x00004000) (align 0x00000010)
     (owner "10-helpers.wat:$post_queue_base"))
   (region.declare $HEAP_ARENAS (size 0x00004010) (align 0x00000010)
-    (owner "10-helpers.wat:$heap_arena_register"))
+    (owner "10-helpers.wat:$heap_arena_register_once"))
   ;; One process token plus 32 independently closeable handles.  The records
   ;; are emulator-private shared state; the tail holds the immutable classic
   ;; privilege names used by LookupPrivilegeValueA.

@@ -3663,12 +3663,8 @@
       (i32.and (i32.add (local.get $requested) (i32.const 0xFFF))
         (i32.const 0xFFFFF000)))
     (if (i32.eqz (local.get $size)) (then (return (i32.const 0))))
-    (local.set $guest (call $virtual_reserve_down (local.get $size)))
+    (local.set $guest (call $virtual_alloc_committed (local.get $size)))
     (if (i32.eqz (local.get $guest)) (then (return (i32.const 0))))
-    (if (i32.eqz (call $virtual_map_commit (local.get $guest) (local.get $size)))
-      (then
-        (drop (call $virtual_map_release (local.get $guest)))
-        (return (i32.const 0))))
     ;; Remember the range as a view, so VirtualFree can refuse it the way
     ;; Windows does instead of treating it as VirtualAlloc'd memory.
     (call $mapped_view_register (local.get $guest) (local.get $size))
@@ -3687,9 +3683,7 @@
       (i32.and (i32.add (local.get $requested) (i32.const 0xFFF))
         (i32.const 0xFFFFF000)))
     (if (i32.eqz (local.get $size)) (then (return (i32.const 0))))
-    (local.set $guest (call $virtual_reserve_down (local.get $size)))
-    (if (i32.eqz (local.get $guest)) (then (return (i32.const 0))))
-    (call $virtual_map_commit (local.get $guest) (local.get $size)))
+    (call $virtual_alloc_committed (local.get $size)))
   (func (export "guest_free") (param $g i32)
     (call $heap_free (local.get $g)))
   ;; Paired with guest_map_alloc; heap_free cannot release a sparse mapping.

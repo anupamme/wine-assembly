@@ -1681,7 +1681,27 @@
   ;; base is what makes the record visible to $heap_arena_find and has to be
   ;; written last: two registrants racing for one dead slot would otherwise both
   ;; fill it in and the loser's extent would be published under the winner's base.
+  ;; A full table is not the end: freed large blocks keep their arenas, and
+  ;; their slots, until something releases them. Black & White 2 frees enough
+  ;; mid-sized blocks (508 KB-1 MB, each its own arena since the large threshold
+  ;; dropped to 508 KB) that every slot was held by memory nothing used, the
+  ;; heap's spills all failed (OOM reason 4), and so did the software D3D9
+  ;; backend's allocations. Release the free arenas once and look again; a
+  ;; released slot comes back recycled, so the reuse scan below finds it.
   (func $heap_arena_register (param $base i32) (param $end i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $heap_arena_register_once (local.get $base) (local.get $end)))
+    ;; Nested, not i32.and: WAT evaluates both operands, and an i32.and here
+    ;; released free arenas on EVERY registration -- out from under other
+    ;; instances' free lists, which the software D3D9 backend's coalesce then
+    ;; reported as "invalid native free list" from the first seconds of a run.
+    (if (i32.eqz (local.get $rec))
+      (then
+        (if (call $heap_arena_release_free)
+          (then (local.set $rec
+            (call $heap_arena_register_once (local.get $base) (local.get $end)))))))
+    (local.get $rec))
+  (func $heap_arena_register_once (param $base i32) (param $end i32) (result i32)
     (local $count i32) (local $rec i32) (local $i i32)
     (local.set $count (i32.atomic.load (global.get $HEAP_ARENAS)))
     (if (i32.gt_u (local.get $count) (i32.const 1024))
@@ -1914,6 +1934,32 @@
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $scan)))
     (local.get $freed))
+
+  ;; Reserve and commit SIZE bytes of sparse guest memory for an owner that is
+  ;; not the heap (a host mapping, a thread stack); 0 when there is none. Out
+  ;; of address space or backing, it first hands back the heap arenas nothing
+  ;; lives in any more and asks once more, as the heap's own spills do.
+  ;;
+  ;; Without that, freed heap memory was out of reach of everything else. A
+  ;; freed large block keeps its arena and backing on $heap_large_free until
+  ;; pressure releases it, and only heap requests applied the pressure. Once
+  ;; the large threshold dropped to 508 KB, Black & White 2 held enough freed
+  ;; mid-sized blocks after loading its land that the software D3D9 backend's
+  ;; guest_map_alloc failed ("native allocation failed") and the world froze.
+  (func $virtual_alloc_committed (param $size i32) (result i32)
+    (local $guest i32) (local $retried i32)
+    (loop $again
+      (local.set $guest (call $virtual_reserve_down (local.get $size)))
+      (if (local.get $guest)
+        (then
+          (if (call $virtual_map_commit (local.get $guest) (local.get $size))
+            (then (return (local.get $guest))))
+          (drop (call $virtual_map_release (local.get $guest)))))
+      (if (i32.eqz (local.get $retried))
+        (then
+          (local.set $retried (i32.const 1))
+          (br_if $again (i32.ne (call $heap_arena_release_free) (i32.const 0))))))
+    (i32.const 0))
 
   ;; Retire the unused tail of an instance-owned arena after a replacement
   ;; arena has been successfully registered. It was reserved exclusively for
