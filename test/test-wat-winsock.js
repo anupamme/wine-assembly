@@ -56,6 +56,8 @@ async function main() {
     (func (export "test_raw_ingress") (param $p i32) (param $n i32) (result i32)
       (call $vsock_raw_ingress (call $g2w (local.get $p)) (local.get $n)))
     (func (export "test_raw_ready") (param $i i32) (result i32) (call $vsock_read_ready (local.get $i)))
+    (func (export "test_socket_attribute") (param $s i32) (result i32)
+      (i32.and (load.field VSock flags (call $vsock_rec (call $vsock_index (local.get $s)))) (i32.const 64)))
     (func (export "test_raw_handle") (param $i i32) (result i32) (call $vsock_handle (local.get $i)))
     (func (export "test_call_getpeername") (param $s i32) (param $p i32) (param $n i32) (result i32)
       (i32.store offset=16 (global.get $reg_base) (i32.const 0x00300000))
@@ -796,7 +798,7 @@ async function main() {
 
   check('raw bind ignores ports, rejects foreign sources and reports write readiness', () => {
     wat.test_vsock_reset();wat.test_wsa_startup(alloc(400));
-    const a=Number(BigInt.asIntN(32,wat.test_wsasocket(0,2,3,1,0,0,0))),b=Number(BigInt.asIntN(32,wat.test_wsasocket(1,2,3,1,0,0,0)));
+    const a=Number(BigInt.asIntN(32,wat.test_wsasocket(0,2,3,1,0,0,1))),b=Number(BigInt.asIntN(32,wat.test_wsasocket(1,2,3,1,0,0,0)));
     assert(a>0 && b>0,'A/W create real synchronous raw sockets');
     const writable=s=>wat.test_call_select(0,0,fdset([s]),0,timeval(0,0));
     assert.strictEqual(writable(a),1);
@@ -906,14 +908,21 @@ async function main() {
     for(const [group,flags] of [[1,0],[0,2]]){assert.strictEqual(value(wat.test_wsasocket(0,2,1,6,0,group,flags)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10022);}
     let probes=0;hostContext.openLanLink=()=>{probes++;return true;};
     for(const wide of [0,1]){
-      assert.throws(()=>wat.test_wsasocket(wide,2,3,1,0,0,1),WebAssembly.RuntimeError,'raw OVERLAPPED creation remains fail-fast');
+      const raw=value(wat.test_wsasocket(wide,2,3,1,0,0,1));assert(raw>0);assert.strictEqual(wat.test_socket_attribute(raw),64);
+      assert.throws(()=>wat.test_wsarecv(raw,0,0,0,0,1),WebAssembly.RuntimeError,'unimplemented operation must not falsely complete');
+      wat.test_call_closesocket(raw);
+      const plain=value(wat.test_wsasocket(wide,2,3,1,0,0,0));assert.strictEqual(wat.test_socket_attribute(plain),0,'reused slot clears creation attribute');wat.test_call_closesocket(plain);
       assert.strictEqual(value(wat.test_wsasocket(wide,2,3,6,0,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10043);
       assert.strictEqual(value(wat.test_wsasocket(wide,2,4,0,0,0,0)),-1);assert.strictEqual(wat.test_call_WSAGetLastError(),10044);
       assert.strictEqual(value(wat.test_wsasocket(wide,99,1,6,0,0,1)),-1);
       assert.strictEqual(wat.test_call_WSAGetLastError(),10047);
-      assert.throws(()=>wat.test_wsasocket(wide,2,1,6,0,0,1),WebAssembly.RuntimeError,'valid but unimplemented overlapped creation must fail fast');
+      const tcp=value(wat.test_wsasocket(wide,2,1,6,0,0,1));assert(tcp>0);assert.strictEqual(wat.test_socket_attribute(tcp),64);
+      assert.strictEqual(wat.test_call_bind(tcp,sockaddr(ROOM_HOST,8035+wide),16),0);assert.strictEqual(wat.test_call_listen(tcp,1),0);
+      const client=wat.test_call_socket(2,1,6);assert.strictEqual(wat.test_call_connect(client,sockaddr(ROOM_HOST,8035+wide),16),0);
+      const accepted=wat.test_call_accept(tcp,0,0);assert(accepted>0);assert.strictEqual(wat.test_socket_attribute(accepted),64);
+      for(const h of [client,accepted,tcp])wat.test_call_closesocket(h);
     }
-    assert.strictEqual(probes,0,'invalid transport/unimplemented mode never opens lobby');delete hostContext.openLanLink;
+    assert.strictEqual(probes,8,'only successfully validated allocations open lobby');delete hostContext.openLanLink;
     let calls=0;hostContext.openLanLink=()=>{calls++;return false;};const r=wat.test_wsasocket(0,0,2,17,0,0,0);assert.strictEqual(wat.get_yield_reason(),8);assert.strictEqual(Number(r>>32n),0x300000);assert.strictEqual(calls,1);
     hostContext.openLanLink=()=>true;const opened=wat.test_wsasocket(0,0,2,17,0,0,0);assert(value(opened)>0);assert.strictEqual(Number(opened>>32n),0x30001c);wat.test_call_closesocket(value(opened));delete hostContext.openLanLink;
   });

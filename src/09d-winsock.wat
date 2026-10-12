@@ -43,6 +43,7 @@
   ;;                         (WSAETIMEDOUT), not by refusal
   ;;                    bit5 FD_READ has been posted and not yet re-enabled
   ;;                         by a recv/recvfrom (Winsock's re-enabling rule)
+  ;;                    bit6 WSASocket requested OVERLAPPED operation mode
   ;;   +60  backlog     listener backlog, clamped to 1..13; while a socket
   ;;                    is connecting (state 6), its connect deadline in
   ;;                    host ticks instead
@@ -1683,7 +1684,8 @@
               (select (i32.const 10060) (i32.const 10061)       ;; WSAETIMEDOUT / WSAECONNREFUSED
                 (i32.ne (i32.and (load.field VSock flags (local.get $rec)) (i32.const 0x10))
                         (i32.const 0))))
-            (store.field VSock flags (local.get $rec) (i32.const 0))
+            (store.field VSock flags (local.get $rec)
+              (i32.and (load.field VSock flags (local.get $rec)) (i32.const 64)))
             (store.field VSock backlog (local.get $rec) (i32.const 0))
             (store.field VSock peer (local.get $rec) (i32.const -1))
             (store.field VSock remote_ip (local.get $rec) (i32.const 0))
@@ -1908,6 +1910,9 @@
     (drop (call $host_socket_event (i32.const 4) (local.get $child) (local.get $idx) (i32.const 0) (i32.const 0)))
     (store.field VSock mode (call $vsock_rec (local.get $child))
       (load.field VSock mode (local.get $rec)))
+    (store.field VSock flags (call $vsock_rec (local.get $child))
+      (i32.or (load.field VSock flags (call $vsock_rec (local.get $child)))
+        (i32.and (load.field VSock flags (local.get $rec)) (i32.const 64))))
     (if (load.field VSock acc_count (local.get $rec))
       (then (call $vsock_async_post (local.get $idx) (i32.const 8) (i32.const 0))))
     (local.set $crec (call $vsock_rec (local.get $child)))
@@ -4225,14 +4230,15 @@
   (func $vsock_wsasocket (param $af i32) (param $type i32) (param $protocol i32)
       (param $info i32) (param $group i32) (param $flags i32) (param $wide i32) (param $name_ptr i32) (result i32)
     (local $error i32) (local $id i32) (local $family i32) (local $kind i32) (local $proto i32)
+    (local $socket i32) (local $rec i32)
     (block $failed
       (local.set $error (i32.const 10093))
       (br_if $failed (i32.eqz (i32.atomic.load (global.get $WSA_STARTED_SHARED))))
       ;; Only ordinary ungrouped sockets; multipoint providers are absent.
       (local.set $error (i32.const 10022))
       (br_if $failed (i32.ne (local.get $group) (i32.const 0)))
-      ;; Multipoint attributes have no provider here. OVERLAPPED is valid,
-      ;; but its capability is still unimplemented (checked after transport).
+      ;; Creation records OVERLAPPED mode; it does not submit an operation.
+      ;; Unsupported completion paths still fail fast in the I/O handlers.
       (br_if $failed (i32.ne (i32.and (local.get $flags) (i32.const -2)) (i32.const 0)))
       (if (local.get $info) (then
         (local.set $error (i32.const 10014))
@@ -4270,8 +4276,13 @@
           (i32.or (i32.eq (local.get $protocol) (i32.const 17)) (i32.eq (local.get $af) (i32.const 6)))))))
       (local.set $error (call $vsock_validate_triple (local.get $af) (local.get $type) (local.get $protocol)))
       (br_if $failed (local.get $error))
-      (if (local.get $flags) (then (call $crash_unimplemented (local.get $name_ptr))))
-      (return (call $vsock_create_core (local.get $af) (local.get $type) (local.get $protocol) (i32.const 28))))
+      (local.set $socket (call $vsock_create_core (local.get $af) (local.get $type) (local.get $protocol) (i32.const 28)))
+      (if (i32.ge_s (local.get $socket) (i32.const 0)) (then
+        (local.set $rec (call $vsock_rec (call $vsock_index (local.get $socket))))
+        (if (local.get $flags) (then
+          (store.field VSock flags (local.get $rec)
+            (i32.or (load.field VSock flags (local.get $rec)) (i32.const 64)))))))
+      (return (local.get $socket)))
     (call $vsock_set_error (local.get $error)) (i32.const -1))
 
   (func $handle_WSASocketA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32)
