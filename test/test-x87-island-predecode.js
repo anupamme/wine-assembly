@@ -102,7 +102,7 @@ function fillBuffer(dv, w) {
 // back as that exact f64 (its compatibility path).
 function fillState(dv, w) {
   const rc = ri(4);
-  const cw = 0x037F | (rc << 10);
+  const cw = pick([0x007F, 0x027F, 0x037F]) | (rc << 10);
   const top = ri(8);
   const sw = (top << 11) | (ri(4) === 0 ? ri(0x40) : 0) | pick([0, 0x4000, 0x0100, 0x4500]);
   let tw = 0;

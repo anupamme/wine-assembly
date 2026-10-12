@@ -13,13 +13,14 @@
   ;;     on the extra ~11 bits of mantissa or the wider exponent range will
   ;;     still diverge.
   ;;
-  ;;   * Precision Control (CW bits 8-9: 24/53/64-bit) is ignored. All
-  ;;     arithmetic runs at f64 precision regardless of PC.
+  ;;   * FMUL honors PC=24 on its f64 result, preserving the f64 exponent
+  ;;     range. Other arithmetic still ignores PC; PC=53/64 remains f64.
+  ;;     This is not exact extended arithmetic (double rounding can remain).
   ;;
   ;;   * Rounding Control (CW bits 10-11) is honored only for FRNDINT and
   ;;     FIST/FISTP via $fpu_round. FADD/FSUB/FMUL/FDIV/FSQRT use WASM's
   ;;     fixed round-to-nearest-even — directed rounding modes are NOT
-  ;;     applied to arithmetic results.
+  ;;     applied to arithmetic results except FMUL PC24 precision reduction.
   ;;
   ;;   * Denormals are handled by the WASM runtime; FTZ/DAZ-style flushing
   ;;     in the x87 control word is ignored.
@@ -426,6 +427,52 @@
     (else (if (result f64) (i32.eq (local.get $rc) (i32.const 3)) (then (f64.trunc (local.get $v)))
     (else (f64.nearest (local.get $v)))))))))
 
+  ;; Round an FMUL result to the selected 24-bit significand without reducing
+  ;; the f64 exponent range to f32. PC=53/64 retain this engine's f64 behavior.
+  ;; Like the rest of x87-lite, multiplication first rounds to f64: this does
+  ;; not emulate 80-bit exponent range or eliminate double-rounding at a
+  ;; 24-bit halfway boundary. RC applies to the precision reduction below.
+  (func $fpu_mul (param $a f64) (param $b f64) (result f64)
+    (local $v f64) (local $bits i64) (local $mag i64)
+    (local $drop i64) (local $mask i64) (local $lost i64)
+    (local $half i64) (local $rc i32) (local $up i32)
+    (local.set $v (f64.mul (local.get $a) (local.get $b)))
+    (if (i32.ne (i32.and (global.get $fpu_cw) (i32.const 0x300)) (i32.const 0))
+      (then (return (local.get $v))))
+    (local.set $bits (i64.reinterpret_f64 (local.get $v)))
+    (local.set $mag (i64.and (local.get $bits) (i64.const 0x7fffffffffffffff)))
+    ;; Preserve NaN payloads, infinities and signed zero.
+    (if (i32.or (i64.ge_u (local.get $mag) (i64.const 0x7ff0000000000000))
+                (i64.eqz (local.get $mag)))
+      (then (return (local.get $v))))
+    (local.set $drop (i64.const 29))
+    ;; An f64 subnormal has no implicit leading bit. Keep 24 significant
+    ;; bits relative to its actual leading bit, not the normal exponent.
+    (if (i64.lt_u (local.get $mag) (i64.const 0x0010000000000000))
+      (then
+        (local.set $drop (i64.sub (i64.const 40) (i64.clz (local.get $mag))))
+        (if (i64.le_s (local.get $drop) (i64.const 0))
+          (then (return (local.get $v))))))
+    (local.set $mask (i64.sub (i64.shl (i64.const 1) (local.get $drop)) (i64.const 1)))
+    (local.set $lost (i64.and (local.get $mag) (local.get $mask)))
+    (if (i64.eqz (local.get $lost)) (then (return (local.get $v))))
+    (local.set $rc (i32.and (i32.shr_u (global.get $fpu_cw) (i32.const 10)) (i32.const 3)))
+    (if (i32.eqz (local.get $rc))
+      (then
+        (local.set $half (i64.shl (i64.const 1) (i64.sub (local.get $drop) (i64.const 1))))
+        (local.set $up (i32.or (i64.gt_u (local.get $lost) (local.get $half))
+          (i32.and (i64.eq (local.get $lost) (local.get $half))
+            (i64.ne (i64.and (i64.shr_u (local.get $mag) (local.get $drop)) (i64.const 1)) (i64.const 0))))))
+      (else
+        (local.set $up (i32.or
+          (i32.and (i32.eq (local.get $rc) (i32.const 1)) (i64.lt_s (local.get $bits) (i64.const 0)))
+          (i32.and (i32.eq (local.get $rc) (i32.const 2)) (i64.ge_s (local.get $bits) (i64.const 0)))))))
+    (local.set $mag (i64.and (local.get $mag) (i64.xor (local.get $mask) (i64.const -1))))
+    (if (local.get $up)
+      (then (local.set $mag (i64.add (local.get $mag) (i64.shl (i64.const 1) (local.get $drop))))))
+    (f64.reinterpret_i64 (i64.or (local.get $mag)
+      (i64.and (local.get $bits) (i64.const 0x8000000000000000)))))
+
   (func $fpu_arith (param $a f64) (param $b f64) (param $op i32) (result f64)
     ;; FDIV (op=6: a/b) and FDIVR (op=7: b/a) — flag ZE if the divisor is zero.
     ;; The WASM result is ±inf which we let through; real x87 with ZE masked
@@ -435,7 +482,7 @@
     (if (i32.eq (local.get $op) (i32.const 7))
       (then (if (f64.eq (local.get $a) (f64.const 0)) (then (call $fpu_set_exc (i32.const 0x04))))))
     (if (result f64) (i32.eq (local.get $op) (i32.const 0)) (then (f64.add (local.get $a) (local.get $b)))
-    (else (if (result f64) (i32.eq (local.get $op) (i32.const 1)) (then (f64.mul (local.get $a) (local.get $b)))
+    (else (if (result f64) (i32.eq (local.get $op) (i32.const 1)) (then (call $fpu_mul (local.get $a) (local.get $b)))
     (else (if (result f64) (i32.eq (local.get $op) (i32.const 4)) (then (f64.sub (local.get $a) (local.get $b)))
     (else (if (result f64) (i32.eq (local.get $op) (i32.const 5)) (then (f64.sub (local.get $b) (local.get $a)))
     (else (if (result f64) (i32.eq (local.get $op) (i32.const 6)) (then (f64.div (local.get $a) (local.get $b)))
@@ -1029,7 +1076,7 @@
         (if (i32.eq (local.get $reg) (i32.const 0))
           (then (call $fpu_set (local.get $rm) (f64.add (local.get $v) (local.get $st0))) (return)))
         (if (i32.eq (local.get $reg) (i32.const 1))
-          (then (call $fpu_set (local.get $rm) (f64.mul (local.get $v) (local.get $st0))) (return)))
+          (then (call $fpu_set (local.get $rm) (call $fpu_mul (local.get $v) (local.get $st0))) (return)))
         (if (i32.eq (local.get $reg) (i32.const 4))
           (then (call $fpu_set (local.get $rm) (f64.sub (local.get $st0) (local.get $v))) (return)))
         (if (i32.eq (local.get $reg) (i32.const 5))
@@ -1070,7 +1117,7 @@
         (if (i32.eq (local.get $reg) (i32.const 0))
           (then (call $fpu_set (local.get $rm) (f64.add (local.get $v) (local.get $st0))) (drop (call $fpu_pop)) (return)))
         (if (i32.eq (local.get $reg) (i32.const 1))
-          (then (call $fpu_set (local.get $rm) (f64.mul (local.get $v) (local.get $st0))) (drop (call $fpu_pop)) (return)))
+          (then (call $fpu_set (local.get $rm) (call $fpu_mul (local.get $v) (local.get $st0))) (drop (call $fpu_pop)) (return)))
         (if (i32.and (i32.eq (local.get $reg) (i32.const 3)) (i32.eq (local.get $rm) (i32.const 1)))
           (then (call $fpu_compare (local.get $st0) (call $fpu_get (i32.const 1))) (drop (call $fpu_pop)) (drop (call $fpu_pop)) (return)))
         (if (i32.eq (local.get $reg) (i32.const 4))
