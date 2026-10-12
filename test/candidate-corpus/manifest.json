@@ -3944,6 +3944,33 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "outcast-demo",
+      "name": "Outcast Demo",
+      "kind": "game",
+      "version": "29 June 1999 demo, GameStar September 1999 disc",
+      "executables": [
+        "game/OC2.EXE",
+        "game/LOADER.EXE"
+      ],
+      "sourcePage": "https://archive.org/details/gsscda1999",
+      "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Copy the contents of DEMOS/OUTCAST/EXE and DEMOS/OUTCAST/PAK from gsscda1999/1999-09/GS0999.iso into game/ as one flat directory, retaining every file. OC2.EXE SHA-256 must be d5513a94c2aff8ed54598c60fbf28bdf5845848a5eef74ff326037ec1a54f8a1. Run --id=outcast-demo --prepare. See docs/re-notes/outcast-demo.md for source extents, hashes and launcher-selected OC2.EXE game route.",
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/OC2.EXE"
+      },
+      "cli": {
+        "args": "game",
+        "maxBatches": 7000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
