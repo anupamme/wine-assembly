@@ -3887,6 +3887,38 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "rage-of-mages-demo",
+      "name": "Rage of Mages Demo",
+      "kind": "game",
+      "version": "GameStar October 1998 demo",
+      "executables": [
+        "game/rom.exe"
+      ],
+      "sourcePage": "https://archive.org/details/GSCDA1998",
+      "license": "Proprietary demo; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Obtain ROMDEMO.EXE from DEMOS/ROM on GSCDA1998/1998-10/GS1098.ISO (ISO SHA-1 cc199d8dc56fc2636843d625a724f9e21467f483). Put the 42111946-byte installer, SHA-1 46b0dbb02e6eafa6eaf9c334c635f9744546f094, at archive/ROMDEMO.EXE, then run --id=rage-of-mages-demo --prepare. Archive entry-download URLs return empty files; the verified installer is at ISO sector 197989. See docs/re-notes/rage-of-mages-demo.md. Do not use the damaged RageofMages_1020 multipart ZIP.",
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "archive/ROMDEMO.EXE",
+          "into": "game"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/rom.exe"
+      },
+      "cli": {
+        "maxBatches": 25000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
