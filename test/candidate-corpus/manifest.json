@@ -3971,6 +3971,31 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "urban-chaos-demo",
+      "name": "Urban Chaos Demo",
+      "kind": "game",
+      "version": "1999 official demo",
+      "executables": [
+        "game/Fallen.exe"
+      ],
+      "sourcePage": "https://archive.org/details/urbanchaos",
+      "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
+      "localOnly": true,
+      "packages": [],
+      "manual": "Verify urbanchaos.zip (26328920 bytes, SHA-1 ba06b6ca040359ac07dd60ca75d680c9f2b5d15c); extract Demo.exe with 7z and installer/data1.cab with unshield. Flatten Global_Media, Local_Media_-_English and Program_Files into game/, preserving relative paths. Copy installer clumps, data and talk2 directories into game/ and copy PE Fallen.ex_ unchanged as Fallen.exe (SHA-256 8cc73044e19b423ef0f13858d8cb3bb3025ca023114cf87ff46c57838f4b2229). Reconstruct config.ini exactly as documented in docs/re-notes/urban-chaos-demo.md, then run --id=urban-chaos-demo --prepare.",
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/Fallen.exe"
+      },
+      "cli": {
+        "maxBatches": 7000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
