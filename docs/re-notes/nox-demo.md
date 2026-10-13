@@ -127,3 +127,21 @@ movement through the ordinary renderer. Registration, registered browser
 launch, DOM input/pointer capture, other controls, combat, audio, FPS,
 physical devices, real network peers and completion remain separate.
 Evidence remains `investigation.json` until a matching candidate is registered.
+
+## Registered CLI verification (2026-10-13 22:10 UTC)
+
+Exact candidate `3540d8304237d6db016d0c4179088306072b8fc3` uses
+`--app=nox_demo` with no EXE or DLL override. Native SFX extraction followed
+by the registered Game1.CAB preparation reproduced all 125 original game
+files with matching SHA-256 hashes and generated the browser file manifest.
+The tested source closure matches module
+`9b3ef6f173daaa8be90733a4b8449733d74ca861062d0383a709f4be02ce1c77`.
+
+Run `20261013T2210Z-nox-registered` repeats Network/Host/Bunker and normal
+renderer right-button hold20/release5/idle20. Root reviewed arena-before and
+right-held captures: Jack moves relative to the carpet/body and camera reveals
+the corridor. Button mask0/2/0 and WM down/up delivery were observed.
+The same post-release settling/inertia limitation above remains. Guest exit0
+at22:11:34.223Z; driver146061, guest146111 and guest group were absent at
+22:11:54.066Z. This validates registered CLI launch and narrow movement, not
+browser/DOM controls, audio, FPS, peer networking or a complete game.
