@@ -268,7 +268,16 @@ a.guest_free(small);
 // Revalidate headers after a freed block is corrupted, before splitting it.
 b.guest_write32(small - 4, 0x100000);
 assert.notStrictEqual(a.guest_alloc(64) >>> 0, small);
-assert.strictEqual(a.get_free_list(), 0);
+// Invalid size-bin entries are discarded independently. Other free blocks can
+// still supply (and be split by) this allocation; the whole list need not empty.
+const freeBlocksAfterMalformed = new Set();
+for (let p = a.get_free_list() >>> 0; p; p = a.guest_read32(p + 4) >>> 0) {
+  assert.notStrictEqual(p, small - 4, 'corrupted block is no longer reusable');
+  assert(!freeBlocksAfterMalformed.has(p), 'remaining free list is acyclic');
+  freeBlocksAfterMalformed.add(p);
+  const size = a.guest_read32(p) >>> 0;
+  assert(size >= 16 && size % 8 === 0, 'remaining free blocks have valid sizes');
+}
 console.log('PASS cross-thread low frees/reuse and malformed/reserved-tail protections');
 
 a.test_sparse_only();
