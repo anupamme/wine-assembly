@@ -44,3 +44,24 @@ claimed to fix that stop or white terrain. A later original-game transfer run
 must identify its actual source/module, reach the operation, and establish
 ordered source readback before destination upload. Current-main source audit
 changes the prerequisite for that run; it does not supply gameplay evidence.
+
+## Superseding reconciliation, 2026-10-13
+
+The missing-implementation prerequisite above was resolved on October 10.
+Commit `51d2f34602a8c5da0469b754a7fd494bfe15b5a6` is an ancestor of
+current main `a8d6e35632618bc5a1e4a5739513cdfe20ca186d`; its rectangle/filter
+sampling and nested packet stack remain present in `src/09am-d3d-color.wat`.
+Each guest stack frame owns its packet; child validation failure/completion
+restores the parent phase, while the host still owns the suspended render token.
+
+Retained `scratch/runs/20261010T0816Z-bge-rect-nested/` was inspected: build,
+color, targets and aliases exit0; `color-final.log` passes both readback/upload
+parks, invalid-child cleanup and distinct source pixels. The negative control
+in `nested-negative.log` returns S_OK where the invalid child must fail.
+These are handler-level nested-frame tests, not a Pirates callback or gameplay
+reproduction. No new execution or current-build certification is claimed.
+
+Do not redo the archived implementation. The next Pirates step is original
+fixture/runtime preflight and investigation of its separate captain-route stop.
+Its historical run did not reach StretchRect, so this source reconciliation
+neither proves transfer execution nor fixes terrain or the captain stop.

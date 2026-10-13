@@ -163,3 +163,139 @@ file was exported and merged, and the parent read it and rendered the match,
 but this is not evidence of entirely clean interpreter shutdown. Preserve this
 separate diagnostic for follow-up; no generated output bytes were retained
 outside the child export/read log.
+
+## 2026-10-13: ordinary human input qualification
+
+The original demo now reaches an actual Player One turn through its real
+`Landgen.exe` child and responds visibly to ordinary Up input. This is a narrow
+human aiming qualification, not a completed match or browser/audio/performance
+qualification. The candidate is not registered in the application corpus yet.
+
+### Original fixture and route
+
+Original `WaDemo.exe` SHA-256:
+`7d6c456c0bd0f4bb197f0305e63e58aeb4868d325cc0110c74bb9d6e968c9bfd`.
+Remote fixture: `test/binaries/candidates/worms-armageddon-demo/game/`.
+Use the original `DXMfc.dll`, `DirectSound.dll`, `DirectX2D.dll`, MFC42/MSVCRT,
+data files, and `--spawn-processes`; do not bypass or fabricate the Landgen result.
+
+The bounded CLI route used `--batch-size=100000`, `--tick-ms-per-batch=200`,
+`--frozen`, `--control-stdin`, and `--max-seconds=540`, with a 570-second
+supervisor bound. Escape dismissed the original splash screens; normal clicks
+entered Single Player and Quick Game. After the real child state merged, the
+route advanced to batch 771 and paused for visual review. The image showed
+Player One, Worm 1 with its red arrow, and a positive timer of 58.
+
+The review gate allowed one ordinary `keydown:38`, 20 batches, `keyup:38`,
+and one final batch. No game-memory writes, artificial focus calls, hardcoded
+message HWND, or DirectInput-only map writes were used. The exact driver and
+command arguments are saved with each run.
+
+### Failure and generic source cause
+
+Control run `scratch/runs/20261013-wa-input-observation-2/` used source
+`924a7b666cfd9c7e7a2d55db598ed55c40f1bae6` and module SHA-256
+`c9971c0abb023c64c8c018505e39734eeb1be52076a23d4846d54385b50b5c07`.
+Its ordinary Up did not change the visible aim. The foreground game HWND was
+`0x10029`, but guest focus remained on frontend native BUTTON `0x10020`.
+`output.log:7192` and `:7206` show the actual Up down/up messages dispatched to
+that frontend HWND. Host physical/async Up was true while held, but the game's
+Up byte remained zero. Initialization and activation were both one, and the
+game's input-suppression field was zero.
+
+The ordering is explicit in the original trace:
+
+- `output.log:886-887`: frontend dialog `0x1001f` and BUTTON `0x10020` created.
+- `:1902`: original game calls `SetActiveWindow(0x10029)`.
+- `:1925` and `:1931`: delayed `WM_KILLFOCUS` / `WM_SETFOCUS` reach the old
+  frontend control after game activation.
+
+`dlg_focus_first_tabstop` in `src/09a5-handlers-window.wat` assigned focus and
+posted its notification pair. The native button's `WM_SETFOCUS` handler later
+assigned focus again when that queued notification arrived. Ordinary keyboard
+routing in `lib/host-window.js` correctly followed the resulting guest focus.
+
+The generic fix completes the dialog helper's existing
+`focus_notify_transfer` transaction synchronously. It preserves the dialog's
+own first-tabstop eligibility, including a hidden WinHelp Contents page, instead
+of substituting the public SetFocus activation path. A real guest-frame nested
+regression also exposed a duplicate focus pass: exported `DefDlgProcA` called
+the helper again after `dialog_default_proc` had already handled WM_SETFOCUS.
+Removing that second pass preserves focus selected by a nested callback.
+DefDlgProcW shares the same handler and stdcall cleanup.
+
+### Candidate evidence
+
+Candidate run `scratch/runs/20261013-wa-input-candidate-1/` used source
+`33efb438426cac8107dec028566ca5f38c946ac1` and module SHA-256
+`9b3ef6f173daaa8be90733a4b8449733d74ca861062d0383a709f4be02ce1c77`.
+The exact tested source/test blobs were integrated as `ab7ea7023`.
+
+The human-idle image is byte-identical to the control, SHA-256
+`4ef1cf36b2b66928460fd3638470848252958952367182b25a3e9f804850a981`.
+Focus and foreground both remain `0x10029`. Ordinary Up visibly raises the
+reticle from approximately `(414,289)` before input to `(388,225)` while held,
+then `(366,208)` in the release capture; the worm visibly aims upward and the
+timer progresses from 58 to 57.
+
+The source-consumption boundary is directly observed:
+
+- `output.log:7169`: `WM_KEYDOWN`, VK `0x26`, actual game HWND `0x10029`.
+- `:7175`: original game keydown branch `0x4695ea`.
+- `:7163`: trace-at hit `0x46a380` at batch 774, VK `0x26` and original caller
+  `0x4695fa`. Trace and API output streams need not appear in execution order.
+- `:7189` / `:7198`: actual game keyup message and branch `0x46960c`.
+- State snapshots: keyboard byte `[K+0x132]` is 0 before, 128 at held batch 791,
+  and 0 after release at 792. Suppression stays zero.
+
+Original game disassembly establishes the path: window wrapper `0x463880`
+reaches `0x469490`; keydown checks `[P+0x2c]`, obtains `K=[P+0x60]`, and calls
+`0x46a380` to set `[K+0x10c+VK]=0x80`. Keyup calls `0x46a3b0` to clear it.
+The GetKeyboardState callers examined were any-key scans, not this arrow path.
+
+All 42 remote run artifacts were copied and SHA-256 verified. The three human
+images were visually reviewed, including an independent coordinator review.
+Guest exit was zero at `2026-10-13T21:39:16.699Z`; supervisor 122041, parent
+122055, and both process groups were absent at `21:39:25.034Z`, before the
+runtime slot was released. See `investigation.json`, `runtime-cleanup.json`,
+`launch.json`, `control.jsonl`, and `remote-artifact-hashes.json` in the run.
+
+### Regression validation and limits
+
+`scratch/runs/20261013-focus-conformance/` contains the full build, focused
+tests, intermediate nested failure, and original-code negative control.
+`test-dialog-setfocus-tabstop.js` executes a real guest x86 wndproc calling the
+imported DefDlgProcA thunk, checks live/outer ESP and nonvolatile registers,
+checks synchronous notifications with a hidden ancestor, and exercises nested
+SetFocus redirection and pending-target destruction. Draining the old dialog's
+queue after activating a new window cannot reclaim focus. The original source
+fails that stale-focus assertion; the candidate passes.
+
+The full build and `test-active-window.js`, `test-def-dlg-proc.js`,
+`test-dialog-custom-dispatch.js`, `test-showwindow-owned-form-activation.js`,
+`test-dialog-null-dlgproc-erase.js`, and the focused tabstop suite all pass.
+This run establishes ordinary human Up aiming through the original child
+route. Firing, movement, a complete match, browser behavior, audio, and timing
+performance remain outside this evidence.
+
+## Registered local candidate launch (2026-10-13)
+
+Candidate `1635081e10df4a62183c184ff27a2daf3123b527` adds the local-only
+`worms_armageddon_demo` app with five original DLL seeds and
+`spawnProcesses: true`. The archive/extractArchive/is5Extract recipe reproduced
+all 667 original files (20,639,487 bytes) with zero SHA-256 differences.
+Eight registry structure checks passed. No desktop/public release is included.
+
+`scratch/runs/20261013T2156Z-wa-registered/` used
+`--app=worms_armageddon_demo --no-build`, without an explicit spawn override,
+with module `9b3ef6f173daaa8be90733a4b8449733d74ca861062d0383a709f4be02ce1c77`.
+The genuine child merged two written files, one deletion and 73 registry/INI
+keys; Quick Game reached the reviewed Player One/Worm 1 human turn at batch
+771, timer 58. Its image matches the previously reviewed candidate capture.
+All 34 artifacts were copied and SHA-256 verified.
+
+The 120-second visual-review gate expired before coordinator confirmation.
+No aiming input was issued in this registered run; the earlier ordinary Up
+aiming evidence remains a separate run. Guest exit was zero at 22:01:31.120Z;
+supervisor136892, guest136903 and guest group were absent at22:02:49.705Z.
+Registered launch is verified; browser, full match, audio and FPS remain open.
