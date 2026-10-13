@@ -3,7 +3,7 @@
 The user's goal: every OpenGL and Direct3D app in the registry works on both the
 **software** and the **WebGL** backend. This is the one shared status table for
 it (task GLD3D-CORPUS-27-20261006). Codex coordinates the remaining work.
-The Claude fleet resumed on October 10; current assignments are on the board.
+The Claude fleet is stopped. Codex coordinates current assignments on the board.
 D3DRM rows marked w4 refer to historical work
 by claude:65967384 (`docs/re-notes/plus98-dx-screensavers.md`), not a live worker.
 
@@ -56,6 +56,22 @@ Pirates logs are listed below; the log provenance gaps are not passes.
 
 The historical measurements below remain dated observations, not current-main
 passes. In particular, the newer fixes do not complete this corpus goal.
+
+
+## October 13 evidence reconciliation
+
+This updates retained evidence against main 1ee7f1ddf; it is not a new corpus sweep.
+
+| App / scope | Evidence now available | Remaining gap |
+|---|---|---|
+| Diablo II | Normal browser default Workers, WebGL with software fallbacks: original character creation, Rogue Encampment and ordinary ground-click movement reviewed in `20261013T1950Z-diablo2-browser-presentations`. Canonical Wasm `79a828167326142433105270a3cd53fe33a3ce934f71116451e8948315b44c93`. | Matched software/WebGL route qualification remains open. 609 presentation events / 30.005925 seconds = 20.296/s, **not logical or display FPS**. Asynchronous Worker census reports 31,077 fallback operations and zero errors; periodic missing telemetry-sink HTTP404 overhead is included. Audio/device qualification is absent. |
+| Neverwinter Nights (new-game extension) | Menu projection and client-attribute stack fixes are on main. Ordinary Prelude loading passes the client stack, then traps at glStencilMask(255); `20261013T1948Z-nwn-prelude`. | Real stencil implementation is under test; no world or player movement yet. |
+| Arcanum | Retained `20261008T1431Z-arcanum-gameplay-qualified` explicitly pins both backends, ordinary movement and module identity. | Software FPS remains unqualified; later missing-knob notes do not erase this run. |
+| UT2004 | Merged `fc0d7bf10`; `20261010T2240Z-ut2004-sw-menu-input-w5` retains software DM-Rankin and Up movement. | Historical installer route, not a fresh registered-app or full backend-pair certification. |
+| UT2003 | `20261010T2140Z-ut2003-server-sw-w4` and both named artifacts are present; TLS/OOM fixes are merged. | Unattended listen server does not prove player movement; module hash absent. |
+| Daikatana / FreeSpace | Earlier launch/API fixes and world/flight evidence remain retained; these are not unresolved launch crashes. | Explicit Daikatana browser backend attestation and FreeSpace browser/device evidence remain gaps. |
+
+The falling-leaf repair, registered saver clock and headless resize fix are merged. Historical 14/14 crash revisits are retained launch evidence, not a fresh full-game certification. MilkDrop remains held after automatic review; Morrowind remains paused and Heroes II belongs to the laptop.
 
 ## How the set was measured
 
