@@ -73,6 +73,7 @@ const extraWat=String.raw`
       if(version!==7) {
         const guid=e.guest_read32(sp+4), hw=e.guest_read32(sp+16), hel=e.guest_read32(sp+20);
         assert.strictEqual(e.guest_read32(hw),252);assert.strictEqual(e.guest_read32(hel),252);
+        for(const desc of [hw,hel]) for(const offset of [76,132]) assert.strictEqual(e.guest_read32(desc+offset)&0x20,0,'legacy enumeration must not require square textures');
         for(const desc of [hw,hel]) for(const offset of [80,136]) assert.strictEqual(e.guest_read32(desc+offset),0xFF,'legacy filter caps unchanged');
         assert.strictEqual(e.guest_read32(guid)>>>0,{ramp:0xf2086b20,rgb:0xa4665c60,hal:0x84e63de0}[item.name]);
         assert.strictEqual(e.guest_read32(hw+8),item.name==='hal'?2:0);
@@ -84,6 +85,7 @@ const extraWat=String.raw`
         const caps=e.guest_read32(sp+12);
         if(item.name==='hal')assert.strictEqual(e.guest_read32(caps),0x8aea1);
         assert.strictEqual(e.guest_read32(caps)&0x401,0x401,'D3D7 float TL DrawPrimitive capability');
+        for(const offset of [36,92]) assert.strictEqual(e.guest_read32(caps+offset)&0x20,0,'D3D7 enumeration must not require square textures');
         for(const offset of [40,96]) assert.strictEqual(e.guest_read32(caps+offset),0x030003FF,'D3D7 callback point/linear stage filter caps');
       }
       e.resume(sp,version,cycle%2?0:1);

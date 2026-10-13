@@ -264,3 +264,100 @@ Source-only continuation: share0x14001000 CacheSetSign writes its argument to0x1
 Once-only granted run `20261013T2257Z-sacrifice-signature-exit` used driverc8133da6, sourcea14a289b, unchanged canonical module/CRT/115-file fixture. The single previously successful original decoderexit0x1602da80 probe requested name, original expected signature0xcd8ec0, and exponent0x9dc170. Both game3d982000/original16000000 and sharecbe000/original14000000 mappings were guarded before every input. Ordinary relative Tutorial input again reached loading and originalexit0, but no TRACE-AT line was emitted. Expected signature/exponent remain unknown. No repeat was launched. Source inspection shows --quiet-blocks only suppresses ordinary progress logging, not TRACE-AT; do not claim it caused this absence. The earlier successful exit sample does not make this run successful measurement.
 
 Four screenshots reviewed, finalPNG SHAaf5ed04034660a4ce9c4b88e170fe91bf30c6a6d05282a9a743b7b274917d6ef matches previous loadingcheckpoint. Guest178945 exited0 at22:57:55.712; supervisor178935,guest178945 andbothgroups absent22:58:20.920. Postcheck all115originalfixture hashes unchanged. Twelve artifacts hashed; archive scratch/sacrifice-signature-exit-evidence.tgz SHA79c973c849ea9c425ce996dbb0592bae3c268a34d5547a2566bd0b454d1bbea1 transferred afterlocalfloor2.70GBcheck. Investigation written afterartifactmanifest. No gameplay/emulatorfault/acceptance/deployment claim. Next source question is passive-probe delivery; root may review standard exit-time dump of persistent globals as an alternative, with no further runtime authorized here.
+
+## Persistent signature and renderer restriction (2026-10-13 23:22 UTC)
+
+Run `20261013T2321Z-sacrifice-persistent-exitdump` used sourced8e702c5,
+driver3556b7ab, unchanged moduleba6f25ea and original115-file fixture.
+The ordinary relative-pointer Tutorial route again exits0 before the world.
+Four screenshots are reviewed: main menu, selector, Tutorial1 hover, and
+Tutorial1 loading at about two-thirds. Guest200257 ended23:22:00.968,
+supervisor200247 recorded cleanupComplete23:22:00.970. All original115
+post-run hashes match. Twenty-two artifacts were transferred and SHA-verified;
+archive SHA837b657aa10a05fc7cd1f4e8c296fa6d2b71bd456634c88403af4b5a5b6c8133.
+Investigation metadata was published last. Gameplay remains unqualified.
+
+Standard exit dumps now establish persistent identifier `tkhsDMXS.001`,
+texture exponent7 at0x9dc170 and expected cache signature23 at0xcd8ec0.
+Original `cache/tkhsDMXS.000` still starts with7. Prior cache tracing already
+established successful open/read followed by rejection and private-VFS deletion.
+These independent observations identify a signature mismatch, not missing files.
+
+The pinned `--dump-vmap` diagnostic only searches sparse allocation records;
+its NOT MAPPED message is misleading for low direct-window addresses.
+`lib/mem-utils.js:g2w` first translates guest-imagebase+GUEST_BASE, returning
+direct addresses below0x08000000 before sparse lookup. Here0x9dc150 maps
+to0x5ee150 and0xcd8ec0 to0x8eaec0. The nonzero hexdumps are valid direct
+memory; sparse-list absence does not invalidate them.
+
+Original `3d_d3d.dll` has a derived renderer: exported Create3dngn0x180011f0
+calls constructor0x18001210, which replaces base vtable0x18014550 with
+0x18014154 at0x1800121b. Derived +0x8c is ValidateCaps0x18003990;
++0x184 is0x180039f0, returning min(object+0x4190,object+0x4194).
+The earlier base-class returnarg&3/max256 analysis was insufficient.
+
+Renderer initialization0x18002c53 copies236bytes from its selected device
+descriptor at[object+0x1924]+0x100. At0x18002c6b it reads descriptor+0x5c,
+the D3DDEVICEDESC7 triangle dwTextureCaps; bit0x20 sets object+0x600 bit31.
+ValidateCaps(1) at0x180039d8 tests that bit and returns bit1 when set.
+game3d0x16026855 then adds16 to exponent7 before CacheSetSign, yielding23.
+The method also has a table-based path; clearing one input restriction has
+not yet been demonstrated to make its complete return valuezero.
+
+Microsoft's [D3DPRIMCAPS documentation](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dcaps/ns-d3dcaps-_d3dprimcaps)
+defines SQUAREONLY as requiring square textures. The official
+[DirectX header](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/d3dcaps.h)
+assigns0x20. Shared `$fill_primcaps` reports0xffff, including this restriction,
+to legacy/D3D7 GetCaps and EnumDevices. The software texture sampler instead
+uses independent width/height for U/V and pitch for row addressing; the GPU
+descriptor likewise retains independent dimensions. This is a concrete generic
+capability-reporting inconsistency, not justification for editing original cache.
+
+Prepared isolated source patch on1bb8c302a clears only SQUAREONLY to0xffdf.
+Existing indexed-texture conformance is extended with ordinary 2x4 surface
+creation, Texture2 GetHandle/bind, four row samples, a yellow fourth-row indexed
+draw, and public GetCaps assertions for legacy1/2/3 and7 line/triangle caps.
+Existing EnumDevices lifetime coverage checks that same restriction in all
+callback descriptors, including D3D7, the actual game dependency.
+Canonical build and both extended conformance tests pass (see validation below).
+The original game has not yet been run with this correction.
+
+The blanket mask contains other unsupported, restrictive or unverified claims.
+This proposal does not certify or replace the whole mask: its audit records
+perspective/alpha/keyed/projected support paths; unnecessary POW2 and conditional
+NPOT policy; unverified repeat precision, palette alpha, cube maps and filtered
+color-key behavior; obsolete BORDER and undefined DX7 bits0x200/0xe000.
+Those require separate capability-specific evidence before changes.
+
+Next, only under a new runtime grant, run the untouched original demo once with
+the new module, normal Tutorial input and persistent dumps. Check signature,
+cache acceptance and whether loading reaches a world independently. Even a
+corrected signature does not establish that later fallback/loading paths work.
+
+### Capability conformance validation (2026-10-13 23:33–23:35 UTC)
+
+On isolated base1bb8c302a, canonical build passes with module
+0918dec0eba2b3f0a6a0f0c1423fe273a9c95f530acb3108d01699f481ffb7ab.
+The extended indexed-texture test passes: original2x4 allocation, allfour
+row samples, fourth-row indexed drawing and GetCaps1/2/3/7 restrictions.
+EnumDevices lifetime passes96balancedcycles and32real x86 nested cases,
+including line/triangle restriction assertions for1/2/3/7 callbacks.
+
+The first enumeration attempt stopped before assertions because this isolated
+checkout lacked test/binaries/notepad.exe. The unchanged existing fixture from
+DLLwork was copied (SHA e7b01ab85a35ba6f577067d13efa522dc3d605de7712340e4acaf7065f866340);
+its loader initializes thunks, not Notepad application code. Only enumeration
+and the negative were resumed; the passing build and indexed test were not repeated.
+
+Restoring only0x20 in the shared mask makes the same indexed test print its
+rectangular-allocation/sample/draw success marker, then fail the intended
+GetCaps assertion32!=0. Thus the negative proves the old advertised restriction
+is inconsistent with already-working rectangular rendering; it is not a fixture
+or graphics-setup failure. The corrected source was restored and allfour
+original proposed file hashes matched at completion.
+
+Evidence:20261013T2333Z-sacrifice-caps-validation and
+20261013T2335Z-sacrifice-caps-validation. Finished23:35:11.130; allnine owned
+PIDs and allpositive/negative process-group checks reportESRCH23:35:36.368.
+Runtime released to the coordinator. No original Sacrifice replay occurred;
+cache acceptance, later loading and gameplay remain unverified for this module.
