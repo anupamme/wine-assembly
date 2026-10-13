@@ -89,7 +89,8 @@ function createBot({state,save,telegram,local,download,inbox,inboxStatus,now=Dat
       return send('Hi! I’m connected to the Wine Assembly orchestrator. This private account is now paired. Send me a message and I’ll pass it on.\n\n'+HELP);
     }
     if(!authorized(m.from,m.chat))return;
-    if(m.date && now()-m.date*1000>5*60000)return send('Old message ignored. Please resend it if still needed.');
+    // Polling can resume long after a message was sent. Age must not discard
+    // owner messages; chat still goes to the inbox, never directly to a pane.
     const text=(m.text??m.caption??'').trim();
     // Anything with an attachment is inbox content, even when its caption looks like a command.
     if(attachment||!text.startsWith('/')&&!isStatusQuestion(text))return saveToInbox(text,attachment,m.message_id);

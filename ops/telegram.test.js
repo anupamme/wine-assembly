@@ -9,6 +9,40 @@ function fixture(){const state={owner:{userId:10,chatId:10}},calls=[],actions=[]
  const bot=createBot({state,save:async()=>{},telegram:async(method,body)=>{calls.push({method,body});return {message_id:20};},local:async(url,body)=>{if(url==='/api/state')return {tasks:[],approvals:{items:live?[live]:[]}};actions.push({url,body});return {sent:true};},inbox:async e=>{const entry={id:saved.length+1,...e};saved.push(entry);return entry;}});
  return {state,bot,calls,actions,saved,live:p=>live=p};}
 const message=(text,id=10,type='private')=>({message:{text,date:Date.now()/1000,from:{id},chat:{id,type}}});
+test('Delayed owner messages survive polling outages and are saved for consumer review',async()=>{
+ const f=fixture(),update=message('Neverwinter Nights: find the demo');
+ update.message.date-=2*24*60*60;
+ await f.bot.handle(update);
+ assert.equal(f.saved.length,1);assert.equal(f.saved[0].text,update.message.text);
+ assert.equal(f.calls.find(c=>c.method==='sendMessage').body.text,'Saved #1');
+ assert.deepEqual(f.actions,[],'saving does not type into an agent or execute an approval');
+ const unauthorized=message('old unauthorized',11);unauthorized.message.date-=86400;
+ await f.bot.handle(unauthorized);assert.equal(f.saved.length,1);
+});
+test('Raw Telegram updates are durable before offset acknowledgement, including failed handling',async t=>{
+ const {receiveUpdate}=require('./telegram-updates');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'tg-updates-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const state={offset:7},update={update_id:7,message:{text:'/status',document:{file_id:'retained'}}};
+ const file=path.join(dir,'7.json');let handled=0,saves=0;
+ await assert.rejects(receiveUpdate({dir,update,state,save:async()=>{
+   assert.deepEqual(JSON.parse(fs.readFileSync(file)).update,update);assert.equal(state.offset,8);saves++;
+ },handle:async()=>{handled++;throw Error('dashboard unavailable');}}),/dashboard unavailable/);
+ assert.equal(handled,1);assert.equal(saves,1);assert.equal(state.offset,8);
+ assert.equal(fs.statSync(file).mode&0o777,0o600);
+ const original=fs.readFileSync(file,'utf8');
+ await receiveUpdate({dir,update,state,save:async()=>{throw Error('unexpected');},handle:async()=>{handled++;}});
+ assert.equal(handled,1,'an acknowledged update is not replayed');assert.equal(fs.readFileSync(file,'utf8'),original);
+});
+test('Archive or offset persistence failure cannot acknowledge or process an update',async t=>{
+ const {receiveUpdate}=require('./telegram-updates');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'tg-update-failure-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const blocked=path.join(dir,'not-a-directory');fs.writeFileSync(blocked,'x');
+ const state={offset:2},update={update_id:2,callback_query:{data:'a:approval'}},handle=async()=>{throw Error('must not run');};
+ await assert.rejects(receiveUpdate({dir:blocked,update,state,save:async()=>{throw Error('must not save');},handle}));
+ assert.equal(state.offset,2);
+ await assert.rejects(receiveUpdate({dir,update,state,save:async()=>{throw Error('disk full');},handle}),/disk full/);
+ assert.equal(state.offset,2);assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir,'2.json'))).update,update);
+});
 test('/blockers matches dashboard grouping and stays read-only for authorized users',async()=>{
  const snapshot={tasks:[
   {id:'root',title:'Restore game files',status:'blocked',line:1,needs:'Restore archive',blocker:'Files absent',owner:'codex:one'},

@@ -6,6 +6,7 @@ Native Node.js; no npm dependencies. The bot runs separately from the agent so a
 - Pairing, owner, update cursor and pending approval: `scratch/telegram/state.json`, mode 0600. Only the paired private Telegram account can chat or approve.
 - Health: `scratch/telegram/health.json` and `watchdog.json`.
 - Logs: `scratch/telegram/service.log`. Never print the token.
+- Raw incoming updates: `scratch/telegram/updates/<update_id>.json`, mode 0600. The bridge writes and syncs each update before advancing its acknowledgement cursor. These records include commands, callback queries and attachment metadata; they are recovery records, not an automatic replay queue.
 
 With the service stopped, run `node ops/telegram.js --pair`. Open `https://t.me/WineAssemblyBot?start=CODE` with the returned code within 30 minutes. The bot greets the account after pairing. Start the service with:
 
@@ -23,7 +24,7 @@ Send plain text to leave a message in the agent inbox (below). `/status` shows t
 {"id":N,"at":"<ISO time>","text":"<message or caption>","attachments":["/abs/path/scratch/telegram/inbox/<iso>-<msgid>-<name>"]}
 ```
 
-Ids are consecutive integers derived from the file, so they survive restarts. Images, files, voice notes and other attachments are saved under `scratch/telegram/inbox/` (mode 0600, Bot API 20 MB limit) and only their paths are recorded; a message with an attachment is always inbox content even if its caption looks like a command. Commands (`/status`, `/blockers`, `/screen`, `/approvals`, `/help`) are answered by the bot and not saved. `/queue` shows the last id and each consumer's cursor; `/cancel` explains that saved messages cannot be withdrawn.
+Ids are consecutive integers derived from the file, so they survive restarts. Owner messages do not expire when polling is delayed: old chat is saved just like new chat. `Saved #N` confirms inbox persistence, not that an agent has read or completed the request. Images, files, voice notes and other attachments are saved under `scratch/telegram/inbox/` (mode 0600, Bot API 20 MB limit) and only their paths are recorded; a message with an attachment is always inbox content even if its caption looks like a command. Commands (`/status`, `/blockers`, `/screen`, `/approvals`, `/help`) are answered by the bot and kept in the raw update archive, not the agent inbox. If attachment download or handling fails, the raw text and Telegram attachment metadata remain available there for manual recovery. `/queue` shows the last id and each consumer's cursor; `/cancel` explains that saved messages cannot be withdrawn.
 
 **Consumers** watch the file and keep their own cursor `scratch/telegram/inbox.<agent>.cursor` (a plain integer: the last id read). Claude agents run a Monitor or background `tail -n0 -F scratch/telegram/inbox.jsonl`; Codex checks the inbox past its cursor at every step of its goal loop (plus a background tail terminal). After reading, write the new last id to the cursor file, and reply with `node ops/telegram-send.js "<text>"`. Consumers are listed in `ops/work-watchdog.json` under `telegramInbox.consumers` (`agent` names the cursor; `agentId`, full or first UUID group, resolves the pane through `ops/terminals.json`).
 
