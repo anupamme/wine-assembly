@@ -91,3 +91,47 @@ Every frame also does the GDI sequence `GetDC`, `CreateCompatibleDC`,
 `SelectObject`, `StretchBlt`, `DeleteDC` and `ReleaseDC`. Input is DirectInput
 keyboard polling (`GetDeviceState`), so `--input=B:keydown:VK` reaches it.
 Command: `--trace-api-counts`.
+
+## Browser loading-stall report (2026-10-13)
+
+User report `TG60-REVOLT-LOADING-20261013` shows loading
+`models\\sphere.ncp`, EIP near `0x45a8xx` / `0x482c69`, and repeated ESI
+`0x3f`. Original EXE SHA-256
+`58ba4835e6607eae62be4e023ef989172cb519c78f34811acba547e9e0e3581a`
+confirms the placement routine above: rejected separation branches at
+`0x45aa17`; acceptance increments ESI at `0x45aa5a` and compares with 64
+at `0x45aa65`. ESI 63 is consistent with the last object. Changing EIP or
+random state alone does **not** prove that object will ever be accepted.
+CRT `rand` at `0x482c69` updates its original state at guest `0x49bb88`.
+
+Run `scratch/runs/20261013T2305Z-revolt-original-browser` used exact clean
+source `a116a574c7411671b1042013b641ac0765471ef5`, an independent canonical
+build (WASM SHA-256
+`46c1e23aabca26de5e459f21463d3e1167f3a71d95e573ffedecefe7b31765f7`),
+and all 443 original installed files plus the browser manifest verified by
+hash. Registered browser route was
+`index.html?app=re_volt_demo&debug&no-threads&d3d-renderer=webgl` on
+`bx_yqnspudj`. Live controls confirmed WebGL, RLE/x87/uop enabled, Lazy Sync
+enabled, and Threads unchecked, matching the report. Five-second samples
+read registers and the random state; they did not write guest memory, change
+the clock, restore a snapshot, or change random state/configuration.
+
+Launch was 23:04:49 UTC; reviewed main menu was 23:06:18 (89 seconds).
+Ordinary Enter selected Start Race, Single Race, default player name,
+RC Bandit, Toys in the Hood 1, then the summary at 23:08:17. The log sampled
+placement at 23:09:03, EIP `0x45aa1d`, ESI 62. It then passed that routine
+and reached the reviewed starting grid at 23:09:24, about 67 seconds after
+the summary confirmation and 276 seconds after launch. No sustained ESI 63
+was observed in this run. `loading-003.png` is the starting grid;
+`race-001.png` and `race-002.png` show later race timers 21.799 and 39.762
+seconds after ordinary Up input, with the latter showing 8 mph. Up without
+steering took the car off the intended route into a dark tunnel/wall area;
+this is limited evidence of movement and input response, not a completed
+lap or a separate physics/rendering diagnosis. Browser closed normally at
+23:10:19; supervisor/driver/Chrome PIDs and groups were absent at 23:10:50.
+
+The reported prolonged stall was **not reproduced**, and no emulator fix is
+claimed. The user's exact loaded module, elapsed stall duration and random
+state are unknown; a successful independent run does not establish that all
+placements terminate. If it recurs, preserve the exact module and elapsed
+ESI/random-state series before changing any optimization settings.
