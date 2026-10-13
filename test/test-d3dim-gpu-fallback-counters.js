@@ -33,6 +33,12 @@ function check(gpu, reason = null, count = 1) {
   const s = gpu.snapshot();
   for (const name of reasons) assert.strictEqual(s[name], name === reason ? count : 0, name);
   assert.strictEqual(s.fallbacks, reasons.reduce((sum, name) => sum + s[name], 0), 'reason sum');
+  assert.strictEqual(s.fallbackDrawShape, Array.from({ length: 7 }, (_, i) => s[`shapeRejectMask${i + 1}`])
+    .reduce((a, b) => a + b, 0), 'disjoint shape mask sum');
+  assert.strictEqual(s.fallbackDrawShape, ['0', '1', '2', '3', '4To15', '16Plus']
+    .reduce((sum, bucket) => sum + s[`shapeCount${bucket}`], 0), 'count bucket sum');
+  assert.strictEqual(s.fallbackDrawShape, Array.from({ length: 8 }, (_, i) => s[`shapeTuple${i}Draws`])
+    .reduce((a, b) => a + b, s.shapeTupleOverflow), 'tuple plus overflow sum');
   return s;
 }
 function reject(reason, setup, opcode = OPCODES.DRAW, address = CALL) {
@@ -49,13 +55,51 @@ function reject(reason, setup, opcode = OPCODES.DRAW, address = CALL) {
   const external = f.gpu.snapshot(); external[reason] = 999; external.fallbacks = 999;
   check(f.gpu, reason, 2);
 }
-// Shape predicates share one bucket, including overlapping invalid inputs.
+// Shape predicates share the aggregate bucket, including overlapping invalid inputs.
 for (const [primitive, type, count] of [[4, 2, 3], [2, 3, 1], [3, 3, 0],
   [1, 3, 3], [7, 3, 3], [4, 3, 2], [1, 2, 0]]) {
   reject('fallbackDrawShape', f => {
     f.put(CALL + 4, primitive); f.put(CALL + 8, type); f.put(CALL + 16, count);
     f.gpu._describe = () => { throw new Error('shape rejection must stop before describe'); };
   });
+}
+// Exact masks distinguish every overlap, including short unsupported primitives.
+for (const [primitive, type, count, mask] of [[4, 2, 3, 1], [1, 3, 3, 2],
+  [7, 2, 3, 3], [2, 3, 1, 4], [3, 2, 0, 5], [1, 3, 2, 6], [0, 2, 1, 7],
+  [4, 3, 2, 4], [6, 3, 0, 4], [0xffffffff, 0xffffffff, 0xffffffff, 3]]) {
+  const f = fixture(), before = f.gpu.snapshot();
+  f.put(CALL + 4, primitive); f.put(CALL + 8, type); f.put(CALL + 16, count);
+  for (let n = 1; n <= 2; n++) {
+    assert.strictEqual(f.gpu.call(OPCODES.DRAW, CALL), 0);
+    const s = check(f.gpu, 'fallbackDrawShape', n);
+    assert.strictEqual(s[`shapeRejectMask${mask}`], n);
+    assert.deepStrictEqual([s.shapeTupleUsed, s.shapeTuple0VertexType, s.shapeTuple0Primitive,
+      s.shapeTuple0Count, s.shapeTuple0Draws, s.shapeTupleOverflow], [1, type, primitive, count, n, 0]);
+  }
+  assert.strictEqual(before.shapeTupleUsed, 0);
+  assert.strictEqual(before.shapeTuple0Draws, 0);
+  const external = f.gpu.snapshot();
+  external.shapeTuple0Primitive = 99; external.shapeTuple0Draws = 99;
+  assert.strictEqual(f.gpu.snapshot().shapeTuple0Primitive, primitive);
+  assert.strictEqual(f.gpu.snapshot().shapeTuple0Draws, 2);
+}
+{
+  const f = fixture(), keys = Object.keys(f.gpu.snapshot());
+  f.put(CALL + 8, 2); // Reject even when count and primitive are otherwise supported.
+  const counts = [0, 1, 2, 3, 4, 15, 16, 0xffffffff, 17, 18, 17, 0];
+  for (const count of counts) {
+    f.put(CALL + 16, count);
+    assert.strictEqual(f.gpu.call(OPCODES.DRAW, CALL), 0);
+  }
+  const s = check(f.gpu, 'fallbackDrawShape', counts.length);
+  assert.deepStrictEqual(Object.keys(s), keys, 'no field growth after tuple saturation');
+  assert.strictEqual(s.shapeTupleUsed, 8);
+  assert.strictEqual(s.shapeTupleOverflow, 3, 'overflow counts operations, including repeats');
+  assert.strictEqual(s.shapeTuple0Draws, 2, 'retained tuples still accumulate after saturation');
+  assert.deepStrictEqual(Array.from({ length: 8 }, (_, i) => s[`shapeTuple${i}Count`]), counts.slice(0, 8));
+  assert.deepStrictEqual(['0', '1', '2', '3', '4To15', '16Plus'].map(b => s[`shapeCount${b}`]),
+    [2, 1, 1, 1, 2, 5]);
+  assert(Object.values(s).every(Number.isFinite), 'snapshots contain only finite numbers');
 }
 reject('fallbackDrawDescribe', f => { f.gpu._describe = () => null; });
 reject('fallbackDrawTarget', f => { f.gpu._target = () => null; });
@@ -67,6 +111,7 @@ for (const offset of [36, 40, 48, 52]) {
 // Accepted triangles, line lists/strips, textured draws, solid/background clears.
 for (const primitive of [2, 3, 4, 5, 6]) {
   const f = fixture(); f.put(CALL + 4, primitive);
+  f.put(CALL + 16, primitive <= 3 ? 2 : 3); // Accepted minimum for each primitive.
   assert.strictEqual(f.gpu.call(OPCODES.DRAW, CALL), 1);
   assert.strictEqual(f.draws.length, 1); check(f.gpu);
 }
