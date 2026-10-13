@@ -156,3 +156,10 @@ The effective child/parent time guards were 420 seconds (first matching argument
 wins), with a 450-second external guard. Audio, real-device behavior and sustained
 play remain unqualified. The title is not yet registered in the candidate manifest,
 so this evidence remains an investigation rather than an unrelated candidate result.
+
+Child termination caveat: output.log records `[Exit] code=0`, followed by a
+NULL-EIP diagnostic at child batch486 (previous EIP0x0040c60e). The generated
+file was exported and merged, and the parent read it and rendered the match,
+but this is not evidence of entirely clean interpreter shutdown. Preserve this
+separate diagnostic for follow-up; no generated output bytes were retained
+outside the child export/read log.
