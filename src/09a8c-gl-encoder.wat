@@ -541,6 +541,8 @@
       (then (return (global.get $gl_list_result))))
     (if (call $gl_stencil_intercept (local.get $op) (local.get $stack))
       (then (return (global.get $gl_list_result))))
+    (if (call $gl_color_mask_intercept (local.get $op) (local.get $stack))
+      (then (return (i32.const 0))))
     (if (call $gl_bitmap_intercept (local.get $op) (local.get $stack))
       (then (return (i32.const 0))))
     (global.set $gl_wat_stat_calls (i64.add (global.get $gl_wat_stat_calls) (i64.const 1)))

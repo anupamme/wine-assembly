@@ -36,6 +36,7 @@ class Backend {
   getPresentationSurface() { return this.presentation; }
   present() { this.presents++; return this.presentation; }
   setCapability(cap, enabled) { this.stencilEnabled = [cap, enabled]; }
+  setColorMask(...values) { this.colorMask = values; }
   resetRenderTargets(width, height, depth) {
     assert.deepStrictEqual(depth, {width,height,bits:24}, 'resized GL drawable retains depth/stencil storage');
     if (this.failNextReset) {
@@ -58,7 +59,7 @@ function makeBridge(backend, win) {
   });
   const context = {
     handle: 1, hwnd: 0x10001, win, backend,
-    frontend: { flushPendingDraw() {}, applyStencil() {}, enabled: new Set() },
+    frontend: { flushPendingDraw() {}, applyStencil() {}, enabled: new Set(), colorMask: [true,false,true,false] },
     layer: { canvas: backend.getPresentationSurface(), backend, writeSeq: 0 },
   };
   bridge.contexts.set(1, context);
@@ -79,6 +80,7 @@ check('a window that grew after createContext gets a drawable that grew with it'
   assert.deepStrictEqual(backend.resets, [[940, 734]],
     'the drawable is resized to the window client area');
   assert.deepStrictEqual([backend.canvas.width, backend.canvas.height], [940, 734]);
+  assert.deepStrictEqual(backend.colorMask, [true,false,true,false], 'resize restores guest color write mask');
   assert.strictEqual(context.layer.canvas, backend.getPresentationSurface(),
     'the composited layer points at the new presentation surface, not the freed one');
 

@@ -36285,8 +36285,7 @@
     "name": "glColorMask",
     "nargs": 4,
     "convention": "stdcall",
-    "hash": 2216263645,
-    "handler": "gl_unimplemented"
+    "hash": 2216263645
   },
   {
     "id": 4245,

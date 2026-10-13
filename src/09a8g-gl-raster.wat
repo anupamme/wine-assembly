@@ -1582,10 +1582,7 @@
             (if (i32.ne (local.get $rt) (global.get $gl_sw_rt))
               (then (local.set $zv (global.get $gl_sw_sc_zview))))))
         (if (i32.and (local.get $mask) (i32.const 0x4000))
-          (then (call $viewport_fill_rect (local.get $rt) (i32.const 0) (i32.const 0)
-            (load.field DxObject width (local.get $rt))
-            (load.field DxObject height (local.get $rt))
-            (global.get $gl_sw_clear_color))))
+          (then (call $gl_color_clear (local.get $rt))))
         (if (i32.and (local.get $mask) (i32.const 0x100))
           (then (call $gl_sw_fill_depth (local.get $zv))))
         (if (i32.and (local.get $mask) (i32.const 0x400))
@@ -2929,6 +2926,7 @@
     (local $b i32) (local $mvp i32) (local $vp i32) (local $i i32) (local $base i32)
     (local $v i32)
     (global.set $rast_stencil_state (call $gl_stencil_state))
+    (global.set $rast_color_mask (call $gl_color_mask_bits (global.get $gl_sw_rt)))
     (if (global.get $rast_stencil_state) (then
       (if (i32.eqz (i32.load (global.get $rast_stencil_state)))
         (then (global.set $rast_stencil_state (i32.const 0))))))
@@ -2979,13 +2977,14 @@
           (else (call $gl_sw_point (local.get $mvp) (local.get $vp) (local.get $v))))))
       (local.set $i (i32.add (local.get $i) (local.get $step)))
       (br $lp)))
-    (global.set $rast_stencil_state (i32.const 0)))
+    (global.set $rast_stencil_state (i32.const 0))
+    (global.set $rast_color_mask (i32.const -1)))
 
   ;; ---- render Worker -------------------------------------------------------
   ;; With a D3D render Worker attached (--d3d-worker, and Threads mode in the
   ;; browser) a draw is queued there instead of rasterized here, exactly as
   ;; D3DIM's are: the guest runs on while the Worker draws. The record is a
-  ;; 1088-byte snapshot of everything $gl_sw_draw reads that the guest may
+  ;; 1092-byte snapshot of everything $gl_sw_draw reads that the guest may
   ;; change before the Worker gets to it, then the packed draw record itself:
   ;;   +0    state block (+0..+63 of $gl_sw_st)
   ;;   +64   top of each matrix stack, 0..3, 64 bytes each
@@ -3098,7 +3097,7 @@
     (if (global.get $gl_sw_in_worker) (then (return (i32.const 0))))
     (if (i32.eq (global.get $gl_sw_worker_ok) (i32.const 2)) (then (return (i32.const 0))))
     (if (i32.eqz (global.get $gl_sw_snap)) (then
-      (local.set $g (call $gl_alloc_affine (i32.const 1104)))
+      (local.set $g (call $gl_alloc_affine (i32.const 1108)))
       (if (i32.eqz (local.get $g)) (then
         (global.set $gl_sw_worker_ok (i32.const 2))
         (return (i32.const 0))))
@@ -3157,10 +3156,11 @@
     (i32.store offset=1076 (local.get $snap) (global.get $gl_stencil_pixels))
     (i32.store offset=1080 (local.get $snap) (global.get $gl_stencil_pitch))
     (i32.store offset=1084 (local.get $snap) (global.get $gl_stencil_height))
+    (i32.store offset=1088 (local.get $snap) (call $gl_color_mask))
     ;; 0x20005's descriptor: snapshot, its length, packed record, its length.
-    (local.set $d (i32.add (local.get $snap) (i32.const 1088)))
+    (local.set $d (i32.add (local.get $snap) (i32.const 1092)))
     (i32.store offset=0 (local.get $d) (local.get $snap))
-    (i32.store offset=4 (local.get $d) (i32.const 1088))
+    (i32.store offset=4 (local.get $d) (i32.const 1092))
     (i32.store offset=8 (local.get $d) (local.get $start))
     (i32.store offset=12 (local.get $d)
       (i32.add (i32.mul (local.get $vertices) (i32.const 76)) (i32.const 32)))
@@ -3244,6 +3244,7 @@
     (global.set $gl_stencil_pixels (i32.load offset=1076 (local.get $snap)))
     (global.set $gl_stencil_pitch (i32.load offset=1080 (local.get $snap)))
     (global.set $gl_stencil_height (i32.load offset=1084 (local.get $snap)))
+    (global.set $gl_color_mask_worker (i32.load offset=1088 (local.get $snap)))
     (call $gl_sw_draw (local.get $rec) (local.get $n) (local.get $step))
     (i32.const 1))
 

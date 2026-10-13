@@ -250,6 +250,7 @@
     (if (i32.eqz (call $gl_sw_raster_state)) (then (return)))
     (if (i32.eqz (call $gl_stencil_prepare)) (then (return)))
     (global.set $rast_stencil_state (call $gl_stencil_state))
+    (global.set $rast_color_mask (call $gl_color_mask_bits (global.get $gl_sw_rt)))
     (if (global.get $rast_stencil_state) (then
       (if (i32.eqz (i32.load (global.get $rast_stencil_state)))
         (then (global.set $rast_stencil_state (i32.const 0))))))
@@ -275,7 +276,8 @@
       (i32.store offset=24 (local.get $p) (call $gl_sw_color (local.get $v)))
       (call $gl_sw_span (local.get $y) (local.get $x) (local.get $p) (i32.add (local.get $x) (i32.const 1)) (local.get $p))
       (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $pixels)))
-    (global.set $rast_stencil_state (i32.const 0)))
+    (global.set $rast_stencil_state (i32.const 0))
+    (global.set $rast_color_mask (i32.const -1)))
 
   (func $gl_bitmap_intercept (param $op i32) (param $stack i32) (result i32)
     (local $ctx i32) (local $a i32) (local $v i32) (local $p i32) (local $n i32) (local $bits i32)
@@ -422,7 +424,7 @@
     (if (i32.eq (local.get $op) (i32.const 76)) (then
       (if (i32.ge_u (i32.load offset=172 (local.get $ctx)) (i32.const 16)) (then
         (call $gl_list_error (local.get $ctx) (i32.const 0x503)) (return (i32.const 1))))
-      (local.set $p (call $gl_list_alloc (i32.const 92)))
+      (local.set $p (call $gl_list_alloc (i32.const 96)))
       (if (i32.eqz (local.get $p)) (then (unreachable)))
       (i32.store (local.get $p) (i32.load offset=104 (local.get $ctx)))
       (i32.store offset=4 (local.get $p) (local.get $a))
@@ -430,6 +432,7 @@
       (i32.store offset=12 (local.get $p) (i32.load offset=108 (local.get $ctx)))
       (memory.copy (i32.add (local.get $p) (i32.const 16)) (i32.add (local.get $ctx) (i32.const 40)) (i32.const 40))
       (memory.copy (i32.add (local.get $p) (i32.const 56)) (i32.add (local.get $ctx) (i32.const 192)) (i32.const 36))
+      (i32.store offset=92 (local.get $p) (i32.load offset=228 (local.get $ctx)))
       (i32.store offset=104 (local.get $ctx) (local.get $p))
       (i32.store offset=172 (local.get $ctx) (i32.add (i32.load offset=172 (local.get $ctx)) (i32.const 1)))))
     (if (i32.eq (local.get $op) (i32.const 77)) (then
@@ -437,6 +440,8 @@
       (if (i32.eqz (local.get $p)) (then
         (call $gl_list_error (local.get $ctx) (i32.const 0x504)) (return (i32.const 1))))
       (local.set $mask (i32.load offset=4 (local.get $p)))
+      (if (i32.and (local.get $mask) (i32.const 0x4000))
+        (then (i32.store offset=228 (local.get $ctx) (i32.load offset=92 (local.get $p)))))
       (if (i32.and (local.get $mask) (i32.const 0x20000))
         (then (i32.store offset=100 (local.get $ctx) (i32.load offset=8 (local.get $p)))))
       (if (i32.and (local.get $mask) (i32.const 0x400)) (then

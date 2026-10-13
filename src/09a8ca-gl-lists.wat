@@ -23,12 +23,13 @@
       (if (i32.eq (i32.load offset=4 (local.get $p)) (global.get $gl_current_context))
         (then (return (local.get $p))))
       (local.set $p (i32.load (local.get $p))) (br $scan)))
-    (local.set $p (call $gl_list_alloc (i32.const 228)))
+    (local.set $p (call $gl_list_alloc (i32.const 232)))
     (if (i32.eqz (local.get $p)) (then (unreachable)))
     (i32.store (local.get $p) (global.get $gl_list_contexts))
     (i32.store offset=4 (local.get $p) (global.get $gl_current_context))
     (call $gl_bitmap_context_init (local.get $p))
     (call $gl_stencil_init (i32.add (local.get $p) (i32.const 192)))
+    (i32.store offset=228 (local.get $p) (i32.const 15))
     (global.set $gl_list_contexts (local.get $p))
     (local.get $p))
 
@@ -108,7 +109,7 @@
     (local.set $ctx (call $gl_list_context))
     (if (i32.eqz (local.get $ctx))
       (then (return (i32.and (i32.ge_u (local.get $op) (i32.const 124))
-        (i32.le_u (local.get $op) (i32.const 139))))))
+        (i32.le_u (local.get $op) (i32.const 140))))))
     (local.set $id (i32.load offset=4 (local.get $stack)))
     (if (call $gl_stencil_validate (local.get $ctx) (local.get $op) (local.get $stack))
       (then (return (i32.const 1))))
@@ -296,7 +297,7 @@
       (br $free))))
 
   (func $gl_list_scalar_command (param $op i32) (result i32)
-    (if (i32.le_u (i32.sub (local.get $op) (i32.const 136)) (i32.const 3))
+    (if (i32.le_u (i32.sub (local.get $op) (i32.const 136)) (i32.const 4))
       (then (return (i32.const 1))))
     (block $no (block $yes
       (br_table $yes $yes $yes $yes $yes $yes $yes $yes $yes $yes $yes $no $no $no $no $yes $yes $no $yes $yes $yes $yes $yes $yes $no $yes $no $no $yes $yes $yes $no $yes $yes $no $yes $yes $yes $yes $yes $yes $yes $yes $no $yes $no $yes $no $no $no $no $no $no $no $no $no $yes $yes $no $no $no $no $no $yes $no $no $yes $no $no $no $yes $yes $yes $no $no $yes $no $no $no $yes $yes $yes $yes $no $yes $no $no $no $no $no $yes $no $yes $no $yes $no $yes $yes $no $no $no $no $no $no $yes $yes $no $yes $no $no $yes $yes $no $no $no $no $no $no $yes $no $yes $no $yes $no $no $no $no $yes $no $no $yes $no $yes $no $no (local.get $op)))
