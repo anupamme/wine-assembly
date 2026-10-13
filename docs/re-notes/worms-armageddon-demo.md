@@ -91,3 +91,33 @@ try ordinary Space or a title click with separate captures. Do not repeat only
 the same logo waits or infer an emulator defect from the run deadline. Once
 the real menu appears, follow Single Player -> Quick Game and reduce the guest
 clock for turn-based input capture. There is still no menu/control/FPS claim.
+
+## Main menu reached, 2026-10-13 20:04 UTC
+
+Run `scratch/runs/20261013T2000Z-worms-armageddon-title-input` used the same
+100,000-block/200 ms original-DLL route and unchanged Wasm. Explicit ordinary
+Escape key-down/key-up at batches 42 and 65 skipped the publisher logos.
+The initial scheduled `keypress:27` at 30/45 was a WM_CHAR, not an Escape
+key-down/up pair; it must not be used as an equivalent replay.
+
+At batch 85 the reviewed Worms title received Escape. The title faded and the
+intro child windows disappeared, leaving WAGame/T17 and no keyboard focus.
+After an ordinary click at (320,240) at batch 105 and three steps, the actual
+main menu rendered: four colorful panels and Quit. The guest log creates the
+MainMenu dialog and labels Single player games, Create a game, Network game,
+Options and Quit. This is reviewed menu evidence, not gameplay.
+
+Space at batch 108 and three more steps produced a darkened main-menu image;
+the subsequent screen was not assessed. Ordinary control quit at batch 111
+exited 0 at 20:04:38; the owned process was absent at 20:04:46. The run reported
+278.627 seconds and 5,205,286 API calls. No performance claim is made for the
+synthetic clock. Nineteen local artifacts preserve launch, complete input log,
+screenshots and exit receipt.
+
+Next allocated route: reproduce the publisher/title Escape events and the
+center click; inspect the main menu; click the top-left Single Player panel
+around (175,105), step briefly and inspect the next screen before selecting
+Play Quick Game Against Computer. Do not send the last Space from this run
+before that click. Reduce the clock while frozen for the actual turn-based
+movement/jump capture. No guest patches, fake API success or emulator source
+changes were needed to reach the menu.
