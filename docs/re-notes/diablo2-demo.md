@@ -1432,3 +1432,31 @@ read-only heap inspection occurred outside timed samples. The evidence supports
 removal of the measured fallback/readback mechanism with intact ordinary town
 rendering and movement. Result manifests retain the exact tested source, rather
 than relabeling the run with the later integration commit.
+
+
+## Explicit software browser gameplay, 2026-10-13
+
+Run `20261013T2115Z-diablo2-software-town` (prepared at21:15, executed
+21:26:31–21:29:01 UTC) uses source `2cf59bcff` and the same canonical
+`ba6f25ea2d467b3fba00110d83575d48ac1aeb8794a474052190998067723259`
+module as the earlier WebGL run. Ordinary title, Single Player, Barbarian and
+name input reached Rogue Encampment. Ground click(405,384) on reviewed open
+ground moved the hero east and scrolled the camera; before/after town captures
+were reviewed with terrain, rain and HUD intact. No captured page errors.
+
+This backend is positively attested rather than inferred from the selector:
+read-only CDP observes an initialized legacy render endpoint with
+backend=software and no GPU adapter; initialized guest workers report
+GPU disabled. Completed renderer commands rise595302->826832 across the
+ordinary input observation (231530 additional commands), endpoint errors0.
+The corresponding source dispatches those batches to the WASM rasterizer.
+All119 served JS/Wasm request hashes were checked against exact source blobs
+or the canonical module hash. Original26fixture hashes were verified during
+preparation;52remote artifacts were transferred with SHA256 checks.
+
+Evidence `result.json` was published after root visual/backend review.
+Supervisor115095, driver115103 and Chrome115116 exited/absent by21:29:10.
+Together with `20261013T2055Z-diablo2-pointlist-candidate`, this supplies
+ordinary browser town/control evidence for both software and WebGL on the
+recorded versions. It is not a matched performance comparison: RNG/time differ.
+No audio, combat, mobile, logical/display FPS or long-session claim is made.
