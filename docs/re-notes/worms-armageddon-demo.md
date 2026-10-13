@@ -277,3 +277,25 @@ The full build and `test-active-window.js`, `test-def-dlg-proc.js`,
 This run establishes ordinary human Up aiming through the original child
 route. Firing, movement, a complete match, browser behavior, audio, and timing
 performance remain outside this evidence.
+
+## Registered local candidate launch (2026-10-13)
+
+Candidate `1635081e10df4a62183c184ff27a2daf3123b527` adds the local-only
+`worms_armageddon_demo` app with five original DLL seeds and
+`spawnProcesses: true`. The archive/extractArchive/is5Extract recipe reproduced
+all 667 original files (20,639,487 bytes) with zero SHA-256 differences.
+Eight registry structure checks passed. No desktop/public release is included.
+
+`scratch/runs/20261013T2156Z-wa-registered/` used
+`--app=worms_armageddon_demo --no-build`, without an explicit spawn override,
+with module `9b3ef6f173daaa8be90733a4b8449733d74ca861062d0383a709f4be02ce1c77`.
+The genuine child merged two written files, one deletion and 73 registry/INI
+keys; Quick Game reached the reviewed Player One/Worm 1 human turn at batch
+771, timer 58. Its image matches the previously reviewed candidate capture.
+All 34 artifacts were copied and SHA-256 verified.
+
+The 120-second visual-review gate expired before coordinator confirmation.
+No aiming input was issued in this registered run; the earlier ordinary Up
+aiming evidence remains a separate run. Guest exit was zero at 22:01:31.120Z;
+supervisor136892, guest136903 and guest group were absent at22:02:49.705Z.
+Registered launch is verified; browser, full match, audio and FPS remain open.
