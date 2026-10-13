@@ -2,6 +2,45 @@
 
 Source: https://archive.org/details/win3_JezzBall ; win3_JezzBall.zip SHA1 2f041c41949b39917754ef1e49667b7f8f4b578b. JEZZBALL.EXE SHA256 0450d0559fa5957d813bdd7be1f71122bf23047869b610802386320f109cb705 matches test/binaries/wep16/WEP4/JEZZBALL.EXE. Use registered wep16_jezzball so WEP4UTIL.DLL and WAV/HLP companions are available.
 
+## 2026-10-13 first-level transition
+
+On 6aaf65235, ordinary pointer gameplay through the real ops emulator handler
+reproduced two "Well done!" dialogs. Clicking each Next Level skipped straight
+to four balls/lives, with overlapping board text. A narrower ordinary-input
+control reached one completion dialog, then clicked the exposed owner board at
+screen (465,455): that alone opened a second dialog. Win16 DialogBox activated
+the popup but never disabled its owner, so the click reactivated the game.
+The modal invocation now remembers and disables an enabled owner before init,
+then restores only that invocation's disable on completion. Modeless dialogs,
+ownerless dialogs, and already-disabled owners retain their previous state.
+
+Blocking that reactivation exposed a second generic bug. After EndDialog, OWL
+calls DestroyWindow on a retired dialog child. Its narrow HWND widens to zero;
+wnd_table_find(0) intentionally finds an empty slot, and enumerating children of
+parent zero visits top-level windows. Win16 DestroyWindow therefore destroyed
+the main window and its WM_DESTROY posted WM_QUIT (ExitProcess 0, not a trap).
+Reject null and invalid HWNDs before starting the destruction walk. Keep the
+window table's empty-slot lookup semantics unchanged.
+
+test-win16-windowpos-defproc.js now runs with actual Win16 handle retirement and
+covers null/stale destruction preserving unrelated windows, modal disable before
+WM_INITDIALOG, nested dialogs, pre-disabled/destroyed/absent owners, EndDialog
+during init, WM_CLOSE/IDCANCEL, failed creation, and modeless creation. Old-source
+negative controls fail the owner-disable and invalid-destruction assertions.
+Baseline evidence: scratch/runs/20261013T1132Z-jezzball-level-before; intermediate
+exit diagnosis: scratch/runs/20261013T1211Z-jezzball-level-after. All gameplay
+inputs were ordinary mouse actions, with no guest gameplay-state writes.
+
+Final Threads browser evidence: scratch/runs/20261013T1225Z-jezzball-level-final.
+The exposed-owner click leaves one completion popup; one Next Level click starts
+level 2 with three balls, three lives and 0% area. A subsequent trusted click
+builds a complete vertical wall, advancing score 3025 to 3105 and area to 3%.
+The completion popup's pre-existing clipped geometry remains a separate visual
+issue. Canonical build, Win16 modal/window-position lifecycle, destroy
+notifications, handle retirement, and renderer modal-input tests pass. The
+existing CLI JezzBall regression also passes wall growth, High Scores, game over,
+name submission and score dismissal. No public deployment was performed.
+
 ## 2026-10-10 crash investigation
 
 User report on 62918bb02, exe:jezzball, Chrome154/macOS, no cross-origin isolation/SAB, EIP1024ec and return1024f5. This is FCHKWEPVERS immediately before score submission; an EXE-only launch may lack its companion DLL. Exact old production build has not been replayed.

@@ -146,11 +146,12 @@
   ;; The state the pump needs sits on the task's stack under the parked EIP, so
   ;; that a dialog put up from inside another dialog's procedure keeps its own:
   ;;   [sp+0] dialog hwnd, 16-bit    [sp+2] return offset    [sp+4] return sel
+  ;;   [sp+6] owner to re-enable, 32-bit (zero if already disabled/modeless)
   ;; A 16-bit window procedure RETFs its own arguments off, so this record is
   ;; exactly what the stack holds again each time one returns here.
   (func $win16_dlg_run (param $template i32) (param $parent i32) (param $proc i32)
         (param $init_param i32) (param $ret i32)
-    (local $hwnd i32) (local $i i32) (local $ctrl i32)
+    (local $hwnd i32) (local $i i32) (local $ctrl i32) (local $restore_owner i32)
     (local.set $hwnd (global.get $next_hwnd))
     (global.set $next_hwnd (i32.add (global.get $next_hwnd) (i32.const 1)))
     (call $wnd_table_set (local.get $hwnd) (global.get $WNDPROC_DIALOG))
@@ -160,6 +161,16 @@
     (call $heap_free (local.get $template))
     (call $wnd_set_parent (local.get $hwnd) (i32.const 0))
     (call $wnd_set_owner (local.get $hwnd) (local.get $parent))
+    ;; A modal owner's exposed client area must not activate or accept input.
+    ;; Remember only a disable performed by this invocation: a nested dialog
+    ;; must not enable the outer dialog's owner when it returns.
+    (if (i32.and (i32.ne (local.get $hwnd) (global.get $win16_dlg_modeless_pending))
+          (i32.and (i32.ne (local.get $parent) (i32.const 0))
+            (i32.and (i32.ge_s (call $wnd_table_find (local.get $parent)) (i32.const 0))
+              (i32.eqz (call $ctrl_style_disabled (call $wnd_get_style (local.get $parent)))))))
+      (then
+        (local.set $restore_owner (local.get $parent))
+        (call $win16_dlg_enable_owner (local.get $parent) (i32.const 0))))
     (drop (call $wnd_set_style (local.get $hwnd)
       (i32.or (call $wnd_get_style (local.get $hwnd)) (i32.const 0x10000000))))
     (call $host_dialog_loaded (local.get $hwnd) (local.get $parent))
@@ -198,6 +209,8 @@
     ;; $win16_focus_start when the dialog ends.
     (drop (call $host_activate_window (local.get $hwnd)))
     (global.set $win16_dlg_ended (i32.const 0))
+    (call $win16_push16 (i32.shr_u (local.get $restore_owner) (i32.const 16)))
+    (call $win16_push16 (local.get $restore_owner))
     (call $win16_push16 (i32.shr_u (local.get $ret) (i32.const 16)))
     (call $win16_push16 (local.get $ret))
     (call $win16_push16 (call $win16_h16 (local.get $hwnd)))
@@ -539,9 +552,15 @@
     ;; Exactly what clicking the Cancel button posts (BN_CLICKED).
     (drop (call $post_queue_push (local.get $dlg) (i32.const 0x0111) (i32.const 2) (local.get $cancel))))
 
+  (func $win16_dlg_enable_owner (param $owner i32) (param $enable i32)
+    (call $win16_call32_begin (i32.const 2))
+    (call $handle_EnableWindow (local.get $owner) (local.get $enable)
+      (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+    (call $win16_call32_end))
+
   (func $win16_dlg_pump
     (local $dlg i32) (local $proc i32) (local $scratch i32) (local $packed i32)
-    (local $hwnd i32) (local $msg i32) (local $owner i32)
+    (local $hwnd i32) (local $msg i32) (local $owner i32) (local $restore_owner i32)
     (local $dlg_x i32) (local $dlg_y i32) (local $dlg_w i32) (local $dlg_h i32)
     (local.set $dlg (call $win16_h32 (call $gl16 (i32.load offset=16 (global.get $reg_base)))))
     (local.set $proc (call $dialog_proc_get (local.get $dlg)))
@@ -556,7 +575,7 @@
         (local.set $packed (i32.or (call $gl16 (i32.load offset=16 (global.get $reg_base)))
           (i32.shl (call $gl16 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 2)))
                    (i32.const 16))))
-        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
         (i32.store offset=0 (global.get $reg_base) (call $win16_h16 (local.get $dlg)))
         (i32.store offset=8 (global.get $reg_base) (i32.const 0))
         (global.set $yield_reason (i32.const 0))
@@ -572,10 +591,14 @@
     (if (global.get $win16_dlg_ended)
       (then
         (global.set $win16_dlg_ended (i32.const 0))
-        ;; The pump frame is {dialog WORD, return offset WORD, selector WORD}.
-        ;; Turn it into the existing far continuation's {result, offset, selector}
-        ;; before teardown can reenter USER and overwrite the shared result.
-        (call $gs16 (i32.load offset=16 (global.get $reg_base)) (global.get $win16_dlg_result))
+        ;; Retire the invocation's owner DWORD, leaving the standard far
+        ;; continuation {result, offset, selector}. Snapshot before callbacks.
+        (local.set $scratch (i32.load offset=16 (global.get $reg_base)))
+        (local.set $restore_owner (call $gl32 (i32.add (local.get $scratch) (i32.const 6))))
+        (local.set $packed (call $gl32 (i32.add (local.get $scratch) (i32.const 2))))
+        (call $gs16 (i32.add (local.get $scratch) (i32.const 4)) (global.get $win16_dlg_result))
+        (call $gs32 (i32.add (local.get $scratch) (i32.const 6)) (local.get $packed))
+        (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $scratch) (i32.const 4)))
         (local.set $owner (call $wnd_get_owner (local.get $dlg)))
         ;; Preserve the popup's screen bounds while its host/window-table
         ;; records still exist. ABOUTTET draws directly through GetDC(NULL),
@@ -587,6 +610,11 @@
         (call $wnd_destroy_children (local.get $dlg))
         (call $wnd_table_remove (local.get $dlg))
         (call $host_destroy_window (local.get $dlg))
+        ;; A destroyed owner is never recreated by restoration. Keep its full
+        ;; HWND here rather than a narrow handle that can be recycled.
+        (if (i32.and (i32.ne (local.get $restore_owner) (i32.const 0))
+              (i32.ge_s (call $wnd_table_find (local.get $restore_owner)) (i32.const 0)))
+          (then (call $win16_dlg_enable_owner (local.get $restore_owner) (i32.const 1))))
         (call $gdi_screen_surface_clear_rect
           (local.get $dlg_x) (local.get $dlg_y)
           (local.get $dlg_w) (local.get $dlg_h))

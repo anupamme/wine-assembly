@@ -4,6 +4,35 @@ const assert = require('assert');
 const { bootRenderHarness } = require('./render-helper');
 
 const extraWat = `
+  (func (export "test_retire_window") (param $h i32) (call $wnd_table_remove (local.get $h)))
+  (func (export "test_destroy_handle") (param $h16 i32)
+    (call $post_queue_reset)
+    (i32.store offset=16 (global.get $reg_base) (i32.const 0x110800))
+    (call $gs16 (i32.const 0x110800) (i32.const 0x90))
+    (call $gs16 (i32.const 0x110802) (i32.const 0xf))
+    (call $gs16 (i32.const 0x110804) (local.get $h16))
+    (call $win16_DestroyWindow))
+  (func (export "test_enabled") (param $h i32) (result i32)
+    (i32.eqz (call $ctrl_style_disabled (call $wnd_get_style (local.get $h)))))
+  (func (export "test_disable") (param $h i32)
+    (call $win16_call32_begin (i32.const 2))
+    (call $handle_EnableWindow (local.get $h) (i32.const 0)
+      (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+    (call $win16_call32_end))
+  (func (export "test_open_modal") (param $template i32) (param $owner i32)
+        (param $proc i32) (param $modeless i32)
+    (call $post_queue_reset)
+    (global.set $yield_reason (i32.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.const 0x110800))
+    (call $gs16 (i32.const 0x110800) (i32.const 0x90))
+    (call $gs16 (i32.const 0x110802) (i32.const 0xf))
+    (call $gs16 (i32.const 0x110804) (local.get $proc))
+    (call $gs16 (i32.const 0x110806) (i32.const 0xf))
+    (call $gs16 (i32.const 0x110808) (call $win16_h16 (local.get $owner)))
+    (call $gs16 (i32.const 0x11080a) (select (i32.const 0) (local.get $template) (local.get $modeless)))
+    (call $gs16 (i32.const 0x11080c) (select (local.get $template) (i32.const 0) (local.get $modeless)))
+    (call $gs16 (i32.const 0x11080e) (i32.const 0))
+    (call $win16_DialogBoxIndirect (local.get $modeless)))
   (func (export "test_native_control") (param $h i32)
     (call $wnd_table_set (local.get $h) (global.get $WNDPROC_CTRL_NATIVE)))
   (func (export "test_modal_template") (result i32)
@@ -33,6 +62,7 @@ const extraWat = `
     (call $gs16 (i32.const 0x110800) (call $win16_h16 (local.get $dlg)))
     (call $gs16 (i32.const 0x110802) (i32.const 0x90))
     (call $gs16 (i32.const 0x110804) (i32.const 0x000f))
+    (call $gs32 (i32.const 0x110806) (i32.const 0))
     (call $win16_dlg_pump))
   (func (export "test_peek_thunk") (result i32)
     (call $win16_thunk_for (i32.const 2) (i32.const 109) (i32.const 0)))
@@ -54,6 +84,8 @@ const extraWat = `
     (call $win16_dlg_pump)
     (i32.add (i32.const 0x120000) (global.get $WIN16_DLG_PUMP)))
   (func (export "test_modal_step") (call $win16_dlg_pump))
+  (func (export "test_modal_parked") (result i32)
+    (i32.add (i32.const 0x120000) (global.get $WIN16_DLG_PUMP)))
   (func (export "test_mouse_pump") (param $peek i32) (param $remove i32) (param $min i32) (param $max i32)
     (i32.store offset=16 (global.get $reg_base) (i32.const 0x110800))
     (call $gs16 (i32.const 0x110800) (i32.const 0x90))
@@ -104,6 +136,7 @@ const extraWat = `
     (i32.or (i32.and (i32.load (global.get $reg_base)) (i32.const 0xFFFF))
       (i32.shl (i32.load offset=8 (global.get $reg_base)) (i32.const 16))))
   (func (export "test_init")
+    (global.set $is_win16 (i32.const 1))
     (global.set $WIN16_THUNK_SEL (call $win16_index_to_sel (i32.const 3)))
     (call $win16_seg_set (i32.const 1) (i32.const 0x100000) (i32.const 65536) (i32.const 0) (i32.const 1))
     (call $win16_seg_set (i32.const 2) (i32.const 0x110000) (i32.const 65536) (i32.const 1) (i32.const 2))
@@ -253,7 +286,8 @@ const extraWat = `
     (global.set $main_hwnd (local.get $h))
     (global.set $pending_wm_size (local.get $size)))
   (func (export "test_alive") (param $h i32) (result i32)
-    (i32.ge_s (call $wnd_table_find (local.get $h)) (i32.const 0)))
+    (i32.and (i32.ne (local.get $h) (i32.const 0))
+      (i32.ge_s (call $wnd_table_find (local.get $h)) (i32.const 0))))
 `;
 
 // Pascal far wndproc, recording {message,wParam,lParam} into SS:0904.
@@ -307,6 +341,21 @@ const pack = (x, y) => ((x & 0xffff) | (y << 16)) >>> 0;
   const writeCode = (offset, code) => code.forEach((b, i) => e.guest_write8(0x100000 + offset + i, b));
   writeCode(0x200, recorder());
   const hwnd = e.test_window(0x200);
+  const unrelated = e.test_window(0x200), survivingChild = e.test_window(0x200);
+  e.test_as_child(survivingChild, unrelated);
+  const retired = e.test_window(0x200), stale = e.test_narrow(retired);
+  e.test_retire_window(retired);
+  assert.strictEqual(e.test_widen(stale), 0, 'retired narrow HWND widens to NULL');
+  for (const h of [0, stale, e.test_narrow(0x12345678)]) {
+    e.test_destroy_handle(h);
+    assert.strictEqual(e.get_eip(), 0x100090, 'invalid DestroyWindow returns without entering a wndproc');
+    assert.strictEqual(e.get_esp(), 0x110806, 'invalid DestroyWindow retires its Pascal arguments');
+    assert.strictEqual(e.test_long_result(), 0, 'invalid DestroyWindow returns FALSE');
+    for (const live of [hwnd, unrelated, survivingChild]) {
+      assert.strictEqual(e.test_alive(live), 1, 'invalid/stale HWND leaves unrelated windows alive');
+    }
+    assert.strictEqual(e.test_post_count(), 0, 'invalid HWND posts no destruction notifications');
+  }
   const pointer = 0x00170a00; // SS:0A00, not a flat address
   const flagsAt = 0x110a0c;
   // Poison WINDOWPOS's geometry: messages must describe committed client
@@ -1230,6 +1279,48 @@ const pack = (x, y) => ((x & 0xffff) | (y << 16)) >>> 0;
     0x8b, 0x46, 0x0e, 0x36, 0xa3, 0x46, 0x0f];
   writeCode(0xb800, recorder([0x81, 0x7e, 0x0c, 0x10, 1,
     0x75, nestedEnd.length, ...nestedEnd]));
+  // Actual DialogBoxIndirect entry disables its owner before WM_INITDIALOG.
+  // EndDialog during init, nested dialogs, and failure must restore exactly
+  // the state owned by this call; CreateDialogIndirect stays modeless.
+  for (const [index, mode] of ['normal', 'pre-disabled', 'nested', 'destroy-owner', 'modeless', 'failed', 'cancel', 'ownerless'].entries()) {
+    const proc = 0xf000 + index * 0x100;
+    const owner = mode === 'ownerless' ? 0 : e.test_window(0x5000);
+    if (mode === 'pre-disabled') e.test_disable(owner);
+    const nested = mode === 'nested' ? [
+      0x6a, 0, 0x68, ...word(template), 0x68, ...word(e.test_narrow(owner)),
+      0x6a, 0x0f, 0x68, 0, 0xb8, 0x9a, ...word(e.test_user_thunk(218)), 0x1f, 0,
+      0x68, ...word(e.test_narrow(owner)), 0x9a, ...word(e.test_user_thunk(35)), 0x1f, 0,
+      0x36, 0xa3, 0x48, 0x0f,
+    ] : [];
+    const destroyOwner = mode === 'destroy-owner' ? [0x68, ...word(e.test_narrow(owner)),
+      0x9a, ...word(destroyThunk), 0x1f, 0] : [];
+    const finish = mode === 'modeless' ? [] : [...nested, ...destroyOwner, ...nestedEnd];
+    writeCode(proc, recorder([0x81, 0x7e, 0x0c, mode === 'cancel' ? 0x11 : 0x10, 1,
+      0x75, finish.length, ...finish]));
+    e.guest_write32(0x110900, 0);
+    e.guest_write32(0x110f48, 0xffff);
+    e.test_open_modal(mode === 'failed' ? 0 : template, owner, proc, mode === 'modeless' ? 1 : 0);
+    assert.strictEqual(e.test_enabled(owner), ['modeless', 'failed', 'ownerless'].includes(mode) ? 1 : 0,
+      `${mode}: owner disabled before WM_INITDIALOG can reenter USER`);
+    if (mode === 'cancel') {
+      for (let i = 0; e.get_eip() !== e.test_modal_parked() && i < 100; i++) e.run(100);
+      assert.strictEqual(e.get_eip(), e.test_modal_parked(), 'dialog enters its ordinary modal pump');
+      assert.strictEqual(e.test_enabled(owner), 0, 'owner stays disabled while modal pump runs');
+      const dlg = e.test_widen(e.guest_read32(e.get_esp()) & 0xffff);
+      e.post_message_q(dlg, 0x10, 0, 0); // WM_CLOSE -> IDCANCEL -> guest EndDialog.
+    }
+    e.set_bp(0x100090);
+    for (let i = 0; e.get_eip() !== 0x100090 && i < 100; i++) e.run(100);
+    e.set_bp(0);
+    assert.strictEqual(e.get_eip(), 0x100090, `${mode}: returns to caller`);
+    assert.strictEqual(e.get_esp(), mode === 'modeless' ? 0x110810 : 0x11080e,
+      `${mode}: complete Pascal and modal frames retired`);
+    if (mode === 'destroy-owner') assert.strictEqual(e.test_alive(owner), 0, 'destroyed owner stays destroyed');
+    else assert.strictEqual(e.test_enabled(owner), mode === 'pre-disabled' ? 0 : 1,
+      `${mode}: restores prior owner state`);
+    if (mode === 'nested') assert.strictEqual(e.guest_read32(0x110f48) & 0xffff, 0,
+      'inner DialogBox must leave the outer owner disabled');
+  }
   const modes = ['owner', 'redirect', 'surviving-focus', 'nested-dialog', 'activate-owner', 'main-fallback'];
   for (const [index, mode] of modes.entries()) {
     const off = 0xb000 + index * 0x100;
@@ -1255,7 +1346,7 @@ const pack = (x, y) => ((x & 0xffff) | (y << 16)) >>> 0;
     for (let i = 0; e.get_eip() !== 0x100090 && i < 50; i++) e.run(100);
     e.set_bp(0);
     assert.strictEqual(e.get_eip(), 0x100090, 'modal close returns to its far caller');
-    assert.strictEqual(e.get_esp(), 0x110806, 'modal and focus continuation frames retired');
+    assert.strictEqual(e.get_esp(), 0x11080a, 'modal and focus continuation frames retired');
     assert.strictEqual(e.test_long_result(), 42, 'focus callbacks preserve outer result');
     assert.strictEqual(e.test_alive(dlg), 0, 'retiring dialog removed');
     assert.strictEqual(e.test_alive(child), 0, 'retiring focused child removed');

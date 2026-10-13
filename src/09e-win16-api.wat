@@ -12000,9 +12000,18 @@
   (func $win16_DestroyWindow
     (local $hwnd i32) (local $sp i32)
     (local.set $hwnd (call $win16_h32 (call $win16_arg16 (i32.const 0))))
+    ;; A retired narrow HWND widens to zero. wnd_table_find(0) deliberately
+    ;; finds an empty slot, and the children of parent zero are top-level
+    ;; windows: accepting that slot would destroy the entire desktop tree.
+    (if (i32.or (i32.eqz (local.get $hwnd))
+          (i32.lt_s (call $wnd_table_find (local.get $hwnd)) (i32.const 0)))
+      (then
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0))
+        (i32.store offset=8 (global.get $reg_base) (i32.const 0))
+        (call $win16_api_return (i32.const 2))
+        (return)))
     (call $win16_cont_push (call $win16_take_return (i32.const 2)) (i32.const 1))
-    (if (i32.or (i32.lt_s (call $wnd_table_find (local.get $hwnd)) (i32.const 0))
-                (call $win16_destroy_in_walk (local.get $hwnd)))
+    (if (call $win16_destroy_in_walk (local.get $hwnd))
       (then (call $win16_destroy_finish (local.get $hwnd)) (return)))
     (local.set $sp (i32.sub (i32.load offset=16 (global.get $reg_base)) (global.get $WIN16_DESTROY_FRAME)))
     (i32.store offset=16 (global.get $reg_base) (local.get $sp))
