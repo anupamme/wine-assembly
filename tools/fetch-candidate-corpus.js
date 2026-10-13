@@ -434,6 +434,16 @@ function runPostExtract(candidate, destination) {
       if (result.status !== 0) {
         throw new Error(`authentic Quake III demo installer failed with exit ${result.status}`);
       }
+    } else if (step.type === 'installThps2Demo') {
+      assertSafeRelative(step.installer, `${candidate.id}.postExtract[${index}].installer`);
+      assertSafeRelative(step.into, `${candidate.id}.postExtract[${index}].into`);
+      const result = spawnSync(process.execPath, [
+        path.join(ROOT, 'tools', 'install-thps2-demo.js'),
+        `--installer=${path.join(destination, step.installer)}`,
+        `--output=${path.join(destination, step.into)}`,
+      ], { cwd: ROOT, stdio: 'inherit' });
+      if (result.error) throw result.error;
+      if (result.status !== 0) throw new Error(`THPS2 installer failed with exit ${result.status}`);
     } else if (step.type === 'installHomeworldDemo') {
       // HWDemo.exe is a Wise package; the tree comes from running that
       // installer in the emulator (tools/install-homeworld-demo.js), as the

@@ -3,6 +3,25 @@
   "assetRoot": "test/binaries/candidates",
   "candidates": [
     {
+      "id": "thps2-demo",
+      "name": "Tony Hawk's Pro Skater 2 Demo",
+      "kind": "game",
+      "version": "Original Windows Wise demo installer",
+      "executables": ["game/thawk2.exe"],
+      "sourcePage": "https://archive.org/details/pro-skater-2",
+      "license": "Proprietary demo; no redistribution grant established. Local compatibility fixture only.",
+      "localOnly": true,
+      "packages": [{
+        "url": "https://archive.org/download/pro-skater-2/Files/Demo/thps2.exe",
+        "sha1": "8fbb8860ce20ca5c7c94a1ec93bd04738afc6699",
+        "type": "file",
+        "destination": "installer/thps2.exe"
+      }],
+      "postExtract": [{"type": "installThps2Demo", "installer": "installer/thps2.exe", "into": "game"}],
+      "browser": {"fileRoot": "game", "exe": "game/thawk2.exe"},
+      "cli": {"maxBatches": 20000, "batchSize": 10000, "vfsInclude": ["**/*"]}
+    },
+    {
       "id": "avp2-demo",
       "name": "Aliens versus Predator 2 single-player demo",
       "kind": "game",

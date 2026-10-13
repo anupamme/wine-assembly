@@ -53,3 +53,26 @@ these three requests during inbox triage. Boat has roughly 200 MB free, below it
 
 Boat task IDs: `TG50-NEVERWINTER-NIGHTS-DEMO-20261013`,
 `TG55-THPS2-DEMO-20261013`, `TG56-CHAOS-GATE-DEMO-20261013`.
+
+## Subsequent local launch investigation
+
+These attempts follow the inbox triage above; none establishes gameplay.
+
+- Neverwinter Nights: unpack `NWNDemo.zip`, then use `unshield` on
+  `NWNDemo/Demo/Disk1/data1.cab` (InstallShield 6, not the IS5 extractor).
+  Flatten group `HD0` into the game root; copy `Data`, `TexturePacks`, `Music`,
+  `Movies`, `Miles`, and `LocalVault` to their lowercase directory names,
+  `Ambiant` to `ambient`, and retain `override`, `scripttemplates`, and `nwm`.
+  Launch `nwmain.exe` with `--threads --vfs-include='**/*'`. The threaded
+  launch reaches the unimplemented `glGenLists` API at batch 31905. The earlier
+  nonthreaded spin is not the relevant blocker. Evidence:
+  `scratch/runs/20261013-nwn-first-launch/run-threads.log`.
+- Chaos Gate: unpack the ZIP and run `tools/is5-extract.js` on its `data1.cab`.
+  The game tree contains `WH40KDemo.exe`, `SMACKW32.DLL`, and WinG DLLs.
+  Launch `WH40KDemo.exe` with `--threads --vfs-include='**/*'`.
+  It reaches unimplemented `WinGRecommendDIBFormat` at batch 9739. Evidence:
+  `scratch/runs/20261013-chaos-first-launch/run.log`.
+- THPS2: the executable is a Wise installer. Its original setup runs inside
+  the emulator; no host archive extractor is needed. See
+  [THPS2 investigation](thps2-demo.md) for the input replay and installation
+  evidence.
