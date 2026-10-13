@@ -305,6 +305,97 @@
             (i32.shl (i32.sub (local.get $a) (i32.const 0x0CF2)) (i32.const 2))) (local.get $v))))))
       (if (i32.eq (local.get $a) (i32.const 0x0CF1)) (then
         (i32.store offset=96 (local.get $ctx) (i32.ne (local.get $v) (i32.const 0)))))))
+    ;; Client stack: context +176=head, +180=depth. Frames own a mask,
+    ;; supported pixel-store modes (+80..96), and all native client arrays.
+    ;; Only the two defined bits select groups; ALL_ATTRIB_BITS selects both.
+    (if (i32.or (i32.eq (local.get $op) (i32.const 134))
+                (i32.eq (local.get $op) (i32.const 135))) (then
+      (if (i32.ge_s (global.get $gl_immediate_mode) (i32.const 0)) (then
+        (call $gl_list_error (local.get $ctx) (i32.const 0x502)) (return (i32.const 1))))))
+    (if (i32.eq (local.get $op) (i32.const 134)) (then
+      (if (i32.ge_u (i32.load offset=180 (local.get $ctx)) (i32.const 16)) (then
+        (call $gl_list_error (local.get $ctx) (i32.const 0x503)) (return (i32.const 1))))
+      (local.set $p (call $gl_list_alloc (i32.const 116)))
+      (if (i32.eqz (local.get $p)) (then
+        (call $gl_list_error (local.get $ctx) (i32.const 0x505)) (return (i32.const 1))))
+      (i32.store (local.get $p) (i32.load offset=176 (local.get $ctx)))
+      (i32.store offset=4 (local.get $p) (local.get $a))
+      (memory.copy (i32.add (local.get $p) (i32.const 8))
+        (i32.add (local.get $ctx) (i32.const 80)) (i32.const 20))
+      (i32.store offset=28 (local.get $p) (global.get $gl_client_bits))
+      (i32.store offset=32 (local.get $p) (global.get $gl_client_tex_unit))
+      (i32.store offset=36 (local.get $p) (global.get $gl_state_pointer_bits))
+      (i32.store offset=40 (local.get $p) (global.get $gl_vp_size))
+      (i32.store offset=44 (local.get $p) (global.get $gl_vp_type))
+      (i32.store offset=48 (local.get $p) (global.get $gl_vp_stride))
+      (i32.store offset=52 (local.get $p) (global.get $gl_vp_guest))
+      (i32.store offset=56 (local.get $p) (global.get $gl_np_type))
+      (i32.store offset=60 (local.get $p) (global.get $gl_np_stride))
+      (i32.store offset=64 (local.get $p) (global.get $gl_np_guest))
+      (i32.store offset=68 (local.get $p) (global.get $gl_cp_size))
+      (i32.store offset=72 (local.get $p) (global.get $gl_cp_type))
+      (i32.store offset=76 (local.get $p) (global.get $gl_cp_stride))
+      (i32.store offset=80 (local.get $p) (global.get $gl_cp_guest))
+      (i32.store offset=84 (local.get $p) (global.get $gl_tp0_size))
+      (i32.store offset=88 (local.get $p) (global.get $gl_tp0_type))
+      (i32.store offset=92 (local.get $p) (global.get $gl_tp0_stride))
+      (i32.store offset=96 (local.get $p) (global.get $gl_tp0_guest))
+      (i32.store offset=100 (local.get $p) (global.get $gl_tp1_size))
+      (i32.store offset=104 (local.get $p) (global.get $gl_tp1_type))
+      (i32.store offset=108 (local.get $p) (global.get $gl_tp1_stride))
+      (i32.store offset=112 (local.get $p) (global.get $gl_tp1_guest))
+      (i32.store offset=176 (local.get $ctx) (local.get $p))
+      (i32.store offset=180 (local.get $ctx) (i32.add (i32.load offset=180 (local.get $ctx)) (i32.const 1)))))
+    (if (i32.eq (local.get $op) (i32.const 135)) (then
+      (local.set $p (i32.load offset=176 (local.get $ctx)))
+      (if (i32.eqz (local.get $p)) (then
+        (call $gl_list_error (local.get $ctx) (i32.const 0x504)) (return (i32.const 1))))
+      (local.set $mask (i32.load offset=4 (local.get $p)))
+      (if (i32.and (local.get $mask) (i32.const 1)) (then
+        (memory.copy (i32.add (local.get $ctx) (i32.const 80))
+          (i32.add (local.get $p) (i32.const 8)) (i32.const 20))
+        (i32.store offset=44 (global.get $gl_sw_st) (i32.load offset=8 (local.get $p)))))
+      (if (i32.and (local.get $mask) (i32.const 2)) (then
+        (global.set $gl_client_bits (i32.load offset=28 (local.get $p)))
+        (global.set $gl_client_tex_unit (i32.load offset=32 (local.get $p)))
+        (global.set $gl_state_pointer_bits (i32.load offset=36 (local.get $p)))
+        (global.set $gl_vp_size (i32.load offset=40 (local.get $p)))
+        (global.set $gl_vp_type (i32.load offset=44 (local.get $p)))
+        (global.set $gl_vp_stride (i32.load offset=48 (local.get $p)))
+        (global.set $gl_vp_guest (i32.load offset=52 (local.get $p)))
+        (global.set $gl_np_type (i32.load offset=56 (local.get $p)))
+        (global.set $gl_np_stride (i32.load offset=60 (local.get $p)))
+        (global.set $gl_np_guest (i32.load offset=64 (local.get $p)))
+        (global.set $gl_cp_size (i32.load offset=68 (local.get $p)))
+        (global.set $gl_cp_type (i32.load offset=72 (local.get $p)))
+        (global.set $gl_cp_stride (i32.load offset=76 (local.get $p)))
+        (global.set $gl_cp_guest (i32.load offset=80 (local.get $p)))
+        (global.set $gl_tp0_size (i32.load offset=84 (local.get $p)))
+        (global.set $gl_tp0_type (i32.load offset=88 (local.get $p)))
+        (global.set $gl_tp0_stride (i32.load offset=92 (local.get $p)))
+        (global.set $gl_tp0_guest (i32.load offset=96 (local.get $p)))
+        (global.set $gl_tp1_size (i32.load offset=100 (local.get $p)))
+        (global.set $gl_tp1_type (i32.load offset=104 (local.get $p)))
+        (global.set $gl_tp1_stride (i32.load offset=108 (local.get $p)))
+        (global.set $gl_tp1_guest (i32.load offset=112 (local.get $p)))))
+      (i32.store offset=176 (local.get $ctx) (i32.load (local.get $p)))
+      (i32.store offset=180 (local.get $ctx) (i32.sub (i32.load offset=180 (local.get $ctx)) (i32.const 1)))
+      (call $heap_free (call $w2g (local.get $p)))))
+    ;; Query the native stack and supported pixel modes, never a stale backend.
+    (if (i32.or (i32.eq (local.get $op) (i32.const 13)) (i32.eq (local.get $op) (i32.const 103))) (then
+      (local.set $n (i32.const -1))
+      (if (i32.eq (local.get $a) (i32.const 0x0BB1)) (then (local.set $n (i32.load offset=180 (local.get $ctx)))))
+      (if (i32.eq (local.get $a) (i32.const 0x0D3B)) (then (local.set $n (i32.const 16))))
+      (if (i32.eq (local.get $a) (i32.const 0x84E1)) (then (local.set $n (i32.add (i32.const 0x84C0) (global.get $gl_client_tex_unit)))))
+      (if (i32.eq (local.get $a) (i32.const 0x0CF5)) (then (local.set $n (i32.load offset=80 (local.get $ctx)))))
+      (if (i32.and (i32.ge_u (local.get $a) (i32.const 0x0CF2)) (i32.le_u (local.get $a) (i32.const 0x0CF4))) (then
+        (local.set $n (i32.load (i32.add (i32.add (local.get $ctx) (i32.const 84))
+          (i32.shl (i32.sub (local.get $a) (i32.const 0x0CF2)) (i32.const 2)))))))
+      (if (i32.eq (local.get $a) (i32.const 0x0CF1)) (then (local.set $n (i32.load offset=96 (local.get $ctx)))))
+      (if (i32.ge_s (local.get $n) (i32.const 0)) (then
+        (call $gs32 (local.get $v) (if (result i32) (i32.eq (local.get $op) (i32.const 13))
+          (then (i32.reinterpret_f32 (f32.convert_i32_s (local.get $n)))) (else (local.get $n))))
+        (return (i32.const 1))))))
     (if (i32.eq (local.get $op) (i32.const 130)) (then
       (call $gl_bitmap_raster_pos (local.get $ctx) (local.get $stack)) (return (i32.const 1))))
     (if (i32.eq (local.get $op) (i32.const 131)) (then

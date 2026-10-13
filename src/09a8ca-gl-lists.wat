@@ -107,7 +107,7 @@
     (local.set $ctx (call $gl_list_context))
     (if (i32.eqz (local.get $ctx))
       (then (return (i32.and (i32.ge_u (local.get $op) (i32.const 124))
-        (i32.le_u (local.get $op) (i32.const 133))))))
+        (i32.le_u (local.get $op) (i32.const 135))))))
     (local.set $id (i32.load offset=4 (local.get $stack)))
     (if (i32.and (i32.ge_u (local.get $op) (i32.const 124))
         (i32.and (i32.ne (local.get $op) (i32.const 127)) (i32.ne (local.get $op) (i32.const 133)))) (then
@@ -281,6 +281,7 @@
           (local.set $next (i32.load (local.get $b)))
           (call $heap_free (call $w2g (local.get $b)))
           (local.set $b (local.get $next)) (br $attributes)))
+        (call $gl_state_free_attribs (i32.load offset=176 (local.get $ctx)))
         (call $heap_free (call $w2g (local.get $ctx))) (return)))
       (local.set $prev (local.get $ctx))
       (local.set $ctx (i32.load (local.get $ctx))) (br $scan))))
@@ -298,6 +299,9 @@
     (i32.const 0))
 
   (func $gl_list_immediate_command (param $op i32) (result i32)
+    ;; Client stacks execute immediately even inside GL_COMPILE.
+    (if (i32.or (i32.eq (local.get $op) (i32.const 134))
+                (i32.eq (local.get $op) (i32.const 135))) (then (return (i32.const 1))))
     (block $no (block $yes
       (br_table $no $no $no $no $no $no $no $no $no $no $no $yes $yes $yes $yes $no $no $yes $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $no $yes $yes $yes $yes $yes $yes $yes $yes $no $no $no $no $no $no $no $no $no $yes $no $no $no $no $no $no $no $yes $yes $no $no $no $no $no $no $no $no $no $no $no $yes $no $yes $yes $no $no $no $yes $no $no $no $no $no $yes $yes $yes $no $yes $no $no $yes $no $no $no $no $no $no $yes $yes $yes $yes $no $no $no $no $no $no $no $no $no $no $no $no $no $no (local.get $op)))
       (return (i32.const 1)))
