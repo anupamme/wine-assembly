@@ -1,5 +1,41 @@
 # Motocross Madness demo
 
+## Scene-list crash and Backspace, 2026-10-13
+
+The next Safari worker report on localhost:8081 failed in `ini_get_string`
+with saved EIP `0x407df6`. The original code at `0x407dd0` formats a scene
+path, then calls GetPrivateProfileString at `0x407e17` for
+`[SceneInfo] SceneName`. Both trial `.SCN` files are INI text. Mark these two
+manifest entries eager; `.SCN` in other games need not be the same format.
+Chromium worker mode then reaches Select Stunt Quarry with the T-rific preview.
+Race startup subsequently hit the same pending-read exception on
+`SBIKE\\BIKE.MCF` (2,400 bytes). BIKE, RIDER and WINNER `.MCF` files are INI
+animation descriptors and now load eagerly too.
+With both classes eager, a fresh Chromium worker profile reaches the rendered
+quarry race after a 60-second wait following Start: rider, terrain and HUD
+are visible. Evidence is in `scratch/runs/20261013-mcm-worker-startup-after/`.
+This is a race-entry smoke test, not a completed event or Safari validation.
+
+The custom Enter Name field also needs `WM_CHAR 8` for Backspace. The browser
+deliberately sends only its keydown/up because native EDIT already deletes
+on keydown. TranslateMessage now supplies that missing character for non-EDIT
+targets, preserving HWND and lParam; native EDIT retains one deletion per key.
+The worker browser check types `Testabc`, presses Backspace twice, and visibly
+shows `Testa`. TranslateMessage queue/metadata checks and the 12 Notepad editing
+checks pass. These browser observations are Chromium, not a Safari rerun.
+
+The video-memory prompt is controlled by the trial registry's
+`DriverInfo\\{00000000-0000-0000-0000-000000000000}` cache. The EXE at
+`0x465600` reads Driver, Version, Description and DeviceID and compares them
+against current enumeration. After testing it writes NumberOfModes, Modes
+(28 records of seven DWORDs in the observed run) and TextureSizes (16 DWORDs).
+The captured modes include a viewport-derived 936x704 mode, so copying that
+snapshot into universal defaults would freeze environment-specific results.
+These values already persist in browser localStorage. KVDD's `OmitDriverCheck`
+under the *non-Trial* key is a separate driver check; it is not evidence that
+setting that value suppresses this texture-memory dialog. No default was
+changed based only on the setting's name.
+
 ## Controller-profile lazy mount crash, 2026-10-13
 
 The Safari report at 21:56Z on dashboard build `d19c10b7` fails in

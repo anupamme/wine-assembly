@@ -3337,9 +3337,21 @@
         (i32.store offset=0 (global.get $reg_base) (i32.const 1))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
 
-  ;; 77: TranslateMessage(lpMsg) — browser already queues WM_CHAR; preserve MSG and report only virtual-key messages.
+  ;; 77: TranslateMessage(lpMsg) — browser queues printable WM_CHAR events.
+  ;; Backspace has no browser character event. Native EDIT handles KEYDOWN
+  ;; already; custom text fields (MCM) need its translated character here.
   (func $handle_TranslateMessage (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $msg i32)
+    (local $hwnd i32)
+    (if (i32.and
+          (i32.eq (call $gl32 (i32.add (local.get $arg0) (i32.const 4))) (i32.const 0x0100))
+          (i32.eq (call $gl32 (i32.add (local.get $arg0) (i32.const 8))) (i32.const 8)))
+      (then
+        (local.set $hwnd (call $gl32 (local.get $arg0)))
+        (if (i32.ne (call $ctrl_table_get_class (local.get $hwnd)) (i32.const 2))
+          (then
+            (drop (call $post_queue_push (local.get $hwnd) (i32.const 0x0102)
+              (i32.const 8) (call $gl32 (i32.add (local.get $arg0) (i32.const 12)))))))))
     (local.set $msg (call $gl32 (i32.add (local.get $arg0) (i32.const 4)))) (i32.store offset=0 (global.get $reg_base) (i32.or (i32.or (i32.eq (local.get $msg) (i32.const 0x0100)) (i32.eq (local.get $msg) (i32.const 0x0101))) (i32.or (i32.eq (local.get $msg) (i32.const 0x0104)) (i32.eq (local.get $msg) (i32.const 0x0105)))))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
   )
