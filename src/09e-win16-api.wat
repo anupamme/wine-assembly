@@ -16465,6 +16465,7 @@
   (func $win16_mmsystem (param $ordinal i32) (result i32)
     (local $name i32) (local $flags i32) (local $dev i32) (local $msg i32)
     (local $p1 i32) (local $p2 i32)
+    (local $mci_params i32) (local $mci_field i32) (local $mci_ptr i32)
     (if (i32.and (i32.ge_u (local.get $ordinal) (i32.const 1210))
                  (i32.le_u (local.get $ordinal) (i32.const 1226)))
       (then (return (call $win16_mmio (local.get $ordinal)))))
@@ -16566,10 +16567,49 @@
         (local.set $p1 (call $win16_arg32 (i32.const 2)))
         (local.set $msg (call $win16_arg16 (i32.const 4)))
         (local.set $dev (call $win16_arg16 (i32.const 5)))
+        ;; MCI_OPEN_PARMS16 keeps the Win32 offsets (a reserved word follows
+        ;; wDeviceID), but its strings are selector:offset pointers. Marshal
+        ;; into invocation-owned stack scratch; never rewrite the caller's
+        ;; pointers or the reserved word when returning the 16-bit device ID.
+        (local.set $mci_params (local.get $p2))
+        (if (i32.and (i32.eq (local.get $msg) (i32.const 0x803))
+                     (i32.ne (local.get $p2) (i32.const 0)))
+          (then
+            (local.set $mci_params (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 64)))
+            (call $zero_memory (call $g2w (local.get $mci_params)) (i32.const 20))
+            (call $gs32 (local.get $mci_params) (call $gl32 (local.get $p2)))
+            (local.set $mci_field (i32.const 8))
+            (loop $mci_open_strings
+              (local.set $flags
+                (if (result i32) (i32.eq (local.get $mci_field) (i32.const 8))
+                  (then (i32.const 0x2000))
+                  (else (if (result i32) (i32.eq (local.get $mci_field) (i32.const 12))
+                    (then (i32.const 0x200)) (else (i32.const 0x400))))))
+              (if (i32.and (local.get $p1) (local.get $flags))
+                (then
+                  (local.set $mci_ptr (call $gl32 (i32.add (local.get $p2) (local.get $mci_field))))
+                  ;; TYPE_ID / ELEMENT_ID are integer resources, not strings.
+                  (if (i32.eqz (i32.and (local.get $p1)
+                        (if (result i32) (i32.eq (local.get $mci_field) (i32.const 8))
+                          (then (i32.const 0x1000))
+                          (else (if (result i32) (i32.eq (local.get $mci_field) (i32.const 12))
+                            (then (i32.const 0x800)) (else (i32.const 0)))))))
+                    (then
+                      (if (local.get $mci_ptr)
+                        (then (local.set $mci_ptr (call $win16_far_to_guest
+                          (i32.shr_u (local.get $mci_ptr) (i32.const 16))
+                          (i32.and (local.get $mci_ptr) (i32.const 0xFFFF))))))))
+                  (call $gs32 (i32.add (local.get $mci_params) (local.get $mci_field)) (local.get $mci_ptr))))
+              (local.set $mci_field (i32.add (local.get $mci_field) (i32.const 4)))
+              (br_if $mci_open_strings (i32.le_u (local.get $mci_field) (i32.const 16))))))
         (call $win16_call32_begin (i32.const 4))
         (call $handle_mciSendCommandA (local.get $dev) (local.get $msg)
-          (local.get $p1) (local.get $p2) (i32.const 0) (i32.const 0))
+          (local.get $p1) (local.get $mci_params) (i32.const 0) (i32.const 0))
         (call $win16_call32_end)
+        (if (i32.and (i32.ne (local.get $mci_params) (local.get $p2))
+                     (i32.eqz (i32.load offset=0 (global.get $reg_base))))
+          (then (call $gs16 (i32.add (local.get $p2) (i32.const 4))
+            (call $gl32 (i32.add (local.get $mci_params) (i32.const 4))))))
         (i32.store offset=8 (global.get $reg_base) (i32.shr_u (i32.load offset=0 (global.get $reg_base)) (i32.const 16)))
         (i32.store offset=0 (global.get $reg_base) (i32.and (i32.load offset=0 (global.get $reg_base)) (i32.const 0xFFFF)))
         (call $win16_api_return (i32.const 12))
