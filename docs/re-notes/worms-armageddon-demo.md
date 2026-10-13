@@ -121,3 +121,38 @@ Play Quick Game Against Computer. Do not send the last Space from this run
 before that click. Reduce the clock while frozen for the actual turn-based
 movement/jump capture. No guest patches, fake API success or emulator source
 changes were needed to reach the menu.
+
+## Original terrain child and rendered match, 2026-10-13
+
+Run `scratch/runs/20261013T2042Z-worms-armageddon-real-child` used source
+`924a7b666` and unchanged canonical Wasm `c9971c0abb023c64c8c018505e39734eeb1be52076a23d4846d54385b50b5c07`.
+The missing requirement was the existing CLI `--spawn-processes` option.
+The guest calls CreateProcessA at 0x42fdc0, closes the returned thread handle,
+and waits on the process in 20 ms intervals at 0x42fe01 while pumping messages.
+The earlier host `ShellExecute` log label was not evidence of a guest
+ShellExecuteA import; this is the CreateProcess fallback route.
+
+With real child spawning enabled, original Landgen.exe ran as guest pid 4004:
+`landgen.exe /mission data\land.dat data\mission\polar.img data\custom\snow data\water\blue 72100332 0`.
+It wrote 1,670,841 bytes to land.dat. The host merged two written files,
+one deletion and 73 registry/INI keys before reporting child completion.
+The parent then read the generated file and reached a rendered snow/ice match.
+No generated terrain was fabricated, no guest was patched and no emulator
+implementation change was needed. Earlier runs without this flag opened a
+missing land.dat, returned null from fopen, and reached the indirect-call failure.
+
+Root reviewed control-right-412.png and control-right-433.png, and independently
+verified all 36 transferred artifact hashes. These prove rendered match state,
+not player control: a thought bubble and later autonomous rocket firing indicate
+that the active worm may belong to the AI. A rejected initial ctl keydown verb
+also makes the earlier input label unsuitable as evidence. Successful queued
+Right input is recorded separately, but movement alone does not isolate its effect.
+The next check must identify a human turn and compare idle versus ordinary held
+input. Do not count the current run as qualified player-controlled gameplay.
+
+Supervisor 79553 exited 0 at 20:47:10 UTC and its process tree was absent.
+The CLI clock remained synthetic 200 ms/batch; this is not an FPS measurement.
+The effective child/parent time guards were 420 seconds (first matching argument
+wins), with a 450-second external guard. Audio, real-device behavior and sustained
+play remain unqualified. The title is not yet registered in the candidate manifest,
+so this evidence remains an investigation rather than an unrelated candidate result.
