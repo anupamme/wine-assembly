@@ -116,3 +116,14 @@ This verifies registered keyboard and touch-pad gameplay; it is Chromium touch
 emulation, not physical phone or Safari qualification. Audio, FPS, aiming/fire,
 menu/map and longer exploration remain separate checks. Local-only registration
 e11417836 pushed on codex/dr2-registration; main integration remains ops-owned.
+
+
+## Integration reconciliation, 2026-10-13
+
+The text above is preserved from historical evidence commit
+`e13360bfd3be5b9330db9b2649cea5c62634e18a`. Registration `e11417836`
+is already an ancestor of main; the old integration-pending/ops-ownership
+statement is superseded. These notes were absent from main and are recovered
+here without claiming a fresh runtime test. The recorded module and dates
+remain the scope of the gameplay evidence. Audio, FPS, physical-device and
+additional action-control checks remain open.
