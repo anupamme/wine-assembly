@@ -3,6 +3,45 @@
   "assetRoot": "test/binaries/candidates",
   "candidates": [
     {
+      "id": "nox-demo",
+      "name": "Nox Multiplayer Demo",
+      "kind": "game",
+      "version": "Original Westwood Windows multiplayer demo (2000)",
+      "executables": [
+        "game/nox.exe"
+      ],
+      "sourcePage": "https://archive.org/details/NoxDemo",
+      "license": "Proprietary original demo; local compatibility fixture only, no redistribution permission established.",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/NoxDemo/noxdemo.exe",
+          "sha1": "78c5187fd27d1264e4cce1b053e1c02bfc0b38ca",
+          "type": "archive",
+          "into": "distribution"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "distribution/Install/Game1.CAB",
+          "into": "game"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/nox.exe"
+      },
+      "cli": {
+        "maxBatches": 10000000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      },
+      "notes": "Original Network/Host Game reaches Bunker; normal renderer right-button movement reviewed in20261013T2203Z-nox-renderer-control. Registered route/browser, audio, FPS and network peers remain unqualified. See docs/re-notes/nox-demo.md."
+    },
+    {
       "id": "worms-armageddon-demo",
       "name": "Worms Armageddon Demo",
       "kind": "game",
