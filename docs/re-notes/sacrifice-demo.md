@@ -320,7 +320,7 @@ draw, and public GetCaps assertions for legacy1/2/3 and7 line/triangle caps.
 Existing EnumDevices lifetime coverage checks that same restriction in all
 callback descriptors, including D3D7, the actual game dependency.
 Canonical build and both extended conformance tests pass (see validation below).
-The original game has not yet been run with this correction.
+The original replay below subsequently verifies cache acceptance and world entry.
 
 The blanket mask contains other unsupported, restrictive or unverified claims.
 This proposal does not certify or replace the whole mask: its audit records
@@ -361,3 +361,45 @@ Evidence:20261013T2333Z-sacrifice-caps-validation and
 PIDs and allpositive/negative process-group checks reportESRCH23:35:36.368.
 Runtime released to the coordinator. No original Sacrifice replay occurred;
 cache acceptance, later loading and gameplay remain unverified for this module.
+
+## Original cache acceptance and tutorial world (2026-10-13 23:45–23:48 UTC)
+
+Run `20261013T2345Z-sacrifice-square-caps-original` uses exact tested
+source dd3bf9aad and module0918dec0, with current test/run SHAde8d48cd
+(the !hostExitRequested diagnostic guard is present). Driver4e850662 verifies
+source/module/CRT/manifest identities and both observed module mappings before
+every ordinary command. No new build or original-file/config/cache edit occurred.
+
+Normal Single Player, relative pointer(-80,-29), reviewed Tutorial1 hover and
+held click now progress beyond the old loading failure. Live and exit dumps
+both show exponent7 and expected cache signature7, matching the original cache.
+Named file tracing reads tkhsDMXS.000 to offset189096, exactly its original
+length, with no target DeleteFile. Final counts: cache-check5, comparison5,
+success5, rejection0, cached-loader5, fallback0. These are aggregate counters;
+the named complete file-read trace independently identifies the target cache.
+The previously missing tkhsDMXS.001 fallback is no longer taken in this run.
+
+Seven images were reviewed. 05-after-cache.png shows the 3D landscape and
+wizard during a letterboxed introduction. 06-after-w.png and final.png show
+the actual tutorial world, wizard, HUD and minimap; final is800x600.
+02-selector.png was queued immediately after the Single Player click and still
+shows the main menu; its filename must not be mistaken for successful selector
+evidence. 03-hover.png independently shows the selector and Tutorial1 tooltip.
+
+Player movement remains unqualified. Ordinary W down/up arrived at
+batches148319/156707, but the introduction transitioned into a Familiar
+movement-instruction prompt, and Continue was never dismissed. Differences
+between these pictures cannot isolate input from the introduction or animation.
+The next authorized ordinary route is Continue dismissal, a stationary baseline,
+W held3seconds, then an after-release stationary comparison using world
+landmarks/minimap position. This is ordinary tutorial UI, not an acceptance prompt.
+
+The standard160-second harness guard stopped the run at batch158891 with
+host exit0; this is not the former original decoder failure exit. Terminal
+23:48:14.890 confirms child cleanup, and217952/217960 plus both negative
+process groups were independentlyESRCH at23:48:29.965. All115 original
+post-run file hashes match. Twenty-one artifacts were SHA-verified locally,
+then investigation metadata published last; archiveSHA
+b1320868884cc3190a9df3d18acd3761b152338028799a52aaa1e1fb06eae639.
+Cache compatibility and rendered tutorial world are verified; player control,
+audio, frame rate and broader gameplay are not yet qualified. No deployment.
