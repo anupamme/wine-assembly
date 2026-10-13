@@ -769,6 +769,37 @@
       }
     },
     {
+      "id": "fifa98-demo",
+      "name": "FIFA 98: Road to World Cup Demo",
+      "kind": "game",
+      "version": "1997 EA Sports PC demo (ready-to-run tree: FIFARTWC.EXE, EACSND.DLL, AUDIO, COMMON, FEPACK, INGAME; UK.SKU)",
+      "executables": [
+        "installed/fifa98/FIFARTWC.EXE"
+      ],
+      "sourcePage": "https://archive.org/details/FIFAWC98",
+      "license": "proprietary Electronic Arts demo: no licence text or redistribution grant in the package, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/FIFAWC98/FIFAWC98.zip",
+          "sha1": "922b626954495cc441cbe9bd9f88f6727bdf69ac",
+          "type": "archive",
+          "into": "installed/fifa98"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/fifa98/FIFARTWC.EXE"
+      },
+      "cli": {
+        "maxBatches": 6000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
       "id": "requiem-demo",
       "name": "Requiem: Avenging Angel Demo",
       "kind": "game",
@@ -1506,6 +1537,42 @@
       "cli": {
         "maxBatches": 7000,
         "batchSize": 50000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
+    },
+    {
+      "id": "slave-zero-demo",
+      "name": "Slave Zero Demo",
+      "kind": "game",
+      "version": "1999 Accolade/Ronin PC demo (InstallShield 5 Setup tree in a zip; file group DEFAULT is the game); Direct3D",
+      "executables": [
+        "installed/Slave Zero/SlaveZero.exe"
+      ],
+      "sourcePage": "https://archive.org/details/SlaveZeroDemo",
+      "license": "proprietary Infogrames/Accolade demo: readme says it may not be copied, distributed, transferred or sold, so a local ignored compatibility fixture only, never deploy or ship it",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/SlaveZeroDemo/SlaveZeroDemo.zip",
+          "sha1": "881fdbf2d7e239e7986be34f8fbc1e19199e1326",
+          "type": "archive",
+          "into": "zip"
+        }
+      ],
+      "postExtract": [
+        { "type": "unshield", "cab": "zip/data1.cab", "into": "groups", "group": "DEFAULT" },
+        { "type": "copyTree", "from": "groups/DEFAULT", "into": "installed/Slave Zero" },
+        { "type": "copyFile", "from": "zip/InstData/GameData/INSTSUPP/szHardware.ini", "into": "installed/Slave Zero/szHardware.ini" }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/Slave Zero/SlaveZero.exe"
+      },
+      "cli": {
+        "maxBatches": 2600,
+        "batchSize": 200000,
         "vfsInclude": [
           "**/*"
         ]
