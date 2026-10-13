@@ -1,5 +1,21 @@
 #!/usr/bin/env node
 
+// Parse non-executing requests before imports or any fixture access.
+const argv = process.argv.slice(2);
+function usage(message) {
+  const write = message ? console.error : console.log;
+  if (message) write(message);
+  write('usage: node tools/fetch-candidate-corpus.js [--id=a,b] [--force|--prepare]');
+  write('Without --id, processes all candidates. --prepare uses existing fixtures.');
+  process.exit(message ? 2 : 0);
+}
+if (argv.includes('--help') || argv.includes('-h')) usage();
+for (const arg of argv) {
+  if (arg === '--force' || arg === '--prepare') continue;
+  if (arg.startsWith('--id=') && arg.slice(5).split(',').every(id => id.trim())) continue;
+  usage(`unknown or invalid argument: ${arg}`);
+}
+
 const crypto = require('crypto');
 const fs = require('fs');
 const http = require('http');
@@ -14,19 +30,12 @@ const ROOT = path.join(__dirname, '..');
 const MANIFEST_PATH = path.join(ROOT, 'test', 'candidate-corpus', 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 const ASSET_ROOT = path.resolve(ROOT, manifest.assetRoot);
-const argv = process.argv.slice(2);
 const force = argv.includes('--force');
 const prepare = argv.includes('--prepare');
 const idArg = argv.find(arg => arg.startsWith('--id='));
 const selectedIds = idArg
   ? new Set(idArg.slice('--id='.length).split(',').map(value => value.trim()).filter(Boolean))
   : null;
-
-function usage(message) {
-  if (message) console.error(message);
-  console.error('usage: node tools/fetch-candidate-corpus.js [--id=a,b] [--force|--prepare]');
-  process.exit(2);
-}
 
 function fixtureId(candidate) {
   return candidate.fixture || candidate.id;
