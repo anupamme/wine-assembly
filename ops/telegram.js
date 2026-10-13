@@ -4,6 +4,7 @@ const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:
 const {createBot,hash,COMMANDS}=require('./telegram-core');
 const replies=require('./telegram-replies');
 const inboxLib=require('./telegram-inbox');
+const {receiveUpdate}=require('./telegram-updates');
 const root=path.resolve(__dirname,'..'),dir=path.join(root,'scratch/telegram');
 const base=process.env.OPS_URL||'http://127.0.0.1:8098';
 if(!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(base))throw Error('OPS_URL must be loopback HTTP');
@@ -68,7 +69,11 @@ async function main(){
   while(true){
     try {
       const updates=await telegram('getUpdates',{offset:state.offset,timeout:5,allowed_updates:['message','callback_query']});
-      for(const update of updates){state.offset=update.update_id+1;await save();try{await bot.handle(update);}catch{if(state.owner)await bot.send('Bridge request failed. Use /status or /screen to check; actions are not automatically replayed.').catch(()=>{});}}
+      for(const update of updates){
+        await receiveUpdate({dir:path.join(dir,'updates'),update,state,save,handle:async item=>{
+          try{await bot.handle(item);}catch{if(state.owner)await bot.send('Bridge request failed. The update is preserved for review; actions are not automatically replayed.').catch(()=>{});}
+        }});
+      }
       if(state.owner){
         // Approval monitoring must not hold up replies when the dashboard is unavailable.
         try{
