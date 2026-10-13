@@ -917,3 +917,40 @@ existing alias. The bar now reads File / View / Window. Evidence:
 - lib/app-files.js's lazy policy streamed them, because `int` was not among its eager config extensions.
 - `int` is now eager: 18 files, about 35 KB, out of 196 MB of streamed data.
 - A headless `--lazy-ranges` run reproduces the crash before the change. After it, the run reaches the title flyby ("Press ESC to begin").
+
+## UT2003 registered native COMCTL closure (2026-10-13)
+
+An isolated `--app=ut2003_demo_server` launch asserted in
+`WControl::RegisterWindowClass`, Window.cpp:1070. Targeted API tracing identified
+the actual failing `GetClassInfoExA(NULL, "SysTabControl32", ...)`, after three
+LISTBOX and two BUTTON superclass registrations. The original Window.dll call
+is at VA `0x11018c8e`; the tab superclass caller is `0x1101ac67`.
+
+The restored installation already contains `comctl32.dll` and
+`windows/system/comctl32.dll`, both 577808 bytes, SHA-256
+`28a41e6a35c4509924a32a99841a815cf49e1d3ee6912ec26a823e45472edfa4`.
+These are preserved installed-fixture files, not newly acquired game payloads.
+The local manifest mounts them in the VFS, but native startup discovery uses
+the explicit DLL seeds and `entry.files`, not that expanded manifest. Its host
+search from `installed/system` misses both paths. Both UT2003 registry entries
+now explicitly seed the existing `windows/system/comctl32.dll`.
+
+Candidate `a4d487337` loads native COMCTL at `0x11729000`, binds Window.dll's
+import, and its DllMain returns 1. The original class assertion clears without
+an API, INI, or fixture change. This is a dependency correction, **not a gameplay
+pass**: software startup then reports `invalid native free list`, followed by
+the game's `LockRect failed: D3DERR_INVALIDCALL` in
+`UD3DRenderDevice::ReadPixels <- Present`. The device queue completes 2829
+commands with queue error null, but bridge `lastError` is nonempty. No usable
+world or player input was established. Existing SHELL32/OLE32 availability
+warnings remain separately unqualified.
+
+Evidence: `20261013T2240Z-ut2003-registered-software-control`,
+`20261013T2245Z-ut2003-registered-class-trace`, and
+`20261013T2247Z-ut2003-registered-comctl-software` under `scratch/runs/`.
+All use pinned WASM SHA-256
+`9b3ef6f173daaa8be90733a4b8449733d74ca861062d0383a709f4be02ce1c77`;
+the candidate changes registry JS separately, with tracked WAT and renderer
+sources unchanged from the preceding `3540d8304` checkout. This does not certify
+a fresh current-main build. All owned processes/groups were confirmed absent;
+movement/reverse/idle and browser/WebGL/audio/network/FPS remain untested.
