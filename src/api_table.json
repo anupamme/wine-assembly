@@ -38789,5 +38789,21 @@
     "nargs": 1,
     "convention": "cdecl",
     "hash": 3240813966
+  },
+  {
+    "id": 4557,
+    "name": "ImmGetDescriptionA",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 3270008883,
+    "handler": "ImmGetConversionStatus"
+  },
+  {
+    "id": 4558,
+    "name": "ImmGetDescriptionW",
+    "nargs": 3,
+    "convention": "stdcall",
+    "hash": 3639116501,
+    "handler": "ImmGetConversionStatus"
   }
 ]

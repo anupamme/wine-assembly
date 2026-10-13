@@ -1808,6 +1808,10 @@ SetColorAdjustment — validate and copy complete per-DC state.
     (call $imm_no_context_result)
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12))))
 
+  ;; ImmGetDescriptionA/W are API-table aliases of this three-argument
+  ;; no-result query. No IME is installed for our plain en-US keyboard layout,
+  ;; so description and size queries return zero without touching the buffer
+  ;; or last_error. The alias must change if IME contexts/layouts are added.
   ;; ImmGetConversionStatus(hIMC, lpfdwConversion, lpfdwSentence) → BOOL.
   ;; FALSE on an invalid context, and on failure Windows leaves both output
   ;; DWORDs untouched -- so this deliberately writes neither. A caller that

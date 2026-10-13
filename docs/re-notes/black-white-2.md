@@ -1,5 +1,27 @@
 # Black & White 2 demo
 
+## Plain-keyboard IME description query (2026-10-13)
+
+User's Safari 26.4 Boat run trapped at `ImmGetDescriptionA`, EIP `0x00b52fc0`,
+return address `0x00af3512`, HKL `0x04090409`, output `0x074ff6e4`, count 256.
+Both description variants were absent from the API table. Append A/W entries
+with three stdcall arguments, sharing the existing no-context query handler:
+this machine has no installed IME, so the query returns zero and preserves
+last error and caller memory. It does not invent a keyboard-layout description.
+
+References: [Microsoft API contract](https://learn.microsoft.com/en-us/windows/win32/api/imm/nf-imm-immgetdescriptiona)
+and [Wine's Windows-conformance tests](https://github.com/wine-mirror/wine/blob/master/dlls/imm32/tests/imm32.c)
+(`test_ImmGetDescription`: ordinary HKL and null HKL return zero, last error preserved).
+Dynamic lookup, ANSI/Unicode size queries, buffer canaries and exact stack
+cleanup are covered by the existing IME tests. These aliases must change if
+the machine gains real IME layouts or contexts.
+
+Full build and IME regressions pass. Local CLI proceeds to its renderer's
+pixel-shader capability warning; that is not gameplay verification. A 60-second
+local Chrome browser run remains running without an IME trap. Evidence:
+`scratch/runs/20261013-bw2-ime/`. Safari and complete gameplay are not yet
+requalified by this fix.
+
 ## Input and extraction (2026-09-09)
 
 `test/binaries/win98-games-a-d/Black and White 2-DX9-D3D.exe` is the
