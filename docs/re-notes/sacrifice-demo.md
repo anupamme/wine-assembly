@@ -155,3 +155,50 @@ from subsequent mapset discovery. Existing sampled EIP logs cannot establish
 that either branch was reached or missed. No diagnostic run, state write,
 registry fabrication, or emulator repair is authorized by these static findings;
 the next run requires the coordinator's runtime grant.
+
+## Selector delivery diagnostic (2026-10-13 21:40 UTC)
+
+The bounded original run
+`scratch/runs/20261013T2140Z-sacrifice-selector-diagnostic/`
+reproduces the main menu, Single Player selector and pointer hover, then sends
+an ordinary held mouse press at(240,211). Trace-input targets hwnd0x10001
+for both down and up, matching the visible/focused main window.
+The selector still does not advance.
+
+At before-batch16440 versus after-batch24659:
+
+| Original address | Before | After |
+| --- | ---: | ---: |
+| 0x40b18e, WM_LBUTTONDOWN branch | 1 | 2 |
+| 0x406260, gated window-message mouse consumer | 0 | 0 |
+| 0x40e93f, probed tu01..tu03 dispatcher | 0 | 0 |
+| 0x4997f0, mapset selection | 0 | 0 |
+| 0x494c20, map enumeration | 0 | 0 |
+| 0x4950c0, map selection | 0 | 0 |
+| 0x4978f0, subsequent transition | 0 | 0 |
+
+The held down/up arrived at batches22634/24658. Read-only dumps before and
+after show byte[0x4cdf28]=0x0b, so bit0x4 is clear and the original wndproc
+intentionally skips0x406260. Global0x4ce288 remainsNULL; the probed Tutorial
+lookup never runs, so this is not evidence that lookup itself failed.
+The file trace includes original demo/music discovery but no maps/tutorial
+enumeration. The next source question is the DirectInput button consumer
+and actual selector callback, ahead of the probed Tutorial dispatch.
+Do not infer that the fallback-mode flag is wrong or that every alternate menu
+path has been ruled out; no repair is justified yet.
+
+The source/module/115 original fixture identities were checked before launch.
+The supervisor uses its own detached child process group, TERM at185seconds,
+KILL after another2seconds and a bounded5-second membership audit. Seven
+pure mock tests cover normal exit, descendants, malformed commands,
+spawn failure, escalation and failed cleanup. Actual counter stdin protocol
+was verified in test/run.js: `{"cmd":"hit-counts:before"}` takes no batch prefix.
+The guest scope remains160seconds; no new emulator build was made.
+
+This run quit ordinarily with exit0 at21:41:39.806. Supervisor125582 and
+child/group125593 were absent by21:41:46.167; the terminal receipt records
+cleanupComplete=true and no surviving group members. No escalation was needed.
+Four reviewed menu/selector screenshots, source snapshots, exact command and
+input traces, counter/dump comparisons, hashes and terminal evidence are
+preserved. This remains unqualified gameplay, with no audio/FPS claim,
+guest-state writes, acceptance or deployment.
