@@ -1386,3 +1386,11 @@ exited zero at 19:58:55 UTC; servers bound only to loopback. No public deploy.
 Next work, if required, is a separately bounded logical-frame boundary
 qualification and fallback-site attribution across idle/movement. This run
 does not establish those, audio quality, other devices, or long-session stability.
+
+## Browser fallback-site census, 2026-10-13
+
+Run `20261013T2020Z-diablo2-fallback-reasons` uses source `45498b943` and Wasm `79a828167326142433105270a3cd53fe33a3ce934f71116451e8948315b44c93`. Original default-Worker browser town and ordinary ground-click movement were reviewed. Across the two sampled scenes, all 33,692 backend fallbacks are `fallbackDrawShape` (idle 19,024; post-click 14,668); all five other reason deltas and backend-error deltas are zero. Raw endpoint arithmetic and exact reason sums were independently checked by the coordinator. The samples also record 24,390 readbacks.
+
+This locates the rejecting gate, not its precise input or performance cost. That gate combines vertex type, primitive kind and minimum vertex count. Worker census endpoints are asynchronous, timings overlap, and the static server retains optional telemetry-sink HTTP404 overhead. These are diagnostic scenes, not repeated optimization benchmarks; logical/display FPS remains unqualified.
+
+Main `0c90327e` adds bounded disjoint predicate masks, count buckets and eight immutable exact input tuple slots plus explicit overflow. Focused positive/negative tests pass. Next sample must validate tuple identities separately from monotonic counts and identify the actual rejected input before changing rendering behavior.
