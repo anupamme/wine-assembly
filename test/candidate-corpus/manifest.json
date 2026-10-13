@@ -3,6 +3,161 @@
   "assetRoot": "test/binaries/candidates",
   "candidates": [
     {
+      "id": "neverwinter-nights-demo",
+      "name": "Neverwinter Nights Demo",
+      "kind": "game",
+      "version": "Original Windows NWNDemo.zip",
+      "executables": [
+        "game/nwmain.exe"
+      ],
+      "sourcePage": "https://archive.org/details/Neverwinternights001",
+      "license": "Proprietary demo; local compatibility fixture only. No redistribution grant established.",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/Neverwinternights001/NWNDemo.zip",
+          "sha1": "fd71deea70c7a4d6b6677893b0fed4738b4f5a0a",
+          "type": "archive",
+          "into": "installer"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "HD0"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/HD0",
+          "into": "game"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "Data"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Data",
+          "into": "game/data"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "TexturePacks"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/TexturePacks",
+          "into": "game/texturepacks"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "Music"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Music",
+          "into": "game/music"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "Movies"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Movies",
+          "into": "game/movies"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "Miles"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Miles",
+          "into": "game/miles"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "LocalVault"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/LocalVault",
+          "into": "game/localvault"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "Ambiant"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Ambiant",
+          "into": "game/ambient"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "override"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/override",
+          "into": "game/override"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "scripttemplates"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/scripttemplates",
+          "into": "game/scripttemplates"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/NWNDemo/Demo/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "nwm"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/nwm",
+          "into": "game/nwm"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/nwmain.exe"
+      },
+      "cli": {
+        "maxBatches": 1000000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      },
+      "notes": "Reviewed original CLI software/Threads Prelude world and dialogue: run20261013T2045Z-nwn-color-prelude on99e780866. Browser route, audio, FPS and mobile remain unqualified. Original nwmain.exe SHA2561c54767bac878459615fa7dc913e1dbdd80bbd70cf40d6249a7c8098fa95fd1f. See docs/re-notes/neverwinter-nights-demo.md."
+    },
+    {
       "id": "thps2-demo",
       "name": "Tony Hawk's Pro Skater 2 Demo",
       "kind": "game",
