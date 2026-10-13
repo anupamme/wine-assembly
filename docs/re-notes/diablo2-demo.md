@@ -1394,3 +1394,41 @@ Run `20261013T2020Z-diablo2-fallback-reasons` uses source `45498b943` and Wasm `
 This locates the rejecting gate, not its precise input or performance cost. That gate combines vertex type, primitive kind and minimum vertex count. Worker census endpoints are asynchronous, timings overlap, and the static server retains optional telemetry-sink HTTP404 overhead. These are diagnostic scenes, not repeated optimization benchmarks; logical/display FPS remains unqualified.
 
 Main `0c90327e` adds bounded disjoint predicate masks, count buckets and eight immutable exact input tuple slots plus explicit overflow. Focused positive/negative tests pass. Next sample must validate tuple identities separately from monotonic counts and identify the actual rejected input before changing rendering behavior.
+
+
+## POINTLIST implementation and ordinary browser check, 2026-10-13
+
+Exact-shape run `20261013T2035Z-diablo2-exact-shapes` found all 40,605
+rejections were transformed-lit vertex type 3, primitive POINTLIST 1, count 1.
+Generic GPU point support is integrated as `782bc73d43c248766c2e24a27b8231cb000a6a44`.
+It preserves the software 2x2 point footprint and clipping. RGB565 batches;
+555/1555/opaque32 use per-point fences to preserve untouched packed bits.
+Unsupported formats remain explicit fallbacks. Forty native-WAT/WebGL1/WebGL2
+pixel cases and depth/blend transition tests passed; a pixel-offset mutation
+failed. This is a renderer change, not an interpreter optimization.
+
+Paired runs `20261013T2055Z-diablo2-pointlist-control` and
+`20261013T2055Z-diablo2-pointlist-candidate` use source d31cf3b784 and
+375c3aa819 respectively, the same original fixtures, and canonical Wasm
+`ba6f25ea2d467b3fba00110d83575d48ac1aeb8794a474052190998067723259`.
+Both reached town through ordinary input and responded to a ground click.
+Read-only target inspection confirms 640x480 RGB565, pitch 1280. Served-source
+and fixture hashes were checked, and final captures reviewed independently.
+Each arm sampled two 10-second idle and two 10-second post-click windows.
+
+| Counter summed across four windows | Control | Candidate |
+| --- | ---: | ---: |
+| Backend fallbacks | 38,701 | 0 |
+| GPU points | unavailable | 51,066 |
+| Readbacks | 27,556 | 1,001 |
+| Readback bytes | 7,260,959,680 | 1,230,028,800 |
+| Backend errors | 0 | 0 |
+
+Presentation events were 16.0–20.6/s for control and 25.0–25.1/s for candidate.
+Fresh characters produced different randomized town layouts, so these rates
+are not an isolated speedup estimate. Logical/display FPS, audio, other devices
+and long-session stability remain unqualified. Worker counters are asynchronous;
+read-only heap inspection occurred outside timed samples. The evidence supports
+removal of the measured fallback/readback mechanism with intact ordinary town
+rendering and movement. Result manifests retain the exact tested source, rather
+than relabeling the run with the later integration commit.
