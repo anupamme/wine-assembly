@@ -3783,25 +3783,26 @@
             (i32.store offset=0 (global.get $reg_base) (call $dialog_font_get (local.get $arg0)))
             (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
             (return)))))
+    ;; dialog_default_proc already completed this focus transaction. Repeating
+    ;; it would overwrite a target selected by a nested focus callback.
     (if (i32.eq (local.get $arg1) (i32.const 0x0007))
       (then
-        (if (call $dlg_focus_first_tabstop (local.get $arg0))
-          (then
-            (i32.store offset=0 (global.get $reg_base) (i32.const 0))
-            (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
-            (return)))))
+        (i32.store offset=0 (global.get $reg_base) (local.get $result))
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
+        (return)))
     (call $handle_DefWindowProcA
       (local.get $arg0) (local.get $arg1) (local.get $arg2) (local.get $arg3)
       (local.get $arg4) (local.get $name_ptr)))
 
   ;; Move the focus to a dialog's first visible, enabled tab stop. Returns 1
   ;; when the focus now sits on such a child, 0 when the dialog has none (the
-  ;; caller then keeps whatever default it had). WM_KILLFOCUS/WM_SETFOCUS are
-  ;; posted rather than sent: this runs inside a guest DefDlgProc call, and a
-  ;; nested synchronous send from here would re-enter the dialog's own wndproc
-  ;; on top of a live x86 frame.
+  ;; caller then keeps whatever default it had). Complete the focus transaction
+  ;; before returning to DefDlgProc. Posted notifications can outlive a later
+  ;; activation and make an old native control reclaim focus when its queued
+  ;; WM_SETFOCUS finally arrives. The shared synchronous sender preserves the
+  ;; live guest frame; the focus serial protects callback-selected targets.
   (func $dlg_focus_first_tabstop (param $dlg i32) (result i32)
-    (local $first i32) (local $old i32)
+    (local $first i32)
     ;; DefDlgProc judges child eligibility from the dialog template/window
     ;; styles, even when the dialog ancestor is not on screen yet. WinHelp
     ;; focuses its hidden Contents page before showing the outer Topics dialog.
@@ -3812,14 +3813,9 @@
       (then (return (i32.const 0))))
     (if (i32.eq (global.get $focus_hwnd) (local.get $first))
       (then (return (i32.const 1))))
-    (local.set $old (global.get $focus_hwnd))
-    (global.set $focus_hwnd (local.get $first))
-    (if (local.get $old)
-      (then
-        (drop (call $post_queue_push (local.get $old) (i32.const 0x0008)
-          (local.get $first) (i32.const 0)))))
-    (drop (call $post_queue_push (local.get $first) (i32.const 0x0007)
-      (local.get $old) (i32.const 0)))
+    ;; Eligibility above intentionally allows a hidden dialog ancestor. Do not
+    ;; replace it with SetFocus's visible-window validation/activation path.
+    (drop (call $focus_notify_transfer (local.get $first)))
     (i32.const 1))
 
   (func $handle_DefDlgProcW (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
