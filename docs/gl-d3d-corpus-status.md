@@ -60,16 +60,17 @@ passes. In particular, the newer fixes do not complete this corpus goal.
 
 ## October 13 evidence reconciliation
 
-This updates retained evidence against main 29213a4ac; it is not a new corpus sweep.
+This updates retained evidence against main fac1dc0ba; it is not a new corpus sweep.
 
 | App / scope | Evidence now available | Remaining gap |
 |---|---|---|
 | Diablo II | GPU POINTLIST fix `782bc73d4` passed 40 pixel cases and ordinary browser town/control in paired `20261013T2055Z-diablo2-pointlist-control` / `-candidate`, canonical Wasm `ba6f25ea2d467b3fba00110d83575d48ac1aeb8794a474052190998067723259`. Control 38,701 fallbacks/27,556 readbacks; candidate 0/1,001 with zero backend errors. | Both arms use WebGL: this is not software/WebGL pairing. Different randomized town layouts prevent an isolated speedup claim; presentation events are not logical/display FPS. Audio/device qualification remains absent. |
-| Neverwinter Nights (new-game extension) | Real client attributes, stencil and color masks are merged. `20261013T2045Z-nwn-color-prelude` on `99e780866` / canonical `ba6f25ea…` reaches Prelude world; ordinary ground clicks change position/camera and open Pavel conversation, then Continue advances dialogue. Root reviewed captures. Local-only corpus registration `46a456ab` merged. | Evidence is CLI software with synthetic batch clock, not browser/WebGL, FPS, audio, combat or physical-device qualification. Registered browser route is being tested separately. |
+| Neverwinter Nights (new-game extension) | Real client attributes, stencil and color masks are merged. `20261013T2045Z-nwn-color-prelude` on `99e780866` / canonical `ba6f25ea…` reaches Prelude world; ordinary ground clicks change position/camera and open Pavel conversation, then Continue advances dialogue. Root reviewed captures. Local-only corpus registration `46a456ab` merged. | Evidence is CLI software with synthetic batch clock, not browser/WebGL, FPS, audio, combat or physical-device qualification. Registered browser run `20261013T2100Z-nwn-registered-browser` now also proves Prelude ground interaction and Pavel Continue; its exact GL backend remains unattested. |
 | Arcanum | Retained `20261008T1431Z-arcanum-gameplay-qualified` explicitly pins both backends, ordinary movement and module identity. | Software FPS remains unqualified; later missing-knob notes do not erase this run. |
 | UT2004 | Merged `fc0d7bf10`; `20261010T2240Z-ut2004-sw-menu-input-w5` retains software DM-Rankin and Up movement. | Historical installer route, not a fresh registered-app or full backend-pair certification. |
 | UT2003 | `20261010T2140Z-ut2003-server-sw-w4` and both named artifacts are present; TLS/OOM fixes are merged. | Unattended listen server does not prove player movement; module hash absent. |
-| Daikatana / FreeSpace | Earlier launch/API fixes and world/flight evidence remain retained; these are not unresolved launch crashes. | Explicit Daikatana browser backend attestation and FreeSpace browser/device evidence remain gaps. |
+| Daikatana | Retained software `20261006T1830Z-daikatana-demo-gameplay` and explicit CLI WebGL `20261010T2140Z-daikatana-webgl-w4` record world, ordinary movement and weapon pickup. The latter commands `--headless-gl --gl-renderer=webgl --gl-census`; all three artifacts remain present. DLL repair remains merged. | Historical module hashes are incomplete. Browser world/control exists, but its exact GL backend is not attested: generic GPU presentation counters and static guest GL_RENDERER strings do not distinguish software. Do not duplicate generic CLI WebGL qualification. |
+| FreeSpace | Earlier codec/API fixes and retained flight evidence remain available; this is not an unresolved launch crash. | Browser/device evidence remains a separate gap. |
 
 The falling-leaf repair, registered saver clock and headless resize fix are merged. Historical 14/14 crash revisits are retained launch evidence, not a fresh full-game certification. MilkDrop remains held after automatic review; Morrowind remains paused and Heroes II belongs to the laptop.
 
