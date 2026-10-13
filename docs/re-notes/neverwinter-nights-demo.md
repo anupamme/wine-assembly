@@ -417,3 +417,47 @@ and queued state changes; an all-zero-only bypass or success stub is not valid.
 This continuation changes no emulator source or fixture bytes. Its self-contained
 investigation evidence uses `validation.json` because NWN remains absent from
 the candidate manifest.
+
+## Color-mask continuation reaches Prelude world and dialogue (2026-10-13)
+
+Exact clean source `99e780866cf5b0b5fc0be5a06b0cf7dc9d853436` and canonical
+Wasm SHA-256 `ba6f25ea2d467b3fba00110d83575d48ac1aeb8794a474052190998067723259`
+were tested in isolated `/home/user/nwn-color-gameplay-work` on `bx_yqnspudj`.
+All 130 tracked `src` files match the separately tested color-mask checkout.
+The unchanged original fixture executable remains SHA-256
+`1c54767bac878459615fa7dc913e1dbdd80bbd70cf40d6249a7c8098fa95fd1f`.
+No emulator, guest, or asset changes were made for this run.
+
+Evidence `scratch/runs/20261013T2045Z-nwn-color-prelude/` started at
+20:48:54Z. The ordinary software/Threads command matches the preceding run,
+with port 8127, `--max-batches=1000000 --max-seconds=270`, and a 300-second
+external deadline. Node was v24.18.1 on Linux x86-64. The drawable is 800x600;
+control captures are 640x480 and the final capture is 800x600. The default
+200ms-per-batch guest clock is not a real-time performance measurement.
+
+Ordinary New clicks (320,183) at batches 72915/76905 and Select Premade
+Character clicks (320,252) at 80143/117469 advanced through the reviewed
+menus. Aluvian Darkstar was double-clicked at (130,75), batch 149080. The
+first clicks again sometimes left the preceding screen visible; input timing
+has not been independently diagnosed. Loading Area reached 100% at 246899,
+then **the actual Prelude world rendered at batch 275516**: characters,
+room geometry, portrait, quickbar and game messages are visible in `world.png`.
+
+Ground clicks at (350,110), (345,100), and (275,265), batches
+284651/312015/317070, were delivered through the normal input queue. The
+first post-click capture retained the same framing. By batch 333375,
+`movement2.png` shows a changed camera/character arrangement and Pavel's
+opening tutorial conversation. A normal click on Continue at (39,98), batch
+337780, advances to his introduction and two player response choices in
+`dialogue.png`, batch 349209. This establishes in-world progression and
+responsive dialogue; it does not isolate which ground click caused each
+movement or prove precise pathfinding behavior.
+
+The run was ended with control-tool quit after 355585 batches; supervisor
+status was 0 at 20:52:38Z. Its supervisor and children were confirmed absent
+before releasing the runtime. `final.png` preserves the dialogue at full
+drawable resolution. All 26 remote artifacts were copied and SHA-256 checked
+locally; all 18 captures were inspected. The self-contained investigation
+record is `validation.json`, because the demo remains unregistered in the
+candidate manifest. **No combat, audio correctness, browser/mobile gameplay,
+or FPS qualification is established.**
