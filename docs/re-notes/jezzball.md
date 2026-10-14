@@ -2,6 +2,20 @@
 
 Source: https://archive.org/details/win3_JezzBall ; win3_JezzBall.zip SHA1 2f041c41949b39917754ef1e49667b7f8f4b578b. JEZZBALL.EXE SHA256 0450d0559fa5957d813bdd7be1f71122bf23047869b610802386320f109cb705 matches test/binaries/wep16/WEP4/JEZZBALL.EXE. Use registered wep16_jezzball so WEP4UTIL.DLL and WAV/HLP companions are available.
 
+## 2026-10-13 worker dialog frame clipping
+
+The release desktop reproduced the clipped High Scores popup in Chromium
+worker mode: its frame was 263x306 while the controls retained Win16 template
+spacing. `renderer.createDialog` recalculated frame size using `is_win16()`
+from the idle host WASM instance, whose process-local global is zero. The live
+worker had already laid out the window and controls at Win16's 8x16 base units.
+The renderer now mirrors `ctrl_get_xy/wh` for top-level dialogs as it already
+did for child dialogs, preserving native dimensions and non-client extents.
+No template, font, or game-specific size override is needed. The High Scores
+popup now renders both score panels and the complete bottom button row.
+The renderer regression explicitly supplies a Win32 host global with Win16
+shared geometry. Caption-drag, modal-input and button-queue checks also pass.
+
 ## 2026-10-13 first-level transition
 
 On 6aaf65235, ordinary pointer gameplay through the real ops emulator handler
