@@ -10,6 +10,33 @@ bytes. GOG listed Arena for USD 0.00 when this corpus was verified, but the
 package remains proprietary and gitignored. Nothing here grants redistribution
 rights for the installer or extracted game.
 
+## Pinned-package recovery and inventory correction (2026-10-14)
+
+`node tools/fetch-candidate-corpus.js --id=gog-free-elder-scrolls-arena --force`
+now extracts the installed payload with innoextract1.9, language `en-US`,
+excluding temporary installer files. `test/candidate-corpus/arena-files.json`
+pins the resulting348 files; `node test/test-arena-recovery.js` verifies fresh
+output. Fresh recipe output matches independent extraction and the matching
+restored fixture files byte-for-byte. The original installer is unchanged.
+
+The older `lib/arena-gog-source.json` inventory is **not a clean package
+inventory**: of its520 entries,102 are installer-temporary `tmp/` files and70
+are absent from the pinned package (including AUTOMAP/CITYDATA/save-slot
+files). All348 package payload files match their older hashes. Do not invent
+the missing70 files or describe them as verified original package contents.
+Their origin remains unresolved; the restored files have been preserved.
+
+`tools/prepare-arena-gog-assets.js` still demands that older inventory, so
+fresh-package browser preparation requires a separate inventory/metadata
+migration. This recovery recipe alone does not complete that route. The
+original `__support/save/NAMES.DAT` template is in the recovered package;
+the older blanket statement that there are no packaged templates is inaccurate.
+Preserve the existing overlay semantics when reconciling the runtime manifest.
+
+Evidence and original installer copy: `scratch/runs/20261014-arena-recovery/`.
+`old-inventory-differences.json` records every missing path and its older hash.
+No runtime test, save migration or public deployment occurred in this recovery.
+
 ## Direct installer path
 
 The original PE32 Inno wrapper was executed directly in Wine-Assembly, without
