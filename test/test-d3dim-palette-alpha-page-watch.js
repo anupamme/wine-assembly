@@ -13,6 +13,15 @@ const extraWat = String.raw`
   (export "pa_w2g" (func $w2g))
   (export "pa_entry" (func $dx_from_this))
   (export "pa_bind" (func $d3dim_set_texture))
+  (func (export "pa_capacity") (result i32) (global.get $DX_MAX))
+  (func (export "pa_refs") (param $obj i32) (result i32)
+    (load.field DxObject refcount (call $dx_from_this (local.get $obj))))
+  (func (export "pa_type") (param $obj i32) (result i32)
+    (i32.load (call $dx_from_this (local.get $obj))))
+  (func (export "pa_release") (param $obj i32) (result i32)
+    (call $handle_IDirectDrawPalette_Release (local.get $obj) (i32.const 0)
+      (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.load (global.get $reg_base)))
   (func (export "pa_seed") (param $vt i32)
     (global.set $DX_VTBL_DDRAW (local.get $vt))
     (global.set $DX_VTBL_DDSURF2 (i32.add (local.get $vt) (i32.const 256)))
@@ -154,7 +163,43 @@ const extraWat = String.raw`
   assert.equal(call(e.pa_attach, texture, ordinary), 0);
   key = refresh(0, [255,255,255], ordinaryData, key);
   setFlags(ordinary, ordinaryData, [255,0,128]);
-  refresh(0, [255,255,255], ordinaryData, key);
+  key = refresh(0, [255,255,255], ordinaryData, key);
+  // Real COM ownership and allocator reuse, without a synthetic refcount or
+  // forced allocator cursor. This remains a single-thread full-VM test: it
+  // does NOT establish that Release drains a production Worker queue.
+  assert.equal(e.pa_refs(ordinary), 2);
+  assert.equal(call(e.pa_attach, texture, ordinary), 0);
+  assert.equal(e.pa_refs(ordinary), 2, 'same attachment does not leak a reference');
+  assert.equal(call(e.pa_attach, texture, alpha), 0);
+  key = refresh(1, [0,128,255], alphaData, key);
+  assert.equal(e.pa_refs(ordinary), 1, 'replacement releases previous attachment');
+  assert.equal(e.pa_refs(alpha), 2);
+  const retiredEntry = e.pa_entry(alpha) >>> 0;
+  // Keep every unused DX slot live, so retiring alpha leaves exactly one
+  // reusable slot. Filler objects need no guest heap payload or PE assets.
+  let filled = false;
+  for (let i = 0; i <= e.pa_capacity(); i++) {
+    if (!e.pa_ddraw()) { filled = true; break; }
+  }
+  assert(filled, 'bounded production allocator exhaustion');
+  assert.equal(call(e.pa_release, alpha), 1, 'caller Release preserves attachment');
+  assert.equal(e.pa_type(alpha), 3);
+  const retained = gpu._texture(target, gpu._describe(device));
+  assert.equal(retained.key, key, 'caller Release preserves cached generation');
+  assert.equal(retained.pixels, undefined);
+  assert.equal(call(e.pa_attach, texture, 0), 0);
+  assert.equal(e.pa_type(alpha), 0, 'final detach retires palette');
+  key = refresh(0, [255,255,255], 0, key);
+  const replacement = palette(4);
+  assert.equal(e.pa_entry(replacement) >>> 0, retiredEntry, 'actual retired slot reused');
+  assert.equal(e.pa_refs(replacement), 1, 'reused slot has fresh ownership');
+  assert.equal(call(e.pa_attach, texture, replacement), 0);
+  key = refresh(0, [255,255,255], e.pa_palette_data(replacement) >>> 0, key);
+  assert.equal(call(e.pa_release, replacement), 1);
+  assert.equal(call(e.pa_attach, texture, 0), 0);
+  assert.equal(e.pa_type(replacement), 0);
+  refresh(0, [255,255,255], 0, key);
+  assert.equal(call(e.pa_release, ordinary), 0, 'unattached final Release retires palette');
   assert(gpu.stats.pageChecks > 0);
   assert.equal(gpu.stats.dirtyAuditMisses, 0);
   gpu.stop();

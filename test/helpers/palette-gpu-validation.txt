@@ -57,3 +57,43 @@ they do not exercise x86 thunk dispatch. State144 or alpha+colorkey precedence
 is intentionally not asserted; all fixtures are unkeyed. Production Worker
 queue, caller Release, final detach/release/slot reuse, and existing full-VM
 CPU regressions remain independent required follow-up work.
+
+Worker/lifetime source follow-up, 2026-10-14:
+  node test/test-shared-render-worker.js
+This cheap JS test now sends two generations through the production Encoder,
+Manager endpoint, legacy worker dispatcher and D3DIM adapter. It overwrites
+producer state/vertex scratch before draining and checks FIFO snapshots,
+two consumed commands, zero encoder fallback and no software raster draw.
+The Worker event delivery, WASM exports and GPU are mocked. A real 6 MiB
+WebAssembly.Memory handle exercises initialization-handle byte accounting;
+no module is compiled or instantiated. This check PASSED locally.
+
+test-d3dim-palette-alpha-page-watch.js also has PREPARED, NOT EXECUTED real
+handler checks for same-attachment refcount stability, replacement ownership,
+caller Release retaining the attached palette/cache, final detach retirement,
+unattached final Release, and actual DX slot reuse with fresh ownership and
+ordinary palette decode after an alpha palette occupied the same slot.
+It fills unused DX slots with live payload-free DirectDraw objects through
+the production allocator, bounded by exported DX_MAX, before retiring alpha;
+the next palette must reuse the only free slot. No cursor/type/refcount is
+forged. The existing full-VM invocation (requires serialized runtime grant):
+  timeout 240s node test/test-d3dim-palette-alpha-page-watch.js
+Only node --check, static test-export parenthesis balance, test-tier membership
+and diff whitespace checks were run for this extension. No full-VM PASS is
+claimed; an assertion failure must be investigated, not weakened.
+
+These two tests do NOT together prove release-before-drain safety. Inspection
+of src/09a8-handlers-directx.wat shows Palette Release, SetEntries and surface
+SetPalette call d3dim_worker_fence before accessing/mutating ownership/data.
+The production legacy Encoder copies 4096 bytes of render state and vertices,
+not the pointed-to palette payload. A fake JS Release would bypass exactly
+the producer fence under examination. The remaining acceptance test must run
+the actual WAT producer on a separate guest Worker with the production render
+endpoint: hold consumption after draw enqueue, invoke Release/SetEntries/
+detach, verify the call stays blocked until the old generation is consumed,
+then verify refcounts, slot reuse, new generation pixels and zero fallback.
+Do not block a same-event-loop mock with Atomics.wait: it cannot drain itself.
+The new single-thread lifetime test has no in-flight queue or real GL context;
+the transport mock has no real palette API, leases or framebuffer. Worker
+palette generations, release-before-drain, real GPU lifetime and alpha+key /
+state144 semantics remain unqualified. Production candidate is unchanged.
