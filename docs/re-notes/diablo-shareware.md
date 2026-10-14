@@ -3172,3 +3172,27 @@ unique frames. This agrees with the fixed 50 ms gameplay iteration in
 in-window interval reaches back to the last frame before the window, during
 the load (660 batches); leave it out. Browser FPS is not measured here.
 Evidence: `scratch/runs/20261010T0400Z-diablo_shareware-control-frames`.
+
+## Worker character initialization, 2026-10-14
+
+Release afbc8ea1c reproduced a gray Single Player Characters screen with
+only stock stat labels. Cooperative mode completed the same route. The
+existing browser regression silently ran cooperatively: its dev server did
+not serve isolation headers. It now starts with --isolate and asserts the
+Worker backend unless explicitly testing ?no-threads.
+
+The Worker API trace installs diabloui's hero DLGPROC (original VA
+0x2000d1c0) and sends WM_INITDIALOG through Storm's DefDlgProc wrapper,
+but initialization does not complete. DefDlgProc previously ran this message
+through the bounded recursive sender, unlike commands and client input.
+WM_INITDIALOG now uses the existing guest continuation so initialization,
+application callbacks and nested dialogs retain the guest stack. The dialog
+result epilog still returns the DLGPROC BOOL for WM_INITDIALOG.
+
+Before: scratch/runs/20261014-diablo-character-worker-before/failure.png
+matches the user's screenshot; API/state captures are in the corresponding
+diablo-character-api2 and diablo-character-state runs. After:
+scratch/runs/20261014-diablo-character-init-after, reviewed class portrait,
+name entry and Tristram; receipt explicitly records threads=true. Full
+browser flow passes. The exact instruction at which the previous recursive
+invocation lost initialization has not been isolated. Safari remains untested.

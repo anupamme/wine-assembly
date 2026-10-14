@@ -3767,6 +3767,10 @@
     ;; continuation. The original API frame is retained beneath the callback,
     ;; so nested sends, modal loops and thread switches cannot replace it.
     ;;
+    ;; WM_INITDIALOG also retains the guest call stack: Diablo's character
+    ;; initialization invokes application callbacks before opening its class
+    ;; selection dialog. Running that inside the bounded synchronous sender
+    ;; left Worker mode at the uninitialized gray character screen.
     ;; Client mouse messages and WM_KEYDOWN/KEYUP/CHAR/DEADCHAR go the same way:
     ;; A click can open the next modal dialog; callers can also inspect the
     ;; result, so TRUE must still become DWL_MSGRESULT rather than raw BOOL.
@@ -3779,7 +3783,9 @@
           (i32.or
             (i32.or
               (i32.ge_u (local.get $arg1) (i32.const 0x0400))
-              (i32.eq (local.get $arg1) (i32.const 0x0111)))
+              (i32.or
+                (i32.eq (local.get $arg1) (i32.const 0x0111))
+                (i32.eq (local.get $arg1) (i32.const 0x0110))))
             (i32.or
               (i32.and (i32.ge_u (local.get $arg1) (i32.const 0x0200))
                        (i32.le_u (local.get $arg1) (i32.const 0x020D)))

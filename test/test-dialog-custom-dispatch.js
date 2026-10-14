@@ -124,7 +124,7 @@ const extraWat = String.raw`
   // WM_LBUTTONDOWN, and through the bounded sender that loop was cut off
   // ("Unable to create game"). Client mouse and plain key messages have no
   // DefDlgProc default work, so they take the same tail path.
-  for (const msg of [0x0201, 0x0202, 0x0200, 0x0203, 0x020A, 0x0100, 0x0101, 0x0102]) {
+  for (const msg of [0x0110, 0x0201, 0x0202, 0x0200, 0x0203, 0x020A, 0x0100, 0x0101, 0x0102]) {
     assert.strictEqual(wat.test_defdlg_custom_tail(stormHwnd, proc, msg) >>> 0, proc,
       `DefDlgProc tail-dispatches message 0x${msg.toString(16)} to the DLGPROC`);
     assert.strictEqual(wat.get_esp() >>> 0, 0x00520000 - 20,

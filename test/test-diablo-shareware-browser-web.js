@@ -9,6 +9,9 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const { PNG } = require('pngjs');
+// The dev server reads this switch at module load. Without isolation this
+// test silently ran cooperatively despite the desktop's default Threads mode.
+if (!process.argv.includes('--isolate')) process.argv.push('--isolate');
 const { createServer } = require('../tools/dev-server');
 
 const ROOT = path.join(__dirname, '..');
@@ -116,7 +119,12 @@ async function capture(page, name, bytes) {
   else await page.screenshot({ path: file });
   const info = { name, titles: await titles(page), file,
     windows: await page.evaluate(() => Object.values(sharedRenderer.windows)
-      .filter(w => w && w.visible).map(w => w.className)) };
+      .filter(w => w && w.visible).map(w => {
+        const e = w.wasm.exports;
+        return { hwnd: w.hwnd, className: w.className, style: w.style,
+          proc: e.wnd_get_proc_export(w.hwnd), dialogProc: e.dialog_get_proc_export(w.hwnd),
+          client: w.clientRect };
+      })) };
   fs.writeFileSync(path.join(OUT, `${name}.json`), JSON.stringify(info, null, 2));
   console.log(`captured ${name}: ${info.titles.join(', ')}`);
   return PNG.sync.read(fs.readFileSync(file));
@@ -204,11 +212,17 @@ async function main() {
   let page;
   try {
     page = await browser.newPage();
+    page.on('console', message => fs.appendFileSync(path.join(OUT, 'console.log'), message.text() + '\n'));
     await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 1 });
     const errors = [];
     page.on('pageerror', e => errors.push(e.stack || String(e)));
     // Keep every spawn.mpq range request in the receipt (default buffer: 250).
     await page.evaluateOnNewDocument(() => performance.setResourceTimingBufferSize(100000));
+    if (process.env.WA_DIABLO_TRACE_API) {
+      await page.evaluateOnNewDocument(names => {
+        window.__waTraceApiNames = new Set(names.split(','));
+      }, process.env.WA_DIABLO_TRACE_API);
+    }
     if (THROTTLE) {
       const [kbps, latency] = THROTTLE.split(':').map(Number);
       const cdp = await page.target().createCDPSession();
@@ -259,6 +273,11 @@ async function main() {
     await page.mouse.click(ix, iy);
     await page.waitForFunction(() => runningApps.some(a => a && a.name === 'diablo_shareware' &&
       a.wine && a.wine.running), { timeout: 150000 });
+    if (!QUERY.includes('no-threads')) {
+      assert(await page.evaluate(() => runningApps.some(a => a.name === 'diablo_shareware' &&
+        a.wine.threadManager && a.wine.threadManager.backend === 'worker')),
+      'desktop regression must actually run with Worker threads');
+    }
 
     await wait(3000);
     assert(!(await titles(page)).includes('Single Player'), 'intro was skipped before capture');
@@ -334,6 +353,8 @@ async function main() {
     { timeout: 15000 });
 
     await clickGuest(page, 320, 213);
+    await wait(2000);
+    await capture(page, '03c-single-player');
     await waitDialogs(page, 2);
     await wait(1500);
     await clickGuest(page, 420, 298); // Warrior
