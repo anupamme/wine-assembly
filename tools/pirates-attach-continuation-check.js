@@ -189,3 +189,18 @@ console.log('PASS budget/disable/self-cancel and unchanged synchronous callback 
   assert.deepEqual(f.gate(),[0,0]); assert.equal(runs,2);
 }
 console.log('PASS synchronous nested-load service preserves outer continuation');
+{
+  const f = fixture(), life = lifecycle(f), manager = Object.create(ThreadManager.prototype);
+  const thread = { instance:{exports:f.e},state:'active',tid:1,_dllAttachOperation:f.begin() };
+  thread._dllAttachOperation.advance(13); thread._dllAttachOperation.advance(13);
+  let exits = 0;
+  Object.assign(manager,{threads:new Map([[2,thread]]),_audioThreadHotUntil:new Map(),
+    _getVfs:()=>null,_abandonMutexesOwnedBy(){},_emitThreadEvent(){},
+    _onThreadExit(){exits++;},_resolveThreadHandle:()=>thread});
+  manager.terminateThread(2,7); manager.terminateThread(2,7);
+  assert.equal(thread.state,'exited'); assert.equal(thread.exitCode,7);
+  assert.equal(thread._dllAttachOperation,null); assert.equal(exits,1);
+  assert.deepEqual(f.gate(),[0,0]); assert.deepEqual([life.get(0,12),life.get(1,12)],[0,1]);
+  assert.equal(f.state.eip,0x5000,'forced death does not restore or resume callback');
+}
+console.log('PASS TerminateThread releases notification exactly once and quarantines unfinished image');
