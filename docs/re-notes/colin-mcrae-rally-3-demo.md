@@ -381,3 +381,64 @@ This does not serialize simultaneous mapping or implement unload. Shared
 PE_STAGING, address selection, reentrant initialization and module-graph
 lifetime still require synchronization before FreeLibraryAndExitThread can
 be implemented correctly. CMR3 gameplay remains unqualified.
+
+## Original CMR3 native quartz A/B (14 October, 00:22 UTC)
+
+Run `scratch/runs/20261014T0022Z-cmr3-original-validation` compares held DLL
+lifecycle commit `50f814bcbcaa7e5be4dad6a2ef1dc4cfe7ac3303` against its exact
+parent-main `2481d17cf12d24b94cc08562000cfc240d29aef8`. Canonical modules are
+candidate `80a8bdf93d9f1f2da53e27c7ba10fa1831cef274be7c9b4d21af87d85002f0ad`
+and baseline `0918dec0eba2b3f0a6a0f0c1423fe273a9c95f530acb3108d01699f481ffb7ab`.
+Actual browser module responses match these hashes. Each software run lasted
+180 seconds in Chrome 151.0.7922.108 with the default Worker scheduler,
+software D3D9 programmable, and a 1000x800 browser viewport.
+
+The fixture contains 302 original mapped files: cabinet extraction gives 333
+records, excludes 32 installer resources, then adds the separate original
+Rally_3PC.exe. EXE SHA remains `50ac9d5efbadd8b9d593ac229e82711a0742f6b2dd4eaac58a1d573cd981408c`.
+The explicit native DLL/AX set has 12 files, including original quartz
+`41925fbcdf3d29232ec80a2ec55969d3c153457ad5421ef594457e0d95593c56`;
+registry SHA is `b676b3d6bc165eacf0dd33af01a0e7200da465562253f8b26443e4bdd0d9c07c`.
+Common native-DLL URLs were blocked and the common DLL registry emptied;
+built-in OLE was used. Original EXE/assets/native DLLs and source hashes
+passed before/after checks. No guest-state/cache patch or silent stub.
+
+The first prepared route had conflicting query parameters. The debug toolbar's
+`d3d-renderer=webgl` overrides `d3d9-renderer=software`; actual WebGL truthfully
+showed the graphics-minimum modal. That run is preserved under
+`candidate-original/`. Both comparison runs correct only the first query to
+software. Actual backend fields and reviewed toolbar screenshots confirm it.
+The local test server also blocks `/src/api_table.json`, so selected API names
+are logged without argument/return-address detail. This is a trace limitation,
+not evidence of missing guest APIs; guest dispatch uses its compiled table.
+
+After ordinary Escape at approximately 38 seconds, baseline quartz thread 1
+traps at runtime `0x0207eb55` (quartz base `0x02022000`, RVA `0x5cb55`) in
+`FreeLibraryAndExitThread`, with return `0x0207eb62` and HMODULE `0x02022000`
+on its saved stack. It repeats on the next media transition. The candidate
+logs two corresponding API calls followed by thread 1 `exited (yield=2)`;
+there is no unimplemented-API trap. Subsequent real native media threads start.
+This validates progress through the original quartz release/exit boundary;
+the browser trace does not independently establish final physical unmapping
+or all reference-count transitions.
+
+Both arms show the original splash, moving title video with PRESS RETURN TO
+CONTINUE, and the main menu with STAGES highlighted. Thus reaching the menu
+is not a differential success claim: the baseline's background thread traps
+do not stop the entire application. Both have conspicuous rectangular video
+artifacts. Reviewed ordinary click/Return inputs (100/700/120/900 ms holds)
+did not enter Stages before their deadlines. Input order and settings match,
+but screenshot review caused different later wall-clock timings; candidate
+needed the second Return to leave the title, baseline accepted the first.
+Neither arm qualifies racing, gameplay performance, or audible sound. Next
+investigation is the remaining main-menu input/progression boundary, with
+explicit frame/thread/input evidence rather than assuming the unload fix
+also solves it.
+
+All 88 observed browser/build PIDs and their positive/negative process-group
+IDs were independently absent at `2026-10-14T00:22:35.696Z`. Runtime was
+released before source-only packaging. `export-manifest.json` pins all 154
+transferred remote artifacts; every local file hash was verified with a 2 GiB
+free-space floor. `investigation.json` records reviewed screenshot paths and
+limits. No corpus candidate ID exists, so no dashboard result was attached
+to an unrelated game. The shared HEAD/index and production files were untouched.
