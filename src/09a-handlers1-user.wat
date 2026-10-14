@@ -1473,6 +1473,8 @@
             (i32.ne (local.get $arg0) (global.get $dlg_ending_hwnd))))
       (then
         (global.set $dlg_ending_hwnd (local.get $arg0))
+        ;; Match DestroyWindow's exposure before the owner/geometry is gone.
+        (call $wnd_uncover_parent (local.get $arg0))
         (call $wnd_destroy_recursive (local.get $arg0))
         (global.set $dlg_ending_hwnd (i32.const 0))))
     ;; Don't set quit_flag — that kills the main message loop.
