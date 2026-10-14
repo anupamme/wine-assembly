@@ -1,8 +1,8 @@
 # Candidate recovery status
 
-Snapshot after main 2c637a182, 2026-10-14. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
+Snapshot including Gallinelle recovery, 2026-10-14. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
 
-135 candidates:118 package recipes,16 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 15 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages.
+135 candidates:119 package recipes,15 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 16 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages.
 
 ## Completed bounded recovery work
 
@@ -23,7 +23,6 @@ Fresh recoveries were verified and committed for .kkrieger,Sanity,Nocturne,Urban
 | moorhuhn-tennis | Pinned installer; original installer/wrapper must run and export projector/SWF/basepath. |
 | moorhuhn-3-puzzles | Shares original Moorhuhn3 acquisition but each loader needs captured child-launch extraction. |
 | best-of-moorhuhn | Pinned original ISO plus transient wrapper exports still needed. |
-| gallinelle-xxl | Existing manual MODE2/2352 conversion and cabinet recipe. Generic helper supports MODE1 only; add tested mode-specific conversion after confirming permitted acquisition. |
 | reflexive-ricochet-xtreme | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | reflexive-zuma-deluxe | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | reflexive-crimsonland | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
@@ -53,3 +52,9 @@ runtime support remains separate from package recovery. These are separate
 from the DOS downloader's existing ZIP recipes.
 
 Audit existing package recipes for installer-only outputs, mutable-save separation and complete output inventories. The initial older-local-tree audit is not current-main completeness. Worms Armageddon already has an integrated complete recipe and fresh667-file recovery verification; the older audit missed it. Silver original media hashes and C:/SILVER plus D:/SILVER ZIP mounting are recovered in docs/re-notes/silver-demo.md, and silver-demo now reconstructs3147 original files and preserves the source ZIP. Dual-drive runtime mounting remains separate from acquisition; no browser/desktop qualification. Reconcile other registry-only fixtures separately. DOS GOG-derived installed trees,Comanche3 original-media provenance and Hornet discovery downloads require their own recovery contracts. Preserve permitted original packages/evidence outside Git; upstream mirrors cannot guarantee permanent availability. Boat SSH remains unavailable to the scoped key. On 2026-10-14, the documented and authorized Boat exec API was verified on a fresh separate test box, allowing clean builds and runtime validation. This resolves the transport blocker only; automated-review restrictions on specific diagnostics remain in force.
+
+Gallinelle XXL now has a pinned original ZIP recipe: validate MODE2 Form1 sectors,
+extract the ISO and original Game/Bonus cabinet groups. Four output files are
+hash-pinned and independently compared; this is local recovery, not public
+redistribution or new gameplay acceptance. MODE2 Form2, mixed sector modes and
+mismatched XA subheaders are rejected instead of silently slicing wrong data.

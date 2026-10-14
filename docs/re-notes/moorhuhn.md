@@ -370,3 +370,22 @@ at the art, not the box: a 30x20 bird's opaque pixels are columns ~12-24 and
 rows ~5-15, so `(x+2, y-6)` from the object's x/y is a body pixel. A ctl
 eval that lists live birds is saved with the run
 (`chicken-list.eval.js`).
+
+## Gallinelle original recovery recipe (2026-10-14)
+
+`node tools/fetch-candidate-corpus.js --id=gallinelle-xxl --force` now
+reconstructs the original Game and Bonus directories from the pinned
+74,287,372-byte ZIP (SHA1 374449d553941dfd75301b09ba3fa0507c934029).
+All 33,997 raw sectors are MODE2 Form1 with matching XA subheaders. The
+converter validates these fields and sync bytes before passing the cooked ISO
+to archive extraction; Form2 and mixed modes fail explicitly. Cabinet groups
+require unshield (tested 1.5.1); the older IS5 fallback correctly refuses this
+newer cabinet. Install with `sudo apt-get install unshield` if absent.
+
+The four original payload files are pinned in
+`test/candidate-corpus/gallinelle-xxl-files.json`; verify with
+`node test/test-gallinelle-recovery.js`. Fresh recovery is independently compared
+with an original sector-slice extraction and unshield group extraction. Original
+archive and receipts: `scratch/runs/20261014-gallinelle-recovery/`. No payload
+patches or new runtime/gameplay/public-distribution claims. Forced recovery
+replaces the fixture tree; preserve local player files elsewhere first.

@@ -208,16 +208,17 @@ function extractArchive(archive, destination, options = {}) {
   throw new Error(`archive extraction failed (${primary}; ${secondary})${detail ? `:\n${detail}` : ''}${hint}`);
 }
 
-function extractRawMode1Cd(image, destination) {
+function extractRawCd(image, destination, mode = 1) {
+  if (mode !== 1 && mode !== 2) throw new Error('Unsupported raw CD sector mode');
   const RAW_SECTOR_SIZE = 2352;
   const ISO_SECTOR_SIZE = 2048;
-  const USER_DATA_OFFSET = 16;
+  const USER_DATA_OFFSET = mode === 2 ? 24 : 16;
   const sectorsPerChunk = 128;
   const size = fs.statSync(image).size;
   if (!size || size % RAW_SECTOR_SIZE !== 0) {
-    throw new Error(`${image} is not a whole-sector MODE1/2352 image`);
+    throw new Error(`${image} is not a whole-sector MODE${mode}/2352 image`);
   }
-  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'wa-mode1-cd-'));
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'wa-raw-cd-'));
   const iso = path.join(temporary, 'disc.iso');
   try {
     const input = fs.openSync(image, 'r');
@@ -229,13 +230,18 @@ function extractRawMode1Cd(image, destination) {
       while (position < size) {
         const bytes = fs.readSync(input, raw, 0, Math.min(raw.length, size - position), position);
         if (!bytes || bytes % RAW_SECTOR_SIZE !== 0) {
-          throw new Error(`${image} has a truncated MODE1/2352 sector`);
+          throw new Error(`${image} has a truncated MODE${mode}/2352 sector`);
         }
         const sectors = bytes / RAW_SECTOR_SIZE;
         for (let sector = 0; sector < sectors; sector++) {
           const rawOffset = sector * RAW_SECTOR_SIZE;
-          if (raw[rawOffset] !== 0 || raw[rawOffset + 11] !== 0 || raw[rawOffset + 15] !== 1) {
-            throw new Error(`${image} contains a non-MODE1 sector at ${position / RAW_SECTOR_SIZE + sector}`);
+          if (raw[rawOffset] !== 0 || raw[rawOffset + 11] !== 0 || raw[rawOffset + 15] !== mode) {
+            throw new Error(`${image} contains a non-MODE${mode} sector at ${position / RAW_SECTOR_SIZE + sector}`);
+          }
+          if (mode === 2 && (raw.subarray(rawOffset + 1, rawOffset + 11).some(b => b !== 255) ||
+              !raw.subarray(rawOffset + 16, rawOffset + 20).equals(raw.subarray(rawOffset + 20, rawOffset + 24)) ||
+              (raw[rawOffset + 18] & 0x20))) {
+            throw new Error(`${image} requires MODE2 Form1 sectors with matching XA subheaders at ${position / RAW_SECTOR_SIZE + sector}`);
           }
           raw.copy(cooked, sector * ISO_SECTOR_SIZE,
             rawOffset + USER_DATA_OFFSET, rawOffset + USER_DATA_OFFSET + ISO_SECTOR_SIZE);
@@ -374,10 +380,10 @@ function runPostExtract(candidate, destination) {
       const into = path.join(destination, step.into);
       fs.mkdirSync(path.dirname(into), { recursive: true });
       fs.copyFileSync(from, into);
-    } else if (step.type === 'extractRawMode1Cd') {
+    } else if (step.type === 'extractRawMode1Cd' || step.type === 'extractRawMode2Cd') {
       assertSafeRelative(step.image, `${candidate.id}.postExtract[${index}].image`);
       assertSafeRelative(step.into, `${candidate.id}.postExtract[${index}].into`);
-      extractRawMode1Cd(path.join(destination, step.image), path.join(destination, step.into));
+      extractRawCd(path.join(destination, step.image), path.join(destination, step.into), step.type === 'extractRawMode2Cd' ? 2 : 1);
     } else if (step.type === 'expandSzdd') {
       assertSafeRelative(step.from, `${candidate.id}.postExtract[${index}].from`);
       assertSafeRelative(step.into, `${candidate.id}.postExtract[${index}].into`);

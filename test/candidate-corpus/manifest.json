@@ -245,19 +245,38 @@
       "name": "Tony Hawk's Pro Skater 2 Demo",
       "kind": "game",
       "version": "Original Windows Wise demo installer",
-      "executables": ["game/thawk2.exe"],
+      "executables": [
+        "game/thawk2.exe"
+      ],
       "sourcePage": "https://archive.org/details/pro-skater-2",
       "license": "Proprietary demo; no redistribution grant established. Local compatibility fixture only.",
       "localOnly": true,
-      "packages": [{
-        "url": "https://archive.org/download/pro-skater-2/Files/Demo/thps2.exe",
-        "sha1": "8fbb8860ce20ca5c7c94a1ec93bd04738afc6699",
-        "type": "file",
-        "destination": "installer/thps2.exe"
-      }],
-      "postExtract": [{"type": "installThps2Demo", "installer": "installer/thps2.exe", "into": "game"}],
-      "browser": {"fileRoot": "game", "exe": "game/thawk2.exe"},
-      "cli": {"maxBatches": 20000, "batchSize": 10000, "vfsInclude": ["**/*"]}
+      "packages": [
+        {
+          "url": "https://archive.org/download/pro-skater-2/Files/Demo/thps2.exe",
+          "sha1": "8fbb8860ce20ca5c7c94a1ec93bd04738afc6699",
+          "type": "file",
+          "destination": "installer/thps2.exe"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "installThps2Demo",
+          "installer": "installer/thps2.exe",
+          "into": "game"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/thawk2.exe"
+      },
+      "cli": {
+        "maxBatches": 20000,
+        "batchSize": 10000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     },
     {
       "id": "avp2-demo",
@@ -280,49 +299,129 @@
       "name": "Turok 2 Demo",
       "kind": "game",
       "version": "1999 Windows promotional demo",
-      "executables": ["game/Turok2Demo.exe"],
+      "executables": [
+        "game/Turok2Demo.exe"
+      ],
       "sourcePage": "https://archive.org/details/turok2demo",
       "license": "Proprietary promotional demo; no redistribution grant established. Local ignored compatibility fixture only; do not deploy or ship.",
       "localOnly": true,
-      "packages": [{
-        "url": "https://archive.org/download/turok2demo/turok2demo.exe",
-        "sha1": "d985ae568ad2f5dfc50f7592681ba10201278020",
-        "type": "archive"
-      }],
-      "postExtract": [
-        {"type": "is5Extract", "cab": "data1.cab", "into": "game"},
-        {"type": "copyFile", "from": "game/Turok2Demo.lss", "into": "game/data/Turok2Demo.lss"},
-        {"type": "copyFile", "from": "game/Rok Match Demo.lsm", "into": "game/data/Rok Match Demo.lsm"},
-        {"type": "copyFile", "from": "game/Textures.dat", "into": "game/data/Textures.dat"},
-        {"type": "copyFile", "from": "game/demo.mnu", "into": "game/data/demo.mnu"},
-        {"type": "copyFile", "from": "game/fontbmp.bmf", "into": "game/data/fontbmp.bmf"},
-        {"type": "copyFile", "from": "game/keyboard.dft", "into": "game/data/keyboard.dft"},
-        {"type": "copyFile", "from": "game/mouse.dft", "into": "game/data/mouse.dft"},
-        {"type": "copyFile", "from": "game/t2snd.11c", "into": "game/data/t2snd.11c"},
-        {"type": "copyFile", "from": "game/t2snd.BPC", "into": "game/data/t2snd.BPC"},
-        {"type": "copyFile", "from": "game/t2snd.spc", "into": "game/data/t2snd.spc"},
-        {"type": "copyFile", "from": "game/t2spchDemo.11k", "into": "game/data/t2spchDemo.11k"}
+      "packages": [
+        {
+          "url": "https://archive.org/download/turok2demo/turok2demo.exe",
+          "sha1": "d985ae568ad2f5dfc50f7592681ba10201278020",
+          "type": "archive"
+        }
       ],
-      "browser": {"fileRoot": "game", "exe": "game/Turok2Demo.exe"},
-      "cli": {"maxBatches": 7000, "batchSize": 100000, "vfsInclude": ["**/*"]}
+      "postExtract": [
+        {
+          "type": "is5Extract",
+          "cab": "data1.cab",
+          "into": "game"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/Turok2Demo.lss",
+          "into": "game/data/Turok2Demo.lss"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/Rok Match Demo.lsm",
+          "into": "game/data/Rok Match Demo.lsm"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/Textures.dat",
+          "into": "game/data/Textures.dat"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/demo.mnu",
+          "into": "game/data/demo.mnu"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/fontbmp.bmf",
+          "into": "game/data/fontbmp.bmf"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/keyboard.dft",
+          "into": "game/data/keyboard.dft"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/mouse.dft",
+          "into": "game/data/mouse.dft"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/t2snd.11c",
+          "into": "game/data/t2snd.11c"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/t2snd.BPC",
+          "into": "game/data/t2snd.BPC"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/t2snd.spc",
+          "into": "game/data/t2snd.spc"
+        },
+        {
+          "type": "copyFile",
+          "from": "game/t2spchDemo.11k",
+          "into": "game/data/t2spchDemo.11k"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/Turok2Demo.exe"
+      },
+      "cli": {
+        "maxBatches": 7000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     },
     {
       "id": "system-shock2-demo",
       "name": "System Shock 2 Demo",
       "kind": "game",
       "version": "1999 Looking Glass/Irrational Windows demo, SHOCK2.EXE CAB",
-      "executables": ["installed/shock/shock2.exe"],
+      "executables": [
+        "installed/shock/shock2.exe"
+      ],
       "sourcePage": "https://archive.org/details/SystemShock2Demo",
       "license": "Proprietary promotional demo; no redistribution grant established. Local ignored compatibility fixture only; do not deploy or ship.",
       "localOnly": true,
-      "packages": [{
-        "url": "https://archive.org/download/SystemShock2Demo/SHOCK2.EXE",
-        "sha1": "efd1e87f5aa0fb9c810893ade9269a8dde9103ba",
-        "type": "archive"
-      }],
-      "postExtract": [{"type": "copyTree", "from": "shock", "into": "installed/shock"}],
-      "browser": {"fileRoot": "installed", "exe": "installed/shock/shock2.exe"},
-      "cli": {"maxBatches": 4000, "batchSize": 100000, "vfsInclude": ["**/*"]}
+      "packages": [
+        {
+          "url": "https://archive.org/download/SystemShock2Demo/SHOCK2.EXE",
+          "sha1": "efd1e87f5aa0fb9c810893ade9269a8dde9103ba",
+          "type": "archive"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "shock",
+          "into": "installed/shock"
+        }
+      ],
+      "browser": {
+        "fileRoot": "installed",
+        "exe": "installed/shock/shock2.exe"
+      },
+      "cli": {
+        "maxBatches": 4000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     },
     {
       "id": "dungeons-of-dredmor-release",
@@ -414,43 +513,105 @@
       "name": "Sid Meier's Pirates! (2004)",
       "kind": "game",
       "version": "1.0.2 (30927), GOG-derived English archive plus Sold Out UK DVD",
-      "executables": ["digital/app/Pirates!.exe"],
+      "executables": [
+        "digital/app/Pirates!.exe"
+      ],
       "sourcePage": "https://archive.org/details/sid-meiers-pirates-pc-windows-iso",
       "license": "proprietary retail release; local compatibility fixture, not a demo",
       "localOnly": true,
-      "packages": [{
-        "url": "https://archive.org/download/pirates_202510/PIRATES.iso",
-        "sha1": "bfaadb137428c16d1e0df408d0f840a91df591d4",
-        "type": "file",
-        "destination": "sources/PIRATES.iso"
-      }, {
-        "url": "https://archive.org/download/sid-meiers-pirates-pc-windows-iso/Sid%20Meiers%20Pirates%20PC%20Windows%20ISO.iso",
-        "sha1": "e7ba887ddaee4e7b81c612ea13c23261af18a1cc",
-        "type": "file",
-        "destination": "sources/alternate.iso"
-      }],
-      "postExtract": [
-        { "type": "extractArchive", "archive": "sources/PIRATES.iso", "into": "disc" },
-        { "type": "extractArchive", "archive": "disc/Progra~1.cab", "into": "cab" },
-        { "type": "extractArchive", "archive": "disc/Disk2A~1.cab", "into": "cab2" },
-        { "type": "extractArchive", "archive": "disc/Language.cab", "into": "cab3" },
-        { "type": "copyTree", "from": "cab2", "into": "cab" },
-        { "type": "copyTree", "from": "cab3", "into": "cab" },
+      "packages": [
         {
-          "type": "msiFiles", "msi": "disc/Sid Meier's Pirates!.msi",
-          "cabinets": "cab", "source": "disc", "into": "installed",
-          "directoryAliases": { "SystemFolder": "." }
+          "url": "https://archive.org/download/pirates_202510/PIRATES.iso",
+          "sha1": "bfaadb137428c16d1e0df408d0f840a91df591d4",
+          "type": "file",
+          "destination": "sources/PIRATES.iso"
         },
-        { "type": "extractArchive", "archive": "sources/alternate.iso", "into": "alternate" },
-        { "type": "innoextract", "installer": "alternate/setup.exe", "into": "digital", "language": "english" },
-        { "type": "extractArchive", "archive": "disc/directx/DirectX.cab", "into": "dx9" },
         {
-          "type": "writeText", "file": "local-config.ini",
+          "url": "https://archive.org/download/sid-meiers-pirates-pc-windows-iso/Sid%20Meiers%20Pirates%20PC%20Windows%20ISO.iso",
+          "sha1": "e7ba887ddaee4e7b81c612ea13c23261af18a1cc",
+          "type": "file",
+          "destination": "sources/alternate.iso"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "sources/PIRATES.iso",
+          "into": "disc"
+        },
+        {
+          "type": "extractArchive",
+          "archive": "disc/Progra~1.cab",
+          "into": "cab"
+        },
+        {
+          "type": "extractArchive",
+          "archive": "disc/Disk2A~1.cab",
+          "into": "cab2"
+        },
+        {
+          "type": "extractArchive",
+          "archive": "disc/Language.cab",
+          "into": "cab3"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab2",
+          "into": "cab"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab3",
+          "into": "cab"
+        },
+        {
+          "type": "msiFiles",
+          "msi": "disc/Sid Meier's Pirates!.msi",
+          "cabinets": "cab",
+          "source": "disc",
+          "into": "installed",
+          "directoryAliases": {
+            "SystemFolder": "."
+          }
+        },
+        {
+          "type": "extractArchive",
+          "archive": "sources/alternate.iso",
+          "into": "alternate"
+        },
+        {
+          "type": "innoextract",
+          "installer": "alternate/setup.exe",
+          "into": "digital",
+          "language": "english"
+        },
+        {
+          "type": "extractArchive",
+          "archive": "disc/directx/DirectX.cab",
+          "into": "dx9"
+        },
+        {
+          "type": "writeText",
+          "file": "local-config.ini",
           "text": "[User Settings]\r\nWindowWidth = 800\r\nWindowHeight = 600\r\nWaterDetail = 0\r\nWorldDetail = 0\r\nDisableShaders = 0\r\nAdvancedLighting = 0\r\nDisplayShadows = 0\r\nIsSlowMachine = 1\r\nSkipIntro = 1\r\nSkipMovie = 1\r\n"
         }
       ],
-      "browser": { "fileRoot": "digital/app", "exe": "digital/app/Pirates!.exe" },
-      "cli": { "maxBatches": 2000, "batchSize": 20000, "timeoutMs": 60000, "vfsInclude": ["**/*"], "dlls": ["digital/app/msvcr71.dll", "digital/app/msvcp71.dll"] },
+      "browser": {
+        "fileRoot": "digital/app",
+        "exe": "digital/app/Pirates!.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 20000,
+        "timeoutMs": 60000,
+        "vfsInclude": [
+          "**/*"
+        ],
+        "dlls": [
+          "digital/app/msvcr71.dll",
+          "digital/app/msvcp71.dll"
+        ]
+      },
       "notes": "Identified from oldyzach status 2105358263252402508. No verified Windows demo/trial found. Default payload is a community Inno repack with GOG gameId 1445250653, not an authenticated original GOG installer. Original DVD retained separately under installed/; its SafeDisc driver blocks startup. Local profile selects low-detail graphics. Reproduction and current compatibility evidence: docs/re-notes/pirates-2004.md."
     },
     {
@@ -458,21 +619,32 @@
       "name": "Serious Sam: The First Encounter Demo",
       "kind": "game",
       "version": "1.00c Windows demo (2001)",
-      "executables": ["package/Disk1/Bin/SeriousSam.exe"],
+      "executables": [
+        "package/Disk1/Bin/SeriousSam.exe"
+      ],
       "sourcePage": "https://archive.org/details/SeriousSamDemo",
       "license": "original Croteam playable demo; local compatibility fixture",
       "localOnly": true,
-      "packages": [{
-        "url": "https://archive.org/download/SeriousSamDemo/SeriousSamDemo.exe",
-        "sha1": "9ba3a09da86754d27470c049a89e127959d1ecbe",
-        "type": "archive",
-        "into": "package"
-      }],
-      "browser": { "fileRoot": "package/Disk1", "exe": "package/Disk1/Bin/SeriousSam.exe" },
+      "packages": [
+        {
+          "url": "https://archive.org/download/SeriousSamDemo/SeriousSamDemo.exe",
+          "sha1": "9ba3a09da86754d27470c049a89e127959d1ecbe",
+          "type": "archive",
+          "into": "package"
+        }
+      ],
+      "browser": {
+        "fileRoot": "package/Disk1",
+        "exe": "package/Disk1/Bin/SeriousSam.exe"
+      },
       "cli": {
         "maxBatches": 2000,
         "batchSize": 10000,
-        "dlls": ["package/Disk1/Bin/Engine.dll", "package/Disk1/Bin/Game.dll", "package/Disk1/Bin/Entities.dll"]
+        "dlls": [
+          "package/Disk1/Bin/Engine.dll",
+          "package/Disk1/Bin/Game.dll",
+          "package/Disk1/Bin/Entities.dll"
+        ]
       },
       "notes": "Original final demo package, 82531165 bytes. The CAB self-extractor contains the game tree directly under Disk1. Gameplay investigation and full-root CLI mounting recipe: docs/re-notes/serious-sam.md. Startup currently under investigation; corpus survey alone does not prove gameplay."
     },
@@ -481,18 +653,28 @@
       "name": "Need for Speed II Demo",
       "kind": "game",
       "version": "1997-05-15 Windows demo",
-      "executables": ["game/nfsw.exe"],
+      "executables": [
+        "game/nfsw.exe"
+      ],
       "sourcePage": "https://www.classicdosgames.com/game/Need_for_Speed_II.html",
       "license": "original EA playable demo; local compatibility fixture",
       "localOnly": true,
-      "packages": [{
-        "url": "https://www.classicdosgames.com/files/games/electronicarts/nfs2demo.exe",
-        "sha1": "3618d9c4070794e5cee4629a85c5e874e006db84",
-        "type": "archive",
-        "into": "game"
-      }],
-      "browser": { "fileRoot": "game", "exe": "game/nfsw.exe" },
-      "cli": { "maxBatches": 2000, "batchSize": 100000 },
+      "packages": [
+        {
+          "url": "https://www.classicdosgames.com/files/games/electronicarts/nfs2demo.exe",
+          "sha1": "3618d9c4070794e5cee4629a85c5e874e006db84",
+          "type": "archive",
+          "into": "game"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/nfsw.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 100000
+      },
       "notes": "Original DirectDraw/software demo, not the Glide-only Special Edition demo. Pacific Spirit track. Keep the complete extracted tree, including mixed-case FEData paths."
     },
     {
@@ -500,23 +682,35 @@
       "name": "Need for Speed III: Hot Pursuit Demo",
       "kind": "game",
       "version": "September 1998 final Windows demo",
-      "executables": ["game/nfs3demo.exe"],
+      "executables": [
+        "game/nfs3demo.exe"
+      ],
       "sourcePage": "https://archive.org/details/need-for-speed-demo-coll-windows",
       "license": "original EA playable demo; local compatibility fixture",
       "localOnly": true,
-      "packages": [{
-        "url": "https://archive.org/download/need-for-speed-demo-coll-windows/nfs03demo.zip",
-        "sha1": "c3f247d051cd347e2f0515d71d8e387f00a6f373",
-        "type": "archive",
-        "into": "game"
-      }],
-      "postExtract": [{
-        "type": "writeText",
-        "file": "game/install.win",
-        "text": "english\r\nlocal\r\n.\\GameData\\\r\n.\\GameData\\Tracks\\\r\n.\\GameData\\Tracks\\Tutor\\\r\n.\\GameData\\CarModel\\\r\n.\\GameData\\Render\\pc\\\r\n.\\GameData\\DashHud\\\r\n.\\GameData\\Audio\\pc\\\r\n.\\GameData\\Audio\\SFX\\\r\n.\\GameData\\Audio\\Speech\\English\\\r\n.\\GameData\\Audio\\Speech\\German\\\r\n.\\GameData\\Audio\\Speech\\French\\\r\n.\\GameData\\Audio\\Speech\\Spanish\\\r\n.\\GameData\\Audio\\Speech\\Italian\\\r\n.\\FeData\\art\\\r\n.\\FeData\\text\\\r\n.\\FeData\\text\\\r\n.\\FeData\\save\\\r\n.\\FeData\\stats\\\r\n.\\FeData\\config\\\r\n.\\FeData\\audio\\\r\n.\\FeData\\Art\\Slides\\\r\n.\\FeData\\Art\\Track\\\r\nC:\\FeData\\Art\\Showcase\\\r\nC:\\FeData\\movies\\\r\n.\\FeData\\stats\\prh\\\r\n\u001a"
-      }],
-      "browser": { "fileRoot": "game", "exe": "game/nfs3demo.exe" },
-      "cli": { "maxBatches": 2000, "batchSize": 100000 },
+      "packages": [
+        {
+          "url": "https://archive.org/download/need-for-speed-demo-coll-windows/nfs03demo.zip",
+          "sha1": "c3f247d051cd347e2f0515d71d8e387f00a6f373",
+          "type": "archive",
+          "into": "game"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "writeText",
+          "file": "game/install.win",
+          "text": "english\r\nlocal\r\n.\\GameData\\\r\n.\\GameData\\Tracks\\\r\n.\\GameData\\Tracks\\Tutor\\\r\n.\\GameData\\CarModel\\\r\n.\\GameData\\Render\\pc\\\r\n.\\GameData\\DashHud\\\r\n.\\GameData\\Audio\\pc\\\r\n.\\GameData\\Audio\\SFX\\\r\n.\\GameData\\Audio\\Speech\\English\\\r\n.\\GameData\\Audio\\Speech\\German\\\r\n.\\GameData\\Audio\\Speech\\French\\\r\n.\\GameData\\Audio\\Speech\\Spanish\\\r\n.\\GameData\\Audio\\Speech\\Italian\\\r\n.\\FeData\\art\\\r\n.\\FeData\\text\\\r\n.\\FeData\\text\\\r\n.\\FeData\\save\\\r\n.\\FeData\\stats\\\r\n.\\FeData\\config\\\r\n.\\FeData\\audio\\\r\n.\\FeData\\Art\\Slides\\\r\n.\\FeData\\Art\\Track\\\r\nC:\\FeData\\Art\\Showcase\\\r\nC:\\FeData\\movies\\\r\n.\\FeData\\stats\\prh\\\r\n\u001a"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/nfs3demo.exe"
+      },
+      "cli": {
+        "maxBatches": 2000,
+        "batchSize": 100000
+      },
       "notes": "The bundled EA readme identifies this as the final demo: Corvette on Rocky Pass, random Single Race/Hot Pursuit and weather. Includes original software and Direct3D renderer DLLs plus installer/readme/license files."
     },
     {
@@ -938,18 +1132,72 @@
         }
       ],
       "postExtract": [
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "game" },
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "cars" },
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "gfx" },
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "levels" },
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "models" },
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "wavs" },
-        { "type": "copyTree", "from": "installed-extracted/game", "into": "installed" },
-        { "type": "copyTree", "from": "installed-extracted/cars", "into": "installed/cars" },
-        { "type": "copyTree", "from": "installed-extracted/gfx", "into": "installed/gfx" },
-        { "type": "copyTree", "from": "installed-extracted/levels", "into": "installed/levels" },
-        { "type": "copyTree", "from": "installed-extracted/models", "into": "installed/models" },
-        { "type": "copyTree", "from": "installed-extracted/wavs", "into": "installed/wavs" }
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "game"
+        },
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "cars"
+        },
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "gfx"
+        },
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "levels"
+        },
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "models"
+        },
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "wavs"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/game",
+          "into": "installed"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/cars",
+          "into": "installed/cars"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/gfx",
+          "into": "installed/gfx"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/levels",
+          "into": "installed/levels"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/models",
+          "into": "installed/models"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/wavs",
+          "into": "installed/wavs"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1092,8 +1340,17 @@
         }
       ],
       "postExtract": [
-        { "type": "unshield", "cab": "sfx/data1.cab", "into": "cab", "group": "Critical Files" },
-        { "type": "copyTree", "from": "cab/Critical_Files", "into": "installed/requiem" }
+        {
+          "type": "unshield",
+          "cab": "sfx/data1.cab",
+          "into": "cab",
+          "group": "Critical Files"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab/Critical_Files",
+          "into": "installed/requiem"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1126,17 +1383,66 @@
         }
       ],
       "postExtract": [
-        { "type": "extractArchive", "archive": "evolvademo.exe", "into": "sfx" },
-        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Resources" },
-        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Program Executable Files" },
-        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Program DLLS" },
-        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Language DLL (English)" },
-        { "type": "unshield", "cab": "sfx/Disk1/data1.cab", "into": "cab", "group": "Registering DLLs" },
-        { "type": "copyTree", "from": "cab/Resources", "into": "installed/evolva" },
-        { "type": "copyTree", "from": "cab/Program_Executable_Files", "into": "installed/evolva" },
-        { "type": "copyTree", "from": "cab/Program_DLLS", "into": "installed/evolva" },
-        { "type": "copyTree", "from": "cab/Language_DLL_(English)", "into": "installed/evolva" },
-        { "type": "copyTree", "from": "cab/Registering_DLLs", "into": "installed/evolva" }
+        {
+          "type": "extractArchive",
+          "archive": "evolvademo.exe",
+          "into": "sfx"
+        },
+        {
+          "type": "unshield",
+          "cab": "sfx/Disk1/data1.cab",
+          "into": "cab",
+          "group": "Resources"
+        },
+        {
+          "type": "unshield",
+          "cab": "sfx/Disk1/data1.cab",
+          "into": "cab",
+          "group": "Program Executable Files"
+        },
+        {
+          "type": "unshield",
+          "cab": "sfx/Disk1/data1.cab",
+          "into": "cab",
+          "group": "Program DLLS"
+        },
+        {
+          "type": "unshield",
+          "cab": "sfx/Disk1/data1.cab",
+          "into": "cab",
+          "group": "Language DLL (English)"
+        },
+        {
+          "type": "unshield",
+          "cab": "sfx/Disk1/data1.cab",
+          "into": "cab",
+          "group": "Registering DLLs"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab/Resources",
+          "into": "installed/evolva"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab/Program_Executable_Files",
+          "into": "installed/evolva"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab/Program_DLLS",
+          "into": "installed/evolva"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab/Language_DLL_(English)",
+          "into": "installed/evolva"
+        },
+        {
+          "type": "copyTree",
+          "from": "cab/Registering_DLLs",
+          "into": "installed/evolva"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1333,8 +1639,17 @@
         }
       ],
       "postExtract": [
-        { "type": "unshield", "cab": "data1.cab", "into": "installed-extracted", "group": "Program Executable Files" },
-        { "type": "copyTree", "from": "installed-extracted/Program_Executable_Files", "into": "installed" }
+        {
+          "type": "unshield",
+          "cab": "data1.cab",
+          "into": "installed-extracted",
+          "group": "Program Executable Files"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Program_Executable_Files",
+          "into": "installed"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1481,7 +1796,11 @@
         }
       ],
       "postExtract": [
-        { "type": "extractArchive", "archive": "MMDemo.exe", "into": "installed" }
+        {
+          "type": "extractArchive",
+          "archive": "MMDemo.exe",
+          "into": "installed"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1514,7 +1833,11 @@
         }
       ],
       "postExtract": [
-        { "type": "extractArchive", "archive": "owtrial.exe", "into": "installed" }
+        {
+          "type": "extractArchive",
+          "archive": "owtrial.exe",
+          "into": "installed"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1547,7 +1870,11 @@
         }
       ],
       "postExtract": [
-        { "type": "is5Extract", "cab": "data1.cab", "into": "installed" }
+        {
+          "type": "is5Extract",
+          "cab": "data1.cab",
+          "into": "installed"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1580,7 +1907,11 @@
         }
       ],
       "postExtract": [
-        { "type": "extractArchive", "archive": "MtM2trial.EXE", "into": "installed" }
+        {
+          "type": "extractArchive",
+          "archive": "MtM2trial.EXE",
+          "into": "installed"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -1835,9 +2166,22 @@
         }
       ],
       "postExtract": [
-        { "type": "unshield", "cab": "zip/data1.cab", "into": "groups", "group": "DEFAULT" },
-        { "type": "copyTree", "from": "groups/DEFAULT", "into": "installed/Slave Zero" },
-        { "type": "copyFile", "from": "zip/InstData/GameData/INSTSUPP/szHardware.ini", "into": "installed/Slave Zero/szHardware.ini" }
+        {
+          "type": "unshield",
+          "cab": "zip/data1.cab",
+          "into": "groups",
+          "group": "DEFAULT"
+        },
+        {
+          "type": "copyTree",
+          "from": "groups/DEFAULT",
+          "into": "installed/Slave Zero"
+        },
+        {
+          "type": "copyFile",
+          "from": "zip/InstData/GameData/INSTSUPP/szHardware.ini",
+          "into": "installed/Slave Zero/szHardware.ini"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -2131,7 +2475,11 @@
         }
       ],
       "postExtract": [
-        { "type": "installQuake3Demo", "installer": "Q3ADemo.exe", "into": "installed" }
+        {
+          "type": "installQuake3Demo",
+          "installer": "Q3ADemo.exe",
+          "into": "installed"
+        }
       ],
       "cli": {
         "maxBatches": 100,
@@ -2158,7 +2506,11 @@
         }
       ],
       "postExtract": [
-        { "type": "installHomeworldDemo", "installer": "HWDemo.exe", "into": "installed" }
+        {
+          "type": "installHomeworldDemo",
+          "installer": "HWDemo.exe",
+          "into": "installed"
+        }
       ],
       "cli": {
         "maxBatches": 100,
@@ -2184,20 +2536,83 @@
         }
       ],
       "postExtract": [
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Main Files" },
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files Bin" },
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files WAbx" },
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files GData" },
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Game Files GZP" },
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Stream Files" },
-        { "type": "unshield", "cab": "Disk1/data1.cab", "into": "installed-extracted", "group": "Music Files" },
-        { "type": "copyTree", "from": "installed-extracted/Main_Files", "into": "installed" },
-        { "type": "copyTree", "from": "installed-extracted/Game_Files_Bin", "into": "installed/Bin" },
-        { "type": "copyTree", "from": "installed-extracted/Game_Files_WAbx", "into": "installed/Bin" },
-        { "type": "copyTree", "from": "installed-extracted/Game_Files_GData", "into": "installed/Bin" },
-        { "type": "copyTree", "from": "installed-extracted/Game_Files_GZP", "into": "installed/Bin" },
-        { "type": "copyTree", "from": "installed-extracted/Stream_Files", "into": "installed/Stream" },
-        { "type": "copyTree", "from": "installed-extracted/Music_Files", "into": "installed/Stream" }
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Main Files"
+        },
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Game Files Bin"
+        },
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Game Files WAbx"
+        },
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Game Files GData"
+        },
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Game Files GZP"
+        },
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Stream Files"
+        },
+        {
+          "type": "unshield",
+          "cab": "Disk1/data1.cab",
+          "into": "installed-extracted",
+          "group": "Music Files"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Main_Files",
+          "into": "installed"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Game_Files_Bin",
+          "into": "installed/Bin"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Game_Files_WAbx",
+          "into": "installed/Bin"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Game_Files_GData",
+          "into": "installed/Bin"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Game_Files_GZP",
+          "into": "installed/Bin"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Stream_Files",
+          "into": "installed/Stream"
+        },
+        {
+          "type": "copyTree",
+          "from": "installed-extracted/Music_Files",
+          "into": "installed/Stream"
+        }
       ],
       "browser": {
         "fileRoot": "installed",
@@ -3855,17 +4270,55 @@
       "sourcePage": "https://archive.org/details/gallinelle-xxl",
       "license": "proprietary retail release; keep as a local ignored candidate fixture",
       "localOnly": true,
-      "packages": [],
-      "manual": "Download https://archive.org/download/gallinelle-xxl/GALLINELLE_XXL.zip (74287372 bytes, SHA-1 374449d553941dfd75301b09ba3fa0507c934029). It holds a raw MODE2/2352 BIN/CUE: keep bytes 24..2071 of each 2352-byte sector to get a 2048-byte ISO, then unshield SETUP/DATA1.CAB. Copy its Game group (Gallinelle.exe a6203f4aa18a931f1e6b08cf18c374c65f75b3a6, not the moorhuhn candidate build, plus Gallinelle.dat d8fda093d174e1a7bdff8c4d8193761e92e070c9) to Game/ and its Bonus group (two plain Flash Player 6 projectors) to Bonus/.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/gallinelle-xxl/GALLINELLE_XXL.zip",
+          "sha1": "374449d553941dfd75301b09ba3fa0507c934029",
+          "type": "archive",
+          "into": "original"
+        }
+      ],
       "cli": {
         "maxBatches": 700,
         "batchSize": 100000
-      }
+      },
+      "postExtract": [
+        {
+          "type": "extractRawMode2Cd",
+          "image": "original/GALLINELLE_XXL.bin",
+          "into": "cd"
+        },
+        {
+          "type": "unshield",
+          "cab": "cd/SETUP/DATA1.CAB",
+          "into": "extracted",
+          "group": "Game"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Game",
+          "into": "Game"
+        },
+        {
+          "type": "unshield",
+          "cab": "cd/SETUP/DATA1.CAB",
+          "into": "extracted",
+          "group": "Bonus"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/Bonus",
+          "into": "Bonus"
+        }
+      ]
     },
     {
       "id": "reflexive-ricochet-xtreme",
       "name": "Ricochet Xtreme",
-      "browser": { "fileRoot": "game", "exe": "game/Ricochet.exe" },
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/Ricochet.exe"
+      },
       "kind": "game",
       "version": "1.4 build 75 (Reflexive, unwrapped)",
       "executables": [
@@ -3892,7 +4345,10 @@
     {
       "id": "reflexive-zuma-deluxe",
       "name": "Zuma Deluxe",
-      "browser": { "fileRoot": "game", "exe": "game/Zuma.exe" },
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/Zuma.exe"
+      },
       "kind": "game",
       "version": "Reflexive archived Windows build (unwrapped; 2026-09-29 sample)",
       "executables": [
@@ -3916,7 +4372,10 @@
     {
       "id": "reflexive-crimsonland",
       "name": "Crimsonland",
-      "browser": { "fileRoot": "game", "exe": "game/crimsonland.exe" },
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/crimsonland.exe"
+      },
       "kind": "game",
       "version": "Reflexive archived Windows build (unwrapped; 2026-09-29 sample)",
       "executables": [
@@ -3946,7 +4405,10 @@
     {
       "id": "reflexive-collapse-crunch",
       "name": "Collapse! Crunch",
-      "browser": { "fileRoot": "game", "exe": "game/Collapse3.exe" },
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/Collapse3.exe"
+      },
       "kind": "game",
       "version": "Reflexive archived Windows build (unwrapped; 2026-09-29 sample)",
       "executables": [
@@ -3970,7 +4432,10 @@
     {
       "id": "reflexive-alien-shooter",
       "name": "Alien Shooter",
-      "browser": { "fileRoot": "game", "exe": "game/AlienShooter.exe" },
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/AlienShooter.exe"
+      },
       "kind": "game",
       "version": "Reflexive archived Windows build (unwrapped; 2026-09-29 sample)",
       "executables": [
@@ -4012,7 +4477,11 @@
         }
       ],
       "postExtract": [
-        { "type": "extractArchive", "archive": "sources/myth-tfl.iso", "into": "disc" }
+        {
+          "type": "extractArchive",
+          "archive": "sources/myth-tfl.iso",
+          "into": "disc"
+        }
       ],
       "notes": "NEW-GAME-MYTH-20261005. Registered as myth_tfl: installed/ is the Small install Setup.exe writes from the mounted ISO, and the ISO mounts as CD D: (sources/myth-tfl.cue). ISO md5 1edda1890e32e7bde09ce3bf563c0479, 538191872 bytes."
     },
@@ -4036,7 +4505,11 @@
         }
       ],
       "postExtract": [
-        { "type": "extractArchive", "archive": "sources/POPULOUS.EXE", "into": "extracted" }
+        {
+          "type": "extractArchive",
+          "archive": "sources/POPULOUS.EXE",
+          "into": "extracted"
+        }
       ],
       "browser": {
         "fileRoot": "extracted",
@@ -4049,14 +4522,26 @@
       "name": "Baldur's Gate II: Shadows of Amn Demo",
       "kind": "game",
       "version": "Original split Wise / InstallShield playable demo",
-      "executables": ["BGMain.exe"],
+      "executables": [
+        "BGMain.exe"
+      ],
       "sourcePage": "https://archive.org/details/win-98-games-a-d.-7z",
       "license": "Proprietary publisher demo; local compatibility fixture, redistribution rights not verified",
       "localOnly": true,
       "packages": [],
       "manual": "Concatenate original bg2demogs.EXE and W02-W07 in order, extract with REWise, then unshield the inner cabinet. Assemble hd0 groups and case-insensitive Extra demo overrides as documented in docs/re-notes/baldurs-gate2-demo.md. Preserve original CD2 tree. BGMain.exe SHA256 944db091d82c6144db8c9a21c085e4504bdc549fca8003c31e309646567bb98b. Generate the complete browser manifest, including audio resources.",
-      "browser": { "fileRoot": ".", "exe": "BGMain.exe" },
-      "cli": { "maxBatches": 1000, "batchSize": 100000, "timeoutMs": 90000, "vfsInclude": ["**/*"] },
+      "browser": {
+        "fileRoot": ".",
+        "exe": "BGMain.exe"
+      },
+      "cli": {
+        "maxBatches": 1000,
+        "batchSize": 100000,
+        "timeoutMs": 90000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      },
       "notes": "Native ordinary character creation, dialogue and player movement verified in run20261009T2236Z-bg2-player-movement on main module527004d9. Browser gameplay, audio and FPS remain unverified. No public release."
     },
     {
