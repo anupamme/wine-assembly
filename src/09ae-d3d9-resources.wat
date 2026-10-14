@@ -1747,7 +1747,7 @@
         (i32.or (i32.or (i32.eq (local.get $format) (i32.const 50))
                         (i32.eq (local.get $format) (i32.const 51)))
                 (i32.eq (local.get $format) (i32.const 26)))
-        (i32.or (i32.or (i32.eq (local.get $format) (i32.const 62))
+        (i32.or (i32.or (i32.or (i32.eq (local.get $format) (i32.const 62)) (i32.eq (local.get $format) (i32.const 63)))
                         (i32.eq (local.get $format) (i32.const 81)))
                 (i32.or (i32.eq (local.get $format) (i32.const 24))
                         (i32.eq (local.get $format) (i32.const 25)))))))
