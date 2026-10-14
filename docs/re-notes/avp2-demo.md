@@ -103,3 +103,24 @@ Built-in --dump-dx-surfaces at the Marine menu (controller165558/guest165565 ter
 The archived [original demo CD](https://archive.org/details/Aliens_Versus_Predator_2_Demo_20th_Century_Fox_2001) supplies the exact previously recorded installer. The complete ISO is 233,406,464 bytes, SHA1 `0527a9c9ab662b0747ed0ca764b58fcf6376ebc2`. Its `avp2spdemo.exe` is 165,836,576 bytes and SHA256 `e335063b508f5b4bc8c8235787d839567f16ce13eb63b74a96ccb5a839d3fbe3`, matching the old local file exactly. The multiplayer installer on that disc is a separate fixture.
 
 Source ISO and verification receipt are preserved under `scratch/runs/20261014-avp2-source-recovery/`. Only source acquisition and exact installer identity were verified here. Complete installed payload recovery, original launcher-generated avp2cmds.txt export and current gameplay still require validation; no command file was synthesized. The obsolete Archive item avp2spdemo returned no file metadata and is not used by this recovery.
+
+### Original cabinet payload recovered (2026-10-14)
+
+The verified original installer was unpacked with 7z, then unshield 1.5.1
+using group `AVP2 Demo Files`. Extraction succeeded for all 18 original
+files (247851457 bytes), including AVP2.exe, lithtech.exe, four REZ files,
+and Profiles/Default.prf. Per-file SHA256 inventory, extraction logs, original
+ISO and payload are retained in
+`scratch/runs/20261014-avp2-source-recovery/`. Evidence copies were byte-compared.
+
+Recovery commands, after verifying the installer hash above:
+
+```sh
+7z x avp2spdemo.exe -ocabinet
+unshield -d payload -g 'AVP2 Demo Files' x cabinet/Disk1/data1.cab
+```
+
+This recovers original source files, not the previously captured 67-file
+launcher handoff. No avp2cmds.txt was synthesized and no launcher was run.
+Automating the recipe and validating the real launcher-generated command file
+remain open; this extraction does not establish current-main gameplay.
