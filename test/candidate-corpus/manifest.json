@@ -2800,6 +2800,14 @@
           "type": "archive"
         }
       ],
+      "postExtract": [
+        {
+          "type": "innoextract",
+          "installer": "setup_the_elder_scrolls_ii_daggerfall_1.07_(28043).exe",
+          "into": "installed",
+          "language": "en-US"
+        }
+      ],
       "cli": {
         "maxBatches": 100,
         "batchSize": 10000
