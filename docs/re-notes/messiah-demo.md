@@ -157,3 +157,9 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Automated recovery, 2026-10-14
+
+The original installer at https://archive.org/download/messiahdemo/messiahdemo.exe was freshly downloaded and verified against SHA1 4b03de968e89c68ed2f34f856cc2190a63f9836b (Archive metadata size104219648). The recipe extracts the SFX, then archive/data1.cab group Program Executable Files using existing unshield/is5 fallback, and copies the untouched group to game/. On this host unshield is absent; the existing JS fallback succeeded.
+
+Run `node tools/fetch-candidate-corpus.js --id=messiah-demo`, then `node test/test-messiah-recovery.js` on the pristine tree. All300 original files are pinned by path,size,SHA256 in test/candidate-corpus/messiah-demo-files.json and compare byte-for-byte with the extracted component. The D3D executable matches its prior recorded hash. Existing launch switches and private-fixture restrictions are unchanged; no new runtime/gameplay/audio/FPS validation or public deployment. No synthesized configuration or executable modifications. Recovery remains dependent on upstream availability.
