@@ -19,7 +19,7 @@ the existing staged publication path. Requires `innoextract` (validated with
 unconditional support files but silently omits the game payload. The recipe
 selects en-US and excludes installer temporary files.
 
-`test/candidate-corpus/ultima4-files.json` pins all 175 extracted files. Run
+`test/candidate-corpus/gog-free-ultima-iv-files.json` pins all 175 extracted files. Run
 `node test/test-ultima4-recovery.js` against pristine recovered output. A fresh
 recipe fetch was compared with an independent extraction and the restored
 fixture; every file matched byte-for-byte. This includes DOSBOX, configuration,

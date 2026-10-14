@@ -20,7 +20,7 @@ executable Wine-Assembly hosts for this acceptance path.
 `node tools/fetch-candidate-corpus.js --id=gog-free-elder-scrolls-daggerfall --force`
 now recovers the pinned package and extracts1623 original files into `installed/`
 using innoextract1.9, language `en-US`, excluding installer temporary files.
-`test/candidate-corpus/daggerfall-files.json` records every output hash;
+`test/candidate-corpus/gog-free-elder-scrolls-daggerfall-files.json` records every output hash;
 `node test/test-daggerfall-recovery.js` verifies pristine output. Fresh recipe
 output matches an independent extraction and all corresponding restored files
 byte-for-byte. Existing critical hashes in `lib/daggerfall-gog-source.json`

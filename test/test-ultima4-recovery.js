@@ -1,6 +1,6 @@
 'use strict';
 const fs = require('fs'), path = require('path'), crypto = require('crypto'), assert = require('assert/strict');
-const inventory = require('./candidate-corpus/ultima4-files.json');
+const inventory = require('./candidate-corpus/gog-free-ultima-iv-files.json');
 const root = path.join(__dirname, 'binaries/candidates/gog-free-ultima-iv/installed');
 if (!fs.existsSync(root)) console.log('SKIP: fetch with node tools/fetch-candidate-corpus.js --id=gog-free-ultima-iv');
 else {

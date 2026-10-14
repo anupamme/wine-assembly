@@ -4,7 +4,7 @@ const assert = require('assert/strict'), crypto = require('crypto');
 const { prepare } = require('../tools/prepare-arena-gog-assets');
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 const canonical = require('../lib/arena-gog-source.json');
-assert.deepEqual(canonical.files, require('./candidate-corpus/arena-files.json').files.map(f => ({path:f.path,bytes:f.size,sha256:f.sha256})));
+assert.deepEqual(canonical.files, require('./candidate-corpus/gog-free-elder-scrolls-arena-files.json').files.map(f => ({path:f.path,bytes:f.size,sha256:f.sha256})));
 assert(canonical.files.some(f => f.path === '__support/save/NAMES.DAT'));
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'arena-migration-'));
 try {

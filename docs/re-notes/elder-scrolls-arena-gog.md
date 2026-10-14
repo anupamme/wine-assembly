@@ -14,7 +14,7 @@ rights for the installer or extracted game.
 
 `node tools/fetch-candidate-corpus.js --id=gog-free-elder-scrolls-arena --force`
 now extracts the installed payload with innoextract1.9, language `en-US`,
-excluding temporary installer files. `test/candidate-corpus/arena-files.json`
+excluding temporary installer files. `test/candidate-corpus/gog-free-elder-scrolls-arena-files.json`
 pins the resulting348 files; `node test/test-arena-recovery.js` verifies fresh
 output. Fresh recipe output matches independent extraction and the matching
 restored fixture files byte-for-byte. The original installer is unchanged.

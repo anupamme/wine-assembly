@@ -21,7 +21,7 @@ extracted `app` tree is 400,345,582 bytes; notable files are the 136,829,952-byt
 now reconstructs `installed/app/` from the existing pinned package using
 innoextract1.9, installer language `GOGCustom`, excluding temporary files.
 The181 original files total400,345,582 bytes, matching the previously recorded
-app-tree size. `test/candidate-corpus/shadow-warrior-files.json` pins every
+app-tree size. `test/candidate-corpus/gog-free-shadow-warrior-classic-files.json` pins every
 output; `node test/test-shadow-warrior-recovery.js` verifies pristine recovery.
 Fresh recipe output was byte-compared with an independent original extraction.
 The former restored installation was absent locally, so no restored-tree

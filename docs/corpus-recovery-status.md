@@ -1,8 +1,8 @@
 # Candidate recovery status
 
-Snapshot after main bea8ac370, 2026-10-14. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
+Snapshot after main 2c637a182, 2026-10-14. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
 
-134 candidates:117 package recipes,16 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt.
+135 candidates:118 package recipes,16 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 15 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages.
 
 ## Completed bounded recovery work
 
