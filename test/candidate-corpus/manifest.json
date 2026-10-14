@@ -2814,6 +2814,14 @@
           "type": "archive"
         }
       ],
+      "postExtract": [
+        {
+          "type": "innoextract",
+          "installer": "setup_ultima_iv_-_quest_of_the_avatar_1.0_cs_(28045).exe",
+          "into": "installed",
+          "language": "en-US"
+        }
+      ],
       "cli": {
         "maxBatches": 100,
         "batchSize": 10000
