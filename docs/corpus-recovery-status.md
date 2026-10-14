@@ -2,7 +2,7 @@
 
 Snapshot including Gallinelle recovery, 2026-10-14. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
 
-135 candidates:119 package recipes,15 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 16 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages.
+135 candidates:119 package recipes,15 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 17 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages.
 
 ## Completed bounded recovery work
 
@@ -58,3 +58,9 @@ extract the ISO and original Game/Bonus cabinet groups. Four output files are
 hash-pinned and independently compared; this is local recovery, not public
 redistribution or new gameplay acceptance. MODE2 Form2, mixed sector modes and
 mismatched XA subheaders are rejected instead of silently slicing wrong data.
+
+AVP2 now has a tracked 18-file original cabinet inventory at
+`test/candidate-corpus/avp2-demo-files.json`, verified against the recovered
+payload. Its recipe remains manual: the original launcher must produce its
+command file before the existing child launch can be validated. The inventory
+excludes generated files and does not assert a complete launcher handoff.
