@@ -249,3 +249,19 @@ build, existing header-validation cases, 20000-operation heap-bin stress,
 11 arena-tail cases, and large-block reuse tests pass. Tested fixed module:
 `d823bf96e9ad51b0ef029fdaf12596350d040889cb187e85d8cf607d8eb74279`.
 Original-demo untraced browser acceptance is recorded separately below.
+
+The original EXE's180-second untraced retest on this module ran
+22:57:32.744–23:00:34.033 UTC. It does not remain in the former mesh loop;
+the log instead reports refused sparse commits of2162688/1441792 bytes and
+failed heap requests of2097160/1398488 bytes, then exits at `0x801924`, with
+caller `0x8045a5`. The60/120-second samples show loading; the180-second
+screenshot shows the desktop after guest exit. This fixes the demonstrated
+cross-allocation overwrite but does **not** qualify startup, menu or gameplay.
+
+Reviewed after-evidence: `scratch/runs/20261014-kkrieger-heap-fix/`, including
+the original untraced probe, screenshots, state/logs, exact module hash and
+source patch. Next capture live heap-arena/backing occupancy, released arenas
+and available extents around the refused commits. These messages alone do
+not distinguish actual capacity exhaustion from fragmentation or retained
+allocations; neither a larger budget nor a forced successful allocation is
+established as a remedy.
