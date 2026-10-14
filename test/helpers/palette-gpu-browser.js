@@ -3,6 +3,7 @@
 // Runs inside the browser with the complete, unmodified source closure plus
 // test exports. All unexpected host calls fail; no decoder/export replacement.
 globalThis.runPaletteGpu = async function (version) {
+  const diagnostics = [];
   const eq = (a, b, label) => {
     if (JSON.stringify(a) !== JSON.stringify(b))
       throw Error(`${label}: actual=${JSON.stringify(a)} expected=${JSON.stringify(b)}`);
@@ -22,6 +23,9 @@ globalThis.runPaletteGpu = async function (version) {
   for (const name of ['log', 'log_i32', 'log_api_exit', 'log_block', 'log_eip'])
     imports.host[name] = () => {};
   imports.host.get_ticks = imports.host.real_time_ms = () => 0;
+  // Production surface creation emits this diagnostic-only, void import.
+  // Preserve its arguments as evidence; all behavioral imports remain strict.
+  imports.host.dx_trace = (...args) => diagnostics.push(args);
   let gpu;
   imports.host.gpu_gl_call = (op, p) => {
     check(gpu, 'GPU host call before executor initialization');
@@ -159,6 +163,6 @@ globalThis.runPaletteGpu = async function (version) {
   const gl=contexts[0], actualVersion=gl.getParameter(gl.VERSION);
   check(actualVersion.includes(`WebGL ${version}.0`),actualVersion);
   const debug=gl.getExtension('WEBGL_debug_renderer_info');
-  const result={actualVersion,renderer:gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER),observations,stats};
+  const result={actualVersion,renderer:gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER),observations,stats,diagnostics};
   gpu.stop(); return result;
 };
