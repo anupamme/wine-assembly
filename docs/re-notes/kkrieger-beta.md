@@ -123,3 +123,60 @@ Root-reviewed evidence: `scratch/runs/20261014-kkrieger-q8-long/`, with three
 screenshots, state samples, log, probe, source patch and process receipt
 (2026-10-14T22:06:42.445Z–22:09:44.501Z). Harness exit0 only confirms orderly
 capture shutdown; the startup route remains unqualified.
+
+### Loading loop: non-closing mesh edge cycle (2026-10-14)
+
+Read-only live memory inspection of the same original browser/module establishes
+the immediate nontermination condition. Unpacked runtime code at `0x81050f`
+iterates selected faces, starting with the edge index at face-record offset8.
+Its inner loop at `0x810538–0x81054c` marks a vertex through helper `0x80e966`,
+then calls `0x80e9c3` for the next edge, and repeats until ESI equals EDI (the
+starting edge). The helper reads:
+
+```
+edgeBase = u32(mesh + 0x1c)
+next(e) = u32(edgeBase + (e >> 1) * 48 + (e & 1) * 4 + 4)
+```
+
+Captured mesh ECX=`0x6d84fb2c` has4052 edge records at `0x6a3c3154` and2026
+face records at `0x6a3b735c`. Face1722 (EBX=`0xa170`, 24-byte records) starts
+at edge6904 (`0x1af8`). Its actual stored chain is:
+
+```
+6904 -> 8068 -> 6888 -> 6917 -> 6921 -> 6912 -> 6888 -> ...
+```
+
+The four-edge cycle excludes6904, so this traversal cannot terminate with the
+captured topology. All those indices are in the allocated edge range. A bounded
+30-hit supported EIP trace at the loop's call/return blocks confirms the live
+interpreter returns precisely these next indices and repeats the cycle. The
+prior repeated ESI=`0x1b05` is one of its members (6917), rather than a timer
+or progress counter. Caller return address is `0x81077d`, immediately after
+`0x810778: call 0x81050f` in the function starting `0x810764`.
+
+This establishes malformed/non-closing topology at consumption, **not the
+upstream cause**: no faulty emulator opcode, API, float calculation or original
+game algorithm has yet been identified. No guest writes, forced loop exits,
+capability overrides, runtime fixes or performance changes were made.
+
+Next actionable test: trace mesh construction/mutation before entry to
+`0x810764` and locate the first write that makes a selected face's edge chain
+non-closing. Resolve the mesh/edge allocation dynamically in each run; the
+addresses above are observations, not stable addresses to hardcode. In this
+capture the suspect chain fields are preserved in `chain-analysis.json`.
+Use the existing EIP hook and size-aware `set_watchpoint` diagnostics for a
+bounded writer capture, then test the implicated instruction/API against its
+real contract. Extending the startup timeout alone cannot repair this cycle.
+
+Evidence: `scratch/runs/20261014-kkrieger-loop-condition/` contains the unpacked
+128KB runtime image at guest `0x800000`, loop/helper disassembly, complete edge
+and face arrays, registers/stack, chain analysis, 30-hit execution trace,
+loading screenshot, browser logs and all capture scripts. The capture controller
+was host-paused from22:15:30 to22:17:26 while Chrome/guest execution continued,
+allowing a second read-only CDP client to capture the loop as reached; guest
+execution was not paused or changed. The initial controller attempt was stopped
+before its first sample to correct an export name in the capture script.
+The successful original run ran22:14:05–22:18:26 UTC; first loop snapshot22:17:02.
+The reviewed screenshot shows a loading bar filled approximately halfway;
+no menu/gameplay/input/audio acceptance. The earlier description of a visually
+full bar should not be used as a measure of completed procedural generation.
