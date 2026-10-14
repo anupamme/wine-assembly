@@ -174,3 +174,9 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Automated recovery, 2026-10-14
+
+Fresh acquisition from https://archive.org/download/NocturneDemo/NocturneDemo.zip verified84965751 bytes and SHA-1 b56df8ca1a91a21803482897748c46d6678a5866. Extract ZIP with7-Zip23.01, then data1.cab groups Program Executable Files and System Files. On this host unshield is absent: the existing tools/is5-extract.js fallback extracted both successfully. Copy those component roots into game/, preserving system/nocturne.ini and system/RENDER.INI exactly, without gameplay configuration changes.
+
+Run `node tools/fetch-candidate-corpus.js --id=nocturne-demo`, then `node test/test-nocturne-recovery.js` on the freshly recovered tree. All17 original output files are pinned in test/candidate-corpus/nocturne-demo-files.json by path,size and SHA-256 and were compared byte-for-byte to the extracted components. The verifier is for pristine payloads: game-written configuration may subsequently differ. Private-fixture restrictions remain. No runtime/gameplay/deployment validation was performed in this recovery check. Source archive retained separately from Git; archive mirrors are not an availability guarantee.

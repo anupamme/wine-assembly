@@ -4444,8 +4444,15 @@
       "sourcePage": "https://archive.org/details/NocturneDemo",
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Verify NocturneDemo.zip (84965751 bytes, SHA-1 b56df8ca1a91a21803482897748c46d6678a5866), unpack and extract installer with unshield. Copy Program_Executable_Files contents into game/, then copy System_Files contents into game/ preserving system/nocturne.ini and system/RENDER.INI. Run --id=nocturne-demo --prepare. Keep original startup/calibration: Space clears intro and swap warning; choose Volume 3 Windy City Massacre, Chapter 6 Crescent Theater. CLI and registered Chrome keyboard walking/firing verified. Use ordinary held menu keys; near-instant automation presses may not be sampled. Touch, brightness, audio and FPS validation pending. See docs/re-notes/nocturne-demo.md.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/NocturneDemo/NocturneDemo.zip",
+          "sha1": "b56df8ca1a91a21803482897748c46d6678a5866",
+          "type": "archive",
+          "into": "archive"
+        }
+      ],
+      "manual": "Verify NocturneDemo.zip (84965751 bytes, SHA-1 b56df8ca1a91a21803482897748c46d6678a5866), unpack and extract installer with unshield. Copy Program_Executable_Files contents into game/, then copy System_Files contents into game/ preserving system/nocturne.ini and system/RENDER.INI. The automated recipe performs this layout; run --id=nocturne-demo. Keep original startup/calibration: Space clears intro and swap warning; choose Volume 3 Windy City Massacre, Chapter 6 Crescent Theater. CLI and registered Chrome keyboard walking/firing verified. Use ordinary held menu keys; near-instant automation presses may not be sampled. Touch, brightness, audio and FPS validation pending. See docs/re-notes/nocturne-demo.md.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/nocturne.exe"
@@ -4456,7 +4463,31 @@
         "vfsInclude": [
           "**/*"
         ]
-      }
+      },
+      "postExtract": [
+        {
+          "type": "unshield",
+          "cab": "archive/data1.cab",
+          "group": "Program Executable Files",
+          "into": "unpacked"
+        },
+        {
+          "type": "unshield",
+          "cab": "archive/data1.cab",
+          "group": "System Files",
+          "into": "unpacked"
+        },
+        {
+          "type": "copyTree",
+          "from": "unpacked/Program_Executable_Files",
+          "into": "game"
+        },
+        {
+          "type": "copyTree",
+          "from": "unpacked/System_Files",
+          "into": "game"
+        }
+      ]
     },
     {
       "id": "kkrieger-beta",
