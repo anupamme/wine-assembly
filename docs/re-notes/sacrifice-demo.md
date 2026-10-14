@@ -258,3 +258,158 @@ Passive TRACE-AT emitted no sample although its address counted once. No live ex
 Guest162747 exited0 at22:36:39.233. Receipt22:37:12.217 confirms supervisor162737, guest162747 and both groups absent. Earlier161978/161993 absent22:34:16.729;162243/162253 absent22:35:08.052. Post-run all115 original fixture hashes match, including cache signature7. Original deletion affected private VFS only. Remote archive `scratch/sacrifice-cache-runtime-evidence.tgz` SHA `9804f1d2f179d2ce9ebea6953622c813eb7490b832fcd4bca8dce60e2d187332`; per-run artifacts hashed, investigation.json written last.
 
 Source-only continuation: share0x14001000 CacheSetSign writes its argument to0x1401aec0; do not assume a static initializer survives. game3d call0x16026868 through IAT0x160470c4 supplies dynamic global0x1605a170, or that value+16 depending renderer virtual+0x8c result. Preceding0x160267d0 uses renderer virtual+0x184 and configured exponent0x16054998 to choose0x1605a170. Actual live values and renderer method semantics are not yet established. Original fread reads4 single-byte elements into a local DWORD before comparison. Next source work must identify the renderer methods and expected signature derivation without changing cache or settings. No emulator API fault established; no runtime grant.
+
+## Guarded exit probe emitted no sample (2026-10-13 22:57 UTC)
+
+Once-only granted run `20261013T2257Z-sacrifice-signature-exit` used driverc8133da6, sourcea14a289b, unchanged canonical module/CRT/115-file fixture. The single previously successful original decoderexit0x1602da80 probe requested name, original expected signature0xcd8ec0, and exponent0x9dc170. Both game3d982000/original16000000 and sharecbe000/original14000000 mappings were guarded before every input. Ordinary relative Tutorial input again reached loading and originalexit0, but no TRACE-AT line was emitted. Expected signature/exponent remain unknown. No repeat was launched. Source inspection shows --quiet-blocks only suppresses ordinary progress logging, not TRACE-AT; do not claim it caused this absence. The earlier successful exit sample does not make this run successful measurement.
+
+Four screenshots reviewed, finalPNG SHAaf5ed04034660a4ce9c4b88e170fe91bf30c6a6d05282a9a743b7b274917d6ef matches previous loadingcheckpoint. Guest178945 exited0 at22:57:55.712; supervisor178935,guest178945 andbothgroups absent22:58:20.920. Postcheck all115originalfixture hashes unchanged. Twelve artifacts hashed; archive scratch/sacrifice-signature-exit-evidence.tgz SHA79c973c849ea9c425ce996dbb0592bae3c268a34d5547a2566bd0b454d1bbea1 transferred afterlocalfloor2.70GBcheck. Investigation written afterartifactmanifest. No gameplay/emulatorfault/acceptance/deployment claim. Next source question is passive-probe delivery; root may review standard exit-time dump of persistent globals as an alternative, with no further runtime authorized here.
+
+## Persistent signature and renderer restriction (2026-10-13 23:22 UTC)
+
+Run `20261013T2321Z-sacrifice-persistent-exitdump` used sourced8e702c5,
+driver3556b7ab, unchanged moduleba6f25ea and original115-file fixture.
+The ordinary relative-pointer Tutorial route again exits0 before the world.
+Four screenshots are reviewed: main menu, selector, Tutorial1 hover, and
+Tutorial1 loading at about two-thirds. Guest200257 ended23:22:00.968,
+supervisor200247 recorded cleanupComplete23:22:00.970. All original115
+post-run hashes match. Twenty-two artifacts were transferred and SHA-verified;
+archive SHA837b657aa10a05fc7cd1f4e8c296fa6d2b71bd456634c88403af4b5a5b6c8133.
+Investigation metadata was published last. Gameplay remains unqualified.
+
+Standard exit dumps now establish persistent identifier `tkhsDMXS.001`,
+texture exponent7 at0x9dc170 and expected cache signature23 at0xcd8ec0.
+Original `cache/tkhsDMXS.000` still starts with7. Prior cache tracing already
+established successful open/read followed by rejection and private-VFS deletion.
+These independent observations identify a signature mismatch, not missing files.
+
+The pinned `--dump-vmap` diagnostic only searches sparse allocation records;
+its NOT MAPPED message is misleading for low direct-window addresses.
+`lib/mem-utils.js:g2w` first translates guest-imagebase+GUEST_BASE, returning
+direct addresses below0x08000000 before sparse lookup. Here0x9dc150 maps
+to0x5ee150 and0xcd8ec0 to0x8eaec0. The nonzero hexdumps are valid direct
+memory; sparse-list absence does not invalidate them.
+
+Original `3d_d3d.dll` has a derived renderer: exported Create3dngn0x180011f0
+calls constructor0x18001210, which replaces base vtable0x18014550 with
+0x18014154 at0x1800121b. Derived +0x8c is ValidateCaps0x18003990;
++0x184 is0x180039f0, returning min(object+0x4190,object+0x4194).
+The earlier base-class returnarg&3/max256 analysis was insufficient.
+
+Renderer initialization0x18002c53 copies236bytes from its selected device
+descriptor at[object+0x1924]+0x100. At0x18002c6b it reads descriptor+0x5c,
+the D3DDEVICEDESC7 triangle dwTextureCaps; bit0x20 sets object+0x600 bit31.
+ValidateCaps(1) at0x180039d8 tests that bit and returns bit1 when set.
+game3d0x16026855 then adds16 to exponent7 before CacheSetSign, yielding23.
+The method also has a table-based path; clearing one input restriction has
+not yet been demonstrated to make its complete return valuezero.
+
+Microsoft's [D3DPRIMCAPS documentation](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dcaps/ns-d3dcaps-_d3dprimcaps)
+defines SQUAREONLY as requiring square textures. The official
+[DirectX header](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/d3dcaps.h)
+assigns0x20. Shared `$fill_primcaps` reports0xffff, including this restriction,
+to legacy/D3D7 GetCaps and EnumDevices. The software texture sampler instead
+uses independent width/height for U/V and pitch for row addressing; the GPU
+descriptor likewise retains independent dimensions. This is a concrete generic
+capability-reporting inconsistency, not justification for editing original cache.
+
+Prepared isolated source patch on1bb8c302a clears only SQUAREONLY to0xffdf.
+Existing indexed-texture conformance is extended with ordinary 2x4 surface
+creation, Texture2 GetHandle/bind, four row samples, a yellow fourth-row indexed
+draw, and public GetCaps assertions for legacy1/2/3 and7 line/triangle caps.
+Existing EnumDevices lifetime coverage checks that same restriction in all
+callback descriptors, including D3D7, the actual game dependency.
+Canonical build and both extended conformance tests pass (see validation below).
+The original replay below subsequently verifies cache acceptance and world entry.
+
+The blanket mask contains other unsupported, restrictive or unverified claims.
+This proposal does not certify or replace the whole mask: its audit records
+perspective/alpha/keyed/projected support paths; unnecessary POW2 and conditional
+NPOT policy; unverified repeat precision, palette alpha, cube maps and filtered
+color-key behavior; obsolete BORDER and undefined DX7 bits0x200/0xe000.
+Those require separate capability-specific evidence before changes.
+
+Next, only under a new runtime grant, run the untouched original demo once with
+the new module, normal Tutorial input and persistent dumps. Check signature,
+cache acceptance and whether loading reaches a world independently. Even a
+corrected signature does not establish that later fallback/loading paths work.
+
+### Capability conformance validation (2026-10-13 23:33–23:35 UTC)
+
+On isolated base1bb8c302a, canonical build passes with module
+0918dec0eba2b3f0a6a0f0c1423fe273a9c95f530acb3108d01699f481ffb7ab.
+The extended indexed-texture test passes: original2x4 allocation, allfour
+row samples, fourth-row indexed drawing and GetCaps1/2/3/7 restrictions.
+EnumDevices lifetime passes96balancedcycles and32real x86 nested cases,
+including line/triangle restriction assertions for1/2/3/7 callbacks.
+
+The first enumeration attempt stopped before assertions because this isolated
+checkout lacked test/binaries/notepad.exe. The unchanged existing fixture from
+DLLwork was copied (SHA e7b01ab85a35ba6f577067d13efa522dc3d605de7712340e4acaf7065f866340);
+its loader initializes thunks, not Notepad application code. Only enumeration
+and the negative were resumed; the passing build and indexed test were not repeated.
+
+Restoring only0x20 in the shared mask makes the same indexed test print its
+rectangular-allocation/sample/draw success marker, then fail the intended
+GetCaps assertion32!=0. Thus the negative proves the old advertised restriction
+is inconsistent with already-working rectangular rendering; it is not a fixture
+or graphics-setup failure. The corrected source was restored and allfour
+original proposed file hashes matched at completion.
+
+Evidence:20261013T2333Z-sacrifice-caps-validation and
+20261013T2335Z-sacrifice-caps-validation. Finished23:35:11.130; allnine owned
+PIDs and allpositive/negative process-group checks reportESRCH23:35:36.368.
+Runtime released to the coordinator. No original Sacrifice replay occurred;
+cache acceptance, later loading and gameplay remain unverified for this module.
+
+## Original cache acceptance and tutorial world (2026-10-13 23:45–23:48 UTC)
+
+Run `20261013T2345Z-sacrifice-square-caps-original` uses exact tested
+source dd3bf9aad and module0918dec0, with current test/run SHAde8d48cd
+(the !hostExitRequested diagnostic guard is present). Driver4e850662 verifies
+source/module/CRT/manifest identities and both observed module mappings before
+every ordinary command. No new build or original-file/config/cache edit occurred.
+
+Normal Single Player, relative pointer(-80,-29), reviewed Tutorial1 hover and
+held click now progress beyond the old loading failure. Live and exit dumps
+both show exponent7 and expected cache signature7, matching the original cache.
+Named file tracing reads tkhsDMXS.000 to offset189096, exactly its original
+length, with no target DeleteFile. Final counts: cache-check5, comparison5,
+success5, rejection0, cached-loader5, fallback0. These are aggregate counters;
+the named complete file-read trace independently identifies the target cache.
+The previously missing tkhsDMXS.001 fallback is no longer taken in this run.
+
+Seven images were reviewed. 05-after-cache.png shows the 3D landscape and
+wizard during a letterboxed introduction. 06-after-w.png and final.png show
+the actual tutorial world, wizard, HUD and minimap; final is800x600.
+02-selector.png was queued immediately after the Single Player click and still
+shows the main menu; its filename must not be mistaken for successful selector
+evidence. 03-hover.png independently shows the selector and Tutorial1 tooltip.
+
+Player movement remains unqualified. Ordinary W down/up arrived at
+batches148319/156707, but the introduction transitioned into a Familiar
+movement-instruction prompt, and Continue was never dismissed. Differences
+between these pictures cannot isolate input from the introduction or animation.
+The next authorized ordinary route is Continue dismissal, a stationary baseline,
+W held3seconds, then an after-release stationary comparison using world
+landmarks/minimap position. This is ordinary tutorial UI, not an acceptance prompt.
+
+The standard160-second harness guard stopped the run at batch158891 with
+host exit0; this is not the former original decoder failure exit. Terminal
+23:48:14.890 confirms child cleanup, and217952/217960 plus both negative
+process groups were independentlyESRCH at23:48:29.965. All115 original
+post-run file hashes match. Twenty-one artifacts were SHA-verified locally,
+then investigation metadata published last; archiveSHA
+b1320868884cc3190a9df3d18acd3761b152338028799a52aaa1e1fb06eae639.
+Cache compatibility and rendered tutorial world are verified; player control,
+audio, frame rate and broader gameplay are not yet qualified. No deployment.
+
+### Original tutorial forward movement, 2026-10-13 23:55 UTC
+
+Run `20261013T2355Z-sacrifice-continue-controls` used unchanged tested source `dd3bf9aadfc441fd0ed8013e22ec2440eb256b4a`, module `0918dec0eba2b3f0a6a0f0c1423fe273a9c95f530acb3108d01699f481ffb7ab`, and all 115 original fixture files. Signature and exponent remained 7; the five cache checks accepted with zero rejection/fallback hits. All 115 post-run hashes matched. The standard 240-second harness limit ended the run normally; supervisor, guest and movement helper plus negative process groups were independently absent at 23:59:38.260 UTC.
+
+Two ordinary Continue clicks advanced the W/S and A/D instructions. At the 800x600 world surface, injected relative mouse deltas scale by 1.25 from the 640x480 capture coordinates: the first attempted Continue hover overshot, and was corrected and visually reviewed before clicking. `06e-prompt.png` shows a brief overlay-free frame, but a third ESC/options instruction appeared before the movement baseline. It remained throughout the comparison; tutorial completion is not claimed.
+
+The guarded helper captured `07-control-before.png`, waited two seconds for `08-stationary-before.png`, held W from 23:59:06.300 to 23:59:09.304 UTC, then captured `09-after-w.png` and `10-stationary-after.png` three seconds apart. Before images share fixed tree/hill/minimap positions despite wizard animation; after images show substantial persistent landscape and minimap displacement, then remain at the new positions after release. This verifies forward player movement independently of the intro transition, with the later tutorial overlay present. Turning, combat, tutorial completion, audio and frame-rate quality remain unqualified. `04-world.png` is a transient bright false-color frame, not stable rendering evidence.
+
+Evidence includes every screenshot, ordinary command queue, helper timestamps, full logs, source/module/fixture pins, cleanup and post-hashes. `findings.json` records per-image review; `artifact-hashes.json` hashes the artifacts, with `investigation.json` published last.

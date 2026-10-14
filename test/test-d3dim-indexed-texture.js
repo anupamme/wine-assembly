@@ -202,6 +202,13 @@ const extraWat = String.raw`
       (i32.const 4) (f32.const 1.0) (f32.const 0.0) (f32.const 1.0) (i32.const 0xffffffff) (f32.const 0.5)
       (i32.const 0) (i32.const 8) (i32.const 0)))
 
+  (func (export "test_diptex_caps") (param $api i32) (param $device i32)
+      (param $hw i32) (param $hel i32) (result i32)
+    (i32.store offset=16 (global.get $reg_base) (i32.const 0x30000))
+    (call $dispatch_api_table (local.get $api) (local.get $device)
+      (local.get $hw) (local.get $hel) (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.load (global.get $reg_base)))
+
   (func (export "test_diptex_sample")
       (param $texture i32) (param $u f32) (param $v f32) (param $linear i32) (result i32)
     (local $entry i32)
@@ -547,6 +554,57 @@ function writeFloat(wat, addr, value) {
   vertex(2, 0, 7, 0.05, 0.95);
   wat.guest_write32(indices, 0x00010000); // u16 indices 0,1
   wat.guest_write32(indices + 4, 0x00000002); // u16 index 2
+
+  // A tall texture catches samplers that use width for the V coordinate.
+  // Exercise normal surface creation, GetHandle, binding and indexed drawing;
+  // sampling only a square texture cannot substantiate the capability report.
+  const rectangle = makeSurface(wat, desc, out + 12, 2, 4);
+  const rectangleDib = wat.test_diptex_dib(rectangle) >>> 0;
+  const rectangleRows = [0xf800, 0x07e0, 0x001f, 0xffe0];
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < 2; x++) mem.setUint16(rectangleDib + y * 4 + x * 2, rectangleRows[y], true);
+  }
+  for (const [row, rgba] of [[0, 0xffff0000], [1, 0xff00ff00], [2, 0xff0000ff], [3, 0xffffff00]]) {
+    assert.strictEqual(wat.test_diptex_sample(rectangle, 0.25, (row + 0.5) / 4, 0) >>> 0, rgba,
+      'rectangular texture row ' + row + ' uses its own height');
+  }
+  assert.strictEqual(wat.test_diptex_get_handle(texture2Api.id, rectangle, device, out + 16), 0);
+  assert.strictEqual(wat.test_diptex_bind_handle(device, wat.guest_read32(out + 16)), 0);
+  for (let i = 0; i < 3; i++) {
+    wat.guest_write32(vertices + i * VERTEX_STRIDE + 16, 0xffffffff);
+    writeFloat(wat, vertices + i * VERTEX_STRIDE + 24, 0.25);
+    writeFloat(wat, vertices + i * VERTEX_STRIDE + 28, 0.875);
+  }
+  new Uint8Array(memory.buffer, rtDib, 8 * 8 * 2).fill(0);
+  wat.test_diptex_draw(device, vertices, indices);
+  assert.strictEqual(mem.getUint16(rtDib + 16 + 2, true), 0xffe0,
+    'indexed draw samples the fourth row of a 2x4 texture');
+  console.log('[rectangular-texture] CreateSurface, four rows and fourth-row indexed draw passed');
+  vertex(0, 0, 0, 0.05, 0.05);
+  vertex(1, 7, 0, 0.95, 0.05);
+  vertex(2, 0, 7, 0.05, 0.95);
+  new Uint8Array(memory.buffer, rtDib, 8 * 8 * 2).fill(0);
+
+  // Public legacy and D3D7 GetCaps must describe the same rectangular
+  // texture support exercised below. SQUAREONLY is a restriction, not a
+  // feature to include in an otherwise generous capability mask.
+  const capsHW = wat.guest_alloc(256), capsHEL = wat.guest_alloc(256);
+  for (const [name, is7] of [
+    ['IDirect3DDevice_GetCaps', false], ['IDirect3DDevice2_GetCaps', false],
+    ['IDirect3DDevice3_GetCaps', false], ['IDirect3DDevice7_GetCaps', true],
+  ]) {
+    wat.guest_write32(capsHW, 252); wat.guest_write32(capsHEL, 252);
+    const api = apiTable.find(entry => entry.name === name);
+    assert(api, name);
+    assert.strictEqual(wat.test_diptex_caps(api.id, device, capsHW, is7 ? 0 : capsHEL), 0, name);
+    assert.strictEqual(wat.test_diptex_esp(), is7 ? 0x3000c : 0x30010, name + ' stdcall cleanup');
+    for (const caps of is7 ? [capsHW] : [capsHW, capsHEL]) {
+      for (const offset of is7 ? [36, 92] : [76, 132]) {
+        assert.strictEqual(wat.guest_read32(caps + offset) & 0x20, 0,
+          name + ' must not require square textures (line and triangle caps)');
+      }
+    }
+  }
 
   const handleOut = out + 8;
   let textureHandle = 0;

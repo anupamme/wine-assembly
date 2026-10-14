@@ -91,3 +91,122 @@ Every frame also does the GDI sequence `GetDC`, `CreateCompatibleDC`,
 `SelectObject`, `StretchBlt`, `DeleteDC` and `ReleaseDC`. Input is DirectInput
 keyboard polling (`GetDeviceState`), so `--input=B:keydown:VK` reaches it.
 Command: `--trace-api-counts`.
+
+## Browser loading-stall report (2026-10-13)
+
+User report `TG60-REVOLT-LOADING-20261013` shows loading
+`models\\sphere.ncp`, EIP near `0x45a8xx` / `0x482c69`, and repeated ESI
+`0x3f`. Original EXE SHA-256
+`58ba4835e6607eae62be4e023ef989172cb519c78f34811acba547e9e0e3581a`
+confirms the placement routine above: rejected separation branches at
+`0x45aa17`; acceptance increments ESI at `0x45aa5a` and compares with 64
+at `0x45aa65`. ESI 63 is consistent with the last object. Changing EIP or
+random state alone does **not** prove that object will ever be accepted.
+CRT `rand` at `0x482c69` updates its original state at guest `0x49bb88`.
+
+Run `scratch/runs/20261013T2305Z-revolt-original-browser` used exact clean
+source `a116a574c7411671b1042013b641ac0765471ef5`, an independent canonical
+build (WASM SHA-256
+`46c1e23aabca26de5e459f21463d3e1167f3a71d95e573ffedecefe7b31765f7`),
+and all 443 original installed files plus the browser manifest verified by
+hash. Registered browser route was
+`index.html?app=re_volt_demo&debug&no-threads&d3d-renderer=webgl` on
+`bx_yqnspudj`. Live controls confirmed WebGL, RLE/x87/uop enabled, Lazy Sync
+enabled, and Threads unchecked, matching the report. Five-second samples
+read registers and the random state; they did not write guest memory, change
+the clock, restore a snapshot, or change random state/configuration.
+
+Launch was 23:04:49 UTC; reviewed main menu was 23:06:18 (89 seconds).
+Ordinary Enter selected Start Race, Single Race, default player name,
+RC Bandit, Toys in the Hood 1, then the summary at 23:08:17. The log sampled
+placement at 23:09:03, EIP `0x45aa1d`, ESI 62. It then passed that routine
+and reached the reviewed starting grid at 23:09:24, about 67 seconds after
+the summary confirmation and 276 seconds after launch. No sustained ESI 63
+was observed in this run. `loading-003.png` is the starting grid;
+`race-001.png` and `race-002.png` show later race timers 21.799 and 39.762
+seconds after ordinary Up input, with the latter showing 8 mph. Up without
+steering took the car off the intended route into a dark tunnel/wall area;
+this is limited evidence of movement and input response, not a completed
+lap or a separate physics/rendering diagnosis. Browser closed normally at
+23:10:19; supervisor/driver/Chrome PIDs and groups were absent at 23:10:50.
+
+The reported prolonged stall was **not reproduced**, and no emulator fix is
+claimed. The user's exact loaded module, elapsed stall duration and random
+state are unknown; a successful independent run does not establish that all
+placements terminate. If it recurs, preserve the exact module and elapsed
+ESI/random-state series before changing any optimization settings.
+
+## Loading-time profile (2026-10-13, TG62)
+
+Run `scratch/runs/20261013T2327Z-revolt-loading-profile` used the same original
+443 installed files plus manifest, clean `a116a574`, canonical module
+`46c1e23aabca26de5e459f21463d3e1167f3a71d95e573ffedecefe7b31765f7`, Chrome
+151.0.7922.108, WebGL selected, and cooperative guest threads. No game state,
+random seed, clock, or settings were changed. The added diagnostics were the
+existing performance HUD, 2 ms CDP sampling, CDP network timestamps, and
+read-only provider-fill/main-IO-poll wrappers. Startup and track profiles each
+had a 120 s cap, inside a 420 s driver and independent 440 s group supervisor.
+
+The earlier **275.572 s launch-to-grid** observation includes **118.819 s of
+menu navigation and review**. Its final confirmation-to-grid capture was
+**67.432 s**; calling the whole 4.5 minutes loading is incorrect. Captures bound
+screen availability rather than marking exact transitions.
+
+The new profiles identify substantial **software rendering on a cooperative
+guest thread**, despite the WebGL selection. To exclude time spent reviewing
+menus and the grid, `analysis.json` crops the full profiles to the console's
+thread-2 spawn/exit timestamps. The thread starts at guest `0x444800`; a live
+read-only thread snapshot confirms it was active during track loading alongside
+the Miles audio thread at `0x8624b0`. The software-draw profile call chain is
+`step → runBudgeted → runSlice → DrawPrimitive → rasterize_triangle_textured →
+viewport_draw_textured_span`. The function map comes from the exact build;
+WASM function 6821's body starts at byte 939163, matching its profile position.
+
+| Loading-thread window | Window | Textured spans | Rectangle clears | Depth clears |
+| --- | ---: | ---: | ---: | ---: |
+| Frontend | 62.526 s | 40.756 s | 5.928 s | 5.618 s |
+| Track | 71.553 s | 45.420 s | 6.811 s | 6.295 s |
+
+Those three functions account for approximately **84% and 82% of sampled
+elapsed time**, respectively. These are sampling-based time attributions,
+not hardware CPU-utilization measurements. The full startup profile also
+contains 18.6 s attributed to the WebGL `fence` method, predominantly outside
+the loading-thread window; synchronous GPU readback can block there. It must
+not be presented as the loading bottleneck from this profile.
+
+During the track window, 152 provider fills took a median **244.7 ms**, while
+156 HTTP range requests took a median **6.75 ms**. The union of network-request
+intervals was **1.136 s**, compared with **40.855 s** for provider-fill intervals
+and **41.020 s** for main-thread IO parking. These intervals overlap and must
+not be added. The large gap is consistent with browser-thread contention
+delaying provider completion while the cooperative thread renders; the
+loopback network transfer itself does not explain the observed loading time.
+Guest sorting and rejection placement still execute, but sampling main EIP
+alone misses this secondary-thread rendering cost. This run sampled ESI 63 in
+placement and subsequently reached the grid; it did not reproduce a lasting
+placement hang.
+
+Source explains the backend mismatch: `host.js::_startD3DIMGpu` explicitly
+binds the executor and `d3dim_gpu_enable(1)` to the main instance. Cooperative
+threads receive separate instances in `ThreadManager.spawnPending`; their
+per-instance `$d3dim_gpu_on` starts at zero, and the manager has no corresponding
+GPU-enable/executor setup. The host bridge deliberately retains synchronous
+software fallback when no consumer is attached. Identifying thread `0x444800`
+as the loading-screen drawing thread is supported by its lifetime, disassembly,
+live identity and the cooperative drawing call chain; the profiler does not
+directly label individual guest thread IDs.
+
+The next generic fix to investigate is GPU routing for cooperative secondary
+threads, with the **calling instance's exports/state** and shared surface
+ownership preserved. Merely enabling the flag or reusing an executor whose
+`getExports` is bound to the main instance is insufficient. Validation should
+cover a secondary-thread Direct3D draw, cross-thread clear/draw/lock ordering,
+software fallback, and an original-game before/after profile. No such fix or
+speedup has been tested here. Profiling overhead is unknown; these instrumented
+times are not a speed comparison against the earlier uninstrumented route.
+
+All 56 transferred original artifacts passed SHA-256 checks. Chrome and driver
+exited normally; the supervisor recorded all 16 discovered child PIDs and both
+owned groups absent at 23:32:57.113 UTC. Independent checks also found the
+supervisor and all recorded PIDs/groups absent. No further run was needed for
+packaging or analysis.
