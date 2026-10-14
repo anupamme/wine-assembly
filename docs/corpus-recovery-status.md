@@ -16,7 +16,7 @@ Fresh recoveries were verified and committed for .kkrieger,Sanity,Nocturne,Urban
 
 | Candidate | Concrete remaining work |
 |---|---|
-| avp2-demo | Original local installer SHA256 is recorded, but no upstream URL. Recover acquisition provenance and complete original launcher-generated avp2cmds.txt export. |
+| avp2-demo | Original demo CD source recovered and its installer SHA256 exactly matches the prior local original (see AVP2 notes). Complete installed payload recovery and original launcher-generated avp2cmds.txt export remain manual. |
 | dungeons-of-dredmor-release | Steam2 depot recovery is documented separately; requires original torrent/depot preparation and acquisition rights. Generic fetcher has no Steam2 pipeline. |
 | starcraft-shareware | Original CCD/IMG preparation and installed-tree export remain manual; do not equate disc acquisition with installed game. |
 | diablo-shareware | Pinned original ISO; installed output requires original AUTORUN.EXE guest installer and exported-tree verification. |
