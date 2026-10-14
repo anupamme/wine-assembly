@@ -83,7 +83,11 @@ async function main() {
   const tick = () => manager.runSlice(1000,{quantumSteps:1000});
   for(let i=0;i<20 && !g32(count+4);i++) tick();
   assert.equal(g32(count),1); assert.equal(g32(count+4),1); assert.equal(g32(count+8),0);
-  assert.equal(t.get_last_run_halt(),4); assert.notEqual(t.get_esp(),saved.esp);
+  // Some dispatch paths surface the yield flag (halt 3) before the run loop's
+  // blocking-wait classification (halt 4). Verify the actual CS park as well.
+  assert.ok([3,4].includes(t.get_last_run_halt()));
+  assert.ok(t.get_cs_waits() > 0); assert.equal(t.get_cs_wait_owner(),e.get_current_thread_id());
+  assert.notEqual(t.get_esp(),saved.esp);
   const gate = new Int32Array(memory.buffer,e.get_dll_callback_lock(),2);
   assert.equal(gate[0],t.get_dll_callback_owner());
   assert.equal(loader.beginDllThreadNotification({exports:peer.exports,memoryBuffer:memory.buffer},2),null);
