@@ -450,6 +450,13 @@
                     (i32.eq (local.get $msg) (i32.const 0x0037)))))) ;; WM_QUERYDRAGICON
           (then (return (local.get $handled))))
         (return (call $dialog_extra_get (local.get $hwnd) (i32.const 0)))))
+    ;; An unhandled WM_NCPAINT still belongs to DefWindowProc. Resource
+    ;; dialogs with a guest DLGPROC (Winamp About) otherwise consume the
+    ;; pending non-client paint without ever drawing their caption or frame.
+    (if (i32.eq (local.get $msg) (i32.const 0x0085))
+      (then
+        (call $defwndproc_do_ncpaint (local.get $hwnd))
+        (return (i32.const 0))))
     ;; BUTTON notifications arrive through the ordinary message pump so a
     ;; dialog procedure can enter another modal loop without stranding a
     ;; recursive WAT interpreter frame. If a true DialogBox DLGPROC leaves

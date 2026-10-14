@@ -59,6 +59,11 @@ assert.notStrictEqual(result.workerHandlesAtCredits.credits, 0,
   'Credits should own a live rendering worker');
 
 const about = findActivePage(result.state && result.state.visibleWindows);
+assert(result.state.aboutCaptionInk > 20,
+  `About dialog must retain its caption text: ${result.state.aboutCaptionInk}`);
+assert(result.state.aboutTabInk && result.state.aboutTabInk.length === 4 &&
+  result.state.aboutTabInk.every(ink => ink > 20),
+  `all four About tab labels must be visible: ${JSON.stringify(result.state.aboutTabInk)}`);
 assert(about.screen.sampledColors > 32,
   `Winamp should render after switching back, got ${about.screen.sampledColors} colors`);
 assert(about.screen.sampledInk > 1000,

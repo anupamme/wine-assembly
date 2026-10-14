@@ -368,3 +368,27 @@ Resource handles still encode identity using resource IDs: two separately
 loaded menus sharing that ID remain ambiguous until LoadMenu identity is
 replaced. This patch does not fix EnableMenuItem/CheckMenuRadioItem's separate
 global scans, or stale canonical bindings after resource-blob mutations.
+
+## About owner-draw labels and frame, 2026-10-14
+
+Winamp 2.91 dialog 245 uses four BS_OWNERDRAW buttons, not a tab control:
+1212 Winamp, 1163 Credits, 1164 Keyboard shortcuts, and 1215 Version history.
+The WM_DRAWITEM branch at 0x406b50 reads the label and calls DrawTextA at
+0x406c26 with the supplied DC text color. Both native button draw paths had
+supplied COLOR_BTNFACE for a Win16 monochrome branding path, making Win32
+labels gray on gray. Win32 now receives COLOR_BTNTEXT; Win16 is unchanged.
+
+The same desktop reproduction lacked its caption and border. The guest
+DLGPROC returns FALSE for WM_NCPAINT, but dialog_proc_result dropped it.
+The unhandled path now calls defwndproc_do_ncpaint; a handled message still
+returns the guest's result. Chrome Worker captures show the restored frame,
+readable labels, animated About flames, and the animated Credits scene.
+The browser regression now checks label ink and caption text in addition to
+page rendering and worker lifetime across About → Credits → About.
+
+Evidence: scratch/runs/20261014-winamp-about-before and
+scratch/runs/20261014-winamp-about-after (no candidate-corpus entry).
+Canonical build, About browser regression, Calculator pressed/released
+buttons, and dialog subclass erase tests pass. Safari and any separate
+visualization plug-in glitch remain unverified; these fixes do not establish
+that every reported visualization issue is resolved.
