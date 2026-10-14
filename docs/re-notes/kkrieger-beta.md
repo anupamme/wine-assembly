@@ -107,3 +107,19 @@ cooperative/non-isolated browser route, original EXE hash unchanged. A first
 fixture-only attempt hit the static server's external-symlink HTTP403 rule;
 copying the three original fixture files into the isolated checkout resolved
 that harness setup failure before the recorded runtime retest.
+
+### Three-minute untraced follow-up
+
+The same tested module and source were run for180 seconds without API/EIP
+return tracing, retaining ordinary runtime diagnostics. The bar progresses
+from a small filled section at60 seconds to visually full at180 seconds.
+The process remains running without the former early exit, but there is still
+no menu or gameplay. Final seven sampled lines repeat EIP `0x0081053e`,
+ECX `0x6d84fb2c`, ESI `0x1b05`, yield0. This is an investigation lead, not
+proof of a permanent hang or its cause. Next inspect that loop and its
+termination condition before extending the same run again. No input was sent.
+
+Root-reviewed evidence: `scratch/runs/20261014-kkrieger-q8-long/`, with three
+screenshots, state samples, log, probe, source patch and process receipt
+(2026-10-14T22:06:42.445Z–22:09:44.501Z). Harness exit0 only confirms orderly
+capture shutdown; the startup route remains unqualified.
