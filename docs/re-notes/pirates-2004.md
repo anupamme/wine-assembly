@@ -49,3 +49,34 @@ correct. Evidence: `scratch/runs/20261006T033534Z-pirates_2004-dxinit`.
 Gameplay (`Play Sid Meier's Pirates!`), audio, the WebGL arm at this build.
 `ole32.dll` is absent from this box's `test/binaries/dlls`, so the Miles
 providers' ole32 imports fall to WAT stubs.
+
+## Cooperative thread-attach regression (2026-10-14, TG77)
+
+The Safari report on module SHA256
+`e6ac188dd8c7b16d04eaa4b74446ab2c4ab211422738709e33cffda5db444e7e`
+reports `DllMain did not complete: module=0x9f1000 reason=2`.
+Reproduced with the existing pinned corpus acquisition on temporary
+`bx_tgbme2h7`, Chrome, isolated page, `?debug&no-threads&app=pirates_2004`.
+Source was `43f04c7c4ac8914c385c37a7be96c7e1b9f61623`, same module hash.
+No guest patch, capability override, or DllMain completion bypass was used.
+
+The loader identifies `0x9f1000` as **msvcr71.dll**, preferred base
+`0x7c340000`, entry `0x9f329f`. Several prior callbacks complete normally.
+The failing callback stops at `EIP=0x7503fc0 yield=9 halt=4`: a critical-section
+wait, not the callback budget limit. The later crash report's `0x9fc5ec`
+(Safari reported `0x9fc4bb`) is the restored caller state, not that wait thunk.
+Increasing budgets or marking the unfinished attach complete would hide the
+scheduling problem.
+
+Next capture the contended section and its owner, then implement resumable
+thread-attach scheduling with a real contended-lock regression. Preserve the
+callback frame, loader serialization, and exactly-once notifications while
+allowing the owner to run. `pumpThreadsOnce` deliberately refuses entry while
+already running a cooperative worker, so it is not a drop-in fix here.
+The owner and precise lock have not yet been established. Worker-mode and
+Safari retests remain separate; no fix or gameplay acceptance is claimed.
+
+Evidence: `scratch/runs/20261014-pirates-browser-cooperative/` contains the
+90-second probe, six captures/state snapshots, browser log and process receipt.
+The final fatal-error screenshot was reviewed. The original user report is in
+`scratch/runs/20261014-pirates-user-crash/report.txt`.

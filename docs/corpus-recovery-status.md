@@ -19,10 +19,10 @@ Fresh recoveries were verified and committed for .kkrieger,Sanity,Nocturne,Urban
 | avp2-demo | Original local installer SHA256 is recorded, but no upstream URL. Recover acquisition provenance and complete original launcher-generated avp2cmds.txt export. |
 | dungeons-of-dredmor-release | Steam2 depot recovery is documented separately; requires original torrent/depot preparation and acquisition rights. Generic fetcher has no Steam2 pipeline. |
 | starcraft-shareware | Original CCD/IMG preparation and installed-tree export remain manual; do not equate disc acquisition with installed game. |
-| diablo-shareware | Pinned original ISO; installed output requires original AUTORUN.EXE guest installer. Remote runtime access currently unavailable. |
-| moorhuhn-tennis | Pinned installer; original installer/wrapper must run and export projector/SWF/basepath. Remote runtime access currently unavailable. |
-| moorhuhn-3-puzzles | Shares original Moorhuhn3 acquisition but each loader needs captured child-launch extraction; remote runtime unavailable. |
-| best-of-moorhuhn | Pinned original ISO plus transient wrapper exports; remote runtime unavailable. |
+| diablo-shareware | Pinned original ISO; installed output requires original AUTORUN.EXE guest installer and exported-tree verification. |
+| moorhuhn-tennis | Pinned installer; original installer/wrapper must run and export projector/SWF/basepath. |
+| moorhuhn-3-puzzles | Shares original Moorhuhn3 acquisition but each loader needs captured child-launch extraction. |
+| best-of-moorhuhn | Pinned original ISO plus transient wrapper exports still needed. |
 | gallinelle-xxl | Existing manual MODE2/2352 conversion and cabinet recipe. Generic helper supports MODE1 only; add tested mode-specific conversion after confirming permitted acquisition. |
 | reflexive-ricochet-xtreme | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | reflexive-zuma-deluxe | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
@@ -30,9 +30,16 @@ Fresh recoveries were verified and committed for .kkrieger,Sanity,Nocturne,Urban
 | reflexive-collapse-crunch | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | reflexive-alien-shooter | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | baldurs-gate2-demo | Original multipart media and REWise/cabinet merge described in notes; pin every source part and exact case-insensitive overrides before automation. |
-| disciples2-demo | Pinned local Wise installer; complete installed-tree export needed, with upstream provenance and runtime access unresolved. |
+| disciples2-demo | Pinned local Wise installer; complete installed-tree export and upstream provenance still needed. |
 | beyond-good-evil-demo | Pinned local installer only; upstream URL absent. Preserve original settings registry and complete installation export. |
 
 ## Further scope
+
+Ultima IV now recovers its complete 175-file installed payload from the existing
+pinned GOG package, including original save templates. Fresh recovery and
+byte comparison against independent extraction/restored files passed; see
+`docs/re-notes/ultima4-gog.md`. Arena, Daggerfall and Shadow Warrior still need
+their corresponding installed-payload recipes and fresh verification. These
+are separate from the DOS downloader's existing ZIP recipes.
 
 Audit existing package recipes for installer-only outputs, mutable-save separation and complete output inventories. The initial older-local-tree audit is not current-main completeness. Worms Armageddon already has an integrated complete recipe and fresh667-file recovery verification; the older audit missed it. Silver original media hashes and C:/SILVER plus D:/SILVER ZIP mounting are recovered in docs/re-notes/silver-demo.md, and silver-demo now reconstructs3147 original files and preserves the source ZIP. Dual-drive runtime mounting remains separate from acquisition; no browser/desktop qualification. Reconcile other registry-only fixtures separately. DOS GOG-derived installed trees,Comanche3 original-media provenance and Hornet discovery downloads require their own recovery contracts. Preserve permitted original packages/evidence outside Git; upstream mirrors cannot guarantee permanent availability. Boat SSH remains unavailable to the scoped key. On 2026-10-14, the documented and authorized Boat exec API was verified on a fresh separate test box, allowing clean builds and runtime validation. This resolves the transport blocker only; automated-review restrictions on specific diagnostics remain in force.
