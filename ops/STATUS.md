@@ -1,3 +1,5 @@
+Current 2026-10-14: Main0ed1987d0 includes reviewed kkrieger loop diagnosis, format63 implementation, ShadowWarrior recovery181files and Arena canonical348-file metadata migration. Texture regression/build suites and recovery/save-preservation tests pass; no new gameplay qualification. Sole worker /root/kkrieger_mesh_writer traces upstream mesh topology writer on separate bx_tgbme2h7; Pirates thread-attach investigation is queued for serialized runtime. TG71 static audit135candidates=118package recipes+16manual+1shared, no malformed source references; manual provenance/export gaps remain explicit in docs/corpus-recovery-status.md. Renderer c2192e014 built and passed four real-VM tests remotely; GPU/contract review remains, no blanket transport blocker. Ops owner separately updated live dashboard to b0b9bc090 including SeriousSam fix, root verified served policy and delivered Telegram1357. Safari/gameplay retest pending. Shared HEAD/index untouched,3GB disk free; no public deployment by coordinator.
+
 updated: 2026-10-10T02:43:12.346Z
 author: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
 
