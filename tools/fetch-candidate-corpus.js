@@ -690,7 +690,8 @@ function writeBrowserManifest(candidate, destination) {
 async function fetchCandidate(candidate) {
   const fixture = fixtureId(candidate);
   assertSafeRelative(fixture, `${candidate.id}.fixture`);
-  const destination = path.join(ASSET_ROOT, fixture);
+  const finalDestination = path.join(ASSET_ROOT, fixture);
+  let destination = finalDestination;
   if (candidate.fixture && candidate.fixture !== candidate.id) {
     console.log(`SHARED ${candidate.id}: uses fixture ${candidate.fixture}`);
     return { shared: 1 };
@@ -714,11 +715,18 @@ async function fetchCandidate(candidate) {
     console.log(`KEEP   ${candidate.id}: ${path.relative(ROOT, destination)}`);
     return { kept: 1 };
   }
-  if (force && fs.existsSync(destination)) fs.rmSync(destination, { recursive: true, force: true });
-  fs.mkdirSync(destination, { recursive: true });
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), `wa-candidate-${candidate.id}-`));
+  let staging;
+  let backup;
   const provenance = [];
   try {
+    if (force) {
+      // Keep the replacement on the destination filesystem for rename publication.
+      fs.mkdirSync(path.dirname(finalDestination), { recursive: true });
+      staging = fs.mkdtempSync(`${finalDestination}.replacement-`);
+      destination = path.join(staging, 'fixture');
+    }
+    fs.mkdirSync(destination, { recursive: true });
     for (let index = 0; index < candidate.packages.length; index++) {
       const pkg = candidate.packages[index];
       if (!pkg.url || !/^[0-9a-f]{40}$/.test(pkg.sha1 || '')) {
@@ -747,7 +755,7 @@ async function fetchCandidate(candidate) {
     }
     runPostExtract(candidate, destination);
     writeBrowserManifest(candidate, destination);
-    fs.writeFileSync(provenanceFile, `${JSON.stringify({
+    fs.writeFileSync(path.join(destination, '.candidate-source.json'), `${JSON.stringify({
       id: candidate.id,
       name: candidate.name,
       version: candidate.version,
@@ -755,13 +763,37 @@ async function fetchCandidate(candidate) {
       packages: provenance,
       postExtract: candidate.postExtract || [],
     }, null, 2)}\n`);
-    console.log(`READY  ${candidate.id}: ${path.relative(ROOT, destination)}`);
+    if (force) {
+      if (fs.lstatSync(finalDestination, { throwIfNoEntry: false })) {
+        const previous = path.join(staging, 'previous');
+        fs.renameSync(finalDestination, previous);
+        backup = previous;
+      }
+      try {
+        fs.renameSync(destination, finalDestination);
+      } catch (error) {
+        if (backup) {
+          try {
+            fs.renameSync(backup, finalDestination);
+            backup = null;
+          } catch (rollbackError) {
+            throw new Error(`${error.message}; rollback failed: ${rollbackError.message}; previous fixture retained at ${backup}`);
+          }
+        }
+        throw error;
+      }
+      // Publication succeeded; only now may cleanup remove the previous tree.
+      backup = null;
+    }
+    console.log(`READY  ${candidate.id}: ${path.relative(ROOT, finalDestination)}`);
     return { fetched: 1 };
   } catch (error) {
     console.error(`ERROR  ${candidate.id}: ${error.message}`);
     return { failed: 1 };
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });
+    // A failed rollback must never delete the only remaining previous fixture.
+    if (staging && !backup) fs.rmSync(staging, { recursive: true, force: true });
   }
 }
 
