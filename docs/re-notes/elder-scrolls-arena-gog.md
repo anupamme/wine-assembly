@@ -26,12 +26,18 @@ files). All348 package payload files match their older hashes. Do not invent
 the missing70 files or describe them as verified original package contents.
 Their origin remains unresolved; the restored files have been preserved.
 
-`tools/prepare-arena-gog-assets.js` still demands that older inventory, so
-fresh-package browser preparation requires a separate inventory/metadata
-migration. This recovery recipe alone does not complete that route. The
-original `__support/save/NAMES.DAT` template is in the recovered package;
-the older blanket statement that there are no packaged templates is inaccurate.
-Preserve the existing overlay semantics when reconciling the runtime manifest.
+`lib/arena-gog-source.json` now pins only the 348 independently verified
+package files. Browser preparation succeeds on pristine recovery and writes
+349 entries including the launch configuration. Known prior generated manifests
+are migrated only by exact hash, with before-image backups; unknown metadata
+still fails without replacement. No payload or player-save file is changed.
+The original `__support/save/NAMES.DAT` template remains in its original path;
+cloud_saves remains the separately persisted overlay. No save is manufactured.
+Tests cover canonical inventory equality, migration/idempotence, save and local
+state preservation, unknown metadata refusal and actual VFS overlay creation.
+Fresh recovery and the exact previous manifest were both prepared successfully;
+evidence: `scratch/runs/20261014-arena-inventory-migration/`. Browser gameplay
+and save/reload validation remain outstanding.
 
 Evidence and original installer copy: `scratch/runs/20261014-arena-recovery/`.
 `old-inventory-differences.json` records every missing path and its older hash.
@@ -94,9 +100,9 @@ node test/test-arena-dosbox.js
 
 ## 2026-10-05 local browser registration and ordinary-route preparation
 
-Local-only app `arena_gog` uses the original installed Windows DOSBox and520 regular original files (122,745,861bytes); no payload copy or guest execution was used to prepare the route. Four stale migrated host symlinks are excluded, with exact targets recorded in `lib/arena-gog-source.json`. The original installer and every regular payload file are pinned there. `tools/prepare-arena-gog-assets.js` validates those bytes before writing an ignored521-record manifest; unknown existing generated state is a conflict, never overwritten.
+Historical preparation (superseded by the 2026-10-14 inventory correction above) used Windows DOSBox and 520 files labelled original (122,745,861 bytes); no payload copy or guest execution was used to prepare the route. Four stale migrated host symlinks are excluded, with exact targets recorded in `lib/arena-gog-source.json`. The original installer and every regular payload file are pinned there. `tools/prepare-arena-gog-assets.js` validates those bytes before writing an ignored521-record manifest; unknown existing generated state is a conflict, never overwritten.
 
-The earlier screenshot-only acceptance does not establish player control. The separate `test/configs/arena-browser-wine-assembly.conf` preserves the documented dynamic50000/surface/sound-disabled configuration and exact ACD arguments. It also restores GOG's original cloud_saves overlay from `__support/app/dosbox_arena_single.conf`. The GOG installation script creates that directory. In a fresh VFS the browser config performs ordinary `if not exist C:\cloud_saves mkdir C:\cloud_saves` after mounting backing C: and BEFORE mounting its overlay. There are no original save templates to seed. D: remains the base payload mounted as CD-ROM, ARENADATA is C:, and ACD launches from D:. The historical snapshot config is unchanged.
+The earlier screenshot-only acceptance does not establish player control. The separate `test/configs/arena-browser-wine-assembly.conf` preserves the documented dynamic50000/surface/sound-disabled configuration and exact ACD arguments. It also restores GOG's original cloud_saves overlay from `__support/app/dosbox_arena_single.conf`. The GOG installation script creates that directory. In a fresh VFS the browser config performs ordinary `if not exist C:\cloud_saves mkdir C:\cloud_saves` after mounting backing C: and BEFORE mounting its overlay. Correction: the original package includes __support/save/NAMES.DAT; it is preserved without manufacturing player saves. D: remains the base payload mounted as CD-ROM, ARENADATA is C:, and ACD launches from D:. The historical snapshot config is unchanged.
 
 Only `c:\cloud_saves\*` persists, with no reset token. Original files, existing host saves and arbitrary conflicting metadata are never replaced. Focused recipe tests exercise original-byte mapping, mkdir/overlay/CD-ROM/ARENADATA/launch order, idempotence, conflicts, no manufactured saves and local-only registration. Existing browser persistence attaches after asset loading; the Ultima focused actual-VFS restore test covers that mechanism separately. Runtime save/reload remains untested for Arena.
 

@@ -40,9 +40,11 @@ pinned GOG package, including original save templates. Fresh recovery and
 byte comparison against independent extraction/restored files passed; see
 `docs/re-notes/ultima4-gog.md`. Arena now recovers348 pinned original payload
 files, but its older browser-preparation inventory additionally demands102
-installer temporary files and70 files absent from the package. That inventory
-and metadata need a separate migration; exact paths/hashes are recorded in the
-Arena recovery evidence. Daggerfall now recovers1623 original files with fresh
+installer temporary files and70 files absent from the package. The canonical inventory now contains only those 348 original files, and
+preparation migrates exact known metadata with backups while preserving saves;
+unknown metadata is refused. Pristine and old-metadata preparation pass.
+Browser gameplay/save-reload validation remains separate; exact removed
+paths/hashes are recorded in the Arena recovery evidence. Daggerfall now recovers1623 original files with fresh
 recipe, independent extraction and restored-file byte comparisons; its dedicated
 browser metadata preparation remains distinct from generic acquisition.
 Shadow Warrior now recovers181 original files, independently byte-compared,
