@@ -4438,6 +4438,36 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "kkrieger-beta",
+      "name": ".kkrieger Chapter I Beta",
+      "kind": "game",
+      "version": "Breakpoint 2004 beta (scene.org archive)",
+      "executables": [
+        "game/pno0001.exe"
+      ],
+      "sourcePage": "https://files.scene.org/view/parties/2004/breakpoint04/96kgame/kkrieger-beta.zip",
+      "license": "Freeware. Original readme permits spreading the original unmodified archive without a fee for the game, with credit to .theprodukkt; preserve archive and notices. No public deployment performed.",
+      "packages": [
+        {
+          "url": "https://files.scene.org/get:fi-https/parties/2004/breakpoint04/96kgame/kkrieger-beta.zip",
+          "sha1": "f46b0fd0e777c33c79e16cb5453db8b0b4bfb91b",
+          "type": "archive",
+          "into": "game"
+        }
+      ],
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/pno0001.exe"
+      },
+      "cli": {
+        "maxBatches": 10000,
+        "batchSize": 100000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      }
     }
   ]
 }
