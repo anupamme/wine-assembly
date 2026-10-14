@@ -4323,8 +4323,15 @@
       "sourcePage": "https://archive.org/details/urbanchaos",
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Verify urbanchaos.zip (26328920 bytes, SHA-1 ba06b6ca040359ac07dd60ca75d680c9f2b5d15c); extract Demo.exe with 7z and installer/data1.cab with unshield. Flatten Global_Media, Local_Media_-_English and Program_Files into game/, preserving relative paths. Copy installer clumps, data and talk2 directories into game/ and copy PE Fallen.ex_ unchanged as Fallen.exe (SHA-256 8cc73044e19b423ef0f13858d8cb3bb3025ca023114cf87ff46c57838f4b2229). Reconstruct config.ini exactly as documented in docs/re-notes/urban-chaos-demo.md, then run --id=urban-chaos-demo --prepare.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/urbanchaos/urbanchaos.zip",
+          "sha1": "ba06b6ca040359ac07dd60ca75d680c9f2b5d15c",
+          "type": "archive",
+          "into": "archive"
+        }
+      ],
+      "manual": "Verify urbanchaos.zip (26328920 bytes, SHA-1 ba06b6ca040359ac07dd60ca75d680c9f2b5d15c); extract Demo.exe with 7z and installer/data1.cab with unshield. Flatten Global_Media, Local_Media_-_English and Program_Files into game/, preserving relative paths. Copy installer clumps, data and talk2 directories into game/ and copy PE Fallen.ex_ unchanged as Fallen.exe (SHA-256 8cc73044e19b423ef0f13858d8cb3bb3025ca023114cf87ff46c57838f4b2229). Reconstruct config.ini exactly as documented in docs/re-notes/urban-chaos-demo.md, then run --id=urban-chaos-demo --prepare. Automated recovery now reproduces the documented layout and reconstructed local-install INI; run --id=urban-chaos-demo. The INI is reconstructed from installer semantics, not captured installer output.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/Fallen.exe"
@@ -4335,7 +4342,72 @@
         "vfsInclude": [
           "**/*"
         ]
-      }
+      },
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "archive/Demo.exe",
+          "into": "installer"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/data1.cab",
+          "group": "Global Media",
+          "into": "unpacked"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/data1.cab",
+          "group": "Local Media - English",
+          "into": "unpacked"
+        },
+        {
+          "type": "unshield",
+          "cab": "installer/data1.cab",
+          "group": "Program Files",
+          "into": "unpacked"
+        },
+        {
+          "type": "copyTree",
+          "from": "unpacked/Global_Media",
+          "into": "game"
+        },
+        {
+          "type": "copyTree",
+          "from": "unpacked/Local_Media_-_English",
+          "into": "game"
+        },
+        {
+          "type": "copyTree",
+          "from": "unpacked/Program_Files",
+          "into": "game"
+        },
+        {
+          "type": "copyTree",
+          "from": "installer/clumps",
+          "into": "game/clumps"
+        },
+        {
+          "type": "copyTree",
+          "from": "installer/data",
+          "into": "game/data"
+        },
+        {
+          "type": "copyTree",
+          "from": "installer/talk2",
+          "into": "game/talk2"
+        },
+        {
+          "type": "copyFile",
+          "from": "installer/Fallen.ex_",
+          "into": "game/Fallen.exe"
+        },
+        {
+          "type": "writeText",
+          "file": "game/config.ini",
+          "text": "[Game]\nlanguage=text\\lang_english.txt\n[LocalInstall]\ntextures=1\nsfx=1\nspeech=1\nmovies=1\n[TextureClumps]\nenable_clumps=1\n"
+        }
+      ]
     },
     {
       "id": "thief2-demo",

@@ -140,3 +140,11 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Automated recovery, 2026-10-14
+
+Fresh ZIP acquisition from https://archive.org/download/urbanchaos/urbanchaos.zip verified26328920 bytes and SHA-1 ba06b6ca040359ac07dd60ca75d680c9f2b5d15c. Unpack Demo.exe with7-Zip23.01; extract data1.cab groups Global Media,Local Media - English,Program Files using the existing is5-extract fallback (unshield absent on this host). Copy component contents into game/ in that order, then installer clumps/,data/,talk2/ preserving relative paths. Fallen.ex_ is in installer/, NOT in Program Files; copy its unchanged bytes to game/Fallen.exe.
+
+The exact config.ini shown above is written as documented reconstructed installation state. It is not original captured installer output. The1122-file reconstructed game tree matches the restored accepted fixture byte-for-byte, including that INI. Every other file also matches its original extracted source; EXE SHA256 remains8cc73044e19b423ef0f13858d8cb3bb3025ca023114cf87ff46c57838f4b2229. The source archive retains readme.rtf outside game/.
+
+Recovery: `node tools/fetch-candidate-corpus.js --id=urban-chaos-demo`; pristine verification: `node test/test-urban-chaos-recovery.js`. test/candidate-corpus/urban-chaos-demo-files.json pins all1122 paths,sizes and SHA256 values and labels config.ini reconstructed. First draft failed explicitly on a wrong Fallen.ex_ source path; corrected recipe was rerun from fresh forced acquisition. Mutable files may differ after playing. Private-fixture restrictions remain; no binary, public deployment or fresh gameplay acceptance is part of this recipe change.
