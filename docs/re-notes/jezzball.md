@@ -4,6 +4,23 @@ Source: https://archive.org/details/win3_JezzBall ; win3_JezzBall.zip SHA1 2f041
 
 ## 2026-10-13 worker dialog frame clipping
 
+Native v86 Windows 98 comparison after the frame fix is retained in
+`scratch/runs/20261013-jezz-v86-dialog-compare/`. High Scores has approximately
+the same outer geometry (native 341x361; release crop 345x364), but the release
+still renders the two panel headings with smaller bold text and white fills;
+native uses larger text on the dialog's gray face. Caption/button font and
+classic chrome details also differ. Fixing the clipping was not pixel parity.
+
+The low-FPS investigation is in `scratch/runs/20261013-jezz-fps-measurement/`.
+Original startup calls USER.10 SetTimer with uElapse=0x32 (50 ms), return address
+0x101f08. A 15-second visible Chromium 155 worker sample on the release reports
+301 GDI presents (20.06/s), p95 interval 53.51 ms, page rAF 60.2/s, and no long
+tasks. The host was busy (load average around 12), with the performance HUD and
+CPU profiler enabled; these are observations, not a quiet-host benchmark.
+Message transport dominates much of the sampled worker/page CPU cost, but the
+sample still meets the game's requested update rate. Safari and v86's actual
+presentation cadence have not been measured.
+
 The release desktop reproduced the clipped High Scores popup in Chromium
 worker mode: its frame was 263x306 while the controls retained Win16 template
 spacing. `renderer.createDialog` recalculated frame size using `is_win16()`
