@@ -2748,6 +2748,14 @@
           "type": "archive"
         }
       ],
+      "postExtract": [
+        {
+          "type": "innoextract",
+          "installer": "setup_shadow_warrior_complete_2.0.0.7.exe",
+          "into": "installed",
+          "language": "GOGCustom"
+        }
+      ],
       "cli": {
         "maxBatches": 100,
         "batchSize": 10000

@@ -45,7 +45,9 @@ and metadata need a separate migration; exact paths/hashes are recorded in the
 Arena recovery evidence. Daggerfall now recovers1623 original files with fresh
 recipe, independent extraction and restored-file byte comparisons; its dedicated
 browser metadata preparation remains distinct from generic acquisition.
-Shadow Warrior still needs its installed-payload recipe and fresh verification.
-These are separate from the DOS downloader's existing ZIP recipes.
+Shadow Warrior now recovers181 original files, independently byte-compared,
+including its original cue sheet, MODE2 media and audio tracks. Its native CD
+runtime support remains separate from package recovery. These are separate
+from the DOS downloader's existing ZIP recipes.
 
 Audit existing package recipes for installer-only outputs, mutable-save separation and complete output inventories. The initial older-local-tree audit is not current-main completeness. Worms Armageddon already has an integrated complete recipe and fresh667-file recovery verification; the older audit missed it. Silver original media hashes and C:/SILVER plus D:/SILVER ZIP mounting are recovered in docs/re-notes/silver-demo.md, and silver-demo now reconstructs3147 original files and preserves the source ZIP. Dual-drive runtime mounting remains separate from acquisition; no browser/desktop qualification. Reconcile other registry-only fixtures separately. DOS GOG-derived installed trees,Comanche3 original-media provenance and Hornet discovery downloads require their own recovery contracts. Preserve permitted original packages/evidence outside Git; upstream mirrors cannot guarantee permanent availability. Boat SSH remains unavailable to the scoped key. On 2026-10-14, the documented and authorized Boat exec API was verified on a fresh separate test box, allowing clean builds and runtime validation. This resolves the transport blocker only; automated-review restrictions on specific diagnostics remain in force.
