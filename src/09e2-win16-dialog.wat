@@ -174,6 +174,9 @@
     (drop (call $wnd_set_style (local.get $hwnd)
       (i32.or (call $wnd_get_style (local.get $hwnd)) (i32.const 0x10000000))))
     (call $host_dialog_loaded (local.get $hwnd) (local.get $parent))
+    ;; Template coordinates are owner-client relative unless DS_ABSALIGN.
+    ;; Use the same placement as Win32 before WM_INITDIALOG can move it.
+    (call $dlg_place_owner_relative (local.get $hwnd))
     (call $defwndproc_do_nccalcsize (local.get $hwnd))
     (call $dlg_fill_bkgnd (local.get $hwnd))
     ;; Chrome and background both owed, and owed *before* the window is shown:

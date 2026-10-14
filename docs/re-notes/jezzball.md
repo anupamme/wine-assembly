@@ -35,6 +35,19 @@ shared geometry. Caption-drag, modal-input and button-queue checks also pass.
 
 ## 2026-10-13 first-level transition
 
+Release follow-up: ordinary screenshot-guided pointer gameplay reached 76%
+cleared, score 3889, and one fully readable completion popup. Its origin was
+incorrectly desktop-relative while the owner was at (309,207). Win16's dialog
+creation omitted `$dlg_place_owner_relative`, already called by Win32. Call it
+after host dialog creation and before WM_INITDIALOG so template coordinates
+respect the owner client area and existing absolute/centering/clamping rules.
+The Win16 lifecycle regression checks placement with an offset owner; it and
+the renderer dialog checks pass, as does the canonical build. One Next Level
+click on the pre-placement-fix runtime produced three balls, three lives and
+0% cleared. Post-placement-fix completion capture and native v86 completion
+comparison remain unverified; subsequent gameplay attempts ended at game over.
+Evidence and trajectory helper: `scratch/runs/20261013-jezz-next-level/`.
+
 On 6aaf65235, ordinary pointer gameplay through the real ops emulator handler
 reproduced two "Well done!" dialogs. Clicking each Next Level skipped straight
 to four balls/lives, with overlapping board text. A narrower ordinary-input
