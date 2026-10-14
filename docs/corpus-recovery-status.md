@@ -8,6 +8,8 @@ Snapshot after main bea8ac370, 2026-10-14. Refresh with `node tools/audit-candid
 
 Forced refresh preserves the prior fixture until replacement preparation succeeds (14cc377a7). Publication uses two renames, so process-death/concurrent-writer recovery is still not guaranteed.
 
+The DOS downloader now also stages and hash-checks downloads and extracts into a clean tree before publication. Download, hash, extraction or missing-executable failures preserve the previous archive and game tree; a failed publication attempts rollback and reports the retained backup path if rollback fails. Serialize recovery for each title: the two-renames operation is not crash-atomic. Successful `--force` replaces the complete tree, including local saves/modifications; copy those elsewhere first. Normal cached reuse still checks the archive and executable presence, not every companion file. Offline regressions use a synthetic ZIP and local HTTP, not guest-runtime qualification.
+
 Fresh recoveries were verified and committed for .kkrieger,Sanity,Nocturne,Urban Chaos,Return Fire,Messiah,ThiefII,RageI,RageII,Outcast. Their source/hash/extraction evidence and limitations are in docs/re-notes and per-title output inventories where present. Urban Chaos config.ini and ThiefII DARKINST.CFG are explicitly reconstructed installer state. No new gameplay/audio/FPS or public deployment claim follows from acquisition.
 
 ## Remaining manual preparations
