@@ -289,3 +289,32 @@ displacement relative to fixed scenery, distinguished from the no-input
 control, and review the actual before/after images with source/input/backend
 identity. No new gameplay, audio, FPS, or engine-fix claim results from this
 offline recovery.
+
+## Complete local fixture restored, 2026-10-14
+
+Follow-up `scratch/runs/20261014-silver-cabinet-restore` restored exactly the
+24 missing cabinet files (39,027,302 bytes) directly into `/tmp/silver-source`
+using the existing `tools/is5-extract.js` and original `data1.cab`. It did not
+re-extract the ZIP, download media, execute the installer, or launch a guest.
+Before extraction, all 3,123 existing files matched the pinned inventory; the
+cabinet catalog matched the 24 absent paths and sizes exactly. Extraction
+was refused for any existing destination, mismatch, or projected free space
+below 2 GiB plus 8 MiB metadata margin. After extraction all 3,147 original
+SHA256 values match `test/candidate-corpus/silver-demo-files.json`, including
+the previously pinned silver.exe. The original 3,123 files remain unchanged.
+
+The source-preparation script, preflight, extraction log and validation are
+retained in that run. `docs/silver-cabinet-restore-20261014.json` preserves
+the command, extractor/inventory/media hashes, resulting disk space, and
+exact mounts. The earlier missing-cabinet finding above describes the
+pre-restoration state and is now resolved for this tree only.
+
+For the next separately coordinated browser run, serve `/tmp/silver-source`
+as the complete C:/silver tree and launch C:/silver/silver.exe with original
+Mss32.dll and Smackw32.dll. Serve the existing unchanged
+`scratch/runs/20261014-silver-recovery/SilverDemo.zip` as `/SilverDemo.zip`,
+then use `HttpRangeProvider.open('/SilverDemo.zip')` and
+`ZipMount.mountZip(wine._helpCtx.vfs, provider, {zipPath:'SilverDemo.zip',
+root:'D:/SILVER/'})` in the recovered route's `beforeRun` hook. Preserve
+D-drive CD-ROM semantics. This is fixture readiness only: no new browser,
+build, game, input comparison, or player-control result has been produced.
