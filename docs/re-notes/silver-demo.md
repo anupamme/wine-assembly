@@ -197,3 +197,124 @@ A source-only follow-up checked original installer metadata: the Silver Demo sho
 Run `node tools/fetch-candidate-corpus.js --id=silver-demo`. Fresh acquisition verified the previously recorded ZIP SHA1/SHA256, preserves source/SilverDemo.zip unchanged, extracts its3123 files under game/SILVER, then extracts the24 original data1.cab files into the same directory. Both sets have no overlapping filenames and no content changes. Canonical silver.exe matches the prior recorded SHA256. Complete3147-file hashes are in test/candidate-corpus/silver-demo-files.json; `node test/test-silver-demo-recovery.js` verifies pristine output. Source media and cabinet outputs were independently extracted and byte-compared.
 
 This adds a recovery candidate only. Original launch still requires C:/SILVER and unchanged source/SilverDemo.zip mounted at D:/SILVER/ with CD semantics, as documented above. Generic candidate CLI does not yet encode that dual mount; do not use its default single-directory execution as a compatibility verdict. No browser/desktop registration, installer/licence prompt, new player-control validation, audio/FPS claim or public deployment.
+
+## Offline browser-evidence recovery, 2026-10-14
+
+Run `scratch/runs/20261014-silver-history-recovery` recovers retained Boat
+command outputs without restarting the old sandbox or executing the game.
+`boat --json info bx_yqnspudj` reports `stopped`, with a verified snapshot at
+02:54:21.026Z. `boat --json exec bx_yqnspudj -- ls -ld
+/home/user/scratch/runs` returns HTTP409 `machine_not_running`. This is a
+stopped-machine observation, not proof that the disk artifacts were deleted.
+No SSH, resume, replacement job, browser, build or guest execution was used.
+
+`boat history bx_yqnspudj COMMAND_ID` remains readable. Its response is JSON
+with a `data` string; decode that string before interpreting base64. Fifteen
+retained archive-chunk outputs reconstruct the complete 02:22 archive:
+5,622,000 bytes, SHA256
+`7fc9ad29807389c214c8af0efd60648012fa1f91b3c643aef210d6215e8cba23`.
+The stored packaging output `cmd_r2ytupol81dk` independently records that
+hash. All 96 extracted files match the original artifact manifest. The
+archive and extracted files are inside the recovery run (about 14 MiB total).
+The committed `docs/silver-history-recovery-20261014.json` retains chunk
+command IDs/offsets and the checks needed to repeat this recovery. Read only
+those stored commands; do not execute the historical command strings.
+
+The 02:22 archive contains both runs, drivers, input commands, logs, module
+responses, and pre/postflight manifests. Its actual module response is
+1,796,313 bytes, SHA256
+`02f7ed397f92fb8e4ed81798b0e2ba3405b27115b9887ce5a52ee4c82c2936d6`;
+recorded source HEAD is `56dc827cc64241cf763fff0d821c6a3fbd195a25`.
+Do not replace this with today's HEAD: preflight includes the actual source
+closure hashes. Browser is Chrome/151.0.7922.108, headless, 1000x800,
+`--enable-unsafe-swiftshader`; the reviewed UI shows Software GPU and Threads
+enabled. The route creates a temporary `silver_probe` app, mounts all original
+files at C:/silver and the unchanged ZIP at D:/SILVER, and uses native
+Mss32.dll/Smackw32.dll. It is not a registered `lib/apps.js` Silver route.
+
+The newly reviewed `run-two/pointer-two.png` shows the menu with the pointer
+on Start. The 02:22 driver lacks `relative:true` and holds the button only
+80ms, so it is not the later corrected input replay. Historical command
+`cmd_bpoch8nvo8sg` records adding `relative:true` and replacing that hold with
+500ms, a passive snapshot, then another 500ms. Packaging commands preserve
+the later ordinary-input sequence and summaries, not the complete later runs.
+
+Stored output `cmd_m2cwqpgklgjx` recovers a JPEG derived from the 02:31
+`run-three/final.png`. Newly reviewed: the original outdoor house/stairs/
+bridge scene is visible. This is a lossy derivative, not the original PNG,
+and a single image does not prove player control. Its local filename is
+`cmd_m2cwqpgklgjx.jpg`. The 02:31 complete archive remains unavailable locally
+(recorded SHA256 `405e36702214669c7d580a91aecbd28da362b96cdac8b78257e108e949b4d050`).
+The final 02:36 archive remains unavailable locally (8,911,631 bytes, SHA256
+`93fc85c1f5b6fc5de897fc96499c337b239bc8c090a2b7bbf387a8233ac240ec`).
+Nine requested image histories return empty `data`, `done:true`, with
+`offset == size` despite nonzero original output sizes; exact responses are
+retained in `history-receipts.json`. Do not describe these missing images as
+visually reviewed. Historical summaries report native completion status2 and
+ring segments0/1; those later raw timing files were not recovered here.
+
+The retained original ZIP was freshly rehashed against the pin above.
+`/tmp/silver-source` matches 3,123 inventory files, with zero mismatches;
+all 24 cabinet payload files, including silver.exe and native DLLs, are absent
+from that particular tree. Do not launch it as a complete fixture. The
+existing corpus extraction recipe can restore the cabinet files from the
+retained media when disk/runtime coordination permits; no download is needed.
+
+### Next bounded ordinary-input comparison (not executed)
+
+First restore/verify all 3,147 fixture hashes and both original mounts. Use
+the recovered browser driver as a route reference, explicitly correcting
+`relative:true` and the one-second Start hold as recorded above. Pin the
+actually served module/source, browser, GPU backend and worker settings;
+do not assert that a new build matches the 02:22 module. Obtain the sole
+runtime slot before launching. Bound each fresh browser session to 300s
+with retained logs and normal owned-process cleanup.
+
+Run a no-world-input control after the reviewed Start click. Capture the
+house scene against fixed scenery and observe whether movement/dialogue
+continues automatically. In a separate matched session, reach the same
+observable scene/readiness checkpoint, capture before input, then use normal
+relative pointer motion and a one-second left hold on one clear destination;
+release and capture at fixed intervals. Repeat at a distinct visible
+destination only if the first comparison is interpretable. Record host
+down/up and actual guest input consumption if existing diagnostics expose
+it. Stop at the deadline or unresolved dialogue/readiness; a changed portrait,
+continued script, host event, or animated scene is not movement acceptance.
+The original readmes describe house/chest/sword/training objectives but do
+not document the ground-click/selection contract. Do not assume that two
+clicks failing proves an input defect, or alter guest state to force control.
+
+Acceptance remains unfulfilled: establish repeatable input-caused hero
+displacement relative to fixed scenery, distinguished from the no-input
+control, and review the actual before/after images with source/input/backend
+identity. No new gameplay, audio, FPS, or engine-fix claim results from this
+offline recovery.
+
+## Complete local fixture restored, 2026-10-14
+
+Follow-up `scratch/runs/20261014-silver-cabinet-restore` restored exactly the
+24 missing cabinet files (39,027,302 bytes) directly into `/tmp/silver-source`
+using the existing `tools/is5-extract.js` and original `data1.cab`. It did not
+re-extract the ZIP, download media, execute the installer, or launch a guest.
+Before extraction, all 3,123 existing files matched the pinned inventory; the
+cabinet catalog matched the 24 absent paths and sizes exactly. Extraction
+was refused for any existing destination, mismatch, or projected free space
+below 2 GiB plus 8 MiB metadata margin. After extraction all 3,147 original
+SHA256 values match `test/candidate-corpus/silver-demo-files.json`, including
+the previously pinned silver.exe. The original 3,123 files remain unchanged.
+
+The source-preparation script, preflight, extraction log and validation are
+retained in that run. `docs/silver-cabinet-restore-20261014.json` preserves
+the command, extractor/inventory/media hashes, resulting disk space, and
+exact mounts. The earlier missing-cabinet finding above describes the
+pre-restoration state and is now resolved for this tree only.
+
+For the next separately coordinated browser run, serve `/tmp/silver-source`
+as the complete C:/silver tree and launch C:/silver/silver.exe with original
+Mss32.dll and Smackw32.dll. Serve the existing unchanged
+`scratch/runs/20261014-silver-recovery/SilverDemo.zip` as `/SilverDemo.zip`,
+then use `HttpRangeProvider.open('/SilverDemo.zip')` and
+`ZipMount.mountZip(wine._helpCtx.vfs, provider, {zipPath:'SilverDemo.zip',
+root:'D:/SILVER/'})` in the recovered route's `beforeRun` hook. Preserve
+D-drive CD-ROM semantics. This is fixture readiness only: no new browser,
+build, game, input comparison, or player-control result has been produced.
