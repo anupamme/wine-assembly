@@ -403,3 +403,13 @@ then investigation metadata published last; archiveSHA
 b1320868884cc3190a9df3d18acd3761b152338028799a52aaa1e1fb06eae639.
 Cache compatibility and rendered tutorial world are verified; player control,
 audio, frame rate and broader gameplay are not yet qualified. No deployment.
+
+### Original tutorial forward movement, 2026-10-13 23:55 UTC
+
+Run `20261013T2355Z-sacrifice-continue-controls` used unchanged tested source `dd3bf9aadfc441fd0ed8013e22ec2440eb256b4a`, module `0918dec0eba2b3f0a6a0f0c1423fe273a9c95f530acb3108d01699f481ffb7ab`, and all 115 original fixture files. Signature and exponent remained 7; the five cache checks accepted with zero rejection/fallback hits. All 115 post-run hashes matched. The standard 240-second harness limit ended the run normally; supervisor, guest and movement helper plus negative process groups were independently absent at 23:59:38.260 UTC.
+
+Two ordinary Continue clicks advanced the W/S and A/D instructions. At the 800x600 world surface, injected relative mouse deltas scale by 1.25 from the 640x480 capture coordinates: the first attempted Continue hover overshot, and was corrected and visually reviewed before clicking. `06e-prompt.png` shows a brief overlay-free frame, but a third ESC/options instruction appeared before the movement baseline. It remained throughout the comparison; tutorial completion is not claimed.
+
+The guarded helper captured `07-control-before.png`, waited two seconds for `08-stationary-before.png`, held W from 23:59:06.300 to 23:59:09.304 UTC, then captured `09-after-w.png` and `10-stationary-after.png` three seconds apart. Before images share fixed tree/hill/minimap positions despite wizard animation; after images show substantial persistent landscape and minimap displacement, then remain at the new positions after release. This verifies forward player movement independently of the intro transition, with the later tutorial overlay present. Turning, combat, tutorial completion, audio and frame-rate quality remain unqualified. `04-world.png` is a transient bright false-color frame, not stable rendering evidence.
+
+Evidence includes every screenshot, ordinary command queue, helper timestamps, full logs, source/module/fixture pins, cleanup and post-hashes. `findings.json` records per-image review; `artifact-hashes.json` hashes the artifacts, with `investigation.json` published last.
