@@ -4282,17 +4282,7 @@
   ;; labels, and that is the only difference between the two. Set by $menu_load.
   (global $ml_char_stride  (mut i32) (i32.const 2))
 
-  ;; Menu tracking state — set by $menu_open / cleared by $menu_close.
-  ;; Read by $menu_paint_bar (open_idx) and $menu_paint_dropdown (hover)
-  ;; via the JS-side compositor as part of every repaint. Only one menu
-  ;; can be open at a time across all windows.
-  (global $menu_open_hwnd  (mut i32) (i32.const 0))
-  (global $menu_open_top   (mut i32) (i32.const -1))
-  (global $menu_open_hover (mut i32) (i32.const -1))
-  (global $menu_open_sub_hover (mut i32) (i32.const -1))
-  (global $menu_open_x     (mut i32) (i32.const -1))
-  (global $menu_open_y     (mut i32) (i32.const -1))
-  (global $menu_open_popup_blob (mut i32) (i32.const 0)) ;; guest ptr to transient TrackPopupMenu blob for dynamic HMENU
+  ;; Process-shared menu tracking lives in 09c5-menu.wat:$MENU_TRACKING.
 
   ;; Currently-dropped combobox hwnd (the COMBO, not the popup). 0 = none open.
   ;; Set by $combobox_open_dropdown / cleared by $combobox_close_dropdown.

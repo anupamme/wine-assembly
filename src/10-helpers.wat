@@ -6267,7 +6267,7 @@
           (i32.ne (global.get $focus_hwnd) (i32.const 0))
           (i32.eq (call $ctrl_table_get_id (global.get $focus_hwnd)) (i32.const 0xE900)))
       (then (return (global.get $focus_hwnd))))
-    (local.set $top (global.get $menu_open_hwnd))
+    (local.set $top (call $menu_open_hwnd_get))
     (if (i32.eqz (local.get $top))
       (then
         (if (global.get $focus_hwnd)

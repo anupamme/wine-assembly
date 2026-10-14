@@ -1,5 +1,33 @@
 # Winamp wVis popup routing
 
+## Desktop Worker popup visibility, 2026-10-14
+
+Release `57a148044` delivered EQ Presets clicks to hwnd 0x10004 and the
+guest called TrackPopupMenu, but no menu appeared. The ordinary CLI Presets
+regression passed all 27 checks. Popup owner, blob, geometry and selection
+were instance-local globals: the guest Worker opened its copy while the
+browser compositor read the idle main-thread instance's empty copy.
+
+Menu tracking now uses an allocated shared-memory record, including the
+TPM_RETURNCMD result and resource-submenu bindings. Existing menu parsing,
+painting, hit testing and command dispatch use the same accessors in both
+instances. Negative index/coordinate defaults are encoded as zero so spawning
+another instance cannot reset a live popup.
+
+The two-instance regression in `test-menu-track-returncmd.js` opens in the
+guest instance and selects/dismisses through the compositor instance. It
+checks WM_COMMAND delivery and return-command results. Substituting local
+globals for the shared accessors fails at "compositor sees guest popup owner"
+(0 instead of 65537); the fixed test passes. Popup text (14 checks), item
+rectangles, owner-draw menus and the 27-check Winamp Presets suite pass.
+
+Chrome desktop Worker captures in `scratch/runs/20261014-winamp-menu-after`
+show Presets, the Load submenu, the Load EQ preset dialog, Cancel, the main
+right-click menu, visualization options and reopening Presets. The earlier Escape attempt did
+not dismiss the preset dialog; Cancel did. The preset list is empty in this
+fixture, so this is menu navigation coverage, not a preset audio test.
+The baseline is `scratch/runs/20261014-winamp-menu-before`. Safari is untested.
+
 ## Binary and guest path
 
 `test/binaries/plugins/candidates/vis_w.dll`, preferred image base

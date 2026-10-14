@@ -146,6 +146,8 @@
   (region.declare $ACCEL_TABLES (size 0x00000400) (align 0x00000100)
     (stride $ACCEL_TABLE_STRIDE (count $ACCEL_TABLE_COUNT))
     (owner "09a5-handlers-window.wat:$accel_table_record_locked"))
+  (region.declare $MENU_TRACKING (size 0x00000030) (align 0x00000010)
+    (owner "09c5-menu.wat:$menu_open_hwnd_get"))
   (region.declare $MENU_DATA_TABLE (size 0x00000400) (align 0x00000010)
     (owner "09c0-window-table.wat:$menu_data_reset_slot"))
   (region.declare $WND_DLG_RECORDS (size 0x00002000) (align 0x00000010)
