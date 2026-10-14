@@ -106,3 +106,9 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Automated recovery, 2026-10-14
+
+Fresh acquisition from https://archive.org/download/ThiefIiTheMetalAgeDemo/thief2.exe verified SHA1 e812b6d8a41c7755f87e1e17bf8e7ef11a57de5a (metadata size136880529). Extract with7-Zip23.01 and copy archive/thf2demo/ to game/, then write documented DARKINST.CFG: install_path,resname_base,load_path,script_module_path each C:\; movie_path C:\MOVIES; language english. This file is reconstructed installer state, not original installer output.
+
+Run `node tools/fetch-candidate-corpus.js --id=thief2-demo`, then `node test/test-thief2-recovery.js` on the pristine recovery. The41-file inventory test/candidate-corpus/thief2-demo-files.json pins paths,sizes,SHA256 and labels DARKINST.CFG reconstructed. All other files matched extracted source bytes; thf2demo.exe matches its prior recorded hash. Comparison with restored fixture differed at: none. Runtime-written settings may differ after playing; no new gameplay or audio/FPS qualification is claimed. Existing private-fixture restrictions unchanged; no public deployment.

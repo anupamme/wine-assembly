@@ -4439,8 +4439,15 @@
       "sourcePage": "https://archive.org/details/ThiefIiTheMetalAgeDemo",
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Verify thief2.exe (136880529 bytes, SHA-1 e812b6d8a41c7755f87e1e17bf8e7ef11a57de5a), extract with 7z and copy thf2demo/ contents into game/. thf2demo.exe SHA-256: 5e5f831ba549081c35e592afaa540f336f76c828a996b4fcb74edef46beba942. Reconstruct installer DARKINST.CFG with install_path, resname_base, load_path and script_module_path each C:\\; movie_path C:\\MOVIES; language english (one setting per line). These keys and language appear in original SETUP.ins. Run --id=thief2-demo --prepare. No executable patch. Registered CLI reaches 3D mission; Chromium walking/turning reviewed. Mobile navigation/touch, audio and FPS validation pending. See docs/re-notes/thief2-demo.md.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/ThiefIiTheMetalAgeDemo/thief2.exe",
+          "sha1": "e812b6d8a41c7755f87e1e17bf8e7ef11a57de5a",
+          "type": "archive",
+          "into": "archive"
+        }
+      ],
+      "manual": "Verify thief2.exe (136880529 bytes, SHA-1 e812b6d8a41c7755f87e1e17bf8e7ef11a57de5a), extract with 7z and copy thf2demo/ contents into game/. thf2demo.exe SHA-256: 5e5f831ba549081c35e592afaa540f336f76c828a996b4fcb74edef46beba942. Reconstruct installer DARKINST.CFG with install_path, resname_base, load_path and script_module_path each C:\\; movie_path C:\\MOVIES; language english (one setting per line). These keys and language appear in original SETUP.ins. The automated recipe performs this layout; run --id=thief2-demo. No executable patch. Registered CLI reaches 3D mission; Chromium walking/turning reviewed. Mobile navigation/touch, audio and FPS validation pending. See docs/re-notes/thief2-demo.md.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/thf2demo.exe"
@@ -4451,7 +4458,19 @@
         "vfsInclude": [
           "**/*"
         ]
-      }
+      },
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "archive/thf2demo",
+          "into": "game"
+        },
+        {
+          "type": "writeText",
+          "file": "game/DARKINST.CFG",
+          "text": "install_path C:\\\nresname_base C:\\\nload_path C:\\\nscript_module_path C:\\\nmovie_path C:\\MOVIES\nlanguage english\n"
+        }
+      ]
     },
     {
       "id": "messiah-demo",
