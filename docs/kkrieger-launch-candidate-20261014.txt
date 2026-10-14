@@ -1,0 +1,37 @@
+.kkrieger registered launch candidate — 2026-10-14
+
+Registry ID: kkrieger_beta. Corpus ID: kkrieger-beta.
+Local dashboard route: /emulator/?debug&app=kkrieger_beta
+CLI route: node test/run.js --app=kkrieger_beta --quiet-api --max-seconds=60
+These are validation routes, not a gameplay qualification.
+
+The existing pinned corpus recipe remains unchanged:
+  node tools/fetch-candidate-corpus.js --id=kkrieger-beta
+It retains game/pno0001.exe, game/readme.txt and game/scene.org.txt and
+generates .wine-assembly-browser.json at the candidate root. Preserve the
+original archive separately; Git is not the binary backup. The registry uses
+that complete manifest with requiredFiles, without binary patches/settings.
+
+Measured reason for bigMemory:
+scratch/runs/20261014-kkrieger-memory-census records fixed 512 MiB WASM,
+288 MiB backing, first failed request 2,162,688 bytes, only 438,272 bytes total
+free and 61,440 largest hole, 207/8192 map records, no extension window.
+The request exceeds total free space, establishing capacity exhaustion at
+that point. This does not establish why all retained backing remains live
+or rule out upstream lifetime bugs. Reuse existing per-app 2 GiB -> 1 GiB ->
+512 MiB allocation fallback; no allocator change or runtime growth is added.
+
+Source verification:
+  node --test --test-name-pattern=kkrieger ops/emulator-server.test.js
+Checks actual registry-to-corpus discovery and actual dashboard catalog,
+using small synthetic metadata fixtures: missing manifest/notice blocks the
+route, complete manifest permits it and preserves both notice dependencies.
+This test does not execute a PE or allocate enlarged WASM memory.
+
+Acceptance still requires an authorized serialized browser run of the
+registered route, recording actual allocated memory, original executable
+hash, startup result, next failure (if any), screenshot and controls/gameplay
+evidence. Failure to allocate larger memory can reproduce the old shortage.
+No public desktop promotion, deployment, or gameplay claim accompanies this
+source candidate. Existing debug-dropdown suite also requires unrelated
+Black & White 2 fixture files absent from the isolated sparse worktree.

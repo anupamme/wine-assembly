@@ -2,6 +2,47 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),http=require('node:http');
 const {createEmulatorHandler,buildCatalog,privateIndex,rangeFor,launchFor,LOCAL_DESKTOP}=require('./emulator-server');
+test('kkrieger registered candidate joins corpus and requires the complete local manifest',async()=>{
+ const {APPS,DESKTOP_APPS,LOCAL_CANDIDATE_APPS}=require('../lib/apps');
+
+const kkrieger = APPS.kkrieger_beta;
+const kkriegerCandidate = require('../test/candidate-corpus/manifest.json').candidates
+  .find(candidate => candidate.id === 'kkrieger-beta');
+assert.strictEqual(kkrieger.exe,
+  'test/binaries/candidates/kkrieger-beta/' + kkriegerCandidate.browser.exe);
+assert.strictEqual(kkrieger.localFileManifest,
+  'test/binaries/candidates/kkrieger-beta/.wine-assembly-browser.json');
+assert.strictEqual(kkrieger.requiredFiles, true);
+assert.strictEqual(kkrieger.bigMemory, true);
+assert(LOCAL_CANDIDATE_APPS.some(([id]) => id === 'kkrieger_beta'));
+assert(!DESKTOP_APPS.some(([id]) => id === 'kkrieger_beta'));
+const kkriegerInventory = require('../ops/corpus-inventory').inventory(
+  { candidates: [kkriegerCandidate] }, { kkrieger_beta: kkrieger });
+assert.strictEqual(kkriegerInventory.length, 1,
+  'dashboard must join the registered executable to the existing candidate');
+assert.deepStrictEqual(kkriegerInventory[0].appIds, ['kkrieger_beta']);
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'kkrieger-route-'));
+ const put=async(name,value)=>{await fs.mkdir(path.dirname(path.join(root,name)),{recursive:true});await fs.writeFile(path.join(root,name),value);};
+ try{
+  await put('lib/apps.js','module.exports='+JSON.stringify({APPS:{kkrieger_beta:kkrieger},LOCAL_CANDIDATE_APPS}));
+  await put(kkrieger.exe,'synthetic metadata fixture, not a playable PE');
+  let catalog=await buildCatalog(root);
+  assert.equal(catalog.routes[0].available,false);
+  assert(catalog.routes[0].missingPaths.includes(kkrieger.localFileManifest));
+  await put(kkrieger.localFileManifest,JSON.stringify({files:[{url:'game/pno0001.exe'},{url:'game/readme.txt'},{url:'game/scene.org.txt'}]}));
+  const base=path.posix.dirname(kkrieger.localFileManifest);
+  await put(base+'/game/readme.txt','synthetic notice fixture');
+  catalog=await buildCatalog(root);
+  assert.equal(catalog.routes[0].available,false);
+  assert(catalog.routes[0].missingPaths.includes(base+'/game/scene.org.txt'));
+  await put(base+'/game/scene.org.txt','synthetic notice fixture');
+  catalog=await buildCatalog(root);
+  assert.equal(catalog.routes[0].available,true);
+  assert.equal(catalog.routes[0].url,'/emulator/?debug&app=kkrieger_beta');
+  assert(catalog.allowed.has(base+'/game/readme.txt'));
+  assert(catalog.allowed.has(base+'/game/scene.org.txt'));
+ }finally{await fs.rm(root,{recursive:true,force:true});}
+});
 async function fixture(){
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'emulator-server-'));
  const files={'index.html':'<html>\n'+LOCAL_DESKTOP+'\n<script src="lib/apps.js"></script></html>','lib/apps.js':"module.exports={APPS:{game:{exe:'test/binaries/game/game.exe',localFileManifest:'test/binaries/game/files.json'},missing:{exe:'test/binaries/no.exe'}},DESKTOP_APPS:[['game','Game']]};",'lib/dll-registry.js':"module.exports={DLL_PATHS:{'msvcrt.dll':'test/binaries/msvcrt.dll'}};",'lib/guest-worker.js':'worker','host.js':'host','fonts/System.fon':'font','lib/host-import-sigs.generated.json':'{}','src/api_table.json':'[]','build/wine-assembly.wasm':'wasm','test/binaries/game/game.exe':'executable','test/binaries/game/files.json':JSON.stringify({files:[{url:'data.bin'}]}),'test/binaries/game/data.bin':'0123456789','test/binaries/msvcrt.dll':'crt','scratch/secret.txt':'secret','ops/access.json':'secret'};
