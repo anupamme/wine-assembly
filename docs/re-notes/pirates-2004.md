@@ -96,3 +96,27 @@ Evidence: `scratch/runs/20261014-pirates-browser-cooperative/` contains the
 90-second probe, six captures/state snapshots, browser log and process receipt.
 The final fatal-error screenshot was reviewed. The original user report is in
 `scratch/runs/20261014-pirates-user-crash/report.txt`.
+
+## Cooperative continuation candidate (2026-10-14, runtime verified)
+
+Task branch `task/pirates-attach-fix` now retains the notification generator,
+module cursor, snapshot pins and loader gate through ordinary scheduler turns.
+Candidate production source `16961623b` freshly built to WASM SHA256
+`70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655` passes
+the real-PE contended-section regression and existing main/Worker DllMain
+completion, load-context and callback-serialization tests.
+
+The original cooperative Chrome startup now reaches the visible Main Menu.
+The actual msvcr71 callback still parks at `0x7503fc0`, yield9; captured section
+guest `0xa3c190` (WASM `0x64e190`) is owned by **thread1/main**, recursion1.
+First recorded tid6 park retains its actual frame and loader gate `[6,1]`;
+5.415ms later its callback returns, followed by sequence completion and gate
+release `[0,0]`. Four such waits complete during the 90-second run. Thus this
+route's owner can run and release the section with ordinary scheduling.
+
+Evidence `scratch/runs/20261014-pirates-attach-candidate/` includes raw traces,
+test/build receipts and reviewed final menu capture. The baseline module is
+older, so the screenshots alone are not a controlled version A/B. No gameplay
+input, affected Safari validation, merge or deployment is claimed. Blocking
+nested initialization and synchronous exit-detach remain existing boundaries;
+see `docs/pirates-attach-candidate-20261014.txt` for exact test scope.
