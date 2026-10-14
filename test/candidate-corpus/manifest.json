@@ -4399,8 +4399,15 @@
       "sourcePage": "https://archive.org/details/sanitydemosetup",
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Verify sanitydemosetup.exe (64250880 bytes, SHA-1 000cd1c36262a1a883fd6d6b67d6629e732d5b9d), extract with 7z, copy Game/ contents into game/ preserving LITHTECH/, then copy Data/SANITY.REZ into game/SANITY.REZ. Run --id=sanity-demo --prepare. The original launcher invokes executable PE client.dll with the registered -rez arguments and C:\\LITHTECH working directory. Requires FMUL PC24 fix462848051. Ordinary CLI and registered Chromium tutorial dismissal/right-button movement reviewed. Touch controls provided; touch/audio/FPS validation pending. See docs/re-notes/sanity-demo.md.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/sanitydemosetup/sanitydemosetup.exe",
+          "sha1": "000cd1c36262a1a883fd6d6b67d6629e732d5b9d",
+          "type": "archive",
+          "into": "archive"
+        }
+      ],
+      "manual": "Verify sanitydemosetup.exe (64250880 bytes, SHA-1 000cd1c36262a1a883fd6d6b67d6629e732d5b9d), extract with 7z, copy Game/ contents into game/ preserving LITHTECH/, then copy Data/SANITY.REZ into game/SANITY.REZ. The automated recipe now performs this layout; run --id=sanity-demo. The original launcher invokes executable PE client.dll with the registered -rez arguments and C:\\LITHTECH working directory. Requires FMUL PC24 fix462848051. Ordinary CLI and registered Chromium tutorial dismissal/right-button movement reviewed. Touch controls provided; touch/audio/FPS validation pending. See docs/re-notes/sanity-demo.md.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/LITHTECH/client.dll"
@@ -4412,7 +4419,19 @@
         "vfsInclude": [
           "**/*"
         ]
-      }
+      },
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "archive/Game",
+          "into": "game"
+        },
+        {
+          "type": "copyFile",
+          "from": "archive/Data/SANITY.REZ",
+          "into": "game/SANITY.REZ"
+        }
+      ]
     },
     {
       "id": "nocturne-demo",

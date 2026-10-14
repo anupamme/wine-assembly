@@ -225,3 +225,9 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Reproducible acquisition, 2026-10-14
+
+The formerly manual recipe is now automated. Archive.org metadata independently lists sanitydemosetup.exe,64250880 bytes,SHA-1 000cd1c36262a1a883fd6d6b67d6629e732d5b9d. A fresh fetch from https://archive.org/download/sanitydemosetup/sanitydemosetup.exe passed that hash, extracted with 7-Zip23.01, copied archive/Game/ to game/, and copied archive/Data/SANITY.REZ to game/SANITY.REZ. No configuration bytes were synthesized.
+
+Recovery: `node tools/fetch-candidate-corpus.js --id=sanity-demo`. Verify pristine output with `node test/test-sanity-recovery.js`. The checked-in test/candidate-corpus/sanity-demo-files.json pins all30 original output files by path,size and SHA-256; each was compared byte-for-byte with its source extraction. Mutable configuration may change after playing, so run the verifier on fresh recovery. Existing private-fixture licence limits remain; no binary or runtime screenshot committed. This is successful clean acquisition, not new gameplay/audio/FPS validation or a guarantee of upstream availability.
