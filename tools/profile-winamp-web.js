@@ -2316,8 +2316,28 @@ async function main() {
   })()`, 5000);
 
   if (DUMP_CONSOLE) result.consoleEvents = consoleEventSummary(cdp.events);
-  console.log(JSON.stringify(result, null, 2));
   await saveScreenshot();
+  const closePoint = await evalExpr(`(() => {
+    const r = window.sharedRenderer || runningApps[0].wine.renderer;
+    const w = Object.values(r.windows).find(w => w && w.visible && w.title === 'About Winamp');
+    if (!w) return null;
+    const p = r._windowOriginForComposite(w);
+    return { x: p.x + w.w - 13, y: p.y + 12 };
+  })()`);
+  if (closePoint) await clickCanvasPoint(closePoint.x, closePoint.y);
+  await wait(1200);
+  result.afterClose = await evalExpr(`(() => {
+    const app = runningApps[0];
+    const r = window.sharedRenderer || app.wine.renderer;
+    const e = app.wine.instance.exports;
+    return {
+      aboutVisible: Object.values(r.windows).some(w => w && w.visible && w.title === 'About Winamp'),
+      aboutWorker: e.guest_read32(0x44f8f8) >>> 0,
+      creditsWorker: e.guest_read32(0x44f8f4) >>> 0,
+      quit: e.get_quit_flag(),
+    };
+  })()`);
+  console.log(JSON.stringify(result, null, 2));
   cdp.close();
   cleanup();
 }

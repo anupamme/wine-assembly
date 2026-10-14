@@ -73,6 +73,11 @@ assert.notStrictEqual(result.state.workerHandles.about, 0,
   'Winamp should start a new rendering worker after switching back');
 assert.strictEqual(result.state.workerHandles.credits, 0,
   'switching back should join and clear the Credits worker');
+assert(result.afterClose, 'profile should exercise the caption close button');
+assert.strictEqual(result.afterClose.aboutVisible, false, 'caption X closes About');
+assert.strictEqual(result.afterClose.aboutWorker, 0, 'closing joins the About animation worker');
+assert.strictEqual(result.afterClose.creditsWorker, 0, 'closing leaves no Credits worker');
+assert.strictEqual(result.afterClose.quit, 0, 'closing About keeps Winamp running');
 
 console.log(
   `PASS  Winamp About → Credits → About rendered on the composited screen ` +

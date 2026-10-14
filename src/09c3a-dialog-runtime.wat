@@ -457,6 +457,22 @@
       (then
         (call $defwndproc_do_ncpaint (local.get $hwnd))
         (return (i32.const 0))))
+    ;; Caption close reaches the guest as SC_CLOSE. Give the DLGPROC both
+    ;; chances to intercept before translating an unhandled WM_CLOSE into
+    ;; IDCANCEL, which modeless dialogs such as Winamp About use to destroy
+    ;; themselves and join their animation worker.
+    (if (i32.and
+          (i32.eq (local.get $msg) (i32.const 0x0112))
+          (i32.eq (i32.and (local.get $wParam) (i32.const 0xFFF0)) (i32.const 0xF060)))
+      (then
+        (drop (call $post_queue_push (local.get $hwnd)
+          (i32.const 0x0010) (i32.const 0) (i32.const 0)))
+        (return (i32.const 0))))
+    (if (i32.eq (local.get $msg) (i32.const 0x0010))
+      (then
+        (drop (call $post_queue_push (local.get $hwnd)
+          (i32.const 0x0111) (i32.const 2) (i32.const 0)))
+        (return (i32.const 0))))
     ;; BUTTON notifications arrive through the ordinary message pump so a
     ;; dialog procedure can enter another modal loop without stranding a
     ;; recursive WAT interpreter frame. If a true DialogBox DLGPROC leaves

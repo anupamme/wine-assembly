@@ -392,3 +392,16 @@ Canonical build, About browser regression, Calculator pressed/released
 buttons, and dialog subclass erase tests pass. Safari and any separate
 visualization plug-in glitch remain unverified; these fixes do not establish
 that every reported visualization issue is resolved.
+
+### About caption close follow-up
+
+The restored X exposed another missing DefDlgProc fallback: unhandled
+SC_CLOSE and WM_CLOSE were discarded. The Worker input path correctly queues
+SC_CLOSE to the guest; it must then become WM_CLOSE and WM_COMMAND/IDCANCEL.
+Winamp's About DLGPROC at 0x406918 handles command IDs 1 and 2 by calling
+DestroyWindow at 0x406ad7, with animation cleanup reached through destruction.
+The fallback now posts those messages through the owning guest pump, after
+the guest has had its chance to handle each one. It does not destroy the
+dialog from the host renderer. The browser regression clicks X and checks
+the dialog disappears, both animation handles clear, and Winamp stays alive.
+Evidence: scratch/runs/20261014-winamp-about-close-before and -after.
