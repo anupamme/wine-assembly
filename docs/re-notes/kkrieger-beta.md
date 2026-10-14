@@ -218,10 +218,34 @@ call, while `0x80fe61` requests81920 bytes for vertex storage. At helper return
 `0x812f3e`, the first differing topology word is2029 (edge169.next). This
 excludes the edge copy as the immediate writer and narrows the contract to
 the subsequent heap allocation. The precise allocator path remains under
-test; no fix is inferred solely from that call boundary.
+test at this stage; the follow-up below supplies the regression and fix.
 
 The first copy probe incorrectly expected a block boundary inside the copy
 function; its `copy-incomplete/` captures are retained as failed instrumentation,
 not evidence of a faulty copy. The corrected `copy/` capture uses the actual
 caller return. Capture scripts, guest word arrays, page translations and the
 24-block writer context are retained alongside the boundary analysis.
+
+### Recycled sparse heap clear: causal fix (2026-10-14)
+
+The final named-API capture confirms
+`HeapAlloc(0x00beef00, 1, 81920)` at return `0x801015`. Across that call the
+mesh header and every captured edge-page translation remain unchanged, but
+edge590.next changes1182→0. The edge copy still compares byte-for-byte equal
+before this call. This is an overwrite, not a changed guest mapping.
+
+`heap_alloc` cleared recycled blocks with
+`zero_memory(g2w(block)+4, need-4)`. A sparse heap block can have non-adjacent
+WASM backing; clearing a linear physical span then reaches another live
+allocation. The fix uses `guest_memset(block+4, 0, need-4)`, which follows the
+guest mappings. It retains the existing recycled-block clearing policy.
+
+The regression added to `test-heap-free-block-validation.js` interleaves an
+unrelated guard page between the physical pages of a valid free block, then
+recycles81920 bytes through the real allocator. Before the fix, the guard's
+`0x11223344` becomes zero. After the fix, the complete payload is zeroed,
+the header and guard remain intact, and the allocation is reused. The full
+build, existing header-validation cases, 20000-operation heap-bin stress,
+11 arena-tail cases, and large-block reuse tests pass. Tested fixed module:
+`d823bf96e9ad51b0ef029fdaf12596350d040889cb187e85d8cf607d8eb74279`.
+Original-demo untraced browser acceptance is recorded separately below.
