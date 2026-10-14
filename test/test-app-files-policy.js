@@ -36,6 +36,22 @@ const files = [
 ];
 const app = { persistFiles: ['c:\\save\\*.sav'] };
 
+// Synchronous page-side fault filters cannot yield a lazy read to the host.
+// Explicit ranges/background declarations must not evade this requirement.
+const faultFiles = [...files, { url: 'background.dat', size: 4 * MB, loadMode: 'background' }];
+const originalFaultFiles = JSON.stringify(faultFiles);
+const residentFault = normalizeLazyFiles(app, faultFiles, { synchronousFaultReads: true });
+assert.strictEqual(residentFault.summary.lazyFiles, 0);
+assert.strictEqual(residentFault.summary.policy, 'eager: synchronous fault reads');
+for (const file of residentFault.files) {
+  assert.strictEqual(file.loadMode, 'required');
+  assert.strictEqual(file.httpRange, false);
+  assert.strictEqual(file.preloadRanges, undefined);
+}
+assert.strictEqual(JSON.stringify(faultFiles), originalFaultFiles, 'do not mutate shared app declarations');
+assert(normalizeLazyFiles(app, faultFiles, { synchronousFaultReads: false }).summary.lazyFiles > 0,
+  'Worker-backed and ordinary reads retain streaming');
+
 const { files: out, summary } = normalizeLazyFiles(app, files);
 const byUrl = new Map(out.map(f => [f.url, f]));
 assert.strictEqual(summary.policy, 'lazy');
