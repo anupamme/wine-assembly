@@ -1,4 +1,19 @@
-# OpenGL / Direct3D corpus status, reconciled 2026-10-09
+# OpenGL / Direct3D corpus status, reconciled 2026-10-14
+
+## October 14 targeted follow-up
+
+Authorized Boat exec access now supports separate-box builds and browser tests.
+The older blanket remote-access blocker is resolved; missing historical runs
+and incomplete per-app software/WebGL qualification remain separate gaps.
+
+| Scope | Verified change and evidence | Remaining work |
+|---|---|---|
+| .kkrieger D3D9 startup | `c79b943bb` implements signed Q8W8V8U8 storage/upload/sampling; full build and resource, software, WebGL1/2 and pipeline checks pass. `2e1d68489` fixes recycled sparse heap clearing that overwrote live mesh edges; baseline regression fails and fixed regression passes. Original demo advances beyond the persistent mesh loop. Runs `20261014-kkrieger-q8w8v8u8`, `20261014-kkrieger-mesh-writer`, `20261014-kkrieger-heap-fix`. Both fixes are on main. | Later allocation failures lead to exit before menu. Measure backing capacity/fragmentation and allocation-table pressure. No gameplay or both-backend acceptance. |
+| Serious Sam cooperative startup | `43f04c7c4` prevents the reproduced low-EIP crash by making synchronous-fault file consumers resident on the cooperative backend. Four browser arms distinguish original failure, eager control, fixed policy and Worker behavior; runs `20261014-sam-browser-*`. Fix is on main. | Chrome intro success does not qualify Safari or gameplay. User-reported low FPS is assigned for measured gameplay profiling; no performance conclusion yet. |
+| Legacy indexed palette candidates | Preserved `c2192e014` passes a separate-box full build and four real-VM CPU/page-watch/resource/software tests. Evidence `20261014-palette-remote-validation`. | Still unmerged. Reconcile with current main, validate actual GPU/worker routes and resolve the filtered color-key contract. Static review is not GPU execution. |
+
+These are scoped results, not a new full-corpus sweep. Preserve the historical
+rows below as dated evidence; no original 27-app completion is claimed.
 
 The user's goal: every OpenGL and Direct3D app in the registry works on both the
 **software** and the **WebGL** backend. This is the one shared status table for
