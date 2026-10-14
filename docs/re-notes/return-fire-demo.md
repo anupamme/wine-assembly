@@ -76,3 +76,7 @@ Original native and browser gameplay now have correct colors without the seconda
 ## Browser audio output observed
 
 Run20261009T2052Z-return-fire-browser-audio uses main c7e568b90 and the same527004d9 module. Ordinary Play/H reaches gameplay; an analyser and MediaRecorder tap the existing master bus without guest changes. AudioContext runs at44100Hz;99/100 windows are non-silent over20.1201 audio-clock seconds. Maximum pre-destination peak1.0234375 is recorded, not diagnosed as an audible clipping defect. gameplay-audio.webm retains the20-second capture. Sound quality, loop correctness and synchronization require listening review; logical gameplay FPS still unqualified. Controller37218/Chrome37230 terminal0 at20:52:44Z.
+
+## Automated original-media recovery, 2026-10-14
+
+Fresh RFIRE.zip download passed recorded942701-byte size and SHA2568e55e2761753d1773cbf52d86eb30900a977f7b281ccc920ffb80fbb5b5e56be; derived SHA1d0adc4af348f0e255d60d59c8ba24b760d3cb729 is now pinned in the fetch recipe. Run `node tools/fetch-candidate-corpus.js --id=return-fire-demo`, then `node test/test-return-fire-recovery.js`. All58 original payload files are pinned in test/candidate-corpus/return-fire-demo-files.json. Each 7z-extracted file was compared byte-for-byte with its original ZIP member using independent unzip extraction; DEMO.EXE matches the previously recorded hash. No installer/configuration synthesis or original file changes. Pristine recovery is verified, not new gameplay/audio/FPS or redistribution rights. Archive and receipts retained separately from Git.
