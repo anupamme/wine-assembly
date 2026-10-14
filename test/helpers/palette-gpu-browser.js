@@ -1,0 +1,164 @@
+'use strict';
+
+// Runs inside the browser with the complete, unmodified source closure plus
+// test exports. All unexpected host calls fail; no decoder/export replacement.
+globalThis.runPaletteGpu = async function (version) {
+  const eq = (a, b, label) => {
+    if (JSON.stringify(a) !== JSON.stringify(b))
+      throw Error(`${label}: actual=${JSON.stringify(a)} expected=${JSON.stringify(b)}`);
+  };
+  const check = (value, label) => { if (!value) throw Error(label); };
+  const module = await WebAssembly.compile(await (await fetch('/fixture.wasm')).arrayBuffer());
+  const memory = new WebAssembly.Memory({ initial: 8192, maximum: 8192, shared: true });
+  const imports = {};
+  for (const i of WebAssembly.Module.imports(module)) {
+    imports[i.module] ||= {};
+    if (i.kind === 'memory') imports[i.module][i.name] = memory;
+    else {
+      check(i.kind === 'function', `unsupported import ${i.module}.${i.name}`);
+      imports[i.module][i.name] = () => { throw Error(`unexpected host call ${i.module}.${i.name}`); };
+    }
+  }
+  for (const name of ['log', 'log_i32', 'log_api_exit', 'log_block', 'log_eip'])
+    imports.host[name] = () => {};
+  imports.host.get_ticks = imports.host.real_time_ms = () => 0;
+  let gpu;
+  imports.host.gpu_gl_call = (op, p) => {
+    check(gpu, 'GPU host call before executor initialization');
+    return gpu.call(op, p);
+  };
+  const e = (await WebAssembly.instantiate(module, imports)).exports;
+  e.heap_init(0x2000000);
+  const alloc = n => { const p = e.pa_alloc(n) >>> 0; check(p, 'allocation'); return p; };
+  const stack = alloc(4096) + 2048;
+  const call = (fn, ...args) => { e.pa_stack(stack); return fn(...args) >>> 0; };
+  e.pa_seed(alloc(1024));
+  const dd = e.pa_ddraw(), desc = alloc(128), out = alloc(16), entries = alloc(1024);
+  const surface = (bpp, caps) => {
+    for (let i = 0; i < 128; i += 4) e.guest_write32(desc + i, 0);
+    for (const [off, value] of [[0,108],[4,0x1007],[8,4],[12,4],[72,32],
+      [76,bpp === 8 ? 0x60 : 0x40],[84,bpp],[104,caps]]) e.guest_write32(desc + off, value);
+    if (bpp === 32) for (const [off, value] of [[88,0xff0000],[92,0xff00],[96,0xff]])
+      e.guest_write32(desc + off, value);
+    eq(call(e.pa_surface, dd, desc, out), 0, 'CreateSurface');
+    return e.guest_read32(out) >>> 0;
+  };
+  const texture = surface(8, 0x1000), rt = surface(32, 0x2040);
+  eq(call(e.pa_device, rt, out), 0, 'CreateDevice');
+  const device = e.guest_read32(out) >>> 0;
+  const rgb = [64,128,192];
+  const entry = a => rgb[0] | rgb[1] << 8 | rgb[2] << 16 | a << 24;
+  for (let i = 0; i < 256; i++) e.guest_write32(entries + i*4, entry(255));
+  [0,128,255].forEach((a,i) => e.guest_write32(entries + (7+i)*4, entry(a)));
+  const palette = caps => {
+    alloc(8192);
+    eq(call(e.pa_palette, dd, caps, entries, out), 0, 'CreatePalette');
+    const p = e.guest_read32(out) >>> 0; alloc(8192); return p;
+  };
+  const alpha = palette(0x404), ordinary = palette(4);
+  const paletteBytes = p => Array.from(new Uint8Array(memory.buffer, e.pa_palette_data(p), 1024));
+  eq(paletteBytes(alpha), paletteBytes(ordinary), 'equal-byte palettes');
+  const contexts = [];
+  gpu = new D3DIMGpu.D3DIMGpu({ getExports: () => e, getMemory: () => memory.buffer,
+    batchDraws: true, onError: error => { throw Error(error); },
+    createCanvas: (w,h) => {
+      const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      const get = canvas.getContext.bind(canvas);
+      canvas.getContext = (kind, ...args) => {
+        if (version === 1 && kind === 'webgl2') return null;
+        const gl = get(kind, ...args); if (gl) contexts.push(gl); return gl;
+      };
+      return canvas;
+    } });
+  e.d3dim_gpu_enable(1);
+  e.set_page_watch_audit(0);
+  e.pa_bind(device, 0, texture);
+  eq(call(e.pa_attach, texture, alpha), 0, 'SetPalette');
+  gpu._view();
+  const d = gpu._describe(device);
+  check(d && d.texBpp === 8 && !d.keyed, 'real unkeyed indexed descriptor');
+  const dib = e.pa_w2g(d.texDib) >>> 0;
+  for (let y=0; y<4; y++) for (let x=0; x<4; x++)
+    e.guest_write8(dib+y*d.texPitch+x, 7+Math.min(x,2));
+  // Scratch allocation precedes acquiring the palette page lease.
+  check(e.d3dim_gpu_decode_texture(d.texture, 0), 'decoder scratch');
+  const vertices = alloc(6*32), fv = new DataView(new ArrayBuffer(4));
+  const float = (p,v) => { fv.setFloat32(0,v,true); e.guest_write32(p,fv.getUint32(0,true)); };
+  const rs = (id,value) => e.pa_rs(device,id,value);
+  const tss = (id,value) => e.pa_tss(device,0,id,value);
+  for (const [id,value] of [[7,0],[14,0],[15,0],[22,1],[27,0],[28,0],[41,0]]) rs(id,value);
+  // SELECTARG1(TEXTURE), including alpha, with point sampling and clamp.
+  for (const [id,value] of [[1,2],[2,2],[4,2],[5,2],[13,3],[14,3],[16,1],[17,1]]) tss(id,value);
+  e.pa_tss(device,1,1,1);
+  const draw = (z=.5, color=0xffffffff) => {
+    [[-.5,-.5,0,0],[3.5,-.5,1,0],[-.5,3.5,0,1],
+      [3.5,-.5,1,0],[3.5,3.5,1,1],[-.5,3.5,0,1]].forEach(([x,y,u,v],i) => {
+      const p=vertices+i*32;
+      [x,y,z,1].forEach((n,j)=>float(p+j*4,n));
+      e.guest_write32(p+16,color); e.guest_write32(p+20,0);
+      float(p+24,u); float(p+28,v);
+    });
+    const before = gpu.stats.drawCalls;
+    e.pa_draw(device,4,3,vertices,6);
+    check(gpu.stats.drawCalls > before, 'draw must use actual GPU, no software fallback');
+  };
+  const read = () => {
+    gpu.fence();
+    const target = gpu.targets.get(d.rt), g = target.device.gpu, gl = g.gl;
+    g.bindImplicitTarget();
+    const bytes = new Uint8Array(4*4*4);
+    gl.readPixels(0,0,4,4,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
+    eq(gl.getError(),0,'WebGL readback');
+    // Rows are identical; examine an interior row away from raster edges.
+    return [0,1,2].map(x=>Array.from(bytes.slice((4+x)*4,(5+x)*4)));
+  };
+  const observations = [];
+  const record = (label, expected) => { const actual=read(); eq(actual,expected,label); observations.push({label,actual}); };
+  const rgba = (a, colors=[rgb,rgb,rgb]) => a.map((v,i)=>[...colors[i],v]);
+  const clear = tex => eq(e.pa_clear(d.rt,1,0xff000000,1,0,0,4,4,tex),1,'real WAT clear descriptor accepted');
+  const matrix = (label, alphas, colors) => {
+    rs(15,0); rs(27,0); draw(); record(`${label} draw RGBA`,rgba(alphas,colors));
+    clear(d.texture); record(`${label} textured clear RGBA`,rgba(alphas,colors));
+    check(gpu.textures.get(d.texture).watch,'actual texture page lease');
+    if (gpu._describe(device).palette) check(gpu.textures.get(d.texture).paletteWatch,'actual palette page lease');
+  };
+  matrix('alpha 0/128/255',[0,128,255]);
+  const setFlags = (pal,values) => {
+    const before = paletteBytes(pal);
+    values.forEach((a,i)=>e.guest_write32(entries+i*4,entry(a)));
+    eq(call(e.pa_entries,pal,7,3,entries),0,'SetEntries');
+    const after=paletteBytes(pal);
+    eq(before.flatMap((v,i)=>v===after[i]?[]:[i]),[31,35,39],'alpha-only mutation');
+  };
+  setFlags(alpha,[255,0,128]); matrix('watched alpha edit',[255,0,128]);
+  setFlags(alpha,[0,128,255]); matrix('watched alpha restore',[0,128,255]);
+  eq(paletteBytes(alpha),paletteBytes(ordinary),'equal bytes before mode switch');
+  eq(call(e.pa_attach,texture,ordinary),0,'ordinary attach'); matrix('ordinary peFlags opaque',[255,255,255]);
+  eq(call(e.pa_attach,texture,alpha),0,'alpha reattach'); matrix('alpha reattach',[0,128,255]);
+  eq(call(e.pa_attach,texture,0),0,'detach');
+  eq(e.get_dx_primary_pal_wa(),0,'grayscale fallback requires no primary palette');
+  matrix('detach grayscale',[255,255,255],[[7,7,7],[8,8,8],[9,9,9]]);
+  eq(call(e.pa_attach,texture,ordinary),0,'ordinary reattach');
+  setFlags(ordinary,[255,0,128]); matrix('ordinary watched flags ignored',[255,255,255]);
+  eq(call(e.pa_attach,texture,alpha),0,'alpha for application tests');
+  clear(0); rs(15,1); rs(24,127); rs(25,5); // GREATER than 127/255
+  draw(); record('application alpha test',[[0,0,0,255],[...rgb,128],[...rgb,255]]);
+  rs(15,0); clear(0); rs(27,1); rs(19,5); rs(20,6); // SRCALPHA / INVSRCALPHA
+  draw(); record('application alpha blend',[[0,0,0,255],[32,64,96,191],[...rgb,255]]);
+  rs(27,0); rs(7,1); rs(14,1); rs(23,2); rs(15,1);
+  eq(e.pa_clear(d.rt,3,0xff000000,1,0,0,4,4,0),1,'color/depth clear');
+  draw(.1); // Alpha-zero fragment must write neither color nor near depth.
+  rs(15,0); e.pa_bind(device,0,0); // Untextured diffuse, green and opaque.
+  draw(.5,0xff00ff00);
+  record('alpha rejection preserves depth',[[0,255,0,255],[...rgb,128],[...rgb,255]]);
+  const stats = gpu.snapshot();
+  check(stats.pageChecks>0 && stats.textureClears>0,'watch and clear routes exercised');
+  eq(stats.textureByteChecks,0,'no byte-shadow cache fallback');
+  eq(stats.dirtyAuditMisses,0,'no watch misses');
+  eq(stats.fallbacks,0,'no renderer fallback');
+  const gl=contexts[0], actualVersion=gl.getParameter(gl.VERSION);
+  check(actualVersion.includes(`WebGL ${version}.0`),actualVersion);
+  const debug=gl.getExtension('WEBGL_debug_renderer_info');
+  const result={actualVersion,renderer:gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER),observations,stats};
+  gpu.stop(); return result;
+};

@@ -1,0 +1,59 @@
+Palette GPU conformance fixture preparation, 2026-10-14
+
+Source base: 21a27cd3d686c0286431037c3122a5dba6ae629a,
+origin/task/palette-integration-review. Its runtime candidate is
+f8e4676ce36c37514df56bb90664d11bb057a442: c2192e014 replayed on df987a415.
+The test adds exports only, without replacing production functions/imports
+used by the API, descriptor, decode, watched cache, shader or executor path.
+WAT API adapters derive from test-d3dim-palette-alpha-page-watch.js;
+WebGL setup/readback follows test-d3dim-gpu-points-web.js. Compilation uses
+test/compile-src.js, the canonical full source closure compiler.
+
+Preparation checks (no compile or browser):
+  node --check test/test-d3dim-palette-gpu-web.js
+  node --check test/helpers/palette-gpu-browser.js
+  node --check test/helpers/palette-gpu-wat.js
+  node tools/test-tiers.js --check
+  git diff --check
+
+After obtaining the serialized build/browser slot, from the candidate tree:
+  mkdir -p scratch/runs/20261014-palette-gpu
+  CHROME=/usr/bin/chromium PALETTE_GPU_EVIDENCE=scratch/runs/20261014-palette-gpu/pixels.json timeout 240s node test/test-d3dim-palette-gpu-web.js > scratch/runs/20261014-palette-gpu/run.log 2>&1
+Adjust CHROME to the installed browser path. Node requires puppeteer and the
+repository dependencies. No assets or PE binaries are needed. The fixture
+serves only a loopback ephemeral port with isolation headers for shared WASM.
+Expected success (NOT observed during source preparation):
+  PASS WebGL1: 17 real palette draw/clear/alpha framebuffer checks
+  PASS WebGL2: 17 real palette draw/clear/alpha framebuffer checks
+
+The JSON records source HEAD, diff summary, instrumented module SHA256,
+test-export SHA256, loaded JS SHA256, browser version, GL version/renderer,
+exact RGBA readbacks, counters and exceptions. Module hash intentionally
+differs from the production artifact due to the additional test exports.
+Failures must be diagnosed rather than turned into SKIP or tolerated colors.
+Use a clean committed tree; the source hash otherwise cannot identify
+untracked or modified WAT (the diff summary is only a warning).
+
+Baseline control: make an isolated worktree at df987a415, apply only this
+fixture's three JS files (and this recipe), install/reuse dependencies without
+copying assets, and run the identical command serially. The baseline is
+expected to fail the palette-alpha pixel contract, not an upload-count-only
+assertion. That failure has NOT been measured. Preserve its error and module
+hash; an earlier harness failure is not a semantic baseline failure.
+
+Coverage: real CreatePalette/SetPalette/SetEntries; byte-identical ordinary
+and alpha palette switching; alpha 0/128/255; alpha-only watched mutations;
+detach/grayscale and reattach; production draw and WAT-generated textured
+clear descriptor; actual framebuffer alpha (not DIB's preserved spare byte);
+SRCALPHA blend, GREATER alpha test and rejected-fragment depth nonwrites.
+Watch leases and no shadow-cache/software fallback are separately asserted.
+
+Limits: source preparation is not runtime validation. No production
+guest/render Worker transport/lifetime or stencil nonwrite coverage exists
+in this fixture. No GPU Worker or game qualification follows. Texture clears
+exercise the real WAT clear descriptor producer directly, rather than a
+viewport COM dispatch. Palette API adapters call the real handlers directly;
+they do not exercise x86 thunk dispatch. State144 or alpha+colorkey precedence
+is intentionally not asserted; all fixtures are unkeyed. Production Worker
+queue, caller Release, final detach/release/slot reuse, and existing full-VM
+CPU regressions remain independent required follow-up work.
