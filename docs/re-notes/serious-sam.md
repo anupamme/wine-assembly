@@ -97,4 +97,38 @@ entry + browser `reservedPageFaults`.
   page-crossing accessor (f6c58213a).
 - ExceptionInformation[0] write classification: not needed so far.
 - Browser route: registered and `reservedPageFaults` is wired into host.js, but
-  not yet exercised in a browser.
+  exercised in a browser; see the bounded startup comparison below for current evidence.
+
+## 2026-10-14 user crash: cooperative lazy fault reads
+
+Telegram76 reports Safari26.4, isolated/SAB available, module SHA256
+`e6ac188dd8c7b16d04eaa4b74446ab2c4ab211422738709e33cffda5db444e7e`,
+EIP `0x62` after `0xbf86cb`. The preceding address maps to `_CxxThrowException`
+in the recorded MSVCRT layout. The earlier Worker io-fill fix `18d061540` is
+already on main; it does not make the page able to block on a nested fault read.
+
+On fresh Boat `bx_tgbme2h7`, original hash-pinned demo and MSVCRT SHA256
+`887eb5ce93edb7192ca3e9220f07f9ca0f94db02af5862ebcbdfcb852db99fd1`:
+
+| Chrome route | 60-second startup result, Enter after 15 seconds |
+|---|---|
+| Worker threads, baseline9ab60e86c | Croteam intro |
+| `?no-threads`, baseline | Exact0x62 trap with matching register values except a heap pointer |
+| `?no-threads&eager-files`, baseline | Croteam intro |
+| `?no-threads`, policy fix43f04c7c4 | Croteam intro; automatic172-file/119112003-byte preload |
+
+The cooperative reserved-page fault filter runs synchronously and cannot await
+a lazy ReadFile cache miss. The browser file policy now keeps data resident for
+that route, including explicitly lazy/ranged declarations. A real guest Worker
+retains streaming. The tradeoff is startup download and memory for the complete
+data tree on the cooperative route; existing launch progress UI covers loading.
+No guest binary, handler return, or exception behavior is patched.
+
+Evidence directories: `scratch/runs/20261014-sam-browser-threads`,
+`20261014-sam-browser-cooperative`, `20261014-sam-browser-coop-eager`, and
+`20261014-sam-browser-coop-fixed`. Each contains the probe, screenshots, logs,
+state and dashboard metadata. Policy regression tests also check explicit
+range/background declarations and that shared file declarations stay unchanged.
+This verifies the reported startup failure in Chrome, not Safari-specific
+behavior, full gameplay, audio or FPS. WebGL readPixels INVALID_ENUM warnings
+remain visible in the eager/fixed runs and are not resolved by this change.
