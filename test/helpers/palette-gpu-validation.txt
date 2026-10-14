@@ -99,7 +99,7 @@ palette generations, release-before-drain, real GPU lifetime and alpha+key /
 state144 semantics remain unqualified. Production candidate is unchanged.
 
 Serialized runtime package:
-  bash -n test/helpers/palette-runtime-validation.sh
+  node --check test/helpers/palette-runtime-validation.js
   git bundle create /tmp/palette-validation.bundle HEAD ^df987a415f5969ea2a0857dc839093738b2a462a
   git bundle verify /tmp/palette-validation.bundle
 This small incremental bundle requires the named baseline history on the
@@ -113,7 +113,7 @@ or build output is included in this package.
 
 Once the source/dependencies and installed Chrome path have been verified:
   mkdir -p scratch/runs
-  CHROME=/usr/bin/chromium bash test/helpers/palette-runtime-validation.sh scratch/runs/20261014-palette-runtime
+  CHROME=/usr/bin/chromium node test/helpers/palette-runtime-validation.js scratch/runs/20261014-palette-runtime
 The driver requires a new evidence directory, performs the canonical build,
 records its module hash, then runs the four CPU regressions and the WebGL1/2
 fixture serially. Each command has a wall-clock timeout and independent log,
