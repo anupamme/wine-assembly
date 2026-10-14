@@ -73,4 +73,10 @@ assert.deepStrictEqual(
   [-12, 34, 345, 364, 345, 364],
   'top-level dialogs mirror live guest geometry instead of host-global units');
 
+wasm.exports.dlg_get_x = () => -32768;
+wasm.exports.ctrl_get_xy = () => 16384;
+renderer.createDialog(102, 0, wasm, memory);
+assert.strictEqual(renderer.windows[102].x, 40,
+  'CW_USEDEFAULT stays on screen when shared geometry contains the scaled sentinel');
+
 console.log('PASS  renderer dialog geometry, shell notifications and ShowWindow state');
