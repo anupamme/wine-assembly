@@ -4713,6 +4713,40 @@
           "**/*"
         ]
       }
+    },
+    {
+      "id": "silver-demo",
+      "name": "Silver Demo",
+      "kind": "game",
+      "version": "Original Infogrames Windows demo (1999)",
+      "executables": [
+        "game/SILVER/silver.exe"
+      ],
+      "sourcePage": "https://archive.org/details/SilverDemo",
+      "license": "Proprietary original demo; private compatibility fixture only, no redistribution permission established.",
+      "localOnly": true,
+      "packages": [
+        {
+          "url": "https://archive.org/download/SilverDemo/SilverDemo.zip",
+          "sha1": "a6af4d96fdc74b9649b1d96b513c416f8c65650b",
+          "type": "file",
+          "destination": "source/SilverDemo.zip"
+        }
+      ],
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "source/SilverDemo.zip",
+          "into": "game/SILVER"
+        },
+        {
+          "type": "is5Extract",
+          "cab": "game/SILVER/data1.cab",
+          "into": "game/SILVER"
+        }
+      ],
+      "manual": "Automated acquisition retains original source/SilverDemo.zip and extracts all original media plus cabinet payload under game/SILVER. Original runtime needs C:/SILVER plus the untouched ZIP mounted at D:/SILVER with CD-ROM semantics. The generic corpus CLI does not yet describe this dual mount; use the documented original harness route. No browser/desktop registration or gameplay qualification from recovery. See docs/re-notes/silver-demo.md.",
+      "notes": "Recovery-only candidate: full original bytes, no installer or licence prompt executed. Do not treat generic single-directory launch as original CD configuration."
     }
   ]
 }
