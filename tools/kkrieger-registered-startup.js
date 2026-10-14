@@ -10,7 +10,7 @@ const {execFileSync} = require('node:child_process');
 const root = path.resolve(process.env.WA_TEST_ROOT || path.join(__dirname, '..'));
 const out = path.resolve(process.env.WA_RUN_OUT || path.join(root, 'scratch/runs/kkrieger-registered-startup'));
 const seconds = Number(process.env.WA_MAX_SECONDS || 300);
-if (!Number.isInteger(seconds) || seconds < 15 || seconds > 360) throw Error('WA_MAX_SECONDS must be 15..360');
+if (!Number.isInteger(seconds) || seconds < 15 || seconds > 600) throw Error('WA_MAX_SECONDS must be 15..600');
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const hashFile = name => sha(fs.readFileSync(path.join(root, name)));
 const git = (...args) => execFileSync('git', ['-C', root, ...args], {encoding: 'utf8'}).trim();
@@ -46,6 +46,11 @@ async function main() {
     browser = await puppeteer.launch({executablePath: '/usr/bin/google-chrome', headless: true,
       args: ['--no-sandbox', '--enable-unsafe-swiftshader'], protocolTimeout: 20000});
     meta.browser = await browser.version();
+    // A follow-up observer can preserve the current viewport by connecting
+    // with defaultViewport:null. Never alter the bound by pausing this process.
+    fs.writeFileSync(path.join(out, 'browser-endpoint.json'), JSON.stringify({
+      wsEndpoint: browser.wsEndpoint(), observerConnectOptions: {defaultViewport: null},
+    }, null, 2));
     const page = await browser.newPage();
     await page.setViewport({width: 1100, height: 800});
     page.on('console', m => fs.appendFileSync(path.join(out, 'browser.log'), m.type() + ': ' + m.text() + '\n'));

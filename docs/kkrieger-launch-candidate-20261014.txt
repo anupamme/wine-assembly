@@ -70,3 +70,20 @@ viewport-note.json records the intervention; no game controls were sent.
 Future CDP attachments must set defaultViewport:null. No1GiB/512MiB fallback
 run or public deployment was performed. Runtime controller109490 exited0 and
 closed Chrome at23:55:09.733Z; palette received the runtime slot next.
+
+Prepared600s follow-up (not executed; requires root runtime grant):
+  WA_MAX_SECONDS=600 \
+  WA_RUN_OUT=/home/user/wa-kkrieger-launch/scratch/runs/kkrieger-registered-startup-600s \
+  WA_EXPECT_WASM_SHA256=70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655 \
+  node tools/kkrieger-registered-startup.js
+
+Use the same isolated source checkout with only the reviewed controller and
+registry-comment updates, retaining the prior source/module equivalence proof.
+Controller saves actual HEAD, source patch, registry hash, original EXE hash
+and module hash for the new run. Recheck source/module identity before launch;
+do not infer equivalence merely from this recipe. The new output directory
+must not exist; old evidence remains untouched. Default remains300s; explicit
+WA_MAX_SECONDS=600 raises the bound. Stop sampling on an observed OOM or exit.
+browser-endpoint.json allows an authorized observer to connect with
+defaultViewport:null and inspect menu/gameplay without the earlier incidental
+resize. Endpoint is local ephemeral diagnostic data, not a hosted service.
