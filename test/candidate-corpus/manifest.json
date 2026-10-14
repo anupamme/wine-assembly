@@ -4290,8 +4290,15 @@
       "sourcePage": "https://archive.org/details/gsscda1999",
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Copy the game files from DEMOS/RAGE2 on gsscda1999/1999-09/GS0999.iso (Archive metadata SHA-1 74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44) into game/, preserving ROM2.EXE, SCENARIO.DLL, SMACKW32.DLL and all RES/DAT/SAV files. ROM2.EXE must have SHA-256 c163964fca7f15958c53c29cef2fe4db4add639a95a3936453f87ccda874ae4b. Run --id=rage-of-mages2-demo --prepare. See docs/re-notes/rage-of-mages2-demo.md; the separate RageofMagesIINecromancer_1020 nested installer is damaged.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/gsscda1999/1999-09/GS0999.iso",
+          "sha1": "74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44",
+          "type": "archive",
+          "into": "disc"
+        }
+      ],
+      "manual": "Copy the game files from DEMOS/RAGE2 on gsscda1999/1999-09/GS0999.iso (Archive metadata SHA-1 74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44) into game/, preserving ROM2.EXE, SCENARIO.DLL, SMACKW32.DLL and all RES/DAT/SAV files. ROM2.EXE must have SHA-256 c163964fca7f15958c53c29cef2fe4db4add639a95a3936453f87ccda874ae4b. Run --id=rage-of-mages2-demo --prepare. See docs/re-notes/rage-of-mages2-demo.md; the separate RageofMagesIINecromancer_1020 nested installer is damaged. Automated recovery downloads and verifies the complete ISO, extracts its Joliet paths, and copies original game bytes with uppercase aliases required by existing registration. No configuration synthesis.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/ROM2.EXE"
@@ -4302,7 +4309,29 @@
         "vfsInclude": [
           "**/*"
         ]
-      }
+      },
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "disc/Demos/Rage2",
+          "into": "game"
+        },
+        {
+          "type": "copyFile",
+          "from": "disc/Demos/Rage2/rom2.exe",
+          "into": "game/ROM2.EXE"
+        },
+        {
+          "type": "copyFile",
+          "from": "disc/Demos/Rage2/Scenario.dll",
+          "into": "game/SCENARIO.DLL"
+        },
+        {
+          "type": "copyFile",
+          "from": "disc/Demos/Rage2/smackw32.dll",
+          "into": "game/SMACKW32.DLL"
+        }
+      ]
     },
     {
       "id": "outcast-demo",
@@ -4316,8 +4345,15 @@
       "sourcePage": "https://archive.org/details/gsscda1999",
       "license": "Proprietary evaluation demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Copy the contents of DEMOS/OUTCAST/EXE and DEMOS/OUTCAST/PAK from gsscda1999/1999-09/GS0999.iso into game/ as one flat directory, retaining every file. OC2.EXE SHA-256 must be d5513a94c2aff8ed54598c60fbf28bdf5845848a5eef74ff326037ec1a54f8a1. Run --id=outcast-demo --prepare. See docs/re-notes/outcast-demo.md for source extents, hashes and launcher-selected OC2.EXE game route.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/gsscda1999/1999-09/GS0999.iso",
+          "sha1": "74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44",
+          "type": "archive",
+          "into": "disc"
+        }
+      ],
+      "manual": "Copy the contents of DEMOS/OUTCAST/EXE and DEMOS/OUTCAST/PAK from gsscda1999/1999-09/GS0999.iso into game/ as one flat directory, retaining every file. OC2.EXE SHA-256 must be d5513a94c2aff8ed54598c60fbf28bdf5845848a5eef74ff326037ec1a54f8a1. Run --id=outcast-demo --prepare. See docs/re-notes/outcast-demo.md for source extents, hashes and launcher-selected OC2.EXE game route. Automated recovery downloads and verifies the complete ISO, extracts its Joliet paths, and copies original game bytes with uppercase aliases required by existing registration. No configuration synthesis.",
       "browser": {
         "fileRoot": "game",
         "exe": "game/OC2.EXE"
@@ -4329,7 +4365,24 @@
         "vfsInclude": [
           "**/*"
         ]
-      }
+      },
+      "postExtract": [
+        {
+          "type": "copyTree",
+          "from": "disc/Demos/Outcast/exe",
+          "into": "game"
+        },
+        {
+          "type": "copyTree",
+          "from": "disc/Demos/Outcast/pak",
+          "into": "game"
+        },
+        {
+          "type": "copyFile",
+          "from": "disc/Demos/Outcast/exe/Oc2.exe",
+          "into": "game/OC2.EXE"
+        }
+      ]
     },
     {
       "id": "urban-chaos-demo",

@@ -104,3 +104,9 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Full-disc automated recovery, 2026-10-14
+
+The complete662108160-byte GS0999.iso was freshly downloaded from https://archive.org/download/gsscda1999/1999-09/GS0999.iso and SHA1 74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44 verified locally. This supersedes the historical limitation that only metadata/ranges were verified. Recipe extraction uses7-Zip23.01 Joliet names. Copy Demos/Rage2 into game/, preserving all companion/installer files. Add unchanged uppercase ROM2.EXE,SCENARIO.DLL,SMACKW32.DLL aliases for existing registration. No configuration synthesis.
+
+Run `node tools/fetch-candidate-corpus.js --id=rage-of-mages2-demo`, then `node test/test-rage-of-mages2-demo-recovery.js`. All32 output files are pinned in test/candidate-corpus/rage-of-mages2-demo-files.json and compared byte-for-byte with the independently downloaded/extracted disc tree. Previously recorded executable SHA256 matches. Restored-fixture differences: none. Private-fixture restrictions remain; full-disc download needs roughly1.5GB temporary/free space and contains unrelated disc material. No new game launch/audio/FPS/deployment qualification.

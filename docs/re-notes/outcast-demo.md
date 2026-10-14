@@ -127,3 +127,9 @@ statement is superseded. These notes were absent from main and are recovered
 here without claiming a fresh runtime test. The recorded module and dates
 remain the scope of the gameplay evidence. Audio, FPS, physical-device and
 additional action-control checks remain open.
+
+## Full-disc automated recovery, 2026-10-14
+
+The complete662108160-byte GS0999.iso was freshly downloaded from https://archive.org/download/gsscda1999/1999-09/GS0999.iso and SHA1 74d2f13d0ccb0e0a4091606b0771bb07ddf7bc44 verified locally. This supersedes the historical limitation that only metadata/ranges were verified. Recipe extraction uses7-Zip23.01 Joliet names. Copy Demos/Outcast/exe then pak into game/; their filenames do not collide. Add unchanged Oc2.exe as uppercase OC2.EXE for the existing registration. No configuration synthesis.
+
+Run `node tools/fetch-candidate-corpus.js --id=outcast-demo`, then `node test/test-outcast-demo-recovery.js`. All135 output files are pinned in test/candidate-corpus/outcast-demo-files.json and compared byte-for-byte with the independently downloaded/extracted disc tree. Previously recorded executable SHA256 matches. Restored-fixture differences: none. Private-fixture restrictions remain; full-disc download needs roughly1.5GB temporary/free space and contains unrelated disc material. No new game launch/audio/FPS/deployment qualification.
