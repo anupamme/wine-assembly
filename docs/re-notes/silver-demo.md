@@ -185,3 +185,9 @@ C-drive files, the original ZIP, 130 source-closure files and the unchanged
 driver 212439, guest 212464 and all three process groups were absent at
 `2026-10-13T23:45:09.545Z`. This follow-up only packaged evidence and inspected
 source; another runtime requires a new coordinated grant.
+
+## One Escape and reviewed Back, 2026-10-14 00:00 UTC
+
+Run `20261014T0000Z-silver-escape-back` retained the same source/module and original fixture. At the dock, one ordinary Escape initially left the same image; 100 further batches exposed Load/Options/Quit Game/Back. Relative pointer motion placed the cursor on Back at (320,450); its reviewed left click returned to the dock. Another 200 batches still showed the dock. No second Escape or guest-state change was used, and no player control was established. All 3,147 post-run original hashes matched; the driver quit normally and all three PIDs/process groups were absent at 00:04:35.516. All 67 transferred artifacts (6,803,478 bytes) were individually hash-checked; evidence is `scratch/runs/20261014T0000Z-silver-escape-back/investigation.json`.
+
+A source-only follow-up checked original installer metadata: the Silver Demo shortcut invokes Silver.exe without extra arguments, so a missing documented command-line switch is not supported by that file. Original `sound/fugeapt1.wav` and `fugeapt2.wav` are format17 stereo44.1kHz with fact-chunk durations19.608s and58.788s; the B variants are15.734s and42.478s. These durations do not establish which clip currently gates the script. Before another replay, correlate actual loaded speech, mixer completion and script progress using existing bounded tracing; do not infer a broken audio API merely from a long animated sequence.
