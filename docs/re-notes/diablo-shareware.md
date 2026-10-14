@@ -3196,3 +3196,45 @@ scratch/runs/20261014-diablo-character-init-after, reviewed class portrait,
 name entry and Tristram; receipt explicitly records threads=true. Full
 browser flow passes. The exact instruction at which the previous recursive
 invocation lost initialization has not been isolated. Safari remains untested.
+
+## Name-dialog repaint investigation, 2026-10-14
+
+The reported class screen retained the entered name and fragments beside
+Cancel. The browser test now has `WA_DIABLO_REPAINT=1`: select Warrior,
+enter GAL, cancel back to class selection, reopen the name page, and enter
+gameplay. It checks the primary for an erased previous Warrior label and
+for an empty margin to the right of Cancel. `WA_DIABLO_GPU=1` enables normal
+browser graphics instead of the test's software-only default.
+
+Two independently tested defects were found:
+
+- Modeless EndDialog destroyed Storm's page without the exposure work done
+  by DestroyWindow. The exposure helper also stopped at a missing child
+  parent, ignoring popup ownership. It now invalidates the covered rectangle
+  in the owner's client coordinates with background erase, and EndDialog
+  invokes it before destruction. The name page no longer retains class text
+  in its DirectDraw primary. Hidden-dialog and visible-owned-dialog contracts
+  are in test-dialog-custom-dispatch.js.
+- A deferred GDI canvas flush advanced the window's drawing sequence even
+  though its pixels were older than a subsequent DirectDraw present. Preserve
+  the actual upload sequence instead; test-gdi-deferred-presentation.js checks
+  that reading the old cache cannot make it newer than the primary.
+
+**Still open; not release-verified:** captures intermittently lose artwork
+  in the final fullscreen presentation. Primary frame and compositor canvas
+  captures can be complete while the post-processing source is incomplete.
+  The full route reaching Tristram is not proof that this visual issue is
+  fixed. Resetting the output context, avoiding the second composition at
+  native size, and using a primary-only presentation fast path did not resolve
+  every capture and were removed. Software-only and GPU-enabled Chrome both
+  exhibited it; Safari has not been tested.
+
+Evidence in scratch/runs/: 20261014-diablo-repaint-layers2 (before, stale
+  Warrior text on Enter Name), 20261014-diablo-repaint-enddialog (primary
+  restoration), 20261014-diablo-repaint-composite (separate output canvases),
+  and 20261014-diablo-repaint-final (cleaned-up candidate). The diagnostic
+  harness is preserved in 20261014-diablo-repaint-gpu. Candidate WASM SHA256
+  ea2cc50f59597e7c2a81e4342f10ebb171eb547ec7ca9322e238854de05b3dd5.
+  Canonical build, dialog continuation/exposure, parent-child paint ordering,
+  GDI cache tests and Winamp About/Credits browser regression pass. No public
+  deploy of this candidate.

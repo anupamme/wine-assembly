@@ -36,6 +36,8 @@ const FAIL_COUNT = Number(process.env.WA_DIABLO_FAIL || 0);
 // worker fetches, so it cannot produce an in-game wait on its own).
 const DELAY_MS = Number(process.env.WA_DIABLO_DELAY_MS || 0);
 const PROFILE = process.env.WA_DIABLO_PROFILE || '';
+// Exercise closing/reopening the custom name dialog and check stale pixels.
+const REPAINT = !!process.env.WA_DIABLO_REPAINT;
 const failState = { armed: false, left: FAIL_COUNT, failed: 0, retries: 0, dialogs: 0 };
 
 // The in-game wait window, when showing its error body: capture it once and
@@ -130,6 +132,19 @@ async function capture(page, name, bytes) {
   return PNG.sync.read(fs.readFileSync(file));
 }
 
+async function waitBlackPrimaryRect(page, rect) {
+  await page.waitForFunction(([x, y, w, h]) => {
+    const win = Object.values(sharedRenderer.windows).find(w => w.className === 'DIABLO');
+    const frame = win && sharedRenderer._overlayFrameLayer(win);
+    if (!frame) return false;
+    const pixels = frame.canvas.getContext('2d').getImageData(x, y, w, h).data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i] || pixels[i + 1] || pixels[i + 2]) return false;
+    }
+    return true;
+  }, { timeout: 10000 }, rect);
+}
+
 function changedPixels(a, b) {
   assert(a.width === b.width && a.height === b.height, 'screenshot size changed');
   let changed = 0, sampled = 0;
@@ -204,7 +219,7 @@ async function main() {
   const base = BASE_URL || `http://127.0.0.1:${server.address().port}`;
   const browser = await puppeteer.launch({
     executablePath: CHROME, headless: true, protocolTimeout: 240000,
-    args: ['--no-sandbox', '--no-first-run', '--disable-gpu'],
+    args: ['--no-sandbox', '--no-first-run', ...(process.env.WA_DIABLO_GPU ? [] : ['--disable-gpu'])],
     ...(PROFILE ? { userDataDir: PROFILE } : {}),
   });
   const startedAt = Date.now();
@@ -376,6 +391,23 @@ async function main() {
     { timeout: 120000 });
     await clickGuest(page, 425, 331);
     await page.keyboard.type('GAL');
+    if (REPAINT) {
+      await wait(1500);
+      // The previous Warrior label must be erased above the name field.
+      await waitBlackPrimaryRect(page, [330, 282, 180, 26]);
+      await capture(page, '04b-name-entry');
+      await clickGuest(page, 530, 446); // Cancel back to class selection
+      await wait(1500);
+      // No letters from an earlier Cancel rendering may survive to its right.
+      await waitBlackPrimaryRect(page, [570, 427, 30, 35]);
+      await capture(page, '04c-name-cancelled');
+      await clickGuest(page, 348, 446);
+      await page.waitForFunction(() => Object.values(sharedRenderer.windows)
+        .some(w => w && w.visible && w.className === 'DIABLOEDIT'),
+      { timeout: 120000 });
+      await clickGuest(page, 425, 331);
+      await page.keyboard.type('GAL');
+    }
     await clickGuest(page, 348, 446);
     if (FAIL_COUNT || DELAY_MS) {
       const until = Date.now() + 120000;

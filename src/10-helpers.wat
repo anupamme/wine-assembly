@@ -4375,9 +4375,17 @@
   (func $wnd_uncover_parent (param $hwnd i32)
     (local $parent i32) (local $xy i32) (local $wh i32)
     (local $x i32) (local $y i32) (local $w i32) (local $h i32)
+    (local $owned i32)
     (if (i32.eqz (local.get $hwnd)) (then (return)))
     (if (i32.eqz (call $wnd_is_effectively_visible (local.get $hwnd))) (then (return)))
     (local.set $parent (call $wnd_get_parent (local.get $hwnd)))
+    (if (i32.eqz (local.get $parent))
+      (then
+        ;; Owned popups expose their owner too. In exclusive DirectDraw these
+        ;; windows paint into the same primary, so retained pixels alone do
+        ;; not restore the owner's background when a modal page disappears.
+        (local.set $parent (call $wnd_get_owner (local.get $hwnd)))
+        (local.set $owned (i32.const 1))))
     (if (i32.eqz (local.get $parent)) (then (return)))
     (if (i32.eq (call $wnd_table_find (local.get $parent)) (i32.const -1)) (then (return)))
     (call $nc_flags_set (local.get $parent) (i32.const 2))
@@ -4391,6 +4399,12 @@
     (local.set $y (i32.shr_s (local.get $xy) (i32.const 16)))
     (local.set $w (i32.and (local.get $wh) (i32.const 0xFFFF)))
     (local.set $h (i32.shr_u (local.get $wh) (i32.const 16)))
+    (if (local.get $owned)
+      (then
+        (local.set $x (i32.sub (call $wnd_window_screen_x (local.get $hwnd))
+          (call $wnd_client_screen_x (local.get $parent))))
+        (local.set $y (i32.sub (call $wnd_window_screen_y (local.get $hwnd))
+          (call $wnd_client_screen_y (local.get $parent))))))
     (if (i32.and (i32.gt_s (local.get $w) (i32.const 0))
                  (i32.gt_s (local.get $h) (i32.const 0)))
       (then
