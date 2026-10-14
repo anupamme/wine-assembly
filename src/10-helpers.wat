@@ -2961,9 +2961,11 @@
     ;; the query at 0x9e5272 scanned guest address i*4 forever. Repairing those
     ;; cells in a live wedged process moved EIP straight out of that loop, which
     ;; is what makes this the fix rather than a guess.
+    ;; Sparse arena pages need not have adjacent backing. Clear guest bytes,
+    ;; otherwise a recycled block can wipe a different live allocation.
     (if (local.get $from_free)
-      (then (call $zero_memory
-        (i32.add (call $g2w (local.get $ptr)) (i32.const 4))
+      (then (call $guest_memset
+        (i32.add (local.get $ptr) (i32.const 4)) (i32.const 0)
         (i32.sub (local.get $need) (i32.const 4)))))
     ;; Return guest pointer past the size header
     (i32.add (local.get $ptr) (i32.const 4)))

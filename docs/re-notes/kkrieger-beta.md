@@ -180,3 +180,88 @@ The successful original run ran22:14:05–22:18:26 UTC; first loop snapshot22:17
 The reviewed screenshot shows a loading bar filled approximately halfway;
 no menu/gameplay/input/audio acceptance. The earlier description of a visually
 full bar should not be used as a measure of completed procedural generation.
+
+### First invalid mesh-operation boundary (2026-10-14)
+
+A fresh bounded trace checks live selected-face topology before the
+copy-on-write helper `0x81108f` and after its enclosing operator returns.
+The selection predicate is face-record offset4 != 0, matching the consumer's
+selection setup. Across982 observed operator pairs, the first981 pairs close;
+pair982 receives a valid608-edge/304-face mesh and returns a malformed mesh.
+The operator starts at `0x812f29`, calls the helper at `0x812f39`, then queues
+a vertex transform through `0x81192e`. Its enclosing return is `0x8178f3`.
+
+In that capture, input mesh `0x71e3dd34` has its edge array at `0x6a15b4a4`;
+the output mesh and edge allocation differ (the exact decimal observations
+are retained in `boundary-analysis.json`). Output face0 starts at16 and walks
+`16 -> 1180 -> 0 -> 29 -> 33 -> 24 -> 0`. Adding the later merge's6888-edge
+index offset reproduces the previous failing chain exactly:
+`6904 -> 8068 -> 6888 -> 6917 -> 6921 -> 6912 -> 6888`.
+The failure therefore precedes the final merge and selected-face traversal.
+
+Evidence is in `scratch/runs/20261014-kkrieger-mesh-writer/`.
+`analyze-boundary.py` reconstructs the complete1964-row history from overlapping
+bounded captures and checks this correspondence. The initial180-second
+consumer-entry probe saw108 closing meshes before its bound. The operator
+probe found the invalid result within270 seconds; instrumentation changes
+runtime, so those durations are not startup performance measurements.
+The screenshot still shows a roughly half-filled loading bar, with no menu
+or gameplay acceptance. No guest data, loop exits, or runtime behavior were
+patched.
+
+The narrower clone capture proves that `0x806b2d` through the edge-array
+copy return `0x81159b` copies all7296 words correctly; the source is unchanged.
+Destination pages are not contiguous in WASM, but the copy handles that.
+A bounded subsequent block trace watches edge590.next. It first changes
+1182→0 across `0x80100e`→`0x801015`, the allocation wrapper's second indirect
+call, while `0x80fe61` requests81920 bytes for vertex storage. At helper return
+`0x812f3e`, the first differing topology word is2029 (edge169.next). This
+excludes the edge copy as the immediate writer and narrows the contract to
+the subsequent heap allocation. The precise allocator path remains under
+test at this stage; the follow-up below supplies the regression and fix.
+
+The first copy probe incorrectly expected a block boundary inside the copy
+function; its `copy-incomplete/` captures are retained as failed instrumentation,
+not evidence of a faulty copy. The corrected `copy/` capture uses the actual
+caller return. Capture scripts, guest word arrays, page translations and the
+24-block writer context are retained alongside the boundary analysis.
+
+### Recycled sparse heap clear: causal fix (2026-10-14)
+
+The final named-API capture confirms
+`HeapAlloc(0x00beef00, 1, 81920)` at return `0x801015`. Across that call the
+mesh header and every captured edge-page translation remain unchanged, but
+edge590.next changes1182→0. The edge copy still compares byte-for-byte equal
+before this call. This is an overwrite, not a changed guest mapping.
+
+`heap_alloc` cleared recycled blocks with
+`zero_memory(g2w(block)+4, need-4)`. A sparse heap block can have non-adjacent
+WASM backing; clearing a linear physical span then reaches another live
+allocation. The fix uses `guest_memset(block+4, 0, need-4)`, which follows the
+guest mappings. It retains the existing recycled-block clearing policy.
+
+The regression added to `test-heap-free-block-validation.js` interleaves an
+unrelated guard page between the physical pages of a valid free block, then
+recycles81920 bytes through the real allocator. Before the fix, the guard's
+`0x11223344` becomes zero. After the fix, the complete payload is zeroed,
+the header and guard remain intact, and the allocation is reused. The full
+build, existing header-validation cases, 20000-operation heap-bin stress,
+11 arena-tail cases, and large-block reuse tests pass. Tested fixed module:
+`d823bf96e9ad51b0ef029fdaf12596350d040889cb187e85d8cf607d8eb74279`.
+Original-demo untraced browser acceptance is recorded separately below.
+
+The original EXE's180-second untraced retest on this module ran
+22:57:32.744–23:00:34.033 UTC. It does not remain in the former mesh loop;
+the log instead reports refused sparse commits of2162688/1441792 bytes and
+failed heap requests of2097160/1398488 bytes, then exits at `0x801924`, with
+caller `0x8045a5`. The60/120-second samples show loading; the180-second
+screenshot shows the desktop after guest exit. This fixes the demonstrated
+cross-allocation overwrite but does **not** qualify startup, menu or gameplay.
+
+Reviewed after-evidence: `scratch/runs/20261014-kkrieger-heap-fix/`, including
+the original untraced probe, screenshots, state/logs, exact module hash and
+source patch. Next capture live heap-arena/backing occupancy, released arenas
+and available extents around the refused commits. These messages alone do
+not distinguish actual capacity exhaustion from fragmentation or retained
+allocations; neither a larger budget nor a forced successful allocation is
+established as a remedy.
