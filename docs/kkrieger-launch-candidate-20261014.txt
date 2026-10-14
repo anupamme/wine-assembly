@@ -35,3 +35,38 @@ evidence. Failure to allocate larger memory can reproduce the old shortage.
 No public desktop promotion, deployment, or gameplay claim accompanies this
 source candidate. Existing debug-dropdown suite also requires unrelated
 Black & White 2 fixture files absent from the isolated sparse worktree.
+
+Bounded runtime result (23:50:08Z–23:55:09Z):
+scratch/runs/20261014-kkrieger-registered-startup contains the reviewed300s
+actual registered URL run on bx_tgbme2h7, Chrome151.0.7922.108/SwiftShader,
+cooperative (crossOriginIsolated=false), runtime log enabled. Original EXE
+and both notice hashes match the pinned package. Standard --prepare generated
+the complete browser manifest without downloading or changing original bytes.
+
+Tested source dd19afc6a7cad48f50d336742ef8191fe0a315cc, empty source patch,
+WASM70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655.
+All144 source/compiler/vendor/map inputs match wa-rodent and the freshly
+canonical-built Pirates checkout; their module bytes are identical. The proof
+and matching canonical build log are in the run bundle. Earlier fixed-memory
+census used d823bf, differing in shader VM and Win16 API source; this is not a
+matched-build A/B performance comparison.
+
+All20 samples held2,147,483,648 bytes with OOM count0. At240s,315/8192 maps
+left20,480 bytes free in primary backing, while174,718,976 bytes were occupied
+in the extension (1,435,893,760 free). Census issues empty. This establishes
+actual use beyond the old capacity ceiling, not merely a larger allocation.
+
+The300s bound ended an active startup:16 distinct sampled PCs, final
+EIP0x0080a819/yield0, virtualTop1,220,935,680. Reviewed screenshots show the
+loading bar advance from a sliver to nearly full at300s. No menu/gameplay,
+audio or player controls verified; no new fault or OOM was observed. The
+dashboard result is timeout, not passed or frozen. A subsequent600s startup
+bound is justified by this visible progress, subject to serialized runtime
+ownership; ordinary controls should be tested if the game/menu appears.
+
+Capture caveat: attaching a read-only census controller at240s accidentally
+applied Puppeteer's800x600 default viewport, restored to1100x800 at263s.
+viewport-note.json records the intervention; no game controls were sent.
+Future CDP attachments must set defaultViewport:null. No1GiB/512MiB fallback
+run or public deployment was performed. Runtime controller109490 exited0 and
+closed Chrome at23:55:09.733Z; palette received the runtime slot next.
