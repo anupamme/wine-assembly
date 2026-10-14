@@ -1161,7 +1161,7 @@
 ;; https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/texbem---ps
 ;; https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/texbeml---ps
 ;; https://learn.microsoft.com/en-us/windows/win32/direct3d9/bump-map-pixel-formats
-;; X8L8V8U8 uses max(signedByte/127,-1) SNORM policy; exact legacy driver
+;; X8L8V8U8 and Q8W8V8U8 use max(signedByte/127,-1) SNORM policy; exact legacy driver
 ;; conversion rounding remains a native-reference gate. Other signed layouts
 ;; reject at binding rather than being interpreted as unsigned RGBA.
 (func $d3d_shader_vm_bind_bump (export "d3d_shader_vm_bind_bump") (param $ctx i32) (param $stage i32) (param $desc i32) (result i32)
