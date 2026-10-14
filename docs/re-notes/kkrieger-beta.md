@@ -69,3 +69,41 @@ Evidence folders under `scratch/runs/`: `20261014-kkrieger-browser-returns`,
 `20261014-kkrieger-browser-exit`, `20261014-kkrieger-browser-texture-returns`,
 and `20261014-kkrieger-browser-texture-returns-long`. The last includes the
 reviewed blank end screenshot, complete log, probe and exact process receipt.
+
+## Signed texture implementation and original-browser retest (2026-10-14)
+
+Implementation `c79b943bbd8e02e5ee62c9bf00f48bb8c5897952`, based on main
+`c851fff9c16096e6be6f480ebd40d8eb168c2e64`, supports format63 in texture
+creation/capability checks, four-byte storage and mip locks, raw surface copies,
+host snapshots, float GPU uploads (plain and mip atlas), and scalar/SIMD software
+sampling. Little-endian U,V,W,Q map to RGBA with `max(signedByte/127,-1)` before
+filtering. GPU cache identities distinguish format62 and63. WebGL1 synthetic
+mip tails also decode signed bytes before averaging. This follows the signed
+layout in [Microsoft's D3DFORMAT documentation](https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dformat);
+exact legacy-driver conversion rounding remains a native-reference gate.
+
+Full build and conformance passed on isolated Boat `bx_tgbme2h7`: texture
+creation/512-square ten-level locks, surface/cube updates, 331-case shader VM,
+software backend and keyed residency, WebGL1/2 uploads and cache identity,
+signed mip filtering, and the complete WAT→host→GPU pipeline. After reconciling
+current main, the full build, WebGL versions test (including partial signed
+mip tails), and complete pipeline passed again. Final tested module SHA256:
+`2158338e146bb30e5f3fc628b64462935cfdc066ee149dfba7fce29bfefbe29f`.
+
+The same original-executable 90-second browser probe now records twelve
+`S_OK` returns each at `0x80454d` and `0x804595`; the error retry site
+`0x804573` is not visited. The former early exit at `0x801924` is absent.
+At 90 seconds the guest is still running procedural generation, displaying
+a black loading screen with a partially filled progress bar. No menu, player
+input, audio or gameplay acceptance. The next investigation is a longer
+bounded startup capture, with loading progress and any subsequent failure
+recorded explicitly.
+
+Evidence: `scratch/runs/20261014-kkrieger-q8w8v8u8/` contains reviewed captures,
+logs, the probe, full source patch against the remote checkout's base
+`43f04c7c4ac8914c385c37a7be96c7e1b9f61623`, implementation patch and process
+receipt. Chrome151.0.7922.108, Node24.18.1, WebGL with SwiftShader permitted,
+cooperative/non-isolated browser route, original EXE hash unchanged. A first
+fixture-only attempt hit the static server's external-symlink HTTP403 rule;
+copying the three original fixture files into the isolated checkout resolved
+that harness setup failure before the recorded runtime retest.
