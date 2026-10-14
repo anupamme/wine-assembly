@@ -146,3 +146,9 @@ historical run, not the current branch. This recovery adds no fresh gameplay,
 audio, performance, Safari, or physical-device qualification; retain the
 recorded run IDs, module hashes, limitations, and failed attempts above.
 
+
+## Automated whole-disc recovery, 2026-10-14
+
+Downloaded full672151552-byte GS1098.ISO from https://archive.org/download/GSCDA1998/1998-10/GS1098.ISO and verified SHA1 cc199d8dc56fc2636843d625a724f9e21467f483. 7-Zip23.01 exposes Joliet path DEMOS/Rom/ROMDEMO.EXE; this nested installer matches42111946 bytes and SHA1 46b0dbb02e6eafa6eaf9c334c635f9744546f094. The recipe copies it to archive/ROMDEMO.EXE and unpacks the original ZIP SFX into game/. No guest installer execution, binary repair, or configuration synthesis. The damaged alternate multipart archive is unused.
+
+Run `node tools/fetch-candidate-corpus.js --id=rage-of-mages-demo`, then `node test/test-rage-of-mages-demo-recovery.js`. All14 files are pinned in test/candidate-corpus/rage-of-mages-demo-files.json and were byte-compared with separately extracted original source. rom.exe matches the previously recorded SHA256. Restored-fixture differences: none. Full-disc recovery requires roughly1.5GB free temporary/output space, includes unrelated disc material, and remains a private fixture. Original-game runtime/audio/FPS and public deployment were not tested.

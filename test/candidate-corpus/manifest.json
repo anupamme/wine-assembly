@@ -4258,9 +4258,21 @@
       "sourcePage": "https://archive.org/details/GSCDA1998",
       "license": "Proprietary demo; private compatibility fixture only. No public redistribution grant established.",
       "localOnly": true,
-      "packages": [],
-      "manual": "Obtain ROMDEMO.EXE from DEMOS/ROM on GSCDA1998/1998-10/GS1098.ISO (ISO SHA-1 cc199d8dc56fc2636843d625a724f9e21467f483). Put the 42111946-byte installer, SHA-1 46b0dbb02e6eafa6eaf9c334c635f9744546f094, at archive/ROMDEMO.EXE, then run --id=rage-of-mages-demo --prepare. Archive entry-download URLs return empty files; the verified installer is at ISO sector 197989. See docs/re-notes/rage-of-mages-demo.md. Do not use the damaged RageofMages_1020 multipart ZIP.",
+      "packages": [
+        {
+          "url": "https://archive.org/download/GSCDA1998/1998-10/GS1098.ISO",
+          "sha1": "cc199d8dc56fc2636843d625a724f9e21467f483",
+          "type": "archive",
+          "into": "disc"
+        }
+      ],
+      "manual": "Obtain ROMDEMO.EXE from DEMOS/ROM on GSCDA1998/1998-10/GS1098.ISO (ISO SHA-1 cc199d8dc56fc2636843d625a724f9e21467f483). Put the 42111946-byte installer, SHA-1 46b0dbb02e6eafa6eaf9c334c635f9744546f094, at archive/ROMDEMO.EXE, then run --id=rage-of-mages-demo --prepare. Archive entry-download URLs return empty files; the verified installer is at ISO sector 197989. See docs/re-notes/rage-of-mages-demo.md. Do not use the damaged RageofMages_1020 multipart ZIP. Automated recovery verifies the full original ISO, copies its exact Joliet DEMOS/Rom/ROMDEMO.EXE path, and extracts the original ZIP SFX. No guest installer execution needed.",
       "postExtract": [
+        {
+          "type": "copyFile",
+          "from": "disc/DEMOS/Rom/ROMDEMO.EXE",
+          "into": "archive/ROMDEMO.EXE"
+        },
         {
           "type": "extractArchive",
           "archive": "archive/ROMDEMO.EXE",
