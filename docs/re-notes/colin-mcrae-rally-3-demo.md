@@ -529,3 +529,33 @@ range, a tampered carve with a matching edited receipt, and truncated bytes.
 These checks pass locally; the revised recipes have not been rerun end to
 end. The successful original-byte recovery above used the earlier script
 versions preserved with its evidence.
+
+## Native dependency recovery (15 October, 10:07 UTC)
+
+All twelve historical native DLL/AX identities are now recovered under
+`/home/user/cmr3-native-recovery-r3-20261015/native` on `bx_erf37bxf`.
+Four seed files matched retained local originals; archived WMP9 and IE6
+packages matched their historical SHA-256 pins and supplied seven more.
+The public IA DirectX 8.1 ZIP matched its metadata SHA-1 and supplied the
+exact 519,680-byte `qedit.dll` hash. Full package and native identities are
+in `docs/cmr3-native-recovery-result-20261015.json`.
+
+Initial acquisition 53906 failed after successful downloads/extractions
+because the recipe expected a nested DirectX.cab. The verified DX81eng.exe
+instead exposes its original files directly to 7z. That failed tree/log is
+retained. Corrected recipe `00a4d0a33` supports direct or cabinet layouts,
+always requiring the exact native identity. Three synthetic tests cover
+both layouts, same-size wrong bytes and source-package hash rejection.
+Final fresh-output run 56105 reverified all three retained package pins,
+extracted and checked all twelve native files, and exited zero at 10:06:44.
+No network transfer was repeated. The earlier direct-only repair 55537 is
+preserved separately; final validation uses the committed corrected recipe.
+
+Evidence `scratch/runs/20261015-cmr3-native-recovery` retains 58 remote
+artifacts (66,282 bytes), all size/SHA-256 verified, plus three terminal
+records and staging identity receipts. Postflight at 10:07:11 found no
+remaining recovery processes and released the runtime slot. Original
+packages, extracted files and failed attempts remain on the remote box.
+No registry registration, Windows guest or game was executed. The full
+registry snapshot remains missing; actual native registration is the next
+preparation prerequisite, not a claim that launch is ready.
