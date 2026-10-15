@@ -52,6 +52,20 @@ node tools/check-wat-logical-and.js
 node tools/check-silent-stubs.js
 git diff --check
 
+Source review follow-up (still NOT runtime-executed)
+- Ordinary and explicit keyed span sampling are now mutually exclusive: one
+  point fetch or four linear taps, without first sampling an unused result.
+- Unsupported DDPCAPS_ALPHA/key checks now use actual pa_draw calls on both
+  GPU and GPU-disabled software routes. Positive actual draws keep state144
+  TRUE with COLORKEYENABLE FALSE, and with COLORKEYENABLE TRUE on a distinct
+  alpha-palette surface without an attached key.
+- SELECTARG2 opaque diffuse alpha plus GREATER0 tests assert black survives
+  alpha testing and writes depth (software565 and GPU). Indexed software also
+  checks the resulting opaque black pixel.
+- GPU positive depth control writes zero RGBA with application alpha testing
+  and blending disabled, then verifies it occludes farther opaque geometry.
+- Explicit keyed Worker snapshots remain an open test requirement.
+
 Queued runtime recipe (only after explicit slot grant)
 1. Build exact branch with bash tools/build.sh; record source and module SHA256.
 2. Run test/test-d3dim-indexed-texture.js, test/test-gl-software-raster.js,

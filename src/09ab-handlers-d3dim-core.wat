@@ -5521,19 +5521,19 @@
                 (i32.const 8))
               (i16x8.splat (i32.const 0))))))
         (else
-          (local.set $sample (call $gl_sw_sample_prepared
+          (local.set $sample (if (result i32) (local.get $key_blend)
+            (then (call $d3dim_texture_sample_keyed
+              (local.get $tw) (local.get $th) (local.get $tbpp) (local.get $tpitch)
+              (local.get $tdib) (local.get $tfmt) (local.get $tpal) (local.get $tpal_alpha)
+              (local.get $tu) (local.get $tv) (local.get $address_u) (local.get $address_v)
+              (local.get $linear) (i32.const 1) (local.get $sample_key)))
+            (else (call $gl_sw_sample_prepared
             (local.get $tw) (local.get $th) (local.get $tbpp) (local.get $tpitch)
             (local.get $tdib) (local.get $tfmt) (local.get $tpal) (local.get $tpal_alpha)
             (local.get $tu) (local.get $tv)
             (local.get $address_u) (local.get $address_v) (local.get $linear)
-            (global.get $gl_sw_r_border)))))
+            (global.get $gl_sw_r_border)))))))
       (local.set $draw (i32.const 1))
-      (if (local.get $key_blend) (then
-        (local.set $sample (call $d3dim_texture_sample_keyed
-          (local.get $tw) (local.get $th) (local.get $tbpp) (local.get $tpitch)
-          (local.get $tdib) (local.get $tfmt) (local.get $tpal) (local.get $tpal_alpha)
-          (local.get $tu) (local.get $tv) (local.get $address_u) (local.get $address_v)
-          (local.get $linear) (i32.const 1) (local.get $sample_key)))))
       ;; D3DRENDERSTATE_COLORKEYENABLE discards a matching texture sample.
       ;; It must happen before depth testing/writes: transparent HUD texels
       ;; neither paint their magenta key nor occlude later geometry.

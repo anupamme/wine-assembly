@@ -1022,6 +1022,11 @@ function writeFloat(wat, addr, value) {
     resetKeyTarget(); wat.test_diptex_draw(device,vertices,indices);
     assert.strictEqual(mem.getUint16(pixel,true),0x001f,'app alpha test rejects key');
     assert.strictEqual(mem.getUint16(depthPixel,true),0x2222,'rejection preserves depth');
+    wat.test_diptex_set_tss(device,4,3); // SELECTARG2 opaque diffuse alpha
+    resetKeyTarget(); wat.test_diptex_draw(device,vertices,indices);
+    assert.strictEqual(mem.getUint16(pixel,true),0,'stage-selected diffuse alpha keeps black fragment');
+    assert.notStrictEqual(mem.getUint16(depthPixel,true),0x2222,'post-stage alpha test passes and writes depth');
+    wat.test_diptex_set_tss(device,4,2); // SELECTARG1 texture alpha
     wat.test_diptex_set_rs(device,15,0);
     wat.test_diptex_set_rs(device,27,1);
     wat.test_diptex_set_rs(device,19,5); wat.test_diptex_set_rs(device,20,6);

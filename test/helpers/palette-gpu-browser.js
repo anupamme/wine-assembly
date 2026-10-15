@@ -202,12 +202,40 @@ globalThis.runPaletteGpu = async function (version) {
   draw(.1,0xffffffff,[.125,.5]);
   rs(15,0); e.pa_bind(device,0,0); draw(.5,0xff00ff00);
   record('key app rejection preserves depth',uniform([0,255,0,255]));
+  // Without an application rejection, transparent black is still a fragment
+  // and must occlude a later, farther opaque draw.
+  e.pa_bind(device,0,texture);
+  eq(e.pa_clear(d.rt,3,0xff0000ff,1,0,0,4,4,0),1,'key positive depth clear');
+  draw(.1,0xffffffff,[.125,.5]);
+  e.pa_bind(device,0,0); draw(.5,0xff00ff00);
+  record('key zero alpha writes depth without app test',uniform([0,0,0,0]));
+  // Alpha testing consumes the stage result, not the substituted texel alpha.
+  e.pa_bind(device,0,texture); tss(4,3); tss(6,0); // SELECTARG2(DIFFUSE)
+  rs(15,1); rs(24,0); rs(25,5);
+  eq(e.pa_clear(d.rt,3,0xff0000ff,1,0,0,4,4,0),1,'key stage alpha depth clear');
+  draw(.1,0xffffffff,[.125,.5]);
+  rs(15,0); e.pa_bind(device,0,0); draw(.5,0xff00ff00);
+  record('opaque diffuse alpha passes test and writes depth',uniform([0,0,0,255]));
+  tss(4,2); rs(7,0); rs(14,0);
+
+  const noKeyTexture=surface(8,0x1000);
+  eq(call(e.pa_attach,noKeyTexture,alpha),0,'alpha palette on surface without key');
+  e.pa_bind(device,0,noKeyTexture);
+  const noKeyDesc=gpu._describe(device), noKeyDib=e.pa_w2g(noKeyDesc.texDib)>>>0;
+  for(let y=0;y<4;y++) for(let x=0;x<4;x++)
+    e.guest_write8(noKeyDib+y*noKeyDesc.texPitch+x,8);
+  check(!noKeyDesc.keyed,'no attached key positive control');
+  clear(0); draw(.5,0xffffffff,[.375,.5]);
+  record('alpha palette state144 TRUE without attached key',uniform([...rgb,128]));
   // The unresolved combination must fail visibly rather than select precedence.
   e.pa_bind(device,0,texture); eq(call(e.pa_attach,texture,alpha),0,'unknown key alpha attach');
+  rs(41,0); clear(0); draw(.5,0xffffffff,[.375,.5]);
+  record('alpha palette state144 TRUE with COLORKEYENABLE FALSE',uniform([...rgb,128]));
+  rs(41,1);
   let unresolved=false;
-  try { gpu._texture(gpu.targets.get(d.rt),gpu._describe(device)); }
+  try { draw(.5,0xffffffff,[.125,.5]); }
   catch (error) { unresolved=String(error).includes('precedence unresolved'); }
-  check(unresolved,'explicit alpha palette/key combination fails fast');
+  check(unresolved,'actual GPU draw of explicit alpha palette/key combination fails fast');
   rs(41,0); rs(144,0); e.pa_bind(device,0,0);
   const stats = gpu.snapshot();
   check(stats.pageChecks>0 && stats.textureClears>0,'watch and clear routes exercised');
@@ -241,5 +269,18 @@ globalThis.runPaletteGpu = async function (version) {
   softwareRecord('software indexed application rejection',.125,[0,0,255,255]);
   rs(15,0); rs(27,1); rs(19,5); rs(20,6);
   softwareRecord('software indexed application blend',.125,[0,0,255,255]);
+  rs(27,0); rs(15,1); tss(4,3); tss(6,0);
+  softwareRecord('software opaque diffuse alpha passes application test',.125,[0,0,0,255]);
+  rs(15,0); tss(4,2);
+  eq(call(e.pa_attach,texture,alpha),0,'software keyed alpha attach');
+  rs(41,0);
+  softwareRecord('software alpha palette state144 TRUE key disabled',.375,[...rgb,128]);
+  rs(41,1); e.pa_bind(device,0,noKeyTexture);
+  softwareRecord('software alpha palette state144 TRUE no attached key',.375,[...rgb,128]);
+  e.pa_bind(device,0,texture);
+  let softwareUnresolved=false;
+  try { draw(.5,0xffffffff,[.125,.5],false); }
+  catch (error) { softwareUnresolved=error instanceof WebAssembly.RuntimeError; }
+  check(softwareUnresolved,'actual software draw of explicit alpha palette/key combination traps');
   return result;
 };
