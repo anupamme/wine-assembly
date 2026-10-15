@@ -266,3 +266,25 @@ Compact numeric logs, environment/wrapper, canonical build, dependency and
 recovery logs retained at scratch/runs/20261015-kkrieger-short-gpu in the
 coordinator checkout. Original600s registered run21221 started09:14:52Z;
 its outcome is pending, and these conformance results do not prove gameplay.
+
+Original run21221 completed 09:20:09Z (controller exit0; guest failed).
+All20 live samples held2GiB/OOM0; sample20 recorded the cleared guest after
+loading. Browser log has zero unsupported vertex declaration errors and zero
+PAGEERROR lines. Final image shows the shell after guest termination; no menu,
+gameplay, input or audio acceptance. The prior declaration rejection is fixed,
+but startup still fails. Last block0x801c31, preceding0x801c25, eax/ecx0,
+stack0x805400/0x80545f/0x7f6095/0x0c10080c match the earlier stop.
+
+IMPORTANT: host.js reports this message when EIP=0 and yield_reason=0; it
+does not establish ExitProcess or a normal return. Retained original-image
+disassembly identifies a likely null sound-buffer call (details in
+docs/re-notes/kkrieger-beta.md). No HRESULT was captured in this run, so the
+specific initialization failure remains a source-supported hypothesis.
+
+Full3387422-byte remote bundle SHA256-verified locally in
+scratch/runs/20261015-kkrieger-short-original, including21 states,12 images,
+original pinned archive, original file hashes, empty source patch and logs.
+Prior declaration evidence remains untouched for comparison; this fresh box
+has the same Chrome/module but different source and a different host, so this
+is not a timing comparison. No normal controls were sent. Process postflight
+09:21:03Z found no browser/node/build processes; browser/build slot released.
