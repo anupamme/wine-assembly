@@ -272,3 +272,41 @@ Queued bounded batch (only after Silver release and renewed root grant):
   failed label/actual/expected values in pixels.json.partial, plus last GPU
   stats and reported renderer/version after readback. Thus a baseline semantic
   mismatch is retained even when page.evaluate rejects before returning.
+
+2026-10-15 final bounded conformance run (actual, replaces pending scope):
+  Fixture79ee64459c9ec5d33dbe3bdc50aa33adffc6e741, process140057,
+  00:28:25.819Z--00:28:52.955Z, exited1 because the main control failed its
+  unchanged pixel oracle. All three suites executed; no SKIP.
+  Explicit Boids software route PASS5351draws/79fences, software with legacy
+  opt-out query PASS4413/65, WebGL PASS3942/114. Each had exactly one live
+  physical render Worker, manager ownership, no fallback and clean retirement.
+  Actual palette Worker lazySync=false AND true PASS: each seven RGB checks,
+  three blocked-before-drain barriers, old/new palette generation ownership,
+  natural slot reuse, actual heap adoption and clean teardown. Each GPU stats:
+  seven draws, six clears, eight pageChecks, zero fallbacks/errors/audit misses.
+  Instrumented Worker module SHA256:
+    1e29e553bbc7d623d520d154c71860fed8f4aafb4db0a119011b58d17ba84554
+
+  Main control901f27cc2d14f1fcbadda5746557b94b06b6ccb3 used its own compiler,
+  WAT closure and production JS plus exactly the same GPU fixture export text.
+  Compilation succeeded; instrumented module SHA256:
+    4a0d63c27a6ef4c3ef9de47406411e0f54a31d939ffaf663711150d867a1b687
+  Export text SHA256 (same as passing candidate cooperative fixture):
+    fcd43977bf9b9691ad9d47efd4bec8fcd496a5f334aec313dcaadc974ba5b77b
+  First WebGL1 alpha0/128/255 draw actually returned:
+    [[64,128,192,255],[64,128,192,255],[64,128,192,255]]
+  Unchanged expected:
+    [[64,128,192,0],[64,128,192,128],[64,128,192,255]]
+  Thus the control fails the intended alpha pixel oracle, not compilation or
+  setup; one actual GPU draw, zero fallbacks/errors. Exact failed assertion,
+  renderer/version and stats are retained in pixels.json.partial. WebGL2 main
+  control was not reached after this failure; no claim for that configuration.
+  Earlier candidate WebGL1/2 17+17 checks remain their separately pinned run.
+
+  All10 final files downloaded and SHA256-verified into the existing local
+  evidence folder's20261015-palette-final subdirectory. Controller exit1 and
+  original earlier route/setup failures remain preserved. Chrome process list
+  was empty00:29:16.197Z; runtime released then, no subsequent runtime work.
+  Remaining scope: unsupported legacy stencil path above; keyed/state144 and
+  DDPCAPS precedence unresolved. These unkeyed checks do not resolve those
+  contracts. No production edits, main merge, performance or hardware claims.
