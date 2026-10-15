@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Jedi Knight child startup and Outlaws original demo preflight)
+  status: active (Outlaws launch preparation and refill after Jedi licence blocker)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger core forward movement reviewed, report2193c3869; responsiveness followup remains. Two active new-game lanes: /root/jedi_original_child_startup prepares captured original installer PE; /root/new_game_refill_after_kkrieger selects original Outlaws v2 demo and recovery recipe. Sole runtime currently IW native lifecycle validation; game runs serialized after release.
+  Next: Kkrieger oneforwardmovement verified; responsiveness followup separate. Jedi originalinstaller reaches unansweredlicenceprompt (Telegram1404), blockeduserdecision. Outlaws original31filedemo verified/directlaunch preparation active; /root/new_game_refill_after_jedi source-selects second actionableunqualifiedtitle. IW realnative scopedendpoint fixture separate/source-only.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1600,9 +1600,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Jedi Knight Dark Forces II original demo
   id: NEW-GAME-JEDI-KNIGHT-DEMO-20261015
-  status: active (original PE installer child captured; startup queued)
-  owner: /root/jedi_original_child_startup
-  Next: Capture132450 terminal0 generated original674816B PE12a2929a,96files and exactemptyargs/cwdCroot; options preserved in originalINI. Rootarchive/nineartifact hashes and tealimage reviewed; report73fc6ee8f. Prepare bounded original child replay afterIW runtime release; no EULA answer, invented registry or gameplay claim.
+  status: blocked (original installer licence requires user decision)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Originalchild141587 reaches actual Software License Agreement; leftunanswered peruserinstruction and stoppedclean. Rootarchive+14recoveredartifact hashes/actualscreen reviewed; Telegramphoto1404 delivered. Full matching text evidence/demo-license.txt preserved. No acceptance/bypass/install/gameplay; lane refilled while awaiting decision.
   Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.
 
 - [ ] Improve and validate original .kkrieger control responsiveness
@@ -1614,7 +1614,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (source-only original demo provenance and recovery preparation)
-  owner: /root/new_game_refill_after_kkrieger
-  Next: Original outdemo_v2.exe archive metadata14186356B/SHA15568d44d and historic LucasArts download reference identified; package/readme/SHA256 not acquired yet. Complete recovery notes then separately serialized remote acquisition and normal installer/gameplay route. No local bulk fixtures, EULA answer or deployment.
+  status: active (original package verified; ordinary launch preparation)
+  owner: /root/outlaws_original_acquisition
+  Next: Original14,186,356B package verified SHA256501f37aa; ZIP SFX31files23,300,090B. Originalreadme says extractthenOLDEMO.EXE; no installer/registryfabrication. Reviewfullinventory/licence then boundedfirstlaunch onserializedbox. No guestexecuted yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
