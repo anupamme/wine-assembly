@@ -572,3 +572,15 @@ Host exit zero alone is insufficient. Pure JS rejection/order tests pass.
 No runtime/build/remote action occurred in preparation; canonical source/module
 pinning and a fresh root runtime grant remain prerequisites. The output is a
 newly generated registry, never asserted equal to the missing historical bytes.
+
+First bounded native registration on 15 October tested `6dfbff842` after a
+fresh canonical build (module `d463bdae09d9a4e8926c31f0a594535331a2a85d39d494c0e281b920ce9f0fa5`).
+Process73364 exited1 at10:34:13: devenum/quartz/qedit/QASF passed real HRESULT,
+guest exit and native COM checks; WMVCORE returned S_OK and exited0 but left
+the 671-entry snapshot byte-identical and no WMVCORE InprocServer32 value.
+The strict recipe stopped before the remaining four steps. Review the real
+export's intended effects before changing the oracle; no DLL defect inferred.
+Postflight10:34:53 found no survivors and unchanged6491sources/module/native12/
+original302. Evidence `scratch/runs/20261015-cmr3-native-registration` retains
+40 verified artifacts plus terminal receipts. Full registry remains incomplete;
+no game or retry executed. Runtime released to root.

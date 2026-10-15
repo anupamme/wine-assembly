@@ -86,3 +86,34 @@ undefined. The exact reviewed `a86527eb6065aa623225fa440a0f1df07b8cfd20`
 handoff is now incorporated. A source-contract regression fails on the old
 checkpoint and passes with the handoff, checking the tool's presence, size,
 SHA256 and historical provenance marker. All three focused tests pass.
+
+## First bounded registration execution
+
+Root granted the sole runtime after palette validation. Current main
+`6b269258` was merged before the candidate was pushed. Fresh checkout staging
+exposed tracked `test/binaries/dlls/SOURCES.md`; the gate now permits only that
+regular documentation file and rejects all other entries and symlinks. Four
+focused tests pass. Exact tested candidate: `6dfbff842c372d9db5cec8e1b833485d2cb312aa`.
+
+Canonical build process 72385 passed at 10:33:22 UTC on 15 October. Module
+SHA256 `d463bdae09d9a4e8926c31f0a594535331a2a85d39d494c0e281b920ce9f0fa5`
+matches the independently built current main. Registration process 73364 ran
+10:34:12–10:34:13 and exited 1. Devenum, quartz, qedit and QASF passed their
+HRESULT/exit/native-key checks (107, 493, 658 and 671 exported entries).
+WMVCORE's actual return trace at `0x401341` reports EAX zero and guest exit
+zero, but it added/changed no registry entries and has no InprocServer32
+value naming WMVCORE.DLL. Its snapshot is byte-identical to the QASF input.
+The strict oracle stopped here; WMADMOD, WMVDMOD, repeat QASF and MLANG were
+not attempted. This does not establish a defect in WMVCORE: the next review
+must establish the real export's intended effects before changing acceptance.
+
+Postflight 10:34:53 UTC found no surviving registration processes; all 6,491
+tracked source hashes, module, original 302 files and native12 were unchanged.
+The slot was released to root. Forty artifacts (1,649,340 bytes) were copied
+and size/SHA verified under `scratch/runs/20261015-cmr3-native-registration`,
+plus terminal receipts and summary. Archive SHA256:
+`98d5416b457d4228ab95bf58d714dd3a28e9d8e917fd4f2024b357e854a6f92e`.
+All source manifest entries independently match the local tested candidate.
+Remote run and build evidence remain in `/home/user/cmr3-registry-run-20261015`
+and `/home/user/cmr3-registry-build-20261015`. No game was launched, no complete
+registry was produced, and no retry was made after the acceptance failure.
