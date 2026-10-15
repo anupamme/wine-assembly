@@ -107,3 +107,28 @@ compiler's intermediate temporaries, and was corrected to verify that actual
 dataflow. This was a source-check issue, not a renderer/GPU result. No browser,
 GPU, build or sandbox execution occurred. Run the prepared browser regression
 only after the runtime grant; this follow-up does not remove the integration hold.
+
+After an explicit runtime grant, in the exact candidate checkout with its
+existing Puppeteer dependency available and `CHROME` set to the verified
+absolute browser executable, the bounded command is:
+
+```sh
+timeout --signal=TERM --kill-after=10s 90s node test/test-d3d9-stencil-web.js
+```
+
+Record the checkout commit, browser version, actual requested/observed WebGL
+versions, both JSON result records, exit status and GL errors. A timeout is
+inconclusive, never a pass. This renderer-only test does not need a WAT build
+and must not start a guest. No browser path or dependency availability has
+been verified by this source-only preparation.
+
+For a discriminating mutation in a separate disposable checkout, delete only
+`&& !(firstFixedStage.colorArg1 === 2 && !draw.textures?.[0])` from the adapted
+backend. The three named missing-texture RGB observations must fail (zero RGB
+instead of 64/128/192); the three corresponding live-color linkage rejection
+observations should also fail because the mutated program no longer reads
+diffuse. The source regression fails immediately on the same mutation. Do not
+modify or weaken the oracle to accept those results. The browser harness stops
+after the first failing version's assertion, with that version's complete
+observation record in its failure output; the unchanged candidate must pass
+both versions. Mutation runtime is not yet authorized or executed.
