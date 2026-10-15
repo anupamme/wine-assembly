@@ -957,9 +957,31 @@ class WineAssembly {
     }
   }
 
-  // The Resource Timing entry for a fetch is queued after its body completes,
-  // not before the last read resolves; give it two short turns to land. No
-  // entry means "not known", never "network".
+  // Debug response metadata is not proof of a browser cache hit. In particular,
+  // CF-Cache-Status describes the CDN, not the browser's own cache.
+  static async _fetchAssetResponse(url, init) {
+    const response = await fetch(url, init);
+    if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug')) {
+      const controlled = typeof navigator !== 'undefined' && !!navigator.serviceWorker?.controller;
+      console.debug('[asset-cache]', {
+        path: new URL(url, location.href).pathname,
+        method: init?.method || 'GET',
+        range: new Headers(init?.headers).get('Range'),
+        status: response.status,
+        cacheControl: response.headers.get('Cache-Control'),
+        etag: response.headers.get('ETag'),
+        contentRange: response.headers.get('Content-Range'),
+        contentLength: response.headers.get('Content-Length'),
+        cdnCache: response.headers.get('CF-Cache-Status'),
+        age: response.headers.get('Age'),
+        browserCache: controlled ? 'unknown: service worker hides cache attribution' : 'unknown: response body not yet consumed',
+      });
+    }
+    return response;
+  }
+
+  // Resource Timing entries can arrive just after the body completes.
+  // No entry means "not known", never "network".
   static async _cacheSourceSettled(url) {
     for (const wait of [0, 0, 25]) {
       const source = WineAssembly._cacheSource(url);
@@ -1006,7 +1028,7 @@ class WineAssembly {
   static async _fetchAssetCandidate(url, options = {}, transfer = null) {
     const init = options.signal ? { signal: options.signal } : undefined;
     const listening = !!(options && options.onTransfer);
-    const direct = await fetch(url, init);
+    const direct = await WineAssembly._fetchAssetResponse(url, init);
     if (direct.ok) {
       const bytes = listening
         ? await WineAssembly._readBody(direct, transfer, false)
@@ -1024,7 +1046,7 @@ class WineAssembly {
     let total = 0;
     for (let index = 0; ; index++) {
       const partUrl = WineAssembly._assetPartUrl(url, index);
-      const response = await fetch(partUrl, init);
+      const response = await WineAssembly._fetchAssetResponse(partUrl, init);
       if (response.status === 404) {
         if (index === 0) throw new Error(`Unable to load ${url}: HTTP 404`);
         throw new Error(`Unable to load ${url}: missing ${partUrl}`);
@@ -4036,9 +4058,9 @@ class WineAssembly {
                   fetch: (source, init = {}) => {
                     if (init.method === 'HEAD') {
                       checkCancelled();
-                      return fetch(source, { ...init, signal: transferOpts.signal });
+                      return WineAssembly._fetchAssetResponse(source, { ...init, signal: transferOpts.signal });
                     }
-                    return fetch(source, sizedRange ? { ...init, signal: lifetimeSignal } : init);
+                    return WineAssembly._fetchAssetResponse(source, sizedRange ? { ...init, signal: lifetimeSignal } : init);
                   },
                 };
                 // A stat-verified manifest already knows the length. Mount it
