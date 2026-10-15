@@ -421,6 +421,10 @@
       (br_if $pinned (i32.atomic.load (region.addr $WIN16_PROCESS_ARENA 0)))
       (call $lock_release (global.get $DLL_LOAD_LOCK))
       (br $retry)))
+    ;; A different instance staging or executing NE owns the nonblocking lease.
+    (if (i32.load (call $win16_task_shared (i32.const 40)))
+      (then (if (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id))
+        (then (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i64.const 0))))))
     ;; +32 is the process bootstrap marker; +36 counts live invocation frames.
     ;; Both lie before WinExec's start records at shared-cursor offset +0x100.
     (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 32))))

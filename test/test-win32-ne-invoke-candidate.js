@@ -71,8 +71,9 @@ async function main() {
   assert.equal(await invokeNeEntry(e,nested),0x56781234);clean();
   await assert.rejects(invokeNeEntry(e,trap),WebAssembly.RuntimeError);clean();
   await assert.rejects(invokeNeEntry(e,spin,{maxBlocks:16,sliceBlocks:4}),/budget exhausted/);clean();
-  const abort=new AbortController(),promise=invokeNeEntry(e,spin,{signal:abort.signal,maxBlocks:1000,sliceBlocks:4});
-  abort.abort(Error('native cancellation'));await assert.rejects(promise,/native cancellation/);clean();
+  const abort=new AbortController(),callbackExports={...e,run(blocks){e.run(blocks);abort.abort(Error('native synchronous cancellation'));}};
+  await assert.rejects(invokeNeEntry(callbackExports,spin,{signal:abort.signal,maxBlocks:1000,sliceBlocks:4}),/native synchronous cancellation/);clean();
+  await assert.rejects(invokeNeEntry(e,good,{signal:abort.signal}),/native synchronous cancellation/);clean();
   assert.equal(await invokeNeEntry(e,good),0xef01abcd,'usable after all failed calls');clean();
   assert.equal(e.is_win16(),0);assert.equal(e.get_image_base(),BASE);assert.equal(e.win16_process_arena_release(),1);
   console.log(JSON.stringify({passed:true,guestExecution:true,registerCalledEntry:true,moduleLifecycle:false,qtThunk:false}));

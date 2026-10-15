@@ -140,12 +140,13 @@ for(const bad of [0,((codeIndex<<3)<<16)|2,(cs<<16)|32,(ds<<16)|2]){
  assert.equal(first.win16_bridge_invoke_begin(prepared,bad,ds,7,16),0);assert.deepEqual(cpu(first),invokeCaller);
 }
 assert.equal(first.win16_bridge_invoke_begin(prepared,target,cs,7,16),0,'code selector cannot be DS');
+const blocked=second.win16_bridge_frame_begin();assert(blocked);
 assert.equal(first.win16_bridge_invoke_begin(prepared,target,ds,7,16),1);
 assert.equal(first.get_sync_msg_depth(),1);assert.equal(first.get_spill_pins(),1);assert.equal(first.thread_spill_can_recycle(),0);
 assert.equal(first.get_eip(),codeBase+2);assert.equal(first.get_sreg_ds(),ds);
 assert.equal(view.getUint32(first.get_reg_base()+28,true),7);assert.equal(view.getUint32(first.get_reg_base()+4,true),16);
 assert.equal(first.win16_bridge_invoke_result(prepared),-1n);
-const blocked=second.win16_bridge_frame_begin();assert.equal(second.win16_bridge_invoke_begin(blocked,target,ds,7,16),0,'foreign execution lease');assert.equal(second.win16_bridge_frame_end(blocked),1);
+assert.equal(second.win16_bridge_frame_begin(),0n,'foreign lease prevents allocation');assert.equal(second.win16_bridge_invoke_begin(blocked,target,ds,7,16),0,'foreign execution lease');assert.equal(second.win16_bridge_frame_end(blocked),1);
 const nested=first.win16_bridge_frame_begin();assert.equal(first.win16_bridge_invoke_begin(nested,target,ds,8,0),1);
 assert.equal(first.get_sync_msg_depth(),2);assert.equal(first.win16_bridge_frame_end(prepared),0);
 assert.equal(first.win16_bridge_frame_end(nested),1,'cancel nested invocation');assert.equal(first.get_sync_msg_depth(),1);
