@@ -1628,15 +1628,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Retain Worker ownership until retirement and termination complete
   id: IW-RETIREMENT-SLOT-OWNERSHIP-20261015
-  status: active (source fix tested; native validation)
-  owner: /root/iw_retirement_native_validation
-  Next: Fixb5b69a714 rootreview and actualWorkerABI regression PASS. Nativefixture492a queued/running under explicit solegrant; prearm160449 failed gitshow ENOBUFS, narrow maxBuffer correction authorized with failure retained. Independentbrokerdeadlock stillheld.
+  status: review (native regression passed; held chain integration pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Root independently verified archive22140338 logs: native lostreply/pincleanup cases PASS, old4050code fails intendedretentionassertion, restoredPASS; actualstack releaseexactonce. Sourceb5b nativevalidationdca0e6201; independentbroker correction remainsblockingcombinedintegration.
 
 - [ ] Resolve independent cross-process send deadlocks
   id: IW-INDEPENDENT-SEND-ADMISSION-20261015
-  status: ready
-  owner: unowned
-  Next: Held process-send-broker PID-wide same-chain stack deadlocks independent A/B sends and blocks unrelated destination threads. Use exact destination thread and waiting frame ownership; turn both retained cycle reproductions into passing regressions without admitting same-frame siblings. Follow retirement fix before integration.
+  status: active (thread/frame admission correction)
+  owner: /root/iw_independent_send_fix
+  Next: Fresh worker baseddca0e6201 implements per-thread exact waiting-frame admission and actualWorker regressions. Root reproduced independentA/B deadlock and unrelatedthread blocking; preserve sibling/stalecontext/lifetime controls. No heldchainmerge untilfixed andvalidated.
 
 - [ ] Implement OEM character to keyboard scan mapping for Outlaws
   id: OUTLAWS-OEMKEYSCAN-20261015
