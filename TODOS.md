@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (readable KERNEL32 native validation)
+  status: active (native KERNEL32 concurrency validation)
   owner: /root/outlaws_kernel_module
-  Next: Source0d290b10 includes real KERNEL32 PE identity, guest thunk-name hint/RVA repair and process-reload cleanup. Direct/sparse tiny tests PASS. Reviewed fullbuild/native Worker concurrency/JMP/refcounts/memoryhooks/lifecycle controller granted sole bx_9ef2wdsw after fresh preflight and TTL extension. Original NE/QT support remains unimplemented; no gameplay claim.
+  Next: Source88360 test-only Worker lifetime repair running bounded attempt4 PID227059 on sole bx_9ef2wdsw. Previous c384 full build and direct native arm passed; sparse arm timed out after64 references, not a gameplay pass. Await independent result/postflight. Original NE/QT support remains unimplemented.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1634,9 +1634,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Resolve independent cross-process send deadlocks
   id: IW-INDEPENDENT-SEND-ADMISSION-20261015
-  status: active (native proof passed; receiver-retirement review issue)
-  owner: /root/iw_receiver_retirement_fix
-  Next: Native199690 positive/control/restored0/1/0 verified archive272821f9. Fresh integration review found deferred sends can hang when receiver Worker exits without notifying broker. New sparse source worker repairs exact receiver retirement cancellation with actual Worker regression; executing frames must retain unwind ownership. Held chain remains off main.
+  status: active (native retirement proof passed; current-main integration)
+  owner: /root/iw_main_integration
+  Next: Native218603 candidate/old/restored0/1/0 verified archive5fa94ff8, exact old failure RECEIVER_RETIREMENT_DID_NOT_SETTLE. Canonicala948 and270 source pins unchanged, runtime released. Fresh source integration onto main88cb preserves cooperative crash diagnostics; combined current-main build/conformance still required. No original IW gameplay claim.
 
 - [ ] Implement OEM character to keyboard scan mapping for Outlaws
   id: OUTLAWS-OEMKEYSCAN-20261015
@@ -1647,7 +1647,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Lords of the Realm II original playable Windows demo
   id: NEW-GAME-LORDS2-DEMO-20261015
-  status: active (dialog composition fixed on main; setup continuation preparation)
+  status: active (original System Test guest crash diagnosis)
   owner: /root/new_demo_refill
-  Next: Merged5870a2e70 after original candidate/control/restored screenshot proof and149 artifact hashes. Telegram1407 delivered. Root source review distinguishes compatibility-test navigation from licence/restart/install consent; preparing one bounded System Test action and observation, no runtime grant yet. Clipped static text remains separate source diagnosis. Gameplay unproved.
+  Next: Original System Test action212340 trapped guest Thread1 EIP1a84eb then teal screen; harness0 is not guest success. Renderer fix5870 is merged; crash diagnostics88cb tested and pushed. Reviewed exact historical diagnostic replay a867 waits for Outlaws release; only Install then System Test Yes, all source restored. Gameplay unproved.
   Done: Registered original launch, actual ordinary player control and reviewed gameplay screenshot with source/run identity.
