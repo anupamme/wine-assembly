@@ -1,6 +1,6 @@
 # OpenGL / Direct3D corpus status, reconciled 2026-10-15
 
-## October 15 current integration status (13:33 UTC)
+## October 15 current integration status (14:38 UTC)
 
 This section supersedes the earlier same-day startup and unmerged-palette
 statuses below; those sections remain dated evidence.
@@ -17,11 +17,15 @@ statuses below; those sections remain dated evidence.
   the oracle detects that regression. See
   [the actual GPU result](iw-render-gpu-result-20261015.json). This validates
   renderer behavior, not Invisible War gameplay or its held transport changes.
-- Original .kkrieger now reaches a first-person level through ordinary Enter
-  on canonical source `dc0611212`. Matched movement captures are inconclusive;
-  sparse presentation observations are not logical FPS. Its next capture uses
-  [accepted input and update observations](kkrieger-input-progress-20261015.md)
-  plus visual review; counters alone cannot qualify player control.
+- Original .kkrieger reaches a first-person level and one reviewed ordinary
+  forward movement. Evidence `2193c3869` and qualification `bee579acb` are on
+  main. The [position capture](kkrieger-position-capture-20261015.md) records
+  body Z progressing from 0 to 0.686228 at fixed yaw and forward basis, with
+  reviewed before/after images. This closes only launch and one movement:
+  observed input/release latency, repeated controls, combat, audio, FPS and
+  a software/WebGL gameplay pair remain unqualified. The strict per-phase
+  comparison still lacks two distinct completed samples; do not call it a
+  performance measurement.
 - CMR3's software LINELIST implementation is merged in `78a06540f` after
   canonical build, native raster suites and three failing negative controls.
   The [original-game replay](cmr3-lines-gameplay-20261015.md) now passes Stages,
@@ -36,19 +40,31 @@ statuses below; those sections remain dated evidence.
   [Line conformance evidence](cmr3-software-line-lists-20261015.md) establishes
   the bounded raster fix, not the remaining game's correctness.
 
-Invisible War callback transport remains on held task branches. The latest
-source-only checkpoint `e2d10ebb0` shares ancestor `4fde32fa2` with current
-main; its loader predates main's existing lock, generation pins and
-INITIALIZING/LIVE/FAILED lifecycle. Passing tiny-Wasm Worker/local tests on
-that branch does not establish compatibility with current production.
-The selective transport port `8793e9f47` now preserves main's lifecycle.
-Cooperative loader primitive `622fa023d` passes tiny-Wasm Worker/local ABI
-tests; `/root/iw_scoped_lifecycle` is wiring exact frame/epoch completion,
-generation publication and acknowledged cleanup before Worker retirement.
-That work remains held off main; actual native loader and game tests are
-still pending. A missing lock in
-the held branch is not evidence that main lacks one; do not replace current
-loader behavior with that older implementation.
+Invisible War callback transport remains on held task branches. Selective
+port `8793e9f47` and endpoint checkpoint `17e713cd2` preserve main's existing
+lock, generation pins and INITIALIZING/LIVE/FAILED lifecycle; the older
+`e2d10ebb0` branch must not replace those semantics. Exact candidate canonical
+module `a948a826…` passed eight native loader/transport suites. Combined
+local/Worker and Worker/Worker native endpoint races, nested initialization,
+publication acknowledgements and lookup retirement passed at `4050bacb3`.
+
+Independent review then found scheduler teardown could discard a retiring
+Worker and reuse its TID/stack before termination. Fix `b5b69a714` passed
+actual Worker ABI checks and canonical native validation `dca0e6201`: lost
+retirement replies and generation-pin cleanup failures retain ownership;
+successful termination releases the real native stack exactly once. The old
+code fails the intended ownership assertion; restored code passes. Root
+verified archive SHA-256
+`22140338c794795536c124019079412943316e4a879b24014b4d51ea763f04fe`
+under `scratch/runs/20261015-iw-retirement-native/` and its logs/postflight.
+
+The combined chain still cannot merge: PID-wide broker admission deadlocks
+independent send chains and blocks a second receiver thread behind the first.
+Root reproduced both failures with real Node Workers, without guest WAT, in
+`scratch/runs/20261015-iw-broker-root-review/`. Worker
+`/root/iw_independent_send_fix` owns per-thread, exact-waiting-frame admission
+and regressions. Original Invisible War gameplay and both renderer routes
+remain unproved; native loader results do not establish either.
 
 The original 27-app membership evidence and per-game software/WebGL gameplay
 coverage remain incomplete. None of these focused tests closes that goal.

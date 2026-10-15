@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws verified original demo awaiting corrected extraction check then ordinary launch; Army Men source134113703 acquisition assigned to /root/army_men_original_acquisition after serialized slot release. Jedi waits unanswered licence decision; Kkr core forward movement verified with latency followup separate. IW combined native endpoint tests passed; root review pending.
+  Next: Outlaws original startup OemKeyScan failure now has tested source fix81268 and fullbuild/native worker; Army Men actual installer reaches licence screen, no assent, source diagnostic waits5s to distinguish prematurecapture fromblankedit defect. Both lanes actionable. Jedi remains userlicenceblocked; Kkr coremovement done with responsiveness followup.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1160,11 +1160,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: GLD3D-CORPUS-27-20261006
   status: active (renderer fixes merged; scoped transport and gameplay coverage pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/iw_scoped_lifecycle (source-only endpoint lifecycle); /root/kkrieger_position_capture (sole runtime)
+  worker: /root/iw_independent_send_fix (source-only transport); /root/outlaws_oemkeyscan_native (serialized build/native validation)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Merged palette6b269/renderer9eb485/LINELIST78a conformance; original CMR3 reaches stage loading then allocator failure. Diagnostic replay105999 automatically rejected and stopped; no retry. IW currentmain port8793/622 held pending endpoint/native proof. Original27 membership, defaultFALSE filtering and per-game dual-backend coverage remain open.
+  Next: Palette/renderer/LINELIST conformance merged; Kkr oneforwardmovement reviewed2193/bee579 but dual-backend/FPS/controlquality open. IW exactnative lifecycle/retirement passed throughdca0e6201, held pending perthread/frame independent-send fix. CMR diagnostic automatic-review hold unchanged/no retry. Original27 membership and per-game software/WebGL pairs remain open.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
