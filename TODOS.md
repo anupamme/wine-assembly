@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws launch preparation and refill after Jedi licence blocker)
+  status: active (Outlaws and Army Men original demo lanes)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger oneforwardmovement verified; responsiveness followup separate. Jedi originalinstaller reaches unansweredlicenceprompt (Telegram1404), blockeduserdecision. Outlaws original31filedemo verified/directlaunch preparation active; /root/new_game_refill_after_jedi source-selects second actionableunqualifiedtitle. IW realnative scopedendpoint fixture separate/source-only.
+  Next: Outlaws verified original demo awaiting corrected extraction check then ordinary launch; Army Men source134113703 acquired by /root/army_men_original_acquisition after serialized slot release. Jedi waits unanswered licence decision; Kkr core forward movement verified with latency followup separate. IW combined native endpoint tests passed; root review pending.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1618,3 +1618,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/outlaws_original_acquisition
   Next: Original14,186,356B package verified SHA256501f37aa; ZIP SFX31files23,300,090B. Originalreadme says extractthenOLDEMO.EXE; no installer/registryfabrication. Reviewfullinventory/licence then boundedfirstlaunch onserializedbox. No guestexecuted yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
+
+- [~] New-game lane: Army Men original 1998 Windows demo
+  id: NEW-GAME-ARMY-MEN-DEMO-20261015
+  status: active (source pinned; acquisition preparation)
+  owner: /root/army_men_original_acquisition
+  Next: Verify original18373265-byte archive and inner executable/readme/licence via bounded acquisition on sole remote lane after Outlaws release. No binary downloaded or original executable run yet. docs/re-notes/army-men-demo.md records source and recovery pins.
+  Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
