@@ -5,6 +5,7 @@ const fs = require('node:fs'), path = require('node:path'), crypto = require('no
 const assert = require('node:assert/strict');
 const plan = require('../docs/cmr3-recovery-20261015.json');
 const historical = require('../docs/cmr3-historical-receipts-20261015.json');
+const { requireCapacity, verifyCarve } = require('./cmr3-recovery-guards');
 const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 function inventory(root) {
   const rows = [];
@@ -20,6 +21,7 @@ function inventory(root) {
 }
 function assemble(source, out) {
   if (![source, out].every(p => path.isAbsolute(p || ''))) throw Error('Usage: cmr3-assemble-original.js ABSOLUTE_ACQUISITION ABSOLUTE_FRESH_OUTPUT');
+  requireCapacity(path.dirname(out));
   fs.mkdirSync(out);
   const save = (name, value) => fs.writeFileSync(path.join(out, name), JSON.stringify(value, null, 2) + '\n');
   const startedAt = new Date().toISOString();
@@ -28,7 +30,8 @@ function assemble(source, out) {
     assert.equal(sha(path.join(source, 'installer.exe')), plan.source.expectedMemberSha256);
     const carved = JSON.parse(fs.readFileSync(path.join(source, 'carved.json')));
     assert.deepEqual(carved.map(r => r.path), plan.historicalExtraction.rangesHalfOpen.map(r => r.output));
-    for (const r of carved) {
+    for (const [index, r] of carved.entries()) {
+      verifyCarve(path.join(source, 'installer.exe'), path.join(source, 'cabinet', r.path), plan.historicalExtraction.rangesHalfOpen[index]);
       assert.equal(fs.statSync(path.join(source, 'cabinet', r.path)).size, r.bytes);
       assert.equal(sha(path.join(source, 'cabinet', r.path)), r.sha256);
     }
@@ -38,6 +41,7 @@ function assemble(source, out) {
     const version = cp.spawnSync('dpkg-query', ['-W', '-f=${Package} ${Version}\n', 'unshield', 'libunshield0'], { encoding: 'utf8', timeout: 10000 });
     save('tool.json', { binary: unshield, sha256: sha(unshield), packages: version.stdout, status: version.status });
     const raw = path.join(out, 'extracted'), game = path.join(out, 'game');
+    requireCapacity(out);
     const args = ['-d', raw, 'x', path.join(source, 'cabinet/data1.cab')];
     const result = cp.spawnSync(unshield, args, { encoding: 'utf8', timeout: 90000, maxBuffer: 4 * 1024 ** 2 });
     fs.writeFileSync(path.join(out, 'unshield.log'), String(result.stdout || '') + String(result.stderr || ''));

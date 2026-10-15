@@ -7,18 +7,19 @@ const crypto = require('node:crypto');
 const cp = require('node:child_process');
 const { pipeline } = require('node:stream/promises');
 const plan = require('../docs/cmr3-recovery-20261015.json');
+const { requireCapacity } = require('./cmr3-recovery-guards');
 const sha = p => new Promise((resolve, reject) => {
   const h = crypto.createHash('sha256');
   fs.createReadStream(p).on('error', reject).on('data', b => h.update(b)).on('end', () => resolve(h.digest('hex')));
 });
 async function recover(root) {
   if (!path.isAbsolute(root || '')) throw Error('Usage: cmr3-source-recovery.js ABSOLUTE_FRESH_OUTPUT');
+  requireCapacity(path.dirname(root));
   fs.mkdirSync(root); // Fail closed on existing output; retain partial failures.
   const save = (name, data) => fs.writeFileSync(path.join(root, name), JSON.stringify(data, null, 2) + '\n');
   const startedAt = new Date().toISOString();
   try {
-    const space = fs.statfsSync(root);
-    if (space.bavail * space.bsize < 2 * 1024 ** 3) throw Error('Need at least 2GiB free for source recovery');
+    requireCapacity(root);
     const part = path.join(root, 'installer.exe.part');
     const args = ['--fail', '--location', '--max-time', '300', '--max-filesize', String(plan.source.memberBytes),
       '--output', part, '--dump-header', path.join(root, 'download-headers.txt'), plan.source.memberUrl];

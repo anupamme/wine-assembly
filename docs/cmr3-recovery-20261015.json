@@ -69,7 +69,8 @@
     "inventory": "docs/cmr3-original-inventory-20261015.json",
     "transferredArtifacts": 16,
     "transferredBytes": 221846,
-    "scripts": ["tools/cmr3-source-recovery.js", "tools/cmr3-assemble-original.js"],
+    "scripts": ["tools/cmr3-source-recovery.js", "tools/cmr3-assemble-original.js", "tools/cmr3-recovery-guards.js"],
+    "laterGuardValidation": "Source review added floor+512MiB capacity checks and independent source-range/carve comparison. Two synthetic positive/negative guard tests pass; revised recipe not rerun end to end. Actual original-byte recovery evidence predates these guard changes.",
     "noGuestExecuted": true
   },
   "preparedRemoteAcquisition": {

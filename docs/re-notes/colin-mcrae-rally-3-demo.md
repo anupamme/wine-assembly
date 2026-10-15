@@ -519,3 +519,13 @@ under `/home/user/cmr3-recovery-20261015`. Postflight at 09:26:01 found no
 remaining acquisition/extraction processes and released the slot. Native
 DLL/AX bytes and full saved registry remain prerequisites for launch; this
 milestone makes no menu, racing or gameplay claim.
+
+Post-run source review hardened both recipes to reserve a 2 GiB free-space
+floor plus a conservative 512 MiB expansion budget before writes. Assembly
+now independently compares every carved byte range against the verified
+installer, so changing a cabinet and its editable receipt together cannot
+pass validation. Two synthetic tests cover the space boundary, an authentic
+range, a tampered carve with a matching edited receipt, and truncated bytes.
+These checks pass locally; the revised recipes have not been rerun end to
+end. The successful original-byte recovery above used the earlier script
+versions preserved with its evidence.
