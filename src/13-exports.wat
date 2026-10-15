@@ -1171,6 +1171,13 @@
         (param i32) (param i32) (param i32) (param i32) (param i32)
     (call $client_rect_set
       (local.get 0) (local.get 1) (local.get 2) (local.get 3) (local.get 4)))
+  (func (export "gl_window_readback_version") (result i32) (i32.const 1))
+  (func (export "gl_window_set_gpu_owned") (param $hwnd i32) (param $owned i32) (result i32)
+    (local $p i32)
+    (local.set $p (call $gdi_window_surface_record (local.get $hwnd) (i32.const 0)))
+    (if (i32.eqz (local.get $p)) (then (return (i32.const 0))))
+    (i32.atomic.store offset=28 (local.get $p) (local.get $owned))
+    (i32.const 1))
   (func (export "test_gdi_window_surface_record") (param i32) (result i32)
     (call $gdi_window_surface_record (local.get 0) (i32.const 0)))
   (func (export "test_gdi_menu_overlay_dc") (result i32)
