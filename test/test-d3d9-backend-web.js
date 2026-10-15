@@ -2,6 +2,31 @@
 'use strict';
 const assert = require('assert');
 const path = require('path');
+// Pure JS validation arm: exercise the production draw validator with a GPU
+// boundary double. No browser, WASM, or pixels are needed for rejection detail.
+const { Device } = require('../lib/d3d9-backend');
+const vertexShader = new Uint32Array([0xfffe0101, 1, 0xc00f0000, 0x90e40000, 0xffff]);
+const pixelShader = new Uint32Array([0xffff0101, 1, 0x800f0000, 0xa0e40000, 0xffff]);
+for (const [type, offset] of [[5, 0], [3, 2], [3, -4], [3, 0.5]]) {
+  const draw = { vertexShader, pixelShader, primitive: 4, primitiveCount: 1,
+    stride: 16, vertices: new Uint8Array(48),
+    attributes: [{ register: 0, usage: 0, usageIndex: 2, type, offset }] };
+  const before = JSON.stringify(draw.attributes);
+  const gpu = { canvas: {width: 16, height: 16}, gl: {}, createProgram: () => ({}),
+    draw() { throw Error('invalid declaration reached GPU draw'); } };
+  assert.throws(() => Device.prototype.draw.call({gpu, programs: new Map(), bindDepth() {}}, draw), error => {
+    const prefix = 'D3D9 draw: unsupported vertex declaration element: ';
+    assert(error.message.startsWith(prefix));
+    assert.deepStrictEqual(JSON.parse(error.message.slice(prefix.length)),
+      {register: 0, type, offset, usage: 0, usageIndex: 2, stride: 16});
+    return true;
+  });
+  assert.strictEqual(JSON.stringify(draw.attributes), before, 'diagnostic must not mutate declaration');
+}
+if (process.argv.includes('--validation-only')) {
+  console.log('PASS D3D9 unsupported type and invalid offsets still reject with exact element detail');
+  process.exit(0);
+}
 const puppeteer = require('puppeteer');
 (async () => {
   const browser = await puppeteer.launch({ headless: true,
