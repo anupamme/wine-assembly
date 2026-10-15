@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two actionable original-demo lanes: Outlaws readable KERNEL32 native direct/sparse checks pass, cooperative DLL exit-code control pending; Lords II renderer fix merged, System Test guest crash captured with CS/SS and WASM stack, source diagnosis active. IW current-main integration is a parallel compatibility task. Army Men/Jedi licences remain unanswered. Runtime serialized on bx_9ef2wdsw.
+  Next: Two actionable original-demo lanes: FIFA98 verified231-file inventory merged91455a540, original startup preparation/transfer on sole bx_9ef2wdsw; Outlaws process-owned NE arena merged083699ed4 after native allocator/concurrency tests, private stacks/caller-context stage active. Lords GetWindow/GetNextWindow diagnostic follow-up is under automatic-review hold, not an active lane. Darkstone bounded character/Town route is queued as GL coverage. Army Men/Jedi licences remain unanswered.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (process-owned NE arena implementation)
+  status: active (private NE stacks and caller-context implementation)
   owner: /root/outlaws_kernel_module
-  Next: Cooperative DLL owner fix merged9b19b3549 after current-IW native249384 candidate/control/restored PASS; root verified archiveeccc5075 and postflight. Worker implements process-owned NE arena/publication and caller-context prerequisites in separate branch; KERNEL stage direct/sparse passed, NE/QT exports remain absent until real lifecycle tests.
+  Next: Process-owned NE arena merged083699ed4 with native ca90 fullbuild/realallocator/concurrentWorkers/reset/exhaustion/pureNE tests; receipt9a50486b1. Worker implements invocation-private stacks and exact caller restoration on task/outlaws-ne-context. KERNEL stage remains separate; NE initialization/QT exports and original gameplay unproved.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1659,5 +1659,5 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: FIFA98 local-only registration recovered949333e1f, original16MB ZIP recipe and installed tree present; no reviewed gameplay evidence found in audit. Fresh worker verifies original inventory and ordinary launch route, then serial runtime toward match gameplay and touch controls. Do not redo unrelated held Lords diagnostic; no public deployment.
+  Next: Original231 files/23411290 bytes independently verified and inventory merged91455a540. Reviewed controllerdc4b89b4d stages isolated SOURCE7405/module04ede, pins six donor modules and copies exact fixture; next bounded90s no-input startup with screenshot/log and independent cleanup. Then inspect ordinary match route and touch controls; no gameplay qualification yet.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
