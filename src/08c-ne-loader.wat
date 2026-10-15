@@ -2198,4 +2198,24 @@
     (if (i32.eq (local.get $field) (i32.const 1)) (then (return (call $win16_dll_data_sel (local.get $id)))))
     (if (i32.eq (local.get $field) (i32.const 2)) (then (return (call $win16_dll_heap_size (local.get $id)))))
     (i32.const 0))
+  ;; WEP is resolved by its export name, not by a presumed ordinal. The four
+  ;; byte Pascal name lives in the owning frame, clear of arguments and CPU files.
+  (func $win16_bridge_module_termination (export "win16_bridge_module_termination")
+    (param $id i32) (param $field i32) (result i32)
+    (local $name i32) (local $ordinal i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 4)))
+      (then (return (i32.const 0))))
+    (if (i32.eq (local.get $field) (i32.const 1)) (then (return (call $win16_dll_data_sel (local.get $id)))))
+    (if (local.get $field) (then (return (i32.const 0))))
+    (local.set $name (i32.add (i32.wrap_i64 (global.get $win16_bridge_frame)) (i32.const 304)))
+    (i32.store (local.get $name) (i32.const 0x50455703))
+    (local.set $ordinal (call $win16_dll_ordinal (local.get $id) (local.get $name)))
+    (if (i32.eqz (local.get $ordinal)) (then (return (i32.const 0))))
+    (call $win16_dll_entry (local.get $id) (local.get $ordinal)))
+
+  ;; Explicit owner retry after a failed WEP. A normal FreeLibrary cannot
+  ;; consume a second reference from a module already awaiting termination.
+  (func $win16_bridge_module_release_retry (export "win16_bridge_module_release_retry")
+    (param $id i32) (result i32)
+    (call $win16_bridge_module_readable (local.get $id) (i32.const 4)))
   ;; END WIN32 NE MODULE TRANSACTIONS

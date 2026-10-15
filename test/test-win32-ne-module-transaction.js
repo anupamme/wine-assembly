@@ -19,7 +19,7 @@ const api = fs.readFileSync(path.join(dir,'09e-win16-api.wat'),'utf8');
 const block = api.slice(api.indexOf(';; BEGIN WIN32 NE INVOCATION CONTEXT'),api.indexOf(';; END WIN32 NE INVOCATION CONTEXT'));
 const loader = fs.readFileSync(path.join(dir,'08c-ne-loader.wat'),'utf8');
 const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'),loader.indexOf(';; END WIN32 NE MODULE TRANSACTIONS'));
-const helpers = ['ascii_upper','win16_dll_entry','win16_entry_lookup','win16_dll_ordinal','win16_name_table_find','win16_pstr_eq_pstr','win16_dll_init_entry','win16_dll_data_sel','win16_dll_heap_size','win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
+const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_entry','win16_entry_lookup','win16_dll_ordinal','win16_name_table_find','win16_pstr_eq_pstr','win16_dll_init_entry','win16_dll_data_sel','win16_dll_heap_size','win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
  'load_ne_dll_sized','win16_dll_staging','win16_dll_rec','win16_dll_loaded','win16_dll_unload','win16_dll_run_ptr','win16_dll_refs_ptr','win16_dll_image_size_ptr','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
   'win16_arena_take','win16_arena_give','win16_arena_free_head','win16_alloc_segment','win16_arena_slot_base',
   'win16_gseg_field','win16_gseg_store','win16_gseg_count','win16_seg_set','win16_seg_base','win16_seg_limit',
@@ -30,7 +30,7 @@ const helpers = ['ascii_upper','win16_dll_entry','win16_entry_lookup','win16_dll
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
 // The rejection control executes the real loader entry. Every unrelated
 // parser/relocator dependency traps if reached, proving rejection precedes it.
-for(const n of ['win16_apply_relocs','win16_patch_dll_prologues','memcpy']) {
+for(const n of ['win16_apply_relocs']) {
  const f=form(n);
  const params=[...f.matchAll(/\(param [^)]*\)/g)].map(m=>m[0]).join(' ');
  const result=f.match(/\(result [^)]*\)/)?.[0]||'';
@@ -41,7 +41,7 @@ code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
- DLL_LOAD_LOCK:0x1100,current_thread_id:1};
+ DLL_LOAD_LOCK:0x1100,current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536};
 const globalNames=[...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s)]+)/g)].map(m=>m[1]))];
 const declared=new Set([...code.matchAll(/\(global \$([^\s)]+)/g)].map(m=>m[1]));
 const mutable=[];
@@ -64,6 +64,7 @@ const source=`
 (import "host" "g2w" (func $g2w (param i32) (result i32)))
 (import "host" "write" (func $gs32 (param i32 i32)))
 (func $host_log_i32 (param i32) (nop))
+(func (export "win16_app_dll_staging_size") (result i32) (global.get $WIN16_APP_DLL_STAGING_SIZE))
 (func $dbg_recompute (nop))
 (func $win16_dll_path_forget (param i32) (nop))
 (export "win16_bridge_module_provisional" (func $win16_bridge_module_provisional))
@@ -204,3 +205,57 @@ assert.equal(first.win16_bridge_module_rollback(accepted.id),1);
 assert.equal(first.win16_bridge_frame_end(one),1);assert.equal(second.win16_bridge_frame_end(two),1);
 assert.equal(first.win16_process_arena_release(),1);
 console.log('PASS actual NE module transactions: unpublished ownership, mutex-free staging lease, provisional allocation rollback, AX-zero cleanup and ready reference acquisition');
+
+// Real coordinator + actual compiled loader/allocator/entry/RETF helpers.
+// Guest execution is a controlled boundary here; the native candidate executes
+// these same image bytes with the complete interpreter.
+const {createNeLifecycle}=require('../lib/ne-lifecycle');
+const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
+first.set_sync_msg_depth(0);let calls=0,trapWep=true;
+const lifecycleExports={...first,run(){
+ calls++;const p=translate(first.get_eip());
+ if(bytes[p]===0x0f && (bytes[p+1]===0x0b))throw Error('controlled guest trap');
+ assert.equal(bytes[p],0xb8);view.setUint32(first.get_reg_base(),view.getUint16(p+1,true),true);
+ view.setUint32(first.get_reg_base()+8,0,true);
+ first.th_retf16(bytes[p+3]===0xca?view.getUint16(p+4,true):0);
+}};
+const images=new Map([
+ ['HELPER',neLifecycleImage()],['PARENT',neLifecycleImage({dependencies:['HELPER']})],
+ ['ZERO',neLifecycleImage({result:0,dependencies:['HELPER']})],
+ ['TRAP',neLifecycleImage({trapInit:true,dependencies:['HELPER']})],
+ ['BADWEP',neLifecycleImage({trapWep:true,dependencies:['HELPER']})],
+ ['MISSING',neLifecycleImage({dependencies:['ABSENT']})],
+ ['CYCLE',neLifecycleImage({dependencies:['CYCLE']})],
+]);
+const lifecycle=createNeLifecycle(lifecycleExports,memory,images);
+assert.throws(()=>lifecycle.load('MISSING'),/Missing NE image/);
+assert.throws(()=>lifecycle.load('CYCLE'),/recursive NE dependency/);
+const parentId=lifecycle.load('parent.dll'),afterInit=calls;
+assert.equal(afterInit,2,'dependency then parent initialized exactly once');
+assert.equal(lifecycle.load('PARENT'),parentId);assert.equal(calls,afterInit,'ready acquisition skips initializer');
+assert(lifecycle.lookup(parentId,'VALUE'));assert.equal(lifecycle.lookup(parentId,'WEP'),lifecycle.lookup(parentId,3));
+assert.equal(lifecycle.lookup(parentId,'MISSING'),0);assert.equal(lifecycle.lookup(parentId,4),0);
+lifecycle.release(parentId);assert.equal(calls,afterInit,'extra reference does not terminate');
+lifecycle.release(parentId);assert.equal(calls,afterInit+2,'parent and sole dependency WEP executed');
+assert.equal(lifecycle.lookup(parentId,2),0,'retired module not visible');
+for(const name of ['ZERO','TRAP']) {
+ assert.throws(()=>lifecycle.load(name),name==='ZERO'?/AX zero/:/controlled guest trap/);
+ for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0,'failed-init restores lease/frame');
+ const inspect=first.win16_bridge_frame_begin();
+ for(let id=13;id<37;id++)assert.equal(view.getUint32(first.win16_bridge_module_record(id),true),0,'all failed-init ownership cleared');
+ assert.equal(first.win16_bridge_frame_end(inspect),1);
+}
+const failing=lifecycle.load('BADWEP');
+assert.throws(()=>lifecycle.release(failing),/controlled guest trap/);
+assert.equal(view.getUint32(shared+36,true),0,'caller context restored after failed WEP');
+assert.equal(view.getUint32(shared+44,true),1,'failed termination retains lease');
+assert.throws(()=>lifecycle.load('BADWEP'),/busy/);assert.equal(lifecycle.lookup(failing,2),0);
+const repair=first.win16_bridge_frame_begin(),failureRecord=first.win16_bridge_module_record(failing);
+assert.equal(view.getUint32(failureRecord,true),4);assert(first.win16_bridge_module_dependencies(failing)>0);
+const wep=first.win16_bridge_module_termination(failing,0),codeBase=first.win16_seg_base(wep>>>19);
+bytes.set([0xb8,1,0,0xca,2,0],translate(codeBase+(wep&65535)));
+assert.equal(first.win16_bridge_frame_end(repair),1);
+lifecycle.retryTermination(failing);
+for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0,'retry finishes retained owner and dependency');
+assert.equal(first.win16_process_arena_release(),1);
+console.log('PASS real NE lifecycle coordinator/loader: dependency refs, init/publication, named lookup, WEP, rollback and retained failed termination (guest run controlled)');
