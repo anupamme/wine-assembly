@@ -4,9 +4,13 @@
 // test exports. All unexpected host calls fail; no decoder/export replacement.
 globalThis.runPaletteGpu = async function (version) {
   const diagnostics = [];
+  const observations = [];
+  const evidence = globalThis.paletteGpuEvidence = {version,diagnostics,observations};
   const eq = (a, b, label) => {
-    if (JSON.stringify(a) !== JSON.stringify(b))
+    if (JSON.stringify(a) !== JSON.stringify(b)) {
+      evidence.failedAssertion={label,actual:a,expected:b};
       throw Error(`${label}: actual=${JSON.stringify(a)} expected=${JSON.stringify(b)}`);
+    }
   };
   const check = (value, label) => { if (!value) throw Error(label); };
   const module = await WebAssembly.compile(await (await fetch('/fixture.wasm')).arrayBuffer());
@@ -109,6 +113,10 @@ globalThis.runPaletteGpu = async function (version) {
   const read = () => {
     gpu.fence();
     const target = gpu.targets.get(d.rt), g = target.device.gpu, gl = g.gl;
+    evidence.actualVersion=gl.getParameter(gl.VERSION);
+    const debug=gl.getExtension('WEBGL_debug_renderer_info');
+    evidence.renderer=gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
+    evidence.stats=gpu.snapshot();
     g.bindImplicitTarget();
     const bytes = new Uint8Array(4*4*4);
     gl.readPixels(0,0,4,4,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
@@ -116,7 +124,6 @@ globalThis.runPaletteGpu = async function (version) {
     // Rows are identical; examine an interior row away from raster edges.
     return [0,1,2].map(x=>Array.from(bytes.slice((4+x)*4,(5+x)*4)));
   };
-  const observations = [];
   const record = (label, expected) => { const actual=read(); eq(actual,expected,label); observations.push({label,actual}); };
   const rgba = (a, colors=[rgb,rgb,rgb]) => a.map((v,i)=>[...colors[i],v]);
   const clear = tex => eq(e.pa_clear(d.rt,1,0xff000000,1,0,0,4,4,tex),1,'real WAT clear descriptor accepted');

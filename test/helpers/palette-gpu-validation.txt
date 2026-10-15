@@ -268,3 +268,7 @@ Queued bounded batch (only after Silver release and renewed root grant):
   production/fixture/module identities. A main pixel assertion failure is an
   expected possible control outcome, never automatically a passing batch.
   No CPU regression repeats or candidate production rebuild are included.
+  Browser assertion failures preserve the completed observation list and exact
+  failed label/actual/expected values in pixels.json.partial, plus last GPU
+  stats and reported renderer/version after readback. Thus a baseline semantic
+  mismatch is retained even when page.evaluate rejects before returning.

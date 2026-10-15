@@ -56,14 +56,14 @@ const saveEvidence = evidence => {
     res.setHeader('Content-Type',req.url.endsWith('.wasm')?'application/wasm':'text/javascript'); res.end(body);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  let browser;
+  let browser,page;
   try {
     browser=await puppeteer.launch({headless:true,
       executablePath:process.env.CHROME || '/usr/bin/chromium',
       args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
     evidence.browser=await browser.version();
     for (const version of [1,2]) {
-      const page=await browser.newPage();
+      page=await browser.newPage();
       page.setDefaultTimeout(120000);
       await page.goto(`http://127.0.0.1:${server.address().port}/`);
       evidence.stage=`WebGL${version} fixture setup and pixel assertions`;
@@ -71,9 +71,14 @@ const saveEvidence = evidence => {
       evidence.results.push({version,...result});
       console.log(`PASS WebGL${version}: ${result.observations.length} real palette draw/clear/alpha framebuffer checks`);
       await page.close();
+      page=null;
     }
     evidence.stage='passed';
-  } catch (error) { evidence.error=error.stack || String(error); throw error; }
+  } catch (error) {
+    evidence.error=error.stack || String(error);
+    if(page)evidence.partial=await page.evaluate(()=>globalThis.paletteGpuEvidence||null).catch(()=>null);
+    throw error;
+  }
   finally {
     saveEvidence(evidence);
     if (browser) await browser.close();
