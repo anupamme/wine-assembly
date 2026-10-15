@@ -487,3 +487,59 @@ It preserves code bytes for review, checks entry prefixes, and records actual
 MSG, wndproc arguments, key translation, queue and callback registers. Entry
 prefixes alone are not a complete code-identity proof; review captured bytes.
 Syntax and whitespace checks pass; observer runtime remains unexecuted.
+
+### Original input diagnosis and first-person level (2026-10-15)
+
+One original600-second run, controller60373, used the unchanged previously
+tested `42b0be0454393da9f75821e44c916b45d68f0414` source, not current main.
+All960 source hashes, tracked build dependencies, module SHA256
+`2dc9775e260c872d098a7b9db43ba0d9797977d6c43f552ddcc0ec235f47ec87`,
+and the three original fixture hashes matched before execution. Observer
+`a0a7165ae4adbdee656a41946d6b845bb250548d` was staged separately; no guest
+bytes/registers or emulator input behavior changed. Evidence is
+`scratch/runs/20261015-kkrieger-menu-input/` (92 transferred artifacts,
+15714270 bytes, every length/SHA verified, plus local recipes and receipts).
+
+The title sequence is visible at315seconds and Start menu by375seconds.
+Observers64255 and64460 each exit0. The250ms ArrowDown/ArrowUp/Enter sequence
+does not leave the menu. Crucially, actual PeekMessage MSG and wndproc args
+both contain HWND0x10001, matching focus/main HWND. The guest maps those
+keys to0x10001/0x10000/0x0a and delivers down/up to callback0x81e8cb. Enter
+down and up are consumed together from queue `[0x0a,0x8000000a]`. Six32-byte
+code snapshots match the prior unpacked image exactly. This rules out the
+suspected null-HWND routing explanation for these observed key events.
+
+The guest callback at0x81daae stores each masked event at its object's
+offset0x1553c, including the high-bit keyup. The later menu consumer at
+0x81937b compares that single value against arrows, Space, and0x0a, then
+conditionally writes a menu state byte and clears the value. Thus a short
+down/up pair dispatched before the next menu evaluation can overwrite the
+press. The broad diagnostic range may itself slow consumption; these are
+instrumented observations, not baseline engine timing measurements. The
+accurate page-pixel click(390,390) also leaves the menu; its button events
+appear in the host log after the click observer's snapshot interval. This
+does not establish that this menu supports mouse activation.
+
+Within the same600-second run, observer65318 holds Enter from
+10:22:40.524Z to10:22:45.636Z (about5.1seconds). Previous broad tracing is
+off; a narrow read-only consumer trace covers0x81937b..0x819456. At page
+performance525510.3ms it captures last-value0x0a at0x8193ec, takes0x819411,
+and reaches0x81944a with the value cleared to0. After keyup it is0x8000000a.
+The immediate screenshot still shows the menu, but the555-second frame and
+final600-second frame show the first-person level with weapon, life100 and
+ammo100. This establishes ordinary-input game start and level rendering.
+It does **not** qualify movement, combat, audible sound or FPS.
+
+The owner ends normally10:23:58.784Z. A late movement observer65955 starts
+10:24:00 and fails attachment with ECONNREFUSED before sending input; that
+failure is retained. No timeout extension or second run occurred. All three
+input observers exit0; postflight10:24:45.998Z finds no runtime survivors,
+unchanged960 source hashes, and matching module/fixture pins. Slot released.
+
+Next bounded run can start its menu observation earlier (around375seconds),
+use a five-second Enter hold, and allow the subsequent scene transition
+before matched idle/movement captures. The reusable observer now accepts
+`WA_MENU_ACTION=enter WA_MENU_HOLD_MS=5000` (250..5000 allowed); this small
+configuration change has syntax/whitespace checks only, and was not rerun.
+The successful held-input recipe is retained as `held-observer.js` in the
+evidence folder. No emulator input fix is justified by these findings.

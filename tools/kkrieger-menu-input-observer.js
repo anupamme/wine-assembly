@@ -18,7 +18,9 @@ async function main() {
     throw Error('WA_MENU_OWNER_DEADLINE must leave at least60s inside the existing owner bound');
   const x = Number(process.env.WA_MENU_START_X), y = Number(process.env.WA_MENU_START_Y);
   const action = process.env.WA_MENU_ACTION || 'keys';
-  if (!['keys', 'click'].includes(action)) throw Error('WA_MENU_ACTION must be keys or click');
+  const holdMs = Number(process.env.WA_MENU_HOLD_MS || 250);
+  if (!Number.isInteger(holdMs) || holdMs < 250 || holdMs > 5000) throw Error('WA_MENU_HOLD_MS must be250..5000');
+  if (!['keys', 'enter', 'click'].includes(action)) throw Error('WA_MENU_ACTION must be keys, enter or click');
   if (action === 'click' && (!Number.isFinite(x) || !Number.isFinite(y)))
     throw Error('Set WA_MENU_START_X/Y from the reviewed live Start label center, in page pixels');
   fs.mkdirSync(out, {recursive: false});
@@ -93,9 +95,9 @@ async function main() {
       fs.writeFileSync(path.join(out, label + '.json'), JSON.stringify(state));
     };
     const key = async name => {
-      events.push({at: new Date().toISOString(), action: 'key', name, holdMs: 250});
+      events.push({at: new Date().toISOString(), action: 'key', name, holdMs});
       await page.keyboard.down(name);
-      try { await delay(250); } finally { await page.keyboard.up(name); }
+      try { await delay(holdMs); } finally { await page.keyboard.up(name); }
       await delay(1500);
       await shot(name);
     };
@@ -105,6 +107,8 @@ async function main() {
     if (action === 'keys') {
       await key('ArrowDown');
       await key('ArrowUp');
+      await key('Enter');
+    } else if (action === 'enter') {
       await key('Enter');
     } else {
       const viewport = await page.evaluate(() => ({width: innerWidth, height: innerHeight}));
