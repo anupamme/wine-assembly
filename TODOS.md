@@ -1564,3 +1564,36 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Evidence: 40fe91b98237f5cf21beef64235d78a94fead740; scratch/tg87-ops-launch-verification.json; Telegram1402
   Done: Private catalog registered and available, launch HTML/module/original EXE HTTP200 with exact hashes;10launch testsPASS including realindex anchor. No public deployment or movement qualification.
+
+
+## Palette integration reconciliation — October 15
+
+- [x] Correct indexed legacy GPU texture color-key behavior if internal key contract confirms raw indices
+  id: D3D-INDEXED-COLORKEY-20261014
+  status: done (bounded implementation and integration validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main; exact combined canonical build,16CPU suites,42observations eachWebGL1/2 and22each actualWorker syncmode PASS. See docs/palette-combined-validation-20261015.txt; this supersedes stale execution/access/ownership blockers. DefaultFALSE filtered-key semantics and alpha-key precedence remain separate open tasks D3D-FILTERED-KEY-STATE144-20261014 and D3D-ALPHA-KEY-PRECEDENCE-20261014, not completed by these results.
+
+- [x] Correct cross-format indexed texture color-key conversion
+  id: D3D-TEXTURE-LOAD-INDEXED-KEY-20261014
+  status: done (bounded implementation and integration validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main; exact combined canonical build,16CPU suites,42observations eachWebGL1/2 and22each actualWorker syncmode PASS. See docs/palette-combined-validation-20261015.txt; this supersedes stale execution/access/ownership blockers. DefaultFALSE filtered-key semantics and alpha-key precedence remain separate open tasks D3D-FILTERED-KEY-STATE144-20261014 and D3D-ALPHA-KEY-PRECEDENCE-20261014, not completed by these results.
+
+- [x] Implement and validate legacy palette alpha semantics
+  id: D3D-PALETTE-ALPHA-API-20261014
+  status: done (bounded implementation and integration validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main; exact combined canonical build,16CPU suites,42observations eachWebGL1/2 and22each actualWorker syncmode PASS. See docs/palette-combined-validation-20261015.txt; this supersedes stale execution/access/ownership blockers. DefaultFALSE filtered-key semantics and alpha-key precedence remain separate open tasks D3D-FILTERED-KEY-STATE144-20261014 and D3D-ALPHA-KEY-PRECEDENCE-20261014, not completed by these results.
+
+- [x] Correct software ordinary-palette point-sampled key identity
+  id: D3D-SOFTWARE-POINT-KEY-20261014
+  status: done (bounded implementation and integration validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main; exact combined canonical build,16CPU suites,42observations eachWebGL1/2 and22each actualWorker syncmode PASS. See docs/palette-combined-validation-20261015.txt; this supersedes stale execution/access/ownership blockers. DefaultFALSE filtered-key semantics and alpha-key precedence remain separate open tasks D3D-FILTERED-KEY-STATE144-20261014 and D3D-ALPHA-KEY-PRECEDENCE-20261014, not completed by these results.
+
+- [x] Add full-VM palette-alpha regression with real watched decoder/cache
+  id: D3D-PALETTE-FULLVM-REGRESSIONS-20261014
+  status: done (bounded implementation and integration validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main; exact combined canonical build,16CPU suites,42observations eachWebGL1/2 and22each actualWorker syncmode PASS. See docs/palette-combined-validation-20261015.txt; this supersedes stale execution/access/ownership blockers. DefaultFALSE filtered-key semantics and alpha-key precedence remain separate open tasks D3D-FILTERED-KEY-STATE144-20261014 and D3D-ALPHA-KEY-PRECEDENCE-20261014, not completed by these results.
