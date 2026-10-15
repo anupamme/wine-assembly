@@ -1513,11 +1513,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Aliens versus Predator 2 single-player demo
   id: NEW-GAME-AVP2-DEMO-20261010
-  status: active
+  status: ready (gameplay evidence exists; registered launch and current-main validation remain)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: root direct, serialized after BG2 evidence collection
+  worker: none
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
-  Next: Original launcher-captured lithtech.exe -cmdfile avp2cmds.txt reaches Single Player -> Marine -> Unwelcome Guests but mission launch fails HUDMgr font initialization. Reviewed run20261010T0237Z-avp2-hud-font; replay142017/142024 terminal0 confirms same error, run20261010T0239Z-avp2-font-trace. cshell factory preferred VA1011bfd0 returns null to10036b3b; discriminate argument/allocation/virtual-init failure before implementing a fix. Branch replay controller143279 live on boat bx_hx8msa33 with600s guard; output /home/user/avp2-font-branch-20261010. Menu model textures also corrupt. Missing local installed media test/binaries/candidates/avp2-demo; original payload remains on boat, disk below2GiB prevents bulk restore. No gameplay qualification or public deployment.
+  Next: Supersede stale HUD-font blocker: original Marine forward-input and textured scene reviewed in run20261011T0836Z-avp2-bltfast-gameplay; BltFast fix merged6613fe863. Manifest/re-note retain exact limits: historical retained-source capture, not current-main revalidation; no registered dashboard launch. Recover original67-file captured handoff/media through existing recipes, add faithful registered launch, then validate current main. Do not redo fixed HUD/DXT diagnosis. FPS/audio remain unqualified.
   Done: Original demo launch, ordinary player input visibly changes gameplay, reviewed screenshot with exact source/build/run evidence.
 
 - [x] Validate original .kkrieger startup on separate test box
