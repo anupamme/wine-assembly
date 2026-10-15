@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (current source investigation and independent new-game acquisition)
+  status: active (serialized Kkrieger position capture and Jedi Knight installer followup)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two active unqualified lanes: /root/kkrieger_movement_consumer source-traces accepted W versus actual displacement after reviewed166artifact run93374; /root/new_game_refill_20261015 acquires original Jedi Knight demo onsolebx_9ef2wdsw. CMR3 replay is held after automatic rejection, stopped clean; no retry. IW currentmain scopedlifecycle port separate.
+  Next: Two unqualified lanes: /root/kkrieger_position_capture owns sole bx_9ef2wdsw run118738 with read-only position comparison; /root/jedi_installer_handoff source-verifies the original Win16 setup-child capture path after Jedi setup116272 failed staging. No parallel runtime. CMR3 diagnostic replay remains held after automatic rejection; IW lifecycle port is source-only.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1522,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (current source investigation and independent new-game acquisition)
+  status: active (bounded original position capture)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Run93374 acceptedW with updatecounter390-400-410 andhost/guestrelease; fiveimages do not distinguish movement fromidle drift. Root independently verified166artifacts24611819B; report d0177304c merged. /root/kkrieger_movement_consumer source-traces original position/timestep consumer before any newruntime.
+  Next: Merged read-only original-code-pinned position probe5f69500eb. /root/kkrieger_position_capture runs frozen46691eb61 canonical937466 on sole bx_9ef2wdsw PID118738, deadline13:45:07.840Z. Compare completed body/camera positions against idle; accepted W alone is not directional qualification.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1600,7 +1600,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Jedi Knight Dark Forces II original demo
   id: NEW-GAME-JEDI-KNIGHT-DEMO-20261015
-  status: active (original package acquisition and licence/readme inspection)
-  owner: /root/new_game_refill_20261015
-  Next: Archived LucasArts original jedidemo.exe source selected; acquire/hash/extract onsolebx_9ef2wdsw, inspect original readme and normal route. No guest/build/browser grant yet; no EULA answer or public deployment.
+  status: active (original installer-child staging investigation)
+  owner: /root/jedi_installer_handoff
+  Next: Original39files verified; setup116272 exits plain teal with B0071612 staging failure before child execution proved. Review source capture coverage before preparing a bounded ordinary setup-child capture/replay. Runtime queued after Kkrieger; no fabricated install state, EULA answer or gameplay claim.
   Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.

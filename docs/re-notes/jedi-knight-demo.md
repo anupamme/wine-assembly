@@ -3,7 +3,7 @@
 2026-10-15, owner `/root/new_game_refill_20261015`, proposed candidate
 `jedi-knight-demo`. Source-only selection against main `729d3fc73675762407a5f45f425a70eb7186866b`.
 The initial selection below preceded acquisition. The later acquisition section
-supersedes its package/licence unknowns; no registration or guest run yet.
+supersedes its package/licence unknowns. The final sections record the first setup run; no registered working launch or gameplay is established.
 
 ## Selection and provenance
 
@@ -128,7 +128,8 @@ replacement engine or direct-to-level bypass are justified by this extraction.
 Separately granted runtime `116272`, `2026-10-15T13:19:39.244Z` to
 `13:19:40.009Z`, launched original `setup.exe` with all 39 files mounted,
 300-second guest and 360-second controller limits. No input was sent.
-The original Win16 setup invoked `C:\WINDOWS\TEMP\_INS0432._MP` via WinExec;
+The original Win16 setup requested `C:\WINDOWS\TEMP\_INS0432._MP` via WinExec;
+execution of that child was not established;
 thread 1 subsequently exited and the host reported `window cleanup failed:
 unreachable`. Parent Exit(0) followed after 602 batches. This is an observed
 installer failure, not proof of a particular cause. No installation, licence
@@ -168,7 +169,9 @@ bootstrap installer's original generated child before temporary-file cleanup.
 The warning in `ThreadManager._markThreadExited` is caught while destroying
 the exiting thread's windows; it does not establish why the child failed.
 
-Exact next ready task, requiring a fresh serialized runtime grant: repeat the
+First validate in source that the capture hook covers this Win16 staging path;
+a ShellExecute hook alone does not establish that. The next proposed task,
+requiring that verification and a fresh serialized runtime grant: repeat the
 ordinary original setup with `--capture-launch=<fresh-dir>`, `--save-vfs`,
 and `--reg-export` so the installer-created `_INS0432._MP` and its genuine
 arguments/cwd survive. Review the resulting `launch.json`, file identities and
