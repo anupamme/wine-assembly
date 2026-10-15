@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const {execFileSync} = require('node:child_process');
-const {containedModule, preflightDelivery, verifyDelivery, installPageDeliveryGuard} = require('./kkrieger-canonical-delivery');
+const {containedModule, preflightDelivery, preflightAssets, verifyDelivery, installPageDeliveryGuard} = require('./kkrieger-canonical-delivery');
 const {captureProgressHold} = require('./kkrieger-input-progress');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -95,6 +95,12 @@ async function main() {
     const origin = 'http://127.0.0.1:' + server.address().port;
     meta.deliveryPreflight = await preflightDelivery(root, origin + '/build/wine-assembly.wasm', moduleHash);
     write('delivery-preflight', meta.deliveryPreflight);
+    if (!app.localFileManifest) throw Error('Registered browser manifest missing');
+    const assetPins = Object.fromEntries(Object.entries(fixturePins).map(([file, hash]) =>
+      [path.join(path.dirname(app.exe), file), hash]));
+    assetPins[app.localFileManifest] = 'd177f30379d59b6723cba5818bfc37104ef670e9c9549704d1510fd1fd9dba0b';
+    meta.assetPreflight = await preflightAssets(root, origin, assetPins);
+    write('asset-preflight', meta.assetPreflight);
     browser = await puppeteer.launch({executablePath: '/usr/bin/google-chrome', headless: true,
       args: ['--no-sandbox', '--enable-unsafe-swiftshader'], protocolTimeout: 5000});
     meta.browser = await browser.version();
