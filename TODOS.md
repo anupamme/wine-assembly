@@ -1637,3 +1637,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: ready
   owner: unowned
   Next: Held process-send-broker PID-wide same-chain stack deadlocks independent A/B sends and blocks unrelated destination threads. Use exact destination thread and waiting frame ownership; turn both retained cycle reproductions into passing regressions without admitting same-frame siblings. Follow retirement fix before integration.
+
+- [ ] Implement OEM character to keyboard scan mapping for Outlaws
+  id: OUTLAWS-OEMKEYSCAN-20261015
+  status: ready
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Actual original launch153370 fails batch0 at unimplemented OemKeyScan(0), return43a8f1. Append API entry, implement documented OEM scan/shift mapping and unmappable failure for current US layout, test actual WAT/stack plus representative controls/punctuation/extended OEM characters; no silent zero or question-mark fallback. Native build and original replay serialized after Army Men.
+  Evidence: scratch/runs/20261015-outlaws-original-startup; archiveSHA241f8911ad2071909fcdeb368d9ff91bb98f76e950744d6abf6314ccc01285dc; independent postflight14:19:27 unchanged active[].
