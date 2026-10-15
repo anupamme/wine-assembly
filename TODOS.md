@@ -1505,9 +1505,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Serialize shared DLL mapping and lifetime mutation
   id: DLL-CONCURRENT-MAPPING-20261009
-  status: ready
+  status: review (serialization and unload merged; CMR3/Alice gameplay revalidation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two actual Node workers forced to interleave after PE_STAGING copy reproduce wrong module bytes and same published table slot, even with distinct low destination addresses. Original main280d28eb1/module527004d9 also fails the same staged-image control (worker B receives worker A bytes); shared staging is a pre-existing race. Candidate d5a47f240 additionally needs graph lifetime synchronization. Implement loader serialization without holding a spinlock across host imports or callbacks. Also protect reachability and reference mutation across instances and refresh per-instance DLL counts. Reproducer: scratch/alice-border-20261009/concurrent-loader-control.js; evidence run20261009T2330Z-dll-cycle-worker-review. No merge-ready claim.
+  Next: Load/publication serialization cfe411bdc/1b3c20aec/7a2953021/89524faca and real unload83947f6a6 are on main. Historical comments about stub FreeLibrary and held-branch adaptation are superseded. Current next action is fresh CMR3/Alice original gameplay validation; reproduce a current boundary before changing loader behavior.
   Done: Concurrent load/free/import tests preserve exact images and module ownership, callback execution stays live without deadlock, normal Alice gameplay/browser revalidated.
 
 - [ ] New-game lane: Aliens versus Predator 2 single-player demo
@@ -1524,3 +1524,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (animated menu verified; ordinary-input level start unresolved)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Sound fix47249aff2 and evidence2d29f0b92 on main. Original46631 reached animated menu; root verified81artifacts and screenshot, Telegram1381 delivered. /root/kkrieger_menu_input owns next bounded input diagnostic, no guestpatch. hwnd0 log precedes routing, not proven bug; no gameplay qualification.
+
+- [ ] Revalidate original CMR3 menu-to-Stages progression
+  id: CMR3-POST-SPLASH-NULL-20261010
+  status: review (historical splash/null boundary superseded; fresh progression unverified)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Lifecycle83947f6a6 is on main; original differential already reached menu with native quartz exits yielding2 instead of traps. Do not re-adapt held unload branch. After authentic registry execution, run one serialized original replay with ordinary menu-to-Stages input and exact module/frame/thread evidence; racing remains unqualified.
+
+- [ ] Validate merged DLL unload and CMR3 progression
+  id: FREELIBRARY-EXITTHREAD-CMR3-20261010
+  status: review (implementation merged; recovered-fixture progression pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Main83947f6a6 integrates real generation-aware unload/thread exit; canonical+6reader+17DLL+2DirectSound suites and negative controls recorded. Later57a148044/321e734aa also landed. Fresh current recovered CMR3 progression remains; no implementation or transport blocker, no race qualification.
