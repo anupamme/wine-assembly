@@ -133,9 +133,15 @@ The task-branch recipe now pins the original ISO above, extracts its
 `node tools/verify-avp2-recovery.js PATH_TO_GAME` checks all 18 original
 file sizes and SHA256 values, failing on missing files or mismatches.
 
-The verifier passed against the retained independently recovered payload.
-Static manifest audit passes. Full generic acquisition/extraction on the
-separate test box is still pending; this preparation is not a fresh recovery
-receipt or gameplay validation. Keep this recipe on its task branch until
-that execution passes. Original launcher execution and its generated command
-file remain a separate runtime step after recovery.
+The verifier passed against the retained independently recovered payload and
+a fresh forced generic recovery on bx_tgbme2h7. The original ISO hash, exact
+installer SHA256 and all 18 original payload sizes/hashes passed. Run
+20261015-avp2-generic-recovery preserves both attempts: first extraction failed
+because unshield was absent and the early-IS5 fallback rejects this IS6 cabinet
+(version 0x100600c). Installing unshield 1.5.1 resolved that dependency; the
+fresh forced fetch/verification process122200 exited0 at00:08:22.982Z.
+
+Use `node tools/fetch-candidate-corpus.js --id=avp2-demo` with unshield
+installed, then `node tools/verify-avp2-recovery.js`. The durable receipt is
+`docs/avp2-recovery-20261015.json`. Original launcher execution and its generated
+command file remain separate runtime work; no gameplay claim follows.
