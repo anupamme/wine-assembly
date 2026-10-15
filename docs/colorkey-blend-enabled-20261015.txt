@@ -2,9 +2,10 @@ DX7 explicitly enabled color-key blending — source checkpoint 2026-10-15
 
 Base: 27f60c4133305a4d7558afbb8c067691b868434e
 Branch: task/colorkey-blend-enabled
-Disposition: canonical build and nine CPU/full-VM suites PASS on bef60e8f7.
-Browser/GPU and explicit keyed Worker execution remain pending. Not ready to
-merge or deploy. Earlier source-only labels below describe checkpoint history.
+Disposition: canonical build/four CPU suites PASS on d582f0da5; WebGL1/2 and
+Worker both sync modes PASS on621a6d4e. Cache-identity mutant SURVIVED; latest
+d1e08ccb fixture FAILS its cache-reuse prerequisite. Not ready to merge or
+deploy. Earlier source-only labels below describe checkpoint history.
 
 Contract
 Original Microsoft DX7 D3DRENDERSTATETYPE reference:
@@ -219,3 +220,41 @@ retained padding allocations. It records addresses and requires unchanged
 FALSE draws to keep textureUploads constant before testing FALSE-to-TRUE.
 This distinguishes an actually reused decode from a coincidental fresh decode.
 The corrected cache fixture and isolated mutant rerun remain pending.
+
+Final bounded runtime outcome — 2026-10-15 09:40 UTC
+The one focused isolation attempt d1e08ccb FAILS unchanged-FALSE cache reuse:
+textureUploads11 ->12. Texture DIB469762048 and RT DIB469835776 occupy distinct
+watch pages; original alpha palette data29452492 is recorded. The exact
+remaining cache invalidation cause is unresolved; these addresses are run
+evidence, not durable ABI constants. No mutant ran after this prerequisite
+failure. Do not merge or claim cache identity is covered by the current test.
+
+Retained passing checkpoint621a6d4e:
+- WebGL1 and WebGL2:42 observations each, including actual indexed software
+  draws and unchanged GPU draw count; direct GPU RGBA remains strict.
+- Real Worker lazySync=false/true:21 observations each (seven existing plus
+  fourteen keyed),24 GPU draws each, zero fallback/errors/watch audit misses
+  and byte-shadow checks. Includes held snapshots and three depth cases.
+- Separate mutant deleting only cached.keyBlend identity also PASSed both
+  modes. Its tracked source was restored and hashes verified.
+
+Build d582f0da5 and four documented CPU suites PASS. Later candidate edits
+are helper/docs only; production source is unchanged. Canonical Wasm SHA256:
+619623c65da9c18932de06ff131a56e83f49e71df51412ebed3c7473721e7fc0.
+GPU fixture module0e438fde2abd5164ef1321984c2983344857574d2bedc35d4becad8ab4958a92;
+Worker fixture module0e56180d7aeb82b7c6df0dac64bfcca4effff939c43a0f0f9d98184714b42722.
+These fixture modules include test exports and are distinct from production.
+
+Environment: bx_erf37bxf Linux x64, Node24.18.1, Chrome151.0.7922.108.
+Saved google-chrome wrapper forces --use-gl=angle --use-angle=swiftshader and
+uses a BetterChromium fingerprint seed. Returned renderer string says ANGLE
+Intel UHD620/Mesa; this does not establish Intel hardware execution. Wrapper,
+launch flags and observed strings are preserved; actual hardware is unknown.
+
+Evidence downloaded and SHA256-verified into coordinator checkout:
+scratch/runs/20261015-colorkey-browser-worker (all five attempts, initial setup,
+numeric failures/successes, source hashes, controllers, wrapper and postflight).
+Archive1891804bytes SHA256f9d922759ac4bdbc2bc81bc8f7b1858d47f52fe38ebe7a6ab4d532593278a2d9.
+Controller37533 terminal1 at09:39:49.730Z; postflight09:40:17.849Z confirms no
+Node/Chrome/build workers and unchanged tracked source. Runtime released to
+root; no further execution, public deployment, or game-readiness claim.
