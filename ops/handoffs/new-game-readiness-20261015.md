@@ -1,5 +1,12 @@
 # Resumed pipeline readiness
 
+Update09:12Z: the resume denial applies to restoring the saved box, not all
+runtime work. Current limits permit a new box, and authorized fresh creation
+succeeded as bx_erf37bxf, with no stored secrets. Kkrieger owns its sole
+browser/build slot; CMR3 recovery is the second, source-preparation lane.
+The pool-wide runtime blockage described below is superseded. No denied
+resume action or alternate credentials were used.
+
 User Telegram82 supersedes pause81; persistent goal now reports active.
 Silver ordinary directional movement is independently reviewed and integrated
 on main90f4033e2. Audio, combat, saving, FPS and full playability remain untested.
