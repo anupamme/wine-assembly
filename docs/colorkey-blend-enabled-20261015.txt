@@ -202,7 +202,8 @@ remain retained; this refined fixture still needs execution.
 The next execution reached real software pixels and exposed a second X-byte
 oracle mismatch: software d3dim_blend_rgb returns RGB only, storing X=0 in
 this XRGB target (no alpha mask), while the GPU DIB fence normalizes X=255.
-The software blend expectation now explicitly pins [0,0,255,0], testing blue
-destination RGB preservation without claiming destination-alpha support.
+The software blend expectation constrains [0,0,255] RGB, retaining all four
+raw bytes in evidence and leaving destination X unconstrained. Observed X=0
+is an implementation detail, not a destination-alpha contract.
 All-key, duplicate-index, mixed-filter and rejection software cases passed
 before this assertion. Numeric software evidence is retained before throwing.
