@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws verified original demo awaiting corrected extraction check then ordinary launch; Army Men source134113703 acquired by /root/army_men_original_acquisition after serialized slot release. Jedi waits unanswered licence decision; Kkr core forward movement verified with latency followup separate. IW combined native endpoint tests passed; root review pending.
+  Next: Outlaws verified original demo awaiting corrected extraction check then ordinary launch; Army Men source134113703 acquisition assigned to /root/army_men_original_acquisition after serialized slot release. Jedi waits unanswered licence decision; Kkr core forward movement verified with latency followup separate. IW combined native endpoint tests passed; root review pending.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1615,8 +1615,8 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (original package verified; ordinary launch preparation)
-  owner: /root/outlaws_original_acquisition
-  Next: Original14,186,356B package verified SHA256501f37aa; ZIP SFX31files23,300,090B. Originalreadme says extractthenOLDEMO.EXE; no installer/registryfabrication. Reviewfullinventory/licence then boundedfirstlaunch onserializedbox. No guestexecuted yet.
+  owner: /root/outlaws_original_startup
+  Next: Corrected JavaScript extraction verified all31 inventory records, merged32a28da07. Fresh startup worker prepares full original VFS and bounded ordinary oldemo.exe launch after Army Men acquisition releases sole runtime. No game executed yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
