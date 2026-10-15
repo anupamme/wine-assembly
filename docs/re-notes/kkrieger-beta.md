@@ -373,3 +373,41 @@ and extension backing against original startup, while retaining the live-charge
 versus retained-space question. Do not weaken allocation checks or claim the
 larger budget fixes gameplay before that acceptance run. Runtime was released
 to the user-priority Pirates validation lane; no memory opt-in is changed here.
+
+## Signed vertex support passes; null audio interface lead (2026-10-15)
+
+See `docs/kkrieger-launch-candidate-20261014.txt` for the memory increase,
+exact rejected SHORT4 declaration, CPU expansion correction and passing
+WebGL1/2 signed-short pixel controls. Source498aead6 with canonical70c6d329
+reaches the end of loading on the original registered route, then stops near
+310seconds with no declaration errors and no OOM. Evidence:
+`scratch/runs/20261015-kkrieger-short-original/`. No gameplay is qualified.
+
+The host's "Program exited" line at host.js6745 means EIP0/yield0. It does
+not mean ExitProcess ran. Prior original unpacked image at0x800000 gives:
+
+- 0x801c31 loads EAX from0x83f890, ECX from[EAX], then calls[ECX+0x10]
+  at0x801c41. EAX/ECX0 in the exit record are consistent with a null sound
+  buffer/vtable. Caller0x8053fb invokes this helper, returning to0x805400.
+- Audio initializer0x804821 creates a primary buffer, sets stereo44.1kHz
+  PCM16, then creates a0x80000-byte secondary buffer at0x80490a, flags0x18000.
+- 0x804925 calls the secondary buffer's QueryInterface with IID bytes at
+  0x81f0dc =6825a449-7524-4d82-920f-50e36ab3ab1e, writing to0x83f890.
+  This is IDirectSoundBuffer8. It releases the original interface, tests
+  HRESULT at0x804932/0x804934 and returns false on failure.
+- The initializer's caller0x805370 ignores that return and enters the main
+  loop, where0x801c31 uses the buffer without a null check.
+- Tested dsbuf_iid_kind_wa does not recognize IDirectSoundBuffer8;
+  IDirectSoundBuffer_QueryInterface zeros the output and returns
+  E_NOINTERFACE for unknown IIDs. This establishes a source-level mismatch,
+  not an observed HRESULT from the fresh game run. Earlier initialization
+  failure could also leave the same pointer null.
+
+Microsoft documents obtaining Buffer8 by QI on a secondary buffer, and that
+primary buffers must retain the earlier interface:
+https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee418055(v=vs.85)
+The inherited GetCurrentPosition slot is0x10. Buffer8 adds methods beyond
+the existing buffer vtable: merely accepting its IID without providing the
+full interface would be incorrect. Next capture the actual QI result at
+0x804927 and the pointer at0x83f890, with earlier CreateSoundBuffer results,
+then validate genuine interface behavior. No guest patch or forced success.
