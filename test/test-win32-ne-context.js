@@ -22,7 +22,8 @@ const helpers = ['win16_arena_base','win16_task_shared','win16_next_seg_get','wi
   'win16_gseg_field','win16_gseg_store','win16_gseg_count','win16_seg_set','win16_seg_base','win16_seg_limit',
   'win16_sel_to_index','win16_index_to_sel','win16_seg_is_big','win16_set_sreg','esp_arch',
   'win16_call32_begin','win16_call32_arg','win16_call32_end','win16_call32_waited',
-  'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release'];
+  'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release',
+  'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16'];
 let code=block+'\n'+helpers.map(form).join('\n');
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
@@ -39,8 +40,8 @@ const globals=globalNames.filter(n=>!declared.has(n)).map(n=>{
  const value=fixture[n]??(constant?Number(constant[1]):0);
  return `(global $${n} ${mut?'(mut '+type+')':type} (${type}.const ${value}))`;
 }).join('\n');
-const saved=[...block.matchAll(/\(i32.store offset=\d+ \(local.get \$frame\) \(global.get \$([^\s)]+)\)\)/g)].map(m=>m[1]);
-for(const n of 'd_seg d_addr16 ea_temp eip ip steps code16 cs_big sreg_es sreg_cs sreg_ss sreg_ds sreg_fs16 sreg_gs seg_base_es seg_base_cs seg_base_ss seg_base_ds fs_base gs_base df flag_op flag_a flag_b flag_res saved_cf flag_sign_shift eflags_extra yield_flag yield_reason last_error win16_in_call32 win16_esp_save win16_eip_save fpu_top fpu_cw fpu_sw fpu_tag fpu_raw_tag'.split(' '))assert(saved.includes(n),n);
+const saved=[...block.matchAll(/\(i32.store offset=\d+ \(local.get \$frame\) \(global.get \$([^\s)]+)\)\)/g)].map(m=>m[1]).filter(n=>n!=='sync_msg_depth');
+for(const n of 'resume_ip eip_redirected current_thunk_eip d_seg d_addr16 ea_temp eip ip steps code16 cs_big sreg_es sreg_cs sreg_ss sreg_ds sreg_fs16 sreg_gs seg_base_es seg_base_cs seg_base_ss seg_base_ds fs_base gs_base df flag_op flag_a flag_b flag_res saved_cf flag_sign_shift eflags_extra yield_flag yield_reason last_error win16_in_call32 win16_esp_save win16_eip_save fpu_top fpu_cw fpu_sw fpu_tag fpu_raw_tag'.split(' '))assert(saved.includes(n),n);
 const probes=mutable.map(n=>`(func (export "set_${n}") (param $v i32) (global.set $${n} (local.get $v)))
 (func (export "get_${n}") (result i32) (global.get $${n}))`).join('\n');
 const exportedHelpers=helpers.filter(n=>!form(n).includes('(export ')).map(n=>`(export "${n}" (func $${n}))`).join('\n');
@@ -51,6 +52,13 @@ const source=`
 (import "host" "g2w" (func $g2w (param i32) (result i32)))
 (import "host" "write" (func $gs32 (param i32 i32)))
 (func $host_log_i32 (param i32) (nop))
+(func $dbg_recompute (nop))
+(func $cs_pop (nop))
+(func $gs16 (param $p i32) (param $v i32) (i32.store16 (call $g2w (local.get $p)) (local.get $v)))
+(func $gl16 (param $p i32) (result i32) (i32.load16_u (call $g2w (local.get $p))))
+(func $win16_dispatch (param $off i32) (param $ret i32)
+  (if (i32.ne (local.get $off) (global.get $WIN16_BRIDGE_RETURN)) (then (unreachable)))
+  (call $win16_bridge_invoke_return (local.get $ret)))
 (func $page_watch_write (param i32 i32) (nop))
 (func $process_code_cache_invalidate (param i32 i32) (nop))
 ${globals}\n${code}\n${probes}\n${exportedHelpers}`;
@@ -119,4 +127,34 @@ assert(raced);assert.equal(ensureCalls,beforeRace+2,'release between ensure and 
 assert.equal(view.getUint32(shared+36,true),1);assert.equal(first.win16_bridge_frame_end(raced),1);
 assert.deepEqual(cpu(first),beforeFailure);assert.equal(first.win16_process_arena_release(),1);
 failEnsure=true;assert.equal(first.win16_bridge_frame_begin(),0n);assert.deepEqual(cpu(first),beforeFailure);
+failEnsure=false;
+// Actual runner setup, sync-depth/spill protection and actual RETF handler.
+seed(first,0x22334455);first.set_sync_msg_depth(0);first.set_spill_active(1);
+first.set_spill_base(0x90000);first.set_spill_end(0xa0000);first.set_ip(0x91000);
+const invokeCaller=cpu(first),prepared=first.win16_bridge_frame_begin();
+const codeIndex=first.win16_arena_take(1),dataIndex=first.win16_arena_take(1);
+const codeBase=first.win16_arena_slot_base(codeIndex),dataBase=first.win16_arena_slot_base(dataIndex);
+first.win16_seg_set(codeIndex,codeBase,32,0,1);first.win16_seg_set(dataIndex,dataBase,65536,1,2);
+const cs=(codeIndex<<3)|7,ds=(dataIndex<<3)|7,target=(cs<<16)|2;
+for(const bad of [0,((codeIndex<<3)<<16)|2,(cs<<16)|32,(ds<<16)|2]){
+ assert.equal(first.win16_bridge_invoke_begin(prepared,bad,ds,7,16),0);assert.deepEqual(cpu(first),invokeCaller);
+}
+assert.equal(first.win16_bridge_invoke_begin(prepared,target,cs,7,16),0,'code selector cannot be DS');
+assert.equal(first.win16_bridge_invoke_begin(prepared,target,ds,7,16),1);
+assert.equal(first.get_sync_msg_depth(),1);assert.equal(first.get_spill_pins(),1);assert.equal(first.thread_spill_can_recycle(),0);
+assert.equal(first.get_eip(),codeBase+2);assert.equal(first.get_sreg_ds(),ds);
+assert.equal(view.getUint32(first.get_reg_base()+28,true),7);assert.equal(view.getUint32(first.get_reg_base()+4,true),16);
+assert.equal(first.win16_bridge_invoke_result(prepared),-1n);
+const blocked=second.win16_bridge_frame_begin();assert.equal(second.win16_bridge_invoke_begin(blocked,target,ds,7,16),0,'foreign execution lease');assert.equal(second.win16_bridge_frame_end(blocked),1);
+const nested=first.win16_bridge_frame_begin();assert.equal(first.win16_bridge_invoke_begin(nested,target,ds,8,0),1);
+assert.equal(first.get_sync_msg_depth(),2);assert.equal(first.win16_bridge_frame_end(prepared),0);
+assert.equal(first.win16_bridge_frame_end(nested),1,'cancel nested invocation');assert.equal(first.get_sync_msg_depth(),1);
+view.setUint32(first.get_reg_base(),0x1234abcd,true);view.setUint32(first.get_reg_base()+8,0x5678ef01,true);
+first.th_retf16(0);assert.equal(first.win16_bridge_invoke_result(prepared),0xef01abcdn);
+assert.equal(first.get_eip(),0);assert.equal(first.win16_bridge_frame_end(prepared),1);assert.deepEqual(cpu(first),invokeCaller);
+assert.equal(first.get_sync_msg_depth(),0);assert.equal(first.get_spill_pins(),0);assert.equal(view.getUint32(shared+40,true),0);assert.equal(view.getUint32(shared+44,true),0);
+const malformed=first.win16_bridge_frame_begin();assert.equal(first.win16_bridge_invoke_begin(malformed,target,ds,7,0),1);
+assert.throws(()=>first.th_retf16(2),WebAssembly.RuntimeError,'wrong return stack rejected');assert.equal(first.win16_bridge_frame_end(malformed),1);assert.deepEqual(cpu(first),invokeCaller);
+first.win16_arena_give(codeIndex,1);first.win16_arena_give(dataIndex,1);assert.equal(first.win16_process_arena_release(),1);
+console.log('PASS actual NE invocation runner: strict selectors, entry ABI, real RETF result, lease exclusion, nested cancellation, spill pins and caller restoration');
 console.log('PASS actual NE invocation helpers: full CPU files/state, nested private stacks, stale/foreign completion, abort and lifetime pins');
