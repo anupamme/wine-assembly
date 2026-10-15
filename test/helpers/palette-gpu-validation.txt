@@ -256,3 +256,15 @@ Matched baseline preparation (not compiled or executed):
   Use existing remote dependencies via NODE_PATH and record CHROME/backend
   provenance identically. Do not change expected alpha values to obtain a pass.
   Explicit Boids renderer and default-lazy Worker reruns remain pending intact.
+
+Queued bounded batch (only after Silver release and renewed root grant):
+  NODE_PATH=/home/user/wa-rodent/node_modules CHROME=/usr/bin/google-chrome node test/helpers/palette-followup-validation.js scratch/runs/20261015-palette-final conformance /absolute/clean-main-checkout 901f27cc2d14f1fcbadda5746557b94b06b6ccb3
+  The driver requires the exact baseline commit and clean tracked files before
+  starting. It runs only the explicit Boids software/software-opt-out/WebGL
+  routes, actual Worker false/true lazy-sync fixture, and main GPU pixel control.
+  Each suite has a180s timeout; failures do not stop subsequent configurations,
+  SKIP fails, original stdout/stderr and exit status remain, and artifact hashes
+  are sealed. Baseline.json, worker.json and pixels.json retain independent
+  production/fixture/module identities. A main pixel assertion failure is an
+  expected possible control outcome, never automatically a passing batch.
+  No CPU regression repeats or candidate production rebuild are included.
