@@ -64,10 +64,13 @@ async function main() {
   const id=lifecycle.load('parent.dll');assert.equal(invocations,2);
   const arena=view.getUint32(R.BASE.WIN16_PROCESS_ARENA,true),wa=e.guest_to_wasm(arena)>>>0,shared=wa+943*65536+0xf000;
   const clean=()=>{assert.deepEqual(snapshot(),caller);for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0,'frame/depth/lease released');};
+  const foreign=await boot(module,memory,[1,e.get_image_base(),e.get_code_start(),e.get_code_end(),e.get_thunk_base(),e.get_thunk_end(),e.get_num_thunks(),0]);
+  const foreignLifecycle=createNeLifecycle(foreign,memory,images,{maxBlocks:10000,sliceBlocks:256});
+  assert.equal(foreignLifecycle.load('PARENT'),id,'shared ready acquisition');foreignLifecycle.release(id);
   clean();assert.equal(lifecycle.load('PARENT'),id);assert.equal(invocations,2);
   assert(lifecycle.lookup(id,'VALUE'));assert.equal(lifecycle.lookup(id,'WEP'),lifecycle.lookup(id,3));
   assert.equal(lifecycle.lookup(id,'ABSENT'),0);assert.equal(lifecycle.lookup(id,4),0);
-  whileRunning=()=>{whileRunning=undefined;lifecycle.release(id);assert.throws(()=>lifecycle.release(id),/release rejected/);};
+  whileRunning=()=>{whileRunning=undefined;assert.throws(()=>foreignLifecycle.load('PARENT'),/lifecycle frame/);lifecycle.release(id);assert.throws(()=>lifecycle.release(id),/release rejected/);};
   assert.equal(lifecycle.call(id,'VALUE'),0x1234,'actual named guest export');clean();
   assert.equal(lifecycle.load('PARENT'),id);const beforeFree=invocations;
   lifecycle.release(id);assert.equal(invocations,beforeFree);
