@@ -22,6 +22,9 @@ Acceptance requires exactly one observed EAX zero, exactly one guest Exit
 zero, no trap/NULL/timeout diagnostic, and a native InprocServer32 entry for
 the target DLL. Host exit zero alone fails. Unexpected successful nonzero
 HRESULT also stops for review. Partial exports remain diagnostic evidence.
+An absent return trace is an inconclusive acceptance failure; it does not
+diagnose a defect in the native DLL. Review the bounded log before attributing
+the failure to registration or changing guest behavior.
 
 Each step preserves argv, merged stdout/stderr, host status/signal/error,
 registry export and assessment. Limits are 20,000 batches / 45 guest seconds,
