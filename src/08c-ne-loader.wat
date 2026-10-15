@@ -2159,4 +2159,43 @@
       (call $zero_memory (local.get $rec) (i32.const 32))
       (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
     (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+  ;; The caller owns a frame and the process execution lease. Parsing export
+  ;; tables can trap, so it must never run under DLL_LOAD_LOCK; the lease keeps
+  ;; the image alive while the host's finally block remains able to unwind.
+  (func $win16_bridge_module_readable (param $id i32) (param $state i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id))
+      (then (return (i32.const 0))))
+    (if (i32.ne (i32.load (local.get $rec)) (local.get $state)) (then (return (i32.const 0))))
+    (if (i32.ne (local.get $state) (i32.const 3))
+      (then (if (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+        (then (return (i32.const 0))))))
+    (call $win16_dll_loaded (local.get $id)))
+
+  (func $win16_bridge_module_entry (export "win16_bridge_module_entry")
+    (param $id i32) (param $ordinal i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (if (i32.or (i32.eqz (local.get $ordinal)) (i32.gt_u (local.get $ordinal) (i32.const 0xFFFF)))
+      (then (return (i32.const 0))))
+    (call $win16_dll_entry (local.get $id) (local.get $ordinal)))
+
+  (func $win16_bridge_module_ordinal (export "win16_bridge_module_ordinal")
+    (param $id i32) (param $name i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (call $win16_dll_ordinal (local.get $id) (local.get $name)))
+
+  ;; Only the unpublished initializer's owner can inspect its header ABI.
+  ;; field 0 CS:IP, 1 DS/instance selector, 2 initial local heap size.
+  (func $win16_bridge_module_init (export "win16_bridge_module_init")
+    (param $id i32) (param $field i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 2)))
+      (then (return (i32.const 0))))
+    (if (i32.eqz (local.get $field)) (then (return (call $win16_dll_init_entry (local.get $id)))))
+    (if (i32.eq (local.get $field) (i32.const 1)) (then (return (call $win16_dll_data_sel (local.get $id)))))
+    (if (i32.eq (local.get $field) (i32.const 2)) (then (return (call $win16_dll_heap_size (local.get $id)))))
+    (i32.const 0))
   ;; END WIN32 NE MODULE TRANSACTIONS

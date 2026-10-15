@@ -615,6 +615,12 @@
           (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
         (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
           (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0))))))
+    (if (i32.load offset=268 (local.get $frame))
+      (then
+        (i32.store (call $win16_task_shared (i32.const 44))
+          (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+        (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
+          (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0))))))
     (i32.store offset=20 (local.get $frame) (i32.const 0))
     (global.set $win16_bridge_frame (local.get $previous))
     (call $lock_release (global.get $DLL_LOAD_LOCK))
@@ -654,6 +660,27 @@
       (then (return (i32.const 0))))
     (i32.and (i32.eqz (i32.and (local.get $flags) (global.get $WIN16_SEG_BIG)))
       (i32.eq (i32.and (local.get $flags) (i32.const 1)) (local.get $data))))
+
+  ;; A synchronous lifecycle operation may hold the execution lease across
+  ;; staging, initialization, publication and cleanup. It is tied to its frame,
+  ;; so ordinary frame teardown releases it even if parsing or guest code traps.
+  (func $win16_bridge_scope_begin (export "win16_bridge_scope_begin")
+    (param $token i64) (result i32)
+    (local $frame i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 0))
+      (i32.ne (i32.load offset=268 (local.get $frame)) (i32.const 0))) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (if (i32.load (call $win16_task_shared (i32.const 40)))
+        (then (br_if $reject (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))))
+      (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
+      (i32.store (call $win16_task_shared (i32.const 44))
+        (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+      (i32.store offset=268 (local.get $frame) (i32.const 1))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
 
   ;; Stack words are listed nearest-return first. The bounded argument vector
   ;; belongs to this prepared frame, never to the suspended caller's stack.

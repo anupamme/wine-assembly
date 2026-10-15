@@ -19,7 +19,7 @@ const api = fs.readFileSync(path.join(dir,'09e-win16-api.wat'),'utf8');
 const block = api.slice(api.indexOf(';; BEGIN WIN32 NE INVOCATION CONTEXT'),api.indexOf(';; END WIN32 NE INVOCATION CONTEXT'));
 const loader = fs.readFileSync(path.join(dir,'08c-ne-loader.wat'),'utf8');
 const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'),loader.indexOf(';; END WIN32 NE MODULE TRANSACTIONS'));
-const helpers = ['win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
+const helpers = ['ascii_upper','win16_dll_entry','win16_entry_lookup','win16_dll_ordinal','win16_name_table_find','win16_pstr_eq_pstr','win16_dll_init_entry','win16_dll_data_sel','win16_dll_heap_size','win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
  'load_ne_dll_sized','win16_dll_staging','win16_dll_rec','win16_dll_loaded','win16_dll_unload','win16_dll_run_ptr','win16_dll_refs_ptr','win16_dll_image_size_ptr','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
   'win16_arena_take','win16_arena_give','win16_arena_free_head','win16_alloc_segment','win16_arena_slot_base',
   'win16_gseg_field','win16_gseg_store','win16_gseg_count','win16_seg_set','win16_seg_base','win16_seg_limit',
@@ -131,15 +131,46 @@ const reused=first.win16_arena_take(3);assert.equal(reused,allocation);first.win
 function staged(moduleName) {
  const id=claim(first,moduleName);assert(id>0);assert.equal(first.win16_bridge_module_stage_begin(id),1);
  const start=first.win16_arena_take(3);first.win16_bridge_module_provisional(id,start,3);
- const r=first.win16_dll_rec(id);view.setUint32(r+4,start-1,true);view.setUint32(r+12,2,true);
+ const r=first.win16_dll_rec(id),header=translate(first.win16_arena_slot_base(start));
+ bytes.fill(0,header,header+128);view.setUint16(header+4,64,true);view.setUint16(header+6,7,true);
+ bytes.set([1,1,1,5,0,0,0],header+64);
+ view.setUint16(header+0x16,1,true);view.setUint16(header+0x14,2,true);
+ view.setUint16(header+0x0e,2,true);view.setUint16(header+0x10,1024,true);
+ view.setUint16(header+0x26,80,true);view.setUint16(header+0x28,87,true);
+ bytes.set([3,87,69,80,1,0,0],header+80);
+ view.setUint32(r,header,true);view.setUint32(r+8,header,true);view.setUint32(r+4,start-1,true);view.setUint32(r+12,2,true);
  view.setUint32(first.win16_dll_run_ptr(id),3,true);assert.equal(first.win16_bridge_module_stage_end(id),1);
  return{id,start,record:first.win16_bridge_module_record(id)};
 }
-const failed=staged('REJECT');assert.equal(first.win16_bridge_module_publish(failed.id,0),0,'AX zero cannot publish');
+const failed=staged('REJECT');
+const initScope=first.win16_bridge_frame_begin();assert.equal(first.win16_bridge_scope_begin(initScope),1);
+assert.equal(first.win16_bridge_module_entry(failed.id,1),0,'initializer exports unpublished');
+assert.equal(first.win16_bridge_module_init(failed.id,0),(((failed.start<<3)|7)<<16)|2);
+assert.equal(first.win16_bridge_module_init(failed.id,1),((failed.start+1)<<3)|7);
+assert.equal(first.win16_bridge_module_init(failed.id,2),1024);
+assert.equal(second.win16_bridge_module_init(failed.id,0),0);
+assert.equal(first.win16_bridge_frame_end(initScope),1);
+assert.equal(first.win16_bridge_module_publish(failed.id,0),0,'AX zero cannot publish');
 assert.equal(claim(second,'REJECT'),0);assert.equal(first.win16_bridge_module_rollback(failed.id),1);
 assert.equal(first.win16_dll_loaded(failed.id),0);const recovered=first.win16_arena_take(3);assert.equal(recovered,failed.start);first.win16_arena_give(recovered,3);
 const accepted=staged('GOOD');assert.equal(second.win16_bridge_module_publish(accepted.id,1),0);
 assert.equal(first.win16_bridge_module_publish(accepted.id,1),1);assert.equal(view.getUint32(accepted.record,true),3);assert.equal(first.win16_bridge_module_load_allowed(accepted.id),0,'cannot replace a ready module');
+assert.equal(first.win16_bridge_module_entry(accepted.id,1),0,'lookup needs lifetime lease');
+const scope=first.win16_bridge_frame_begin();assert.equal(first.win16_bridge_scope_begin(scope),1);
+assert.equal(first.win16_bridge_scope_begin(scope),0,'one scope lease per frame');
+assert.equal(first.win16_bridge_module_entry(accepted.id,1),(((accepted.start<<3)|7)<<16)|5);
+assert.equal(first.win16_bridge_module_entry(accepted.id,2),0,'ordinal hole');
+assert.equal(first.win16_bridge_module_entry(accepted.id,0),0,'invalid ordinal');
+assert.equal(second.win16_bridge_module_entry(accepted.id,1),0,'foreign lease');
+bytes.set([3,87,69,80],0x70000);assert.equal(first.win16_bridge_module_ordinal(accepted.id,0x70000),1);
+assert.equal(first.win16_bridge_module_init(accepted.id,0),0,'ready is no longer initializing');
+const loadedRecord=first.win16_dll_rec(accepted.id),savedHeader=view.getUint32(loadedRecord,true);
+view.setUint32(loadedRecord,memory.buffer.byteLength-1,true);
+assert.throws(()=>first.win16_bridge_module_entry(accepted.id,1),WebAssembly.RuntimeError);
+assert.equal(view.getUint32(fixture.DLL_LOAD_LOCK,true),0,'export parser trap leaves no held mutex');
+view.setUint32(loadedRecord,savedHeader,true);
+
+assert.equal(first.win16_bridge_frame_end(scope),1);assert.equal(view.getUint32(shared+44,true),0);
 assert.equal(claim(second,'GOOD'),-accepted.id,'ready lookup acquires reference without another init');
 assert.equal(view.getUint32(accepted.record+8,true),2);assert.equal(first.win16_bridge_module_rollback(accepted.id),0,'ready reference cannot be rolled back');
 // A parent owns exactly the dependency references transferred to it.
