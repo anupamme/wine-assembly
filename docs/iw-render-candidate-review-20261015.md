@@ -132,3 +132,9 @@ modify or weaken the oracle to accept those results. The browser harness stops
 after the first failing version's assertion, with that version's complete
 observation record in its failure output; the unchanged candidate must pass
 both versions. Mutation runtime is not yet authorized or executed.
+
+## Runtime gate completed (supersedes preparation-only status above)
+
+Root ran exact candidate14dd0c539 on bx_9ef2wdsw after CMR3 released the sole runtime slot. Chrome151.0.7922.108 passed77 checks in each actual WebGL1/2 context with zero GL errors. Removing only the missing-texture termination guard in a separate disposable copy failed all three RGB retention and three live-color linkage observations as expected; no oracle was weakened. Candidate source remained clean, and postflight found no browser survivors. The reported ANGLE Intel/Mesa renderer string is recorded, not treated as proof of physical GPU execution.
+
+The four renderer/compiler library files on current main before integration were identical to the review baseline, and the integrated source suite passed30 checks. This clears the renderer integration gate only: IW transport, actual game correctness, device coverage and performance remain unqualified. Exact observations and negative controls are in [the runtime receipt](iw-render-gpu-result-20261015.json); raw logs and hashes are retained in scratch/runs/20261015-iw-render-gpu.
