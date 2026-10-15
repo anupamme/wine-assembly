@@ -1615,7 +1615,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (PM/Pro loader compatibility investigation)
-  owner: /root/outlaws_pmpro_loader
+  owner: /root/outlaws_kernel_module
   Next: Fresh source worker investigates actual NE pmpro62/PE pmpro62f universal-thunk boundary after reviewed original replay173098. OemKeyScan merged; no gameplay. Existing150s watchdog required SIGKILL, independent14:49:51 postflight unchanged active[]. No rerun until source/conformance review.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
@@ -1644,3 +1644,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/outlaws_oemkeyscan_native
   Next: Merged main9ca647939 after normal gatedbuild, fullmodule lookup/thunk/ESP tests, missing baseline and restored PASS; root independently verified archive d4bdcb14. Original replay now passes initial OemKeyScan blocker; further loader issue belongs to game lane.
   Evidence: scratch/runs/20261015-outlaws-original-startup; archiveSHA241f8911ad2071909fcdeb368d9ff91bb98f76e950744d6abf6314ccc01285dc; independent postflight14:19:27 unchanged active[].
+
+- [~] New-game lane: Lords of the Realm II original playable Windows demo
+  id: NEW-GAME-LORDS2-DEMO-20261015
+  status: active (original payload verified; faithful setup registration)
+  owner: /root/new_demo_refill
+  Next: Original lorddemo.zip7522232B SHA256 afef0f0dd7012c46f483ab09d785431ba5813c2080d8468a52e8ec32c745f49d recovered on sole test box; 181-file tree, original LORDS2.EXE PE32 and SETUP.EXE NE verified. README requires INSTALL.BAT extraction then original SETUP; no guest run or licence answer. Prepare pinned ordinary setup route and bounded capture.
+  Done: Registered original launch, actual ordinary player control and reviewed gameplay screenshot with source/run identity.
