@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
-  "status": "source-only; no dependency transfer, extraction or registration performed",
+  "status": "all12 exact native dependencies recovered; registry and launch still pending",
+  "result": "docs/cmr3-native-recovery-result-20261015.json",
   "expectedNativeInventory": "docs/cmr3-historical-receipts-20261015.json",
   "acquisitionRecipe": {
     "script": "tools/cmr3-native-recovery.js",
@@ -8,7 +9,8 @@
     "seedPreparation": "Copy the four locallyVerifiedExactMatches to a separate seed directory under their native basenames; reverify each historical identity before network activity",
     "limits": "570-second internal overall budget, <=300-second downloads, <=60-second extraction subprocesses, 2GiB free-space floor plus1GiB expansion budget",
     "evidence": "Source packages, download headers, subprocess arguments/status/logs, extraction outputs and exact native provenance inventory retained; failure.json on unsuccessful attempt",
-    "validation": "JS syntax plus synthetic same-name/same-size replacement rejection, exact nested-file selection and source SHA1 verification pass; no remote end-to-end execution yet",
+    "validation": "Three focused synthetic tests pass. Real acquisition53906 verified all packages then exposed direct-payload layout assumption; corrected committed recipe00a4d0a33 passed fresh-output cached-source rerun56105. Every cached source pin and all12 native hashes reverified. Failure retained.",
+    "cacheReuse": "Optional fourth argument is an absolute directory containing retained MPSetup.exe, ie60.exe and dx81.zip. Every package size/hash is reverified before copy and again afterward; output must remain fresh.",
     "registryPrepared": false
   },
   "locallyVerifiedExactMatches": [
@@ -25,7 +27,7 @@
       "sha256": "678c102847c18a92abf13c3fae404c3473a0770c871a046b45efe623c9938fc0",
       "provides": ["WMVCORE.DLL", "WMASF.DLL", "WMADMOD.DLL", "WMVDMOD.DLL", "qasf.dll", "msdmo.dll"],
       "historicalEvidence": "restoration session01a1373b-0a03-7af0-8752-f2ddc42f7ace event3329 prints successful source.json; event3240 prints original acquisition/extraction script",
-      "currentAvailabilityVerified": false
+      "currentAvailabilityVerified": true
     },
     {
       "name": "ie60.exe",
@@ -35,7 +37,7 @@
       "provides": ["MLANG.DLL"],
       "nestedCabinet": "IEMIL_4.CAB",
       "historicalEvidence": "same restoration session event3329 source.json and event3502 exact574976-byte MLANG extraction/hash",
-      "currentAvailabilityVerified": false
+      "currentAvailabilityVerified": true
     }
   ],
   "qedit": {
@@ -50,7 +52,7 @@
       "listingUrl": "https://archive.org/download/direct-x-8.1-windows-me-and-9x/DirectX%208.1%20Windows%20ME%20and%209x.zip/",
       "listedMember": "DX81eng.exe",
       "listedMemberBytes": 12144784,
-      "verification": "Only metadata and archive listing inspected; this package is a candidate until extracted qedit bytes match exact historical hash. Do not substitute another version."
+      "verification": "Package SHA1 and direct extracted qedit.dll519680-byte SHA256 ffc045d4381dd21ec2bd2f48915e61e3445f1e9bb7d595a7cd44eb6a20845066 verified in actual recovery. This DX81eng.exe exposes files directly to7z."
     },
     "rejectedLocalCandidates": "Gallinelle DIRECTX80A/90B DIRECTX.CAB and DXNT.CAB list qedit sizes1768448..1798144, different from required519680; no extraction performed"
   },
