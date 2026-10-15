@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (serialized Kkrieger position capture and Jedi Knight installer followup)
+  status: active (Jedi Knight child startup and Outlaws original demo preflight)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two unqualified lanes: /root/kkrieger_position_capture owns sole bx_9ef2wdsw run118738 with read-only position comparison; /root/jedi_installer_handoff source-verifies the original Win16 setup-child capture path after Jedi setup116272 failed staging. No parallel runtime. CMR3 diagnostic replay remains held after automatic rejection; IW lifecycle port is source-only.
+  Next: Kkrieger core forward movement reviewed, report2193c3869; responsiveness followup remains. Two active new-game lanes: /root/jedi_original_child_startup prepares captured original installer PE; /root/new_game_refill_after_kkrieger selects original Outlaws v2 demo and recovery recipe. Sole runtime currently IW native lifecycle validation; game runs serialized after release.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1600,9 +1600,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Jedi Knight Dark Forces II original demo
   id: NEW-GAME-JEDI-KNIGHT-DEMO-20261015
-  status: active (original installer-child staging investigation)
-  owner: /root/jedi_installer_handoff
-  Next: Original39files verified; setup116272 exits plain teal with B0071612 staging failure before child execution proved. Review source capture coverage before preparing a bounded ordinary setup-child capture/replay. Runtime queued after Kkrieger; no fabricated install state, EULA answer or gameplay claim.
+  status: active (original PE installer child captured; startup queued)
+  owner: /root/jedi_original_child_startup
+  Next: Capture132450 terminal0 generated original674816B PE12a2929a,96files and exactemptyargs/cwdCroot; options preserved in originalINI. Rootarchive/nineartifact hashes and tealimage reviewed; report73fc6ee8f. Prepare bounded original child replay afterIW runtime release; no EULA answer, invented registry or gameplay claim.
   Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.
 
 - [ ] Improve and validate original .kkrieger control responsiveness
@@ -1611,3 +1611,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: unowned
   Next: Run118738 records22.154s first accepted input lag and18.125s observed guest release lag; strict within-phase comparison lacks two completed times. Use retained source/time/input evidence to distinguish simulation work, presentation and input service before choosing a performance change. No logicalFPS, combat, audio, repeated-control or software/WebGL pair claim. Do not repeat long runs merely to chase displacement.
   Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
+
+- [~] New-game lane: Outlaws original Windows single-player demo
+  id: NEW-GAME-OUTLAWS-DEMO-20261015
+  status: active (source-only original demo provenance and recovery preparation)
+  owner: /root/new_game_refill_after_kkrieger
+  Next: Original outdemo_v2.exe archive metadata14186356B/SHA15568d44d and historic LucasArts download reference identified; package/readme/SHA256 not acquired yet. Complete recovery notes then separately serialized remote acquisition and normal installer/gameplay route. No local bulk fixtures, EULA answer or deployment.
+  Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
