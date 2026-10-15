@@ -517,6 +517,7 @@ comInterfaces.push({ prefix: 'IDirectPlayLobby3W', global: 'DX_VTBL_DPLAYLOBBY3W
 // Append only: worker registry offsets of existing interfaces are ABI.
 comInterfaces.push({ prefix: 'IDirectSoundNotify', global: 'DX_VTBL_DSNOTIFY' });
 comInterfaces.push({ prefix: 'IDirectSoundPropertySet', global: 'DX_VTBL_DSPROPERTY' });
+comInterfaces.push({ prefix: 'IDirectSoundBuffer8', global: 'DX_VTBL_DSBUF8', extends: 'IDirectSoundBuffer' });
 
 const ifaceInfo = new Map();
 for (const iface of comInterfaces) {

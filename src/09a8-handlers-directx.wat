@@ -217,6 +217,7 @@
   (global $DX_VTBL_DSOUND     (mut i32) (i32.const 0))
   (global $DX_VTBL_DSOUND8    (mut i32) (i32.const 0))
   (global $DX_VTBL_DSBUF      (mut i32) (i32.const 0))
+  (global $DX_VTBL_DSBUF8     (mut i32) (i32.const 0))
   (global $DX_VTBL_DSPROPERTY (mut i32) (i32.const 0))
   (global $DX_VTBL_DSNOTIFY   (mut i32) (i32.const 0))
   (global $DX_VTBL_DS3DBUF    (mut i32) (i32.const 0))
@@ -8177,9 +8178,13 @@
 
   ;; IID_IDirectSound3DBuffer = {279AFA86-4981-11CE-A521-0020AF0BE560}.
   ;; IID_IDirectSound3DListener = {279AFA84-4981-11CE-A521-0020AF0BE560}.
-  ;; Complete DirectSound buffer-family interface classification. These four
-  ;; GUIDs share a suffix, so compare all four words after one translation.
+  ;; Compare the complete identity after one translation; Buffer8 and the
+  ;; auxiliary interfaces do not share the legacy buffer GUID suffix.
   (func $dsbuf_iid_kind_wa (param $iid_wa i32) (result i32)
+    (if (call $guid_words_equal (local.get $iid_wa)
+          (i32.const 0x6825A449) (i32.const 0x4D827524)
+          (i32.const 0xE3500F92) (i32.const 0x1EABB36A))
+      (then (return (i32.const 7)))) ;; IDirectSoundBuffer8
     (if (call $guid_words_equal (local.get $iid_wa)
           (i32.const 0x31EFAC30) (i32.const 0x11D0515C)
           (i32.const 0xAA00AAA9) (i32.const 0x93BE6100))
@@ -8235,6 +8240,27 @@
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
         (return)))
     (local.set $slot (call $dx_slot_of (local.get $entry)))
+    (if (i32.eq (local.get $kind) (i32.const 7))
+      (then
+        ;; Buffer8 is a secondary-buffer interface, with three additional
+        ;; methods. Never hand out the 21-slot legacy vtable under this IID.
+        (if (i32.or
+              (i32.ne (load.field DxObject type (local.get $entry)) (i32.const 5))
+              (i32.ne (i32.and (i32.load offset=4
+                (call $dx_surf_state_ptr (local.get $entry))) (i32.const 1)) (i32.const 0)))
+          (then
+            (i32.store (global.get $reg_base) (i32.const 0x80004002))
+            (i32.store offset=16 (global.get $reg_base)
+              (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+            (return)))
+        (local.set $wrapper (call $dsbuf_aux_wrapper
+          (local.get $slot) (global.get $DX_VTBL_DSBUF8)))
+        (if (i32.eqz (local.get $wrapper))
+          (then
+            (i32.store (global.get $reg_base) (i32.const 0x8007000E))
+            (i32.store offset=16 (global.get $reg_base)
+              (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
+            (return)))))
     (if (i32.eq (local.get $kind) (i32.const 6))
       (then
         (local.set $wrapper (call $dsbuf_aux_wrapper
@@ -8298,6 +8324,16 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16))))
 
+
+  ;; Buffer8's inherited 21 slots operate on the same buffer. The three DX8
+  ;; extensions remain explicit missing features, not successful no-ops or
+  ;; invented capability failures. A caller reaching one gets its API name.
+  (func $handle_IDirectSoundBuffer8_SetFX (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $crash_unimplemented (local.get $name_ptr)))
+  (func $handle_IDirectSoundBuffer8_AcquireResources (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $crash_unimplemented (local.get $name_ptr)))
+  (func $handle_IDirectSoundBuffer8_GetObjectInPath (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $crash_unimplemented (local.get $name_ptr)))
 
   ;; Unlike the legacy auxiliary allocator, exhaustion must never rewrite a
   ;; live buffer's primary vtable. Hold the allocator lock through the check.
