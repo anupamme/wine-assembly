@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active
+  status: active (kkrieger original Buffer8 validation; CMR3 native/registry recovery)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Return Fire native/browser movement and colors verified; audio quality/FPS open. Alice native movement reviewed on held DLL lifecycle candidate; finish correctness review and browser registration. BG2 media extracted; assemble installer-defined game tree and run startup. One worker/runtime, temporary boats only.
+  Next: Two unqualified lanes: /root/kkrieger_buffer8_validation owns sole runtime bx_erf37bxf, original controller46631 after canonical/six suites PASS on42b0be045; actual Buffer8 QI succeeds, gameplay pending. CMR3 original302files recovered; d2083fb native recipe and four verified seeds ready for next serialized runtime slot. Palette cache regression remains unmerged and queued. Saved bx_tcen9fqv snapshot-stop completed; no new-game qualification yet.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1518,3 +1518,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
   Next: Original launcher-captured lithtech.exe -cmdfile avp2cmds.txt reaches Single Player -> Marine -> Unwelcome Guests but mission launch fails HUDMgr font initialization. Reviewed run20261010T0237Z-avp2-hud-font; replay142017/142024 terminal0 confirms same error, run20261010T0239Z-avp2-font-trace. cshell factory preferred VA1011bfd0 returns null to10036b3b; discriminate argument/allocation/virtual-init failure before implementing a fix. Branch replay controller143279 live on boat bx_hx8msa33 with600s guard; output /home/user/avp2-font-branch-20261010. Menu model textures also corrupt. Missing local installed media test/binaries/candidates/avp2-demo; original payload remains on boat, disk below2GiB prevents bulk restore. No gameplay qualification or public deployment.
   Done: Original demo launch, ordinary player input visibly changes gameplay, reviewed screenshot with exact source/build/run evidence.
+
+- [ ] Validate original .kkrieger startup on separate test box
+  id: KKRIEGER-STARTUP-20261014
+  status: active (Buffer8 candidate passes six suites; original gameplay validation running)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Signed vertex fix ec4844f16 merged. Buffer8 candidate42b0be045 passes canonical and six suites; original46631 confirms all sound initialization return codes successful, QI output nonnull with24-slot vtable. /root/kkrieger_buffer8_validation retains sole runtime until bounded600s run and evidence collection finish; gameplay unverified. Candidate not yet merged.
