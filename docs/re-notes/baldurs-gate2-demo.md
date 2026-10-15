@@ -1,5 +1,15 @@
 # Baldur's Gate II demo
 
+## Retained fixture metadata verification (2026-10-15, resumed work)
+
+The merged generator at `8ef8e1073` regenerated the retained local fixture's
+browser manifest with 644 support entries. Its existing manifest already had
+644 entries; parsed file records remained identical (only serialization changed).
+All 645 required installed files matched their recorded hashes both before and
+after generation. The extra file is host browser metadata. This is a local
+metadata check, not a new game run or deployment. Before/after manifests and
+hash receipt are preserved in `scratch/runs/20261015-bg2-manifest-regeneration`.
+
 `fetch-candidate-corpus.js --id=baldurs-gate2-demo --prepare` verifies the
 645 required installed files before regenerating browser metadata. It does not
 repeat extraction or require the moved source directory. Extra save files and
