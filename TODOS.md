@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (CMR3 runtime preparation; kkrieger input investigation)
+  status: active (CMR3 line raster validation; kkrieger progress capture queued)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two currentworkers: /root/cmr3_registered_gameplay owns next bx_9ef2wdsw serialized run after all9registrationPASS; /root/kkrieger_input_progress source-only polling/progress-aware input work. Kkrieger level verified but directional control remains inconclusive. Runtime39718 completed, oldboxes snapshot-stopped; no parallel guest/browser.
+  Next: Two lanes: /root/cmr3_software_lines owns sole bx_9ef2wdsw canonical build/raster test slot for579c1eee; kkrieger accepted-input progress probe integrated and next capture queued. CMR3 original menu-to-Stages exposes unsupported LINELIST; no race. Kkr firstperson level verified, movement unverified.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,13 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: review (held renderer GPU validation queued)
+  status: active (renderer merged; per-game dual-backend coverage incomplete)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: none (source preparation completed; runtime slot queued)
+  worker: /root/cmr3_software_lines (bounded native raster validation)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Held task/iw-render-review14dd0c539 has30 independently passing source checks and prepared actual WebGL1/2 RGB/linkage/depth/stencil tests, still unexecuted. Run bounded renderer validation after game lane release before any merge. FALSE filtering/native contract, original27 membership and per-game dual-backend coverage remain unresolved.
+  Next: Renderer merged through9eb485acb after77 actual checks perWebGL1/2 and6 discriminating mutant failures; source30checks PASS. CMR3 software LINELIST tests next. Original27 membership, FALSE filtering contract and per-game coverage remain open.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1522,15 +1522,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (level verified; input-progress source investigation)
+  status: active (accepted-input capture queued)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Private WineOps launch repaired40fe91b98, exact module/EXE HTTP200 verified, Telegram1402 delivered. Canonical39718 completed0 with level via ordinaryEnter;172local artifacts independently verified. W/A/look inconclusive with sparse Present observations and5sholds. /root/kkrieger_input_progress investigates original input polling and prepares bounded progress-aware capture; no new runtime yet.
+  Next: Private WineOps launch fixed40fe91b98; canonical level verified but controls inconclusive. Progress-aware W hold/release probe integrated a505ddc55; five tests PASS including original code pins. Next serialized900s capture after CMR3 raster slot release; accepted state/update counter alone is not displacement.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
-  status: review (historical splash/null boundary superseded; fresh progression unverified)
+  status: active (current line-list renderer boundary)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Lifecycle83947f6a6 is on main; original differential already reached menu with native quartz exits yielding2 instead of traps. Do not re-adapt held unload branch. After authentic registry execution, run one serialized original replay with ordinary menu-to-Stages input and exact module/frame/thread evidence; racing remains unqualified.
+  Next: Historical splash/null superseded: corrected registered original58821 reaches main menu and rejects primitive2/count12 after Stages input. Source/module/native identities unchanged, no runtime survivors. Real LINELIST implementation under validation; abandoned parked calls also retained, causality unknown.
 
 - [ ] Validate merged DLL unload and CMR3 progression
   id: FREELIBRARY-EXITTHREAD-CMR3-20261010
@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: active (registered original game launch preparation)
+  status: active (software line-list implementation validation)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: Authentic original302/native12 recovery and all9 registration steps PASS53813; generated972entry registry and exactWMVCORE profile preserved,108artifacts rootverified. Evidence merged876aa2264. /root/cmr3_registered_gameplay owns sole bx_9ef2wdsw next bounded original launch, preparation only until process receipt; mount actual registry/profile, no historical snapshot fabrication.
+  Next: Registered original run58821 reached main menu; selectingStages triggers primitive2/count12 unsupported LINELIST. All25 retained artifacts independently hash-verified and menu image reviewed. /root/cmr3_software_lines candidate579c1eee owns next canonical build/raster validation, then original replay only after passing tests. No race/audio/FPS qualification.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
