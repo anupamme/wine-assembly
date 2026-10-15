@@ -129,7 +129,14 @@ async function touch(page, selector, duration=1000) {
     const guest=await open('mobile',true);
     await guest.evaluate(()=>{apps.quake3_demo.args='+set logfile 2';document.getElementById('app-select').value='quake3_demo';launchApp();});
     await guest.waitForSelector('#wine-lan-card .wine-lan-room button',{timeout:60000});
-    await guest.click('#wine-lan-card .wine-lan-room button');
+    if (process.env.Q3_RUNNING_JOIN === '1') {
+      await guest.evaluate(()=>[...document.querySelectorAll('#wine-lan-card button')].find(b=>b.textContent==='Play offline').click());
+      await guest.waitForFunction(()=>runningApps[0]?.wine?.instance && !runningApps[0].wine.vlanWire,{timeout});
+      await guest.waitForSelector('#wine-lan-card .wine-lan-room button',{timeout:90000});
+      await guest.click('#wine-lan-card .wine-lan-room button');
+    } else {
+      await guest.click('#wine-lan-card .wine-lan-room button');
+    }
     await gameplay(guest);
     await host.waitForFunction(()=>{
       const e=[...runningApps[0].wine._helpCtx.vfs.files].find(([k])=>k.endsWith('games.log'));
@@ -143,6 +150,21 @@ async function touch(page, selector, duration=1000) {
     assert.strictEqual(metrics.network.address,'10.0.0.2');
     assert(metrics.network.sent>50&&metrics.network.recv>100,'bidirectional game traffic');
     assert.strictEqual(metrics.network.datagram,'open');
+    if (process.env.Q3_RUNNING_JOIN === '1') {
+      assert(!metrics.network.args?.includes('+connect'), 'running join must use the console, not launch arguments');
+      await guest.keyboard.press('Backquote'); await sleep(300);
+      await guest.keyboard.type('/localservers\n', {delay:25});
+      await guest.waitForFunction(()=>{
+        const w=runningApps[0].wine;
+        return new DataView(w.memory.buffer).getUint32(w.instance.exports.guest_to_wasm(0x6dc250),true)>0;
+      },{timeout:30000});
+      metrics.localServers=await guest.evaluate(()=>{
+        const w=runningApps[0].wine;
+        return new DataView(w.memory.buffer).getUint32(w.instance.exports.guest_to_wasm(0x6dc250),true);
+      });
+      await guest.keyboard.press('Backquote'); await sleep(300);
+      console.log('PASS running-game console join and native LAN server discovery');
+    }
     metrics.mobileStart=await position(guest);
     await touch(guest,'.tc-up');metrics.mobileForward=await position(guest);
     assert.notDeepStrictEqual(metrics.mobileForward.slice(0,2),metrics.mobileStart.slice(0,2),'touch movement changes guest position');

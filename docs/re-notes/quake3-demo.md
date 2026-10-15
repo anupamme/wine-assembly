@@ -73,6 +73,36 @@ entries exist, and `pak0.pk3` is emitted as five parts. No public deployment
 was performed. Physical-phone/Safari behavior and WAN/NAT conditions were not
 tested by this local two-browser run.
 
+## Running-game joins and native server browser, 2026-10-15
+
+The release acceptance originally covered the pre-launch room card only.
+Q3 also opens a socket immediately after an offline launch, producing another
+room picker after command-line arguments have already been consumed. The
+running-game join recipe now handles that socket-time picker (`why=1`) and
+the later invitation (`why=0`); the pre-launch card still uses `+connect`.
+
+Original demo `Con_ToggleConsole_f` at `0x406640` toggles bit 0 of
+`cls.keyCatchers` at `0x6dc1a4`. Renderer startup creates the window before
+the UI is ready, so the socket-time recipe waits for a nonzero catcher before
+opening the console. Q3 consumes printable text through WM_CHAR, unlike
+Q2's key-event recipe: `type(text, { characters: true })` explicitly opts in
+to character delivery. No guest memory is patched.
+
+Reviewed `scratch/runs/20261015-quake3-running-join4`: offline launch,
+socket-time room join, console connect without launch arguments, two-player
+gameplay, native `localservers` discovery, mobile movement/look/fire and
+portrait controls all passed. Earlier runs exposed the second picker,
+premature key injection, and missing character delivery.
+
+Reviewed `scratch/runs/20261015-quake3-native-browser`: joined the browser LAN
+with automatic connect disabled, opened the original Multiplayer menu,
+selected Local and clicked Refresh. The actual native list displayed
+`NONAME`, `Q3DM1`, `1/4 DM`, `UDP 155`, and `1 of 1 Arena Servers`.
+The native `localservers` handler at `0x40ee70` broadcasts on ports
+27960–27963; `cls.numlocalservers` at `0x6dc250` became 1. The Internet
+master-server list is not the Berrry room directory: native discovery sees
+peers in the browser LAN room, not every published Berrry room.
+
 ## Install
 
 The package is Installer VISE (MindVision); neither `unzip` nor `7z` opens it,
