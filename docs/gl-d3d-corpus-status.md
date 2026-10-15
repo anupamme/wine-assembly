@@ -1,6 +1,6 @@
 # OpenGL / Direct3D corpus status, reconciled 2026-10-15
 
-## October 15 current integration status (12:55 UTC)
+## October 15 current integration status (13:33 UTC)
 
 This section supersedes the earlier same-day startup and unmerged-palette
 statuses below; those sections remain dated evidence.
@@ -27,8 +27,12 @@ statuses below; those sections remain dated evidence.
   The [original-game replay](cmr3-lines-gameplay-20261015.md) now passes Stages,
   player/car/transmission/country selection and reaches the UK Warwick stage
   loading map. Rendering then reports `invalid native free list` after batch
-  2402. The exact damaged node has not been captured; allocator diagnosis is
-  active. Neither driving nor a software/WebGL gameplay pair is qualified.
+  2402. The exact damaged node has not been captured; the first-failure diagnostic passed independent native conformance and is
+  merged as `729d3fc73`. The subsequent original replay was automatically
+  rejected for possible cybersecurity risk (exact action unspecified), then
+  stopped cleanly at 13:08:09. That diagnostic replay is held: do not retry,
+  rephrase or delegate it around the rejection. This restriction is separate
+  from permitted compatibility/conformance work. Neither driving nor a software/WebGL gameplay pair is qualified.
   [Line conformance evidence](cmr3-software-line-lists-20261015.md) establishes
   the bounded raster fix, not the remaining game's correctness.
 
@@ -37,8 +41,12 @@ source-only checkpoint `e2d10ebb0` shares ancestor `4fde32fa2` with current
 main; its loader predates main's existing lock, generation pins and
 INITIALIZING/LIVE/FAILED lifecycle. Passing tiny-Wasm Worker/local tests on
 that branch does not establish compatibility with current production.
-The next step is to port its scoped callback operations onto main's existing
-lifecycle and rerun both protocol and native loader tests. A missing lock in
+The selective transport port `8793e9f47` now preserves main's lifecycle.
+Cooperative loader primitive `622fa023d` passes tiny-Wasm Worker/local ABI
+tests; `/root/iw_scoped_lifecycle` is wiring exact frame/epoch completion,
+generation publication and acknowledged cleanup before Worker retirement.
+That work remains held off main; actual native loader and game tests are
+still pending. A missing lock in
 the held branch is not evidence that main lacks one; do not replace current
 loader behavior with that older implementation.
 

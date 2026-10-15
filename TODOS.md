@@ -1158,13 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active (line raster fix merged; original and dual-backend validation pending)
+  status: active (renderer fixes merged; scoped transport and gameplay coverage pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/cmr3_line_gameplay (source-only replay preparation)
+  worker: /root/iw_scoped_lifecycle (source-only endpoint lifecycle); /root/kkrieger_position_capture (sole runtime)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Renderer9eb485 GPU77checks each and line raster78a06540f canonical/foursoftware suites/3negativecontrols merged. CMR3 ordinary replay queued. Original27 membership, defaultFALSE filtering contract and per-game dual-backend coverage remain unresolved.
+  Next: Merged palette6b269/renderer9eb485/LINELIST78a conformance; original CMR3 reaches stage loading then allocator failure. Diagnostic replay105999 automatically rejected and stopped; no retry. IW currentmain port8793/622 held pending endpoint/native proof. Original27 membership, defaultFALSE filtering and per-game dual-backend coverage remain open.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1528,15 +1528,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
-  status: active (line-list fix merged; original replay queued)
+  status: blocked (original diagnostic replay automatic-review hold)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Original58821 mainmenu-toStages exposed primitive2/count12 rejection, fixed78a06540f with real raster validation. Replay original302/native12/972registry/profile on exact newmodule937466db after solebox release; inspect next boundary rather than assuming race works.
+  Next: 85638 exact937466 original replay reached UK Warwick loading, then invalid native free list. Diagnostic729d3fc73 passed native suites, but original replay105999 was automatically rejected for possible cybersecurity risk (exact action unspecified) and stopped clean13:08:09. Do not retry/rephrase/delegate that diagnostic; no driving or cause established. Independent ordinary conformance remains permitted.
 
 - [ ] Validate merged DLL unload and CMR3 progression
   id: FREELIBRARY-EXITTHREAD-CMR3-20261010
-  status: review (implementation merged; recovered-fixture progression pending)
+  status: review (implementation merged; stage loading observed, gameplay unresolved)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Main83947f6a6 integrates real generation-aware unload/thread exit; canonical+6reader+17DLL+2DirectSound suites and negative controls recorded. Later57a148044/321e734aa also landed. Fresh current recovered CMR3 progression remains; no implementation or transport blocker, no race qualification.
+  Next: Main83947f6a6 plus57a148044/321e734aa integrate generation-aware unload/thread exit with recorded suites. Recovered original85638 progresses to UK Warwick loading then native free-list failure; this is not evidence of a new unload defect. CMR3 diagnostic replay105999 is held by automatic review; do not restart it. No driving qualification.
 
 
 - [~] New-game lane: Colin McRae Rally 3 demo
