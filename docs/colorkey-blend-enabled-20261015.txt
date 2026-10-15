@@ -2,10 +2,11 @@ DX7 explicitly enabled color-key blending — source checkpoint 2026-10-15
 
 Base: 27f60c4133305a4d7558afbb8c067691b868434e
 Branch: task/colorkey-blend-enabled
-Disposition: canonical build/four CPU suites PASS on d582f0da5; WebGL1/2 and
-Worker both sync modes PASS on621a6d4e. Cache-identity mutant SURVIVED; latest
-d1e08ccb fixture FAILS its cache-reuse prerequisite. Not ready to merge or
-deploy. Earlier source-only labels below describe checkpoint history.
+Disposition: canonical build/four CPU suites PASS on d582f0da5; WebGL1/2 PASS
+on621a6d4e; updated Worker both sync modes PASS on2e4bd5f17. Cache-reuse
+prerequisite PASS and isolated cache-identity mutant now FAILS expected RGB.
+Production source unchanged across these checkpoints. Historical failures
+below are retained; default/FALSE and alpha-palette/key boundaries stay open.
 
 Contract
 Original Microsoft DX7 D3DRENDERSTATETYPE reference:
@@ -285,3 +286,36 @@ implementations, and distinguish resource-page invalidation from an unknown
 identity/replay cause without asserting a reason from upload counts alone.
 Only JS syntax and diff checks ran. No production edits or runtime actions;
 latest source follow-up awaits root's next serialized validation grant.
+
+Replacement isolation validated — 2026-10-15 10:07-10:08 UTC
+Exact source2e4bd5f17cb24161277b9f54e1b2d08b41f3da38, controller56700.
+Actual Worker lazySync=false and true both PASS:22 observations each (seven
+existing and15 keyed),25 GPU draws,10 texture uploads. Unchanged FALSE holds
+uploads9 ->9 in both modes. Texture watch page114688 stays generation24;
+actual replacement palette pages7194/7195 stay generation6/6 through clear,
+producer draw and fence. All refs remain1; poison/audit0, changedRanges[],
+paletteOverlaps[]. No renderer fallback/errors, byte-shadow checks or dirty
+audit misses. Addresses and phases are retained numerically in worker.json.
+
+Separate /home/user/wa-colorkey-cache-mutant-run6 removes only
+" && cached.keyBlend === d.keyBlend" from identity. It passes the unchanged
+FALSE cache-hit prerequisite, then FAILS in lazySync=false at the new TRUE
+transition: first pixel actual[64,128,192,255] vs expected[0,0,0,255]. Nonkey
+pixels remain[64,128,192,255]. The test stops at this first expected failure;
+the mutant lazySync=true mode was not reached. Controller checks exact label
+and numeric stale RGB, then reports successful mutation discrimination.
+Mutant source was restored and full tracked source hashes verified.
+
+No canonical rebuild was needed: independently checked261 src/lib hashes
+match the retained production build and prior successful GPU/CPU checkpoint.
+Worker test module remains0e56180d7aeb82b7c6df0dac64bfcca4effff939c43a0f0f9d98184714b42722;
+retained canonical module remains619623c65da9c18932de06ff131a56e83f49e71df51412ebed3c7473721e7fc0.
+This closes the Worker cache-oracle gap; it does not retroactively validate
+the older mutant-surviving fixture or change the unresolved DX7 boundaries.
+
+Evidence added under scratch/runs/20261015-colorkey-browser-worker:
+colorkey-runtime-evidence-run6, controller script, terminal56700, source-pin
+verification and download receipt. New archive417840bytes SHA256:
+f3f8d50b679b4754e8797fe603833ed17b7aebe128e7bd22ce9aaee20b5e31f9.
+Controller terminal0 at10:08:22.938Z, postflight10:08:49.157Z survivors[].
+Runtime released to root. No production edits or deployment occurred.
