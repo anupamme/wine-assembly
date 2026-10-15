@@ -1,6 +1,6 @@
 'use strict';
 globalThis.runPaletteWorker=async function(lazySync=false){
-  const evidence=globalThis.paletteWorkerEvidence={lazySync,observations:[],barriers:[],logs:[]};
+  const evidence=globalThis.paletteWorkerEvidence={lazySync,observations:[],barriers:[],snapshots:[],logs:[]};
   const check=(v,s)=>{if(!v)throw Error(s);};
   const eq=(a,b,s)=>check(JSON.stringify(a)===JSON.stringify(b),`${s}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`);
   const until=async(predicate,label)=>{
@@ -16,7 +16,7 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     host[name]=(...args)=>evidence.logs.push({name,args});
   const broker=GuestRpc.createMainBroker(memory,host,sigs,{onError:(name,error)=>evidence.logs.push({name,error:String(error)})});
   broker.publish({tickMs:0});
-  let manager,port,lastStats,holding=false;
+  let manager,port,lastStats,heldRecord,holding=false;
   const held=[];
   const link=new GuestWorkerLink({slot:0,module,memory,sigs,broker,workerUrl:'/lib/guest-worker.js',
     sharedRenderWorker:true,d3dimGpu:true,d3dimLazySync:lazySync,log:s=>evidence.logs.push(s),
@@ -33,7 +33,7 @@ globalThis.runPaletteWorker=async function(lazySync=false){
         // control, dispatcher and GPU executor are otherwise unmodified.
         if(holding && (message.t==='batch'||held.length))held.push(()=>post(message));
         else post(message);
-        if(holding)evidence.barriers.at(-1).messages.push(message.t);
+        if(holding)heldRecord.messages.push(message.t);
       };
       return port;
     }});
@@ -73,8 +73,9 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     for(const [id,v] of [[7,0],[14,0],[15,0],[22,1],[27,1],[19,5],[20,6],[28,0],[41,0]])await raw('pa_rs',device,id,v);
     for(const [id,v] of [[1,2],[2,2],[4,2],[5,2],[13,3],[14,3],[16,1],[17,1]])await raw('pa_tss',device,0,id,v);
     await raw('pa_tss',device,1,1,1);await raw('set_page_watch_audit',0);
-    const clear=async()=>eq(await raw('pa_clear',rtEntry,1,0xff000000,1,0,0,4,4,0),1,'real clear');
-    const draw=()=>raw('pa_draw',device,4,3,vertices,6);
+    const clear=async(color=0xff000000)=>eq(await raw('pa_clear',rtEntry,1,color,1,0,0,4,4,0),1,'real clear');
+    let drawCount=0;
+    const draw=()=>{drawCount++;return raw('pa_draw',device,4,3,vertices,6);};
     const pixel=()=>{const b=new Uint8Array(memory.buffer,rtDib+20,4);return [b[2],b[1],b[0]];};
     const observe=(label,expected)=>{const actual=pixel();eq(actual,expected,label);evidence.observations.push({label,actual});};
     // The production GPU deliberately declines clears until it has drawn on
@@ -83,7 +84,7 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     const barrier=async(label,mutation,expected)=>{
       await clear();const before=new Uint8Array(memory.buffer,palData,1024).slice();
       const ownership=new Uint8Array(memory.buffer,alphaSlot,32).slice();
-      const record={label,messages:[]};evidence.barriers.push(record);holding=true;
+      const record={label,messages:[]};evidence.barriers.push(record);heldRecord=record;holding=true;
       await draw();await until(()=>held.length>0,'held draw');
       let settled=false;const result=mutation().then(v=>{settled=true;return v;});
       await until(()=>record.messages.includes('legacy-fence'),'actual producer fence');
@@ -108,11 +109,61 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     eq(await raw('pw_refs',replacement),1,'new slot ownership');
     eq(await call('pa_attach',texture,replacement),0,'ordinary replacement');
     await clear();await draw();await raw('pw_fence');observe('reused ordinary palette ignores peFlags',rgb);
+
+    // Exercise the same real transport with an ordinary keyed palette. All
+    // three native indices have identical RGB; only index 7 is a key. Keep
+    // these bytes and palette unchanged throughout the mode/cache switches.
+    for(let y=0;y<4;y++)for(let x=0;x<4;x++)await raw('guest_write8',texGuest+y*4+x,[7,8,9,9][x]);
+    await write(out,7);await write(out+4,7);
+    eq(await call('pa_key',texture,out),0,'Worker SetColorKey native index 7');
+    const rs=(id,v)=>raw('pa_rs',device,id,v);
+    await rs(27,0);await rs(41,1);await rs(144,1);
+    const opaque=[...rgb,255],zero=[0,0,0,0],background=[17,34,51,255];
+    const recordRGBA=(label,expected)=>{
+      const actual=[0,1,2].map(x=>{
+        const b=new Uint8Array(memory.buffer,rtDib+16+x*4,4);
+        return [b[2],b[1],b[0],b[3]];
+      });
+      // Retain numeric failure evidence before throwing, including alpha.
+      evidence.observations.push({label,actual,expected});eq(actual,expected,label);
+    };
+    const renderRGBA=async(label,expected)=>{
+      await clear(0xff112233);await draw();await raw('pw_fence');recordRGBA(label,expected);
+    };
+    await renderRGBA('Worker explicit key zero RGBA/native duplicate RGB',[zero,opaque,opaque]);
+    // Delay only message delivery. Mutate live device state after the real
+    // Encoder has copied the draw, then let the production dispatcher replay
+    // it. Reading live state instead of the queued snapshot must fail pixels.
+    const snapshot=async(label,nextMode,expected)=>{
+      await clear(0xff112233);await raw('pw_fence');
+      heldRecord={label,messages:[],nextMode};evidence.snapshots.push(heldRecord);holding=true;
+      await draw();await until(()=>held.length>0,'held keyed draw');
+      await rs(144,nextMode);heldRecord.stateChangedBeforeDrain=true;
+      holding=false;for(const send of held.splice(0))send();
+      await raw('pw_fence');recordRGBA(label,expected);
+    };
+    await snapshot('Worker queued TRUE survives live FALSE',0,[zero,opaque,opaque]);
+    await renderRGBA('Worker FALSE cache transition legacy rejection',[background,opaque,opaque]);
+    await snapshot('Worker queued FALSE survives live TRUE',1,[background,opaque,opaque]);
+    await renderRGBA('Worker TRUE cache restore unchanged bytes',[zero,opaque,opaque]);
+    await rs(41,0);
+    await renderRGBA('Worker state144 alone does not key',[opaque,opaque,opaque]);
+    await rs(41,1);await rs(15,1);await rs(25,5);await rs(24,0);
+    await renderRGBA('Worker application GREATER0 rejects zero alpha',[background,opaque,opaque]);
+    await rs(15,0);await rs(27,1);
+    await renderRGBA('Worker application blend preserves destination',[background,opaque,opaque]);
+    await rs(27,0);
+    // SELECTARG2(DIFFUSE) makes stage alpha opaque: application rejection
+    // must use stage output, while the keyed sample RGB remains zero.
+    await raw('pa_tss',device,0,4,3);await raw('pa_tss',device,0,6,0);await rs(15,1);
+    await renderRGBA('Worker opaque stage alpha passes application test',[[0,0,0,255],opaque,opaque]);
+    await rs(15,0);await raw('pa_tss',device,0,4,2);await rs(41,0);await rs(144,0);
     eq(await call('pw_release',replacement),1,'replacement attachment ownership');
     eq(await call('pa_attach',texture,0),0,'replacement final detach');
     eq(await raw('pw_type',replacement),0,'replacement retired');
-    await until(()=>lastStats?.stats.drawCalls>=7,'all GPU draw stats');evidence.stats=lastStats;
-    check(lastStats.stats.drawCalls>=7,'actual GPU draws');
+    await until(()=>lastStats?.stats.drawCalls>=drawCount,'all GPU draw stats');evidence.stats=lastStats;
+    evidence.expectedDrawCalls=drawCount;
+    eq(lastStats.stats.drawCalls,drawCount,'every draw used actual GPU');
     eq(lastStats.stats.fallbacks,0,'no renderer fallback');
     eq(lastStats.stats.errors,0,'no GPU errors');
     eq(lastStats.stats.dirtyAuditMisses,0,'no watch misses');

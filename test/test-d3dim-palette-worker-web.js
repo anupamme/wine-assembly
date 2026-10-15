@@ -36,7 +36,7 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
       page.on('pageerror',error=>console.error('pageerror:',error.message));
       await page.goto(`http://127.0.0.1:${server.address().port}/palette-worker-fixture`);
       evidence.results.push(await page.evaluate(lazy=>runPaletteWorker(lazy),lazySync));
-      console.log(`PASS production guest/render Worker palette barriers, generations, ownership and slot reuse; lazySync=${lazySync}`);
+      console.log(`PASS production guest/render Worker palette lifetime and keyed RGBA/state snapshots/cache transitions; lazySync=${lazySync}`);
       await page.close();page=null;
     }
   }catch(error){

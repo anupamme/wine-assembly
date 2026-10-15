@@ -65,7 +65,8 @@ Source review follow-up (still NOT runtime-executed)
   checks the resulting opaque black pixel.
 - GPU positive depth control writes zero RGBA with application alpha testing
   and blending disabled, then verifies it occludes farther opaque geometry.
-- Explicit keyed Worker snapshots remain an open test requirement.
+- Explicit keyed Worker snapshots were subsequently added in the source-only
+  follow-up below; their actual execution remains an open requirement.
 
 Queued runtime recipe (only after explicit slot grant)
 1. Build exact branch with bash tools/build.sh; record source and module SHA256.
@@ -73,9 +74,9 @@ Queued runtime recipe (only after explicit slot grant)
    test/test-d3dim-palette-alpha-page-watch.js, test/test-d3dim-device7-load.js.
 3. PALETTE_GPU_EVIDENCE=<absolute-output.json> node test/test-d3dim-palette-gpu-web.js
    Require both WebGL versions and every assertion; retain partial failures.
-4. Re-run existing palette Worker lazySync=false/true lifetime suites as route
-   regression. Their existing cases do not establish keyed queued snapshots;
-   explicit state144 Worker pixel coverage remains a separate pending gap.
+4. PALETTE_WORKER_EVIDENCE=<absolute-output.json> node test/test-d3dim-palette-worker-web.js
+   Require both lazySync=false/true lifetime and keyed snapshot cases; retain
+   partial failures. No passing result for the new keyed cases exists yet.
 
 Open boundaries
 State144 default and FALSE mixed-filter rejection contract remain UNKNOWN.
@@ -116,3 +117,25 @@ Remote /home/user/colorkey-cpu-bef60e8 retains build log, per-suite logs,
 cpu-suites.js recovery driver, hashes, source/environment and postflight.
 No browser was started. CPU host released to coordinator after terminal suite
 and postflight at00:42:51.102Z. Browser slot remains owned by Silver.
+
+Worker keyed fixture follow-up — 2026-10-15, source-only, NOT EXECUTED
+The existing real GuestWorkerLink/RenderWorker fixture now adds nine RGBA
+observations per sync mode, after the ordinary-palette slot reuse case:
+- Native indices 7/8/9 share RGB; only 7 becomes transparent black.
+- TRUE/FALSE/TRUE transitions keep texture and palette bytes unchanged and
+  distinguish zero RGBA from the opaque colored clear preserved by rejection.
+- Two delayed production batches change live state144 before replay, testing
+  TRUE-to-FALSE and FALSE-to-TRUE snapshot isolation through actual Encoder
+  and dispatcher paths. Only endpoint delivery is delayed; no decoder,
+  renderer, native export or shared control is replaced.
+- COLORKEYENABLE FALSE positive control, application GREATER0 rejection,
+  source-alpha blending, and opaque diffuse stage alpha passing the test.
+Numeric actual/expected RGBA is saved before each new assertion. The final
+draw-count oracle includes every newly queued draw, retaining zero fallback,
+error, dirty-audit-miss and byte-shadow requirements. The original three
+ownership/generation mutation barriers and seven RGB observations remain.
+Only JavaScript syntax and diff/static review were run for this follow-up.
+No new production behavior, Wasm build, browser or Worker execution occurred.
+The saved runtime host cannot currently resume (403 sandbox.resume); no
+alternate transport or host was attempted. GPU/Worker and browser-embedded
+software tests remain pending, and this branch is not merge/deploy ready.
