@@ -1164,7 +1164,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Darkstone paired software295780/WebGL298325 completed, root reviewed Town/camera and owning renderer counters. Full recovered25252 archive includes root reviews; report/controller merged6789c835e. WebGL six fallback sites/errors zero but declinedClears1 retained. Locomotion/combat/FPS/audio/children/original27 membership unresolved; worker audits ordinary locomotion instructions source-only.
+  Next: Darkstone paired software/WebGL Town and camera evidence merged6789c835e. New316037 capture proves two ordinary ground-click movements with following camera; root reviewed stable first idle and target-dependent landmark changes. Archive56acbc258 SHA verified, root review separate. Internal deadline exit1/final idle absent and foreground geometry clipping retained. Combat/audio/FPS/children/full27 membership remain unresolved; locomotion report integration pending.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (private NE stacks and caller-context implementation)
+  status: active (full native NE lifecycle validation queued)
   owner: /root/outlaws_kernel_module
-  Next: Actual NE runner merged through6789c835e after normalbuildd618 and all9native302790 arms passed; root verified archiveaf173 and independent17:43:36 release. Real synthetic NE return/zero/nested/trap/budget/cancellation restore caller. Module lifecycle3cd/a926 remains separate source-only with tiny tests; host dependency/unload/QT/original-game work remains.
+  Next: Actual NE runner merged6789c835e with native d618/all9 arms passed. Host lifecycle, dependency references, active-call pins and strict NE image staging now tested in tiny actual loader suites. Reviewed934109 native packet queued after FIFA independent release: normal build, full-module lifecycle and unchanged original PMPRO62 load/init/lookup/unload. Original Outlaws/QT and broader guest-created resource ownership remain unproved.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1654,10 +1654,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (FIFA 98 original-demo launch preparation)
+  status: active (original keyboard assignment capture)
   owner: /root/new_game_refill_after_lords
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Browser287054 completed and independently released; original ordinary menus reached Controller Select with blank assignment rows, Enter delivered but no player-control proof. Evidence/report merged6870922fe. Source e212767fe inserts controller records before joystick discovery; zero joysticks alone does not justify API changes. Root-reviewed bounded read-only state observer passed tests; worker prepares pinned MainMenu/ControllerSelect snapshots after Darkstone runtime release. Touch layout remains open.
+  Next: Read-only capture307000 verified two original records reach blank Controller Select slots; merged6515ebfbb. Original executable activation handler requires horizontal keyboard input, absent from prior mouse/Enter route. Reviewed e9f controller now runs bounded ArrowLeft/ordinary visible continuation as sole PID323637 on bx_9ef2wdsw; gameplay/touch still unproved.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
