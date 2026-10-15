@@ -492,3 +492,30 @@ documented conflicting renderer query before later correction. They must be
 reviewed/adapted before reuse. The recovery JSON includes the bounded remote
 single-member acquisition arguments, still unexecuted pending runtime-owner
 coordination. No native registration or guest execution occurred in this audit.
+
+The subsequent authorized remote recovery succeeded on `bx_erf37bxf`:
+installer download/hash/carves process 26104 exited zero at 09:24:23;
+unshield installation 26582 and extraction/mapping 27812 exited zero.
+Original installer and EXE SHA-256 values match. Distro unshield 1.5.1-1
+extracted exactly 333 records; the recovered 32 exclusions matched exactly,
+with 301 mapped cabinet files plus the separate EXE, zero case-insensitive
+collisions and every copied file hash verified. The 302 original files total
+158,742,926 bytes. `docs/cmr3-original-inventory-20261015.json` preserves their
+paths, lengths and hashes; this is a fresh verified-source inventory, not a
+recovery of the missing historical 302-file manifest.
+
+Reproduce in a fresh remote workspace using `tools/cmr3-source-recovery.js`
+with an absolute fresh acquisition output, then `tools/cmr3-assemble-original.js`
+with that acquisition and a separate absolute fresh assembly output. Curl
+and `/usr/bin/unshield` are required. Both preserve originals and failure
+receipts; neither executes a Windows binary or creates registry settings.
+The tested acquisition has a 360-second outer deadline and assembly 180
+seconds, in addition to their internal subprocess bounds.
+
+Evidence: `scratch/runs/20261015-cmr3-original-recovery` contains 16 transferred
+artifacts (221,846 bytes), all size/SHA-256 checked, plus terminal process
+records. Sources, carved cabinets and extracted originals remain remotely
+under `/home/user/cmr3-recovery-20261015`. Postflight at 09:26:01 found no
+remaining acquisition/extraction processes and released the slot. Native
+DLL/AX bytes and full saved registry remain prerequisites for launch; this
+milestone makes no menu, racing or gameplay claim.
