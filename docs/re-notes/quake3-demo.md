@@ -161,6 +161,12 @@ joined gameplay through the invite as `.3`. Safari cross-browser behavior was
 not tested in this run. `test/test-vlan-star.js` also covers response validation
 and discovery filtering without public peers.
 
+Q3 sends Local discovery automatically on entering Multiplayer, before the
+player chooses Create or Join. Empty directory results therefore stay silent.
+When other hosts exist, the picker also offers **Host a game**, which closes
+it and leaves Q3's native Create button available without opening a room.
+The dismiss action is **Back to game**, since it does not disable networking.
+
 ## Install
 
 The package is Installer VISE (MindVision); neither `unzip` nor `7z` opens it,
