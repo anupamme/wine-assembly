@@ -10,6 +10,24 @@ const {execFileSync} = require('node:child_process');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 
+function presentWindow(before, after) {
+  const seconds = (after.pageMs - before.pageMs) / 1000;
+  const a = before.presents, b = after.presents;
+  const available = seconds > 0 && !!a && !!b && before.presentHookActive && after.presentHookActive;
+  const countsByKindAndSlot = {};
+  if (available) for (const [at, kind, slot] of b.rows)
+    if (at > before.pageMs && at <= after.pageMs) {
+      const key = kind + ':' + slot;
+      countsByKindAndSlot[key] = (countsByKindAndSlot[key] || 0) + 1;
+    }
+  return {seconds, available, hookContinuity: 'Checked at endpoints only',
+    eventCount: available ? b.count - a.count : null,
+    eventsPerSecond: available ? (b.count - a.count) / seconds : null,
+    droppedRows: available ? b.dropped - a.dropped : null, countsByKindAndSlot,
+    eventsPerSecondByKindAndSlot: Object.fromEntries(Object.entries(countsByKindAndSlot).map(([k, n]) => [k, n / seconds])),
+    scope: 'Presentation events/s; logical game FPS unknown'};
+}
+
 function confirmation(out, stage, startedAt) {
   const file = path.join(out, stage + '-confirmed.json');
   if (!fs.existsSync(file)) return null;
@@ -101,6 +119,7 @@ async function main() {
             voices: Object.entries(voices?._map || {}).slice(0, 16).map(([id, v]) => ({id,
               rate: v.rate, channels: v.channels, bits: v.bits, ringPtr: v.ringPtr,
               ringLen: v.ringLen, sourcePresent: !!v.currentSrc, workletPresent: !!v.workletNode})),
+            recordingAvailable: false, audibleQuality: 'unknown',
             scope: 'Read-only host voice metadata; no PCM recording or audibility claim'},
           text: document.body.innerText.slice(-3000)};
       });
@@ -129,6 +148,11 @@ async function main() {
         const w = window.wineShell?.currentWine;
         if (!w?.running) throw Error('Guest no longer running');
         const previous = w.onGuestFrame;
+        window.__kkriegerGameplayRestore = () => {
+          if (w.onGuestFrame === w.__kkriegerGameplayHook) w.onGuestFrame = previous;
+          delete w.__kkriegerGameplayHook;
+          delete window.__kkriegerGameplayRestore;
+        };
         const records = window.__kkriegerGameplayPresents = {count: 0, dropped: 0, rows: []};
         w.__kkriegerGameplayHook = function (f) {
           records.count++;
@@ -141,7 +165,7 @@ async function main() {
       // Ordinary positioning before the idle control; retain any effect in evidence.
       await page.mouse.move(550, 400); await delay(3000);
       for (const action of ['idle', 'forward', 'strafe', 'look']) {
-        admit(30000); await shot(action + '-before'); event('window-start', {action});
+        admit(30000); const before = await shot(action + '-before'); event('window-start', {action});
         const t = Date.now();
         if (action === 'forward') await hold('w');
         if (action === 'strafe') await hold('a');
@@ -150,7 +174,8 @@ async function main() {
           await page.mouse.move(710, 400, {steps: 16});
         }
         await delay(Math.max(0, 20000 - (Date.now() - t)));
-        event('window-end', {action}); await shot(action + '-after');
+        event('window-end', {action}); const after = await shot(action + '-after');
+        write(action + '-present-window', presentWindow(before, after));
       }
       meta.captureSequenceCompleted = true;
     } else meta.captureSequenceCompleted = false;
@@ -161,11 +186,12 @@ async function main() {
   } catch (error) { meta.error = error.stack; throw error; }
   finally {
     if (page) for (const key of ['Enter', 'w', 'a']) await page.keyboard.up(key).catch(() => {});
+    if (page) await page.evaluate(() => window.__kkriegerGameplayRestore?.()).catch(() => {});
     if (browser) await browser.close().catch(error => { meta.closeError = String(error); browser.process()?.kill('SIGKILL'); });
     if (server) await closeServer(server);
     try { checkPins(); meta.postflightPins = 'passed'; } catch (error) { meta.postflightPins = String(error); process.exitCode = 1; }
     meta.finishedAt = new Date().toISOString(); write('meta', meta); clearTimeout(watchdog);
   }
 }
-module.exports = {confirmation};
+module.exports = {confirmation, presentWindow};
 if (require.main === module) main().catch(error => { console.error(error); process.exitCode = 1; });
