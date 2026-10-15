@@ -156,6 +156,18 @@ assert.equal(first.get_eip(),0);assert.equal(first.win16_bridge_frame_end(prepar
 assert.equal(first.get_sync_msg_depth(),0);assert.equal(first.get_spill_pins(),0);assert.equal(view.getUint32(shared+40,true),0);assert.equal(view.getUint32(shared+44,true),0);
 const malformed=first.win16_bridge_frame_begin();assert.equal(first.win16_bridge_invoke_begin(malformed,target,ds,7,0),1);
 assert.throws(()=>first.th_retf16(2),WebAssembly.RuntimeError,'wrong return stack rejected');assert.equal(first.win16_bridge_frame_end(malformed),1);assert.deepEqual(cpu(first),invokeCaller);
+// Callee-cleaned word arguments, actual RETF immediate, and exact caller restore.
+const withArgs=first.win16_bridge_frame_begin();
+assert.equal(second.win16_bridge_invoke_word(withArgs,1),0,'foreign token');
+assert.equal(first.win16_bridge_invoke_word(withArgs,65536),0,'word overflow');
+for(let i=0;i<16;i++)assert.equal(first.win16_bridge_invoke_word(withArgs,0x1100+i),1);
+assert.equal(first.win16_bridge_invoke_word(withArgs,1),0,'bounded argument storage');
+assert.equal(first.win16_bridge_invoke_begin(withArgs,target,ds,7,0),1);
+assert.equal(first.win16_bridge_invoke_word(withArgs,1),0,'running frame is immutable');
+const argStack=translate(view.getUint32(first.get_reg_base()+16,true));
+for(let i=0;i<16;i++)assert.equal(view.getUint16(argStack+4+2*i,true),0x1100+i);
+first.th_retf16(32);assert.equal(first.win16_bridge_frame_end(withArgs),1);assert.deepEqual(cpu(first),invokeCaller);
+assert.equal(first.win16_bridge_invoke_word(withArgs,1),0,'retired frame');
 first.win16_arena_give(codeIndex,1);first.win16_arena_give(dataIndex,1);assert.equal(first.win16_process_arena_release(),1);
 console.log('PASS actual NE invocation runner: strict selectors, entry ABI, real RETF result, lease exclusion, nested cancellation, spill pins and caller restoration');
 console.log('PASS actual NE invocation helpers: full CPU files/state, nested private stacks, stale/foreign completion, abort and lifetime pins');

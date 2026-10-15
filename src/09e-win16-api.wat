@@ -655,10 +655,25 @@
     (i32.and (i32.eqz (i32.and (local.get $flags) (global.get $WIN16_SEG_BIG)))
       (i32.eq (i32.and (local.get $flags) (i32.const 1)) (local.get $data))))
 
+  ;; Stack words are listed nearest-return first. The bounded argument vector
+  ;; belongs to this prepared frame, never to the suspended caller's stack.
+  (func $win16_bridge_invoke_word (export "win16_bridge_invoke_word")
+    (param $token i64) (param $word i32) (result i32)
+    (local $frame i32) (local $count i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 0))
+      (i32.gt_u (local.get $word) (i32.const 0xFFFF))) (then (return (i32.const 0))))
+    (local.set $count (i32.load offset=264 (local.get $frame)))
+    (if (i32.ge_u (local.get $count) (i32.const 16)) (then (return (i32.const 0))))
+    (i32.store16 offset=272 (i32.add (local.get $frame) (i32.shl (local.get $count) (i32.const 1))) (local.get $word))
+    (i32.store offset=264 (local.get $frame) (i32.add (local.get $count) (i32.const 1)))
+    (i32.const 1))
+
   (func $win16_bridge_invoke_begin (export "win16_bridge_invoke_begin")
     (param $token i64) (param $target i32) (param $ds i32)
     (param $instance i32) (param $heap i32) (result i32)
-    (local $frame i32) (local $owner i32)
+    (local $frame i32) (local $owner i32) (local $argc i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
     (local.set $frame (i32.wrap_i64 (local.get $token)))
     (if (i32.or (i32.load offset=24 (local.get $frame))
@@ -686,6 +701,13 @@
       (i32.store offset=24 (local.get $frame) (i32.const 1))
       (drop (call $win16_bridge_stack_enter (local.get $token)))
       (i32.store offset=260 (local.get $frame) (i32.load offset=16 (global.get $reg_base)))
+      (local.set $argc (i32.load offset=264 (local.get $frame)))
+      (block $args_done (loop $args
+        (br_if $args_done (i32.eqz (local.get $argc)))
+        (local.set $argc (i32.sub (local.get $argc) (i32.const 1)))
+        (call $win16_push16 (i32.load16_u offset=272
+          (i32.add (local.get $frame) (i32.shl (local.get $argc) (i32.const 1)))))
+        (br $args)))
       (call $win16_push16 (global.get $WIN16_THUNK_SEL))
       (call $win16_push16 (global.get $WIN16_BRIDGE_RETURN))
       (call $win16_set_sreg (i32.const 3) (local.get $ds))
