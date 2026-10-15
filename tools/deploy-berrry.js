@@ -259,6 +259,10 @@ const neverPublish = p => {
 // this demonstration version ... to your friends, as long as you don't sell
 // it." Same footing as the RCT shareware already live.
 const PUBLISHABLE_OUTSIDE_BINARIES = [
+  // Original Quake III 1.11 demo installation, including its bundled EULA
+  // and documentation. Desktop preparation requested 2026-10-14; no retail
+  // pak files or installer sibling directories are included.
+  'test/binaries/candidates/quake-3-arena-demo-installer/installed/',
   'test/binaries/candidates/heroes-2-demo/files/',
   // Blizzard explicitly permits non-commercial mirroring of its unmodified
   // demos when every original file remains present.  This directory retains

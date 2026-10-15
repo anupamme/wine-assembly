@@ -1,6 +1,6 @@
 # Quake III Arena demo 1.11
 
-Local-only app id `quake3_demo` (2026-10-10, w4). OpenGL only.
+App id `quake3_demo` (2026-10-10, w4). OpenGL only.
 
 ## Provenance and license boundary
 
@@ -19,8 +19,59 @@ Local-only app id `quake3_demo` (2026-10-10, w4). OpenGL only.
   included); CD copies labelled "SHAREWARE" or "DEMO"; no commercial
   distribution. Section 2 forbids, among others, renting/selling,
   distribution outside section 3, and (j) publicly displaying the software.
-  So it is a local candidate fixture, not a public deployment input, and it is
-  registered in `LOCAL_CANDIDATE_APPS`.
+  It was initially kept in `LOCAL_CANDIDATE_APPS`. Desktop preparation was
+  requested on 2026-10-14; that branch includes the complete original installed
+  demo, including `extras/help/q3a eula.htm`, in the desktop asset set. This is
+  a record of the requested packaging change, not a new interpretation of the
+  license or a claim that this candidate has been deployed.
+
+## Desktop preparation, 2026-10-14
+
+The first-launch `lib/quake3-modern-controls.ini` is mounted as
+`c:\\demoq3\\q3config.cfg`; saved user configuration replaces that seed on
+later launches. W/S move, A/D strafe, Space or right mouse jumps, Ctrl/C
+crouches, left mouse fires, wheel changes weapons, E/Enter uses the held item,
+and Shift walks. `relativeMouse: true` uses the same browser capture policy
+as Quake II. Mobile has a held move pad (Up/Down also navigate menus), relative look surface, and
+Fire/Jump/Crouch/Item/Weapon/Esc buttons.
+
+The browser LAN uses an automatic room on UDP 27960. Its hosting probe sends
+`getinfo berrry` and reads the real server's hostname response; the room card
+launches clients with `+connect {host}`. No engine patches or native UDP
+Internet access are implied: the transport is the existing browser WebRTC
+virtual LAN. The standalone CLI pair remains `test-quake3-vlan-gameplay.js`.
+
+`test-quake3-desktop-web.js` exercises trusted browser keyboard/mouse input,
+measures movement and turning with the game's own `viewpos`, then joins a
+separate mobile browser through the normal room card and checks the server's
+`ClientBegin` log, bidirectional WebRTC traffic, touch movement and look.
+Reviewed acceptance: `scratch/runs/20261015-quake3-acceptance6/` (UTC date;
+2026-10-14 locally). Chrome with SwiftShader, cooperative mode, desktop plus
+touch-emulated mobile browser contexts:
+
+- All WASD directions changed the guest's `viewpos`. Mouse yaw changed from
+  -45 to -52 degrees and remained -52 after release/absolute motion/re-capture.
+  Escape reached the game menu. CDP does not invoke Chrome's browser-level
+  Escape shortcut, so the test explicitly calls `exitPointerLock` to exercise
+  release/re-capture; this is not a physical-key test of that browser shortcut.
+- The room card launched the member at `10.0.0.2` with `+connect 10.0.0.1`.
+  Both players reached `ClientBegin` in the server's own game log. At the
+  traffic checkpoint, the member had sent 51 frames and received 157 over an
+  open WebRTC datagram channel. Both guest views rendered Arena Gate.
+- Touch movement advanced the client from (1024,1000,50) to (1024,1212,50);
+  touch look changed yaw from 90 to 63 degrees. Fire held/released the attack
+  mask (1 → 0), and the capture shows ammo consumed. Landscape (844×390) and
+  portrait (390×844) controls fit the viewport.
+- No guest/page runtime errors were reported. Earlier harness attempts hit
+  Puppeteer's default command timeout or read an unfinished `condump`; the
+  final harness permits arena loading and reads completed `viewpos` lines
+  from the synchronous game log instead. No guest code was patched for tests.
+
+Canonical build, asset/manifest-size checks, FPS touch-layout and file-policy
+tests pass. The deploy dry run considers 2262 files; all 303 installed manifest
+entries exist, and `pak0.pk3` is emitted as five parts. No public deployment
+was performed. Physical-phone/Safari behavior and WAN/NAT conditions were not
+tested by this local two-browser run.
 
 ## Install
 
