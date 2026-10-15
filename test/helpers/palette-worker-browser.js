@@ -76,6 +76,9 @@ globalThis.runPaletteWorker=async function(){
     const draw=()=>raw('pa_draw',device,4,3,vertices,6);
     const pixel=()=>{const b=new Uint8Array(memory.buffer,rtDib+20,4);return [b[2],b[1],b[0]];};
     const observe=(label,expected)=>{const actual=pixel();eq(actual,expected,label);evidence.observations.push({label,actual});};
+    // The production GPU deliberately declines clears until it has drawn on
+    // the target. Establish that ownership with a real queued draw and fence.
+    await draw();await raw('pw_fence');observe('initial GPU ownership',rgb);
     const barrier=async(label,mutation,expected)=>{
       await clear();const before=new Uint8Array(memory.buffer,palData,1024).slice();
       const ownership=new Uint8Array(memory.buffer,alphaSlot,32).slice();
@@ -107,8 +110,8 @@ globalThis.runPaletteWorker=async function(){
     eq(await call('pw_release',replacement),1,'replacement attachment ownership');
     eq(await call('pa_attach',texture,0),0,'replacement final detach');
     eq(await raw('pw_type',replacement),0,'replacement retired');
-    await until(()=>lastStats?.stats.drawCalls>=6,'all GPU draw stats');evidence.stats=lastStats;
-    check(lastStats.stats.drawCalls>=6,'actual GPU draws');
+    await until(()=>lastStats?.stats.drawCalls>=7,'all GPU draw stats');evidence.stats=lastStats;
+    check(lastStats.stats.drawCalls>=7,'actual GPU draws');
     eq(lastStats.stats.fallbacks,0,'no renderer fallback');
     eq(lastStats.stats.errors,0,'no GPU errors');
     eq(lastStats.stats.dirtyAuditMisses,0,'no watch misses');
