@@ -1164,7 +1164,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Darkstone paired software/WebGL Town and camera evidence merged6789c835e. New316037 capture proves two ordinary ground-click movements with following camera; root reviewed stable first idle and target-dependent landmark changes. Archive56acbc258 SHA verified, root review separate. Internal deadline exit1/final idle absent and foreground geometry clipping retained. Combat/audio/FPS/children/full27 membership remain unresolved; locomotion report integration pending.
+  Next: Darkstone paired software/WebGL Town and camera evidence merged6789c835e; locomotion report already integrated. Reviewed316037 two-click movement retains deadline1/final-idle absence and foreground clipping. Follow-up software338262 exited0; independent18:33:48 postflight passed active[], archive83e859adee SHA reverified at wrap-up. Review retained same-pose software images against WebGL before drawing a clipping conclusion. Combat/audio/FPS/children/full27 membership remain unresolved.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1616,7 +1616,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (original NE initializer trap diagnosis)
   owner: /root/outlaws_kernel_module
-  Next: Native332007 exact934109/module497bc: canonical build, driver, invocation, context, image, tiny lifecycle and full native synthetic lifecycle passed; original unchanged PMPRO62 initializer trapped unreachable. Four later arms unrun. Lifecycle source remains unmerged; preserve failure and diagnose retained native map/source before retry. Original gameplay/QT and guest-created resource ownership unproved.
+  Next: Native332007 exact934109/module497bc: canonical build, driver, invocation, context, image, tiny lifecycle and full native synthetic lifecycle passed; original unchanged PMPRO62 initializer trapped unreachable. Four later arms unrun. Selector correction and regressions preserved/pushed86386f92d on task/outlaws-ne-invoke; tiny transaction/coordinator test passes, full native validation remains pending. Lifecycle source remains unmerged. Original gameplay/QT and guest-created resource ownership unproved.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1659,7 +1659,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Original ArrowLeft assigned keyboard England Config.1 in323637; root reviewed screenshots, raw assigned count0→1 and archiveabcaed. Enter delivered but stayed Controller Select. Result merged47b987f7b; source-backed S action readiness route3399 tested and merged13a22cf91, queued after Darkstone software comparison. Actual match control/touch unproved.
+  Next: Original ArrowLeft assigned keyboard England Config.1 in323637; root reviewed screenshots, raw assigned count0→1 and archiveabcaed. Enter delivered but stayed Controller Select. Mode2 source disproved the unrun S-key candidate; corrected mouse-readiness recipe51580 passes controller/state/preservation tests and is integrated. Capture remains unrun; actual match control/touch unproved. Boat wrap-up handoff: ops/handoffs/boat-wrap-20261015.md.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
