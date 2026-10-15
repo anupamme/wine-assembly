@@ -17,6 +17,8 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
     wasmSha256:sha(wasm),extraWatSha256:sha(extraWat),
     scripts:Object.fromEntries(scripts.map(p=>[p,sha(fs.readFileSync(path.join(root,p)))]))};
   const server=await startStaticServer({root,crossOriginIsolated:true,handleRequest(req,res){
+    res.setHeader('Cross-Origin-Opener-Policy','same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy','require-corp');
     if(req.url==='/palette-worker.wasm'){
       res.writeHead(200,{'Content-Type':'application/wasm'});res.end(wasm);return true;
     }
