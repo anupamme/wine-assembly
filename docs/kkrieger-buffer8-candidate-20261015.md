@@ -27,6 +27,13 @@ checks, Lock/Unlock/Play/cursor/Stop on the real host audio model, final voice
 release, and all three explicit extension traps. No external PE is required.
 Runtime tests and canonical build are pending a serialized CPU grant.
 
+Initial canonical validation found and retained two gate failures: registry
+storage had not grown with the appended entry (fixed 312 to 316 bytes, generated
+mirror updated), then the exact-duplicate ratchet rejected the three explicit
+extension traps. Those three one-call fail-fast handlers were reviewed and
+added individually to the existing duplicate-member allowance. No group-count
+cap was increased, no guard disabled and no successful stub introduced.
+
 Prepared validation controller (source/syntax checked, execution pending):
 `tools/kkrieger-buffer8-validate.js`. From an isolated clean remote clone with
 the existing `node_modules` and pinned calc fixture linked/copied, run:
