@@ -1,5 +1,6 @@
 {
-  "status": "source-prepared; unexecuted; fresh root runtime grant required",
+  "status": "superseded historical equivalence receipt; DO NOT reuse d463 for current main; fresh-build controller required",
+  "replacement": "tools/cmr3-build-register.js with docs/cmr3-registry-r2-config-20261015.json; instructions in docs/cmr3-registry-preparation-20261015.md",
   "config": "docs/cmr3-registry-r2-config-20261015.json",
   "targetCommit": "5f43d41f54950151f08ad7cab3b536d9ed150bbd",
   "canonicalBuild": {
