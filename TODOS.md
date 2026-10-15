@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (kkrieger original Buffer8 validation; CMR3 native/registry recovery)
+  status: active (kkrieger menu input; CMR3 registry preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two unqualified lanes: /root/kkrieger_buffer8_validation owns sole runtime bx_erf37bxf, original controller46631 after canonical/six suites PASS on42b0be045; actual Buffer8 QI succeeds, gameplay pending. CMR3 original302files recovered; d2083fb native recipe and four verified seeds ready for next serialized runtime slot. Palette cache regression remains unmerged and queued. Saved bx_tcen9fqv snapshot-stop completed; no new-game qualification yet.
+  Next: Kkrieger sound fix47249aff2 merged; original reaches animated3D menu, no player control. /root/kkrieger_menu_input prepares next ordinary-input diagnostic. CMR3 original302files and12exact nativeDLLs recovered; /root/cmr3_registry_prepare prepares real original registration. One runtime box bx_erf37bxf; palette56700 finished, renderer integration review independent.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,12 +1158,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active
+  status: active (Worker cache regression discriminates; integration review pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: October9 coverage reconciles retained Morrowind prison movement (4image hashes + module verified), Pirates sailing images (6referenced logs missing, no fresh backend qualification), AoWII software army movement (render defects remain), and BW2 fixed Worker startup/live normal intro. QuakeII/Crimsonland/AlienShooter/WC3 two-backend results retained. PBO standalone Chrome reproduction completed; do not restart speculative renderer diagnosis. Finish ordinary BW2 route, then queued DisciplesII; retain software/WebGL/FPS/audio/current-main gaps per docs/gl-d3d-corpus-status.md. Winamp held, HeroesII laptop-owned.
+  Next: Palette56700 exact2e4bd5f passes bothWorker modes22observations/25draws, unchangedcache9->9; deletingonlycached.keyBlend fails expectedpixel. Root124artifacts hashverified. /root/palette_final_review independently reviews full productiondelta before merge. Prior WebGL1/2 each42observations PASS; original27 membership/defaultFALSE/alpha-keyprecedence/legacy stencil remain open.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1521,6 +1521,6 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (Buffer8 candidate passes six suites; original gameplay validation running)
+  status: active (animated menu verified; ordinary-input level start unresolved)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Signed vertex fix ec4844f16 merged. Buffer8 candidate42b0be045 passes canonical and six suites; original46631 confirms all sound initialization return codes successful, QI output nonnull with24-slot vtable. /root/kkrieger_buffer8_validation retains sole runtime until bounded600s run and evidence collection finish; gameplay unverified. Candidate not yet merged.
+  Next: Sound fix47249aff2 and evidence2d29f0b92 on main. Original46631 reached animated menu; root verified81artifacts and screenshot, Telegram1381 delivered. /root/kkrieger_menu_input owns next bounded input diagnostic, no guestpatch. hwnd0 log precedes routing, not proven bug; no gameplay qualification.
