@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (real OemKeyScan implementation and conformance tests)
-  owner: /root/outlaws_oemkeyscan
-  Next: Original startup failed batch0 OemKeyScan(0), evidence reviewed and merged fe9757c05; no screenshot/menu. Fresh API worker implements real mapping/tests; new canonical build and original replay require serialized grant after Army Men.
+  status: active (original replay exposes PM/Pro loader error)
+  owner: /root/outlaws_oemkeyscan_native
+  Next: Original replay173098 candidate5d02 passes batch0 and reaches batch29 PM/Pro Error: Unable to link to KERNEL32.DLL. Root reviewed original screenshot; no gameplay. Collect bounded run terminal and unchanged-source postflight, then diagnose actual pmpro62.dll initialization without bypasses.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1640,7 +1640,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Implement OEM character to keyboard scan mapping for Outlaws
   id: OUTLAWS-OEMKEYSCAN-20261015
-  status: active (source tested; full build and native API validation queued)
+  status: done
   owner: /root/outlaws_oemkeyscan_native
-  Next: Source81268f actualWAT unit tests pass, root reviewed; full gatedbuild/thunk/oldmodulemissingcontrol/restored native run follows IW cleanrelease on solebox. OriginalOLDEMO replay only after native proof.
+  Next: Merged main9ca647939 after normal gatedbuild, fullmodule lookup/thunk/ESP tests, missing baseline and restored PASS; root independently verified archive d4bdcb14. Original replay now passes initial OemKeyScan blocker; further loader issue belongs to game lane.
   Evidence: scratch/runs/20261015-outlaws-original-startup; archiveSHA241f8911ad2071909fcdeb368d9ff91bb98f76e950744d6abf6314ccc01285dc; independent postflight14:19:27 unchanged active[].
