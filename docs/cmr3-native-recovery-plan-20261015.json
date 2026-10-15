@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "status": "source-only; no dependency transfer, extraction or registration performed",
+  "expectedNativeInventory": "docs/cmr3-historical-receipts-20261015.json",
+  "locallyVerifiedExactMatches": [
+    { "native": "msvcrt.dll", "path": "/home/user/wine-assembly/test/binaries/dlls/msvcrt.dll" },
+    { "native": "quartz.dll", "path": "/home/user/wine-assembly/test/binaries/candidates/morrowind/installed/quartz.dll" },
+    { "native": "devenum.dll", "path": "/home/user/wine-assembly/test/binaries/candidates/morrowind/installed/devenum.dll" },
+    { "native": "l3codecx.ax", "path": "/home/user/wine-assembly/test/binaries/candidates/morrowind/installed/l3codecx.ax" }
+  ],
+  "historicalPackageSources": [
+    {
+      "name": "MPSetup.exe",
+      "url": "https://web.archive.org/web/20180404022333if_/download.microsoft.com/download/1/b/c/1bc0b1a3-c839-4b36-8f3c-19847ba09299/MPSetup.exe",
+      "bytes": 13951112,
+      "sha256": "678c102847c18a92abf13c3fae404c3473a0770c871a046b45efe623c9938fc0",
+      "provides": ["WMVCORE.DLL", "WMASF.DLL", "WMADMOD.DLL", "WMVDMOD.DLL", "qasf.dll", "msdmo.dll"],
+      "historicalEvidence": "restoration session01a1373b-0a03-7af0-8752-f2ddc42f7ace event3329 prints successful source.json; event3240 prints original acquisition/extraction script",
+      "currentAvailabilityVerified": false
+    },
+    {
+      "name": "ie60.exe",
+      "url": "https://web.archive.org/web/20150411022055if_/http://download.oldapps.com/Internet_Explorer/ie60.exe",
+      "bytes": 80472659,
+      "sha256": "e34e0557d939e7e83185f5354403df99c92a3f3ff80f5ee0c75f6843eaa6efb2",
+      "provides": ["MLANG.DLL"],
+      "nestedCabinet": "IEMIL_4.CAB",
+      "historicalEvidence": "same restoration session event3329 source.json and event3502 exact574976-byte MLANG extraction/hash",
+      "currentAvailabilityVerified": false
+    }
+  ],
+  "qedit": {
+    "historicalPath": "test/binaries/candidates/morrowind/dx81/x/qedit.dll",
+    "historicalEvidence": "same restoration session event3299 copies this exact file and records519680-byte ffc045d4381dd21ec2bd2f48915e61e3445f1e9bb7d595a7cd44eb6a20845066",
+    "historicalRedistributable": "Morrowind disc DX81eng.exe; tools/prepare-morrowind.js documents original disc extraction",
+    "publicCandidate": {
+      "metadataUrl": "https://archive.org/metadata/direct-x-8.1-windows-me-and-9x",
+      "url": "https://archive.org/download/direct-x-8.1-windows-me-and-9x/DirectX%208.1%20Windows%20ME%20and%209x.zip",
+      "bytes": 12092018,
+      "sha1": "342f664af6cc110a4a8cd6fd0c5157b6e93037d8",
+      "listingUrl": "https://archive.org/download/direct-x-8.1-windows-me-and-9x/DirectX%208.1%20Windows%20ME%20and%209x.zip/",
+      "listedMember": "DX81eng.exe",
+      "listedMemberBytes": 12144784,
+      "verification": "Only metadata and archive listing inspected; this package is a candidate until extracted qedit bytes match exact historical hash. Do not substitute another version."
+    },
+    "rejectedLocalCandidates": "Gallinelle DIRECTX80A/90B DIRECTX.CAB and DXNT.CAB list qedit sizes1768448..1798144, different from required519680; no extraction performed"
+  },
+  "registry": {
+    "missingOriginalSource": "scratch/runs/20261010T1318Z-cmr3-mlang/registration/MLANG.DLL.json",
+    "missingRestoredCopy": "scratch/dll-original-restoration-20261014/registry-native.json",
+    "historicalBytes": 184922,
+    "sha256": "b676b3d6bc165eacf0dd33af01a0e7200da465562253f8b26443e4bdd0d9c07c",
+    "historicalEvidence": "restoration session event3299 records transfer source path and output hash; actual bytes were read dynamically, not embedded in that retained command",
+    "reproductionRoute": [
+      "Prepare isolated built-in OLE environment with authenticated original regsvr32.exe and exact native DLL set; prevent common native ole32/oleaut32 selection without modifying another lane",
+      "Seed only historically recorded game INSTALL_PATH/CD_PATH C: values, then generate native COM keys by running original registration binaries; never synthesize COM registry classes",
+      "Historical sequence: devenum then quartz; qedit; QASF; WMP9 WMVCORE, WMADMOD, WMVDMOD, QASF; finally MLANG",
+      "Use actual native MSDMO during WMP9 registration (required by DMORegister) and explicit dependency paths; retain each --reg-import/--reg-export snapshot, args, HRESULT/failure logs and byte identities",
+      "Compare generated registry contents to historical expectations; a new snapshot hash may differ and must be reported, not asserted byte-equivalent to missing snapshot",
+      "Runtime grant required for registration and any game launch; neither performed by this source-only plan"
+    ],
+    "recipeStatus": "Historical registration sequence recovered, not yet an executable or tested new preparation recipe"
+  }
+}
