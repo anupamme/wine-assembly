@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (two game lanes ready; runtime restore blocked)
+  status: active (kkrieger runtime; CMR3 next serialized lane)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger delivery guard021380b4b and CMR3 freshbuild/registration controllera21a6311d are merged and source-tested. Both game workers completed preparation, no live runtime. Laptop must resume savedbx_erf37bxf via authorizedkey (scopedresume403); Telegram1396 requests this. Afterrestore run freshcanonical+CMR3registration, then boundedKkrieger movementcapture, serialized.
+  Next: Kkrieger39718 is live on sole bx_9ef2wdsw with actual canonical delivery verified, bounded900s ordinary-input capture. CMR3 recovery/registration source-ready dc4ab04e4 for next runtime slot. Saved tcen/erf boxes verified snapshot-stopped. Preserve two game lanes; runtime ownership serial, no new gameplay claims until reviewed evidence.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,13 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active (held IW renderer regression preparation)
+  status: review (held renderer GPU validation queued)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/iw_render_candidates_review (source-only GPU regression preparation)
+  worker: none (source preparation completed; runtime slot queued)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: /root/iw_render_candidates_review prepares currentWebGL1/2 regressions for held5649dd4d7; missingtexturecascade diffuse bug reproduced/fixed in source-onlycandidate27checks. NoGPUvalidation/mainmerge yet. FALSEfiltering/nativecontract and original27membership/alpha-key/border/stencil/pergame dualbackend coverage remain unresolved.
+  Next: Held task/iw-render-review14dd0c539 has30 independently passing source checks and prepared actual WebGL1/2 RGB/linkage/depth/stencil tests, still unexecuted. Run bounded renderer validation after game lane release before any merge. FALSE filtering/native contract, original27 membership and per-game dual-backend coverage remain unresolved.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1522,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: ready (delivery guard merged; runtime restore required)
+  status: active (bounded canonical gameplay capture)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Merged021380b4b verifies containedcanonicalHTTP200/hash beforeChrome and pagefetchedbytes beforeinputs, rejectsWATfallback;8focusedtestsPASS, actualbrowserunexecuted. Freshcurrentmain build and boundedordinary-input movement capture queued afterruntime restoration. Priorlevel evidence remains distinct; no newgameplayqualification.
+  Next: Worker /root/kkrieger_verified_runtime owns sole bx_9ef2wdsw runtime39718, confirmed live; exact dc0611212 fresh canonical SHA02b41f090dacdb461ea0b59a77260d6c17432e9d3993d4cc8878cb76a865a33d, HTTP200/page digest verified with no fallback. One900s capture deadline11:51:20Z; loading observed, ordinary movement/gameplay still unverified. Preserve artifacts and postflight before release.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: ready (freshbuild and registration controller merged; runtime restore required)
+  status: ready (queued after kkrieger runtime release)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: Maina21a6311d requires freshcanonical then authentic9-stepregistration;8focusedtestsPASS, no build/guestexecuted. ExactWMVCORE generatedprofile hash required. Next restorebx_erf37bxf, verifycurrentmain/config/source/native/game identities, run boundedcontroller; no racingqualification.
+  Next: Fresh-box recovery/registration handoff merged dc4ab04e4; four local native seeds and original regsvr32 verified. After39718 terminal/postflight, recover original302 game files/native12 on bx_9ef2wdsw using authenticated recipes, then corrected native registration. Reuse fresh canonical only after source/hash equivalence verification. Saved erf box remains snapshot-stopped; no resume dependency or racing qualification.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
