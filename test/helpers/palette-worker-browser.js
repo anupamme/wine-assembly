@@ -1,6 +1,6 @@
 'use strict';
-globalThis.runPaletteWorker=async function(){
-  const evidence=globalThis.paletteWorkerEvidence={observations:[],barriers:[],logs:[]};
+globalThis.runPaletteWorker=async function(lazySync=false){
+  const evidence=globalThis.paletteWorkerEvidence={lazySync,observations:[],barriers:[],logs:[]};
   const check=(v,s)=>{if(!v)throw Error(s);};
   const eq=(a,b,s)=>check(JSON.stringify(a)===JSON.stringify(b),`${s}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`);
   const until=async(predicate,label)=>{
@@ -19,7 +19,7 @@ globalThis.runPaletteWorker=async function(){
   let manager,port,lastStats,holding=false;
   const held=[];
   const link=new GuestWorkerLink({slot:0,module,memory,sigs,broker,workerUrl:'/lib/guest-worker.js',
-    sharedRenderWorker:true,d3dimGpu:true,d3dimLazySync:false,log:s=>evidence.logs.push(s),
+    sharedRenderWorker:true,d3dimGpu:true,d3dimLazySync:lazySync,log:s=>evidence.logs.push(s),
     createRenderEndpoint:async options=>{
       eq(options,{api:'legacy',backend:'webgl'},'production requested WebGL endpoint');
       manager=new RenderWorker.Manager({module,memory,sigs,imageBase:0x400000,

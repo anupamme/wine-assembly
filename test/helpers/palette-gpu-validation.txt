@@ -177,3 +177,48 @@ Original Boids assets and external symlink/static-server permissions must be
 verified before running routes. Worker barriers, stencil nonwrites, baseline
 semantic failure, these remaining regressions, and state144/key semantics are
 still separate gaps. Passing unkeyed cooperative pixels resolves none of them.
+
+2026-10-15 actual Worker and remaining regressions update:
+  ecee178b717667212702be120f33a0f343a64138, process125426 exited0
+  at00:11:31.440Z with browser closed. Production GuestWorkerLink/GuestRpc,
+  Encoder, Manager endpoint and browser render Worker executed actual WAT
+  handlers and D3DIMGpu. Seven RGB observations and three deliberately held
+  production fence barriers passed. Caller Release, SetEntries and final
+  detach could not return before drain; palette bytes and object ownership
+  bytes stayed intact before drain. Old/new generations, detach grayscale,
+  and natural same-slot reuse with ordinary peFlags=128 all passed. GPU
+  fallback/error/audit-miss counts were zero. Actual heap adoption and clean
+  guest/render teardown passed. This run uses d3dimLazySync=false and shared
+  DIB RGB readback, distinct from the earlier WebGL1/2 framebuffer RGBA checks.
+  Default lazy-sync=true counterpart is prepared but not yet executed.
+
+  Preserved prior fixture failures:123429 clear returned0 before any draw;
+  production clear intentionally declines a never-GPU-owned target, so an
+  actual warmup draw/fence was added without changing clear expectations.
+  124636 then passed observations/barriers but failed missing heap reclamation
+  callback on teardown. ecee178b uses actual d3d_render_adopt_free_list while
+  the guest remains live before stopping it. Neither failed run is acceptance.
+
+  Process127574 at ecee178b exited1 at00:13:21.915Z. Thirteen of fourteen
+  configurations passed, no SKIP: palette format and QI with original calc,
+  texture-stage alias, page-watch, shader VM, D3D9 color surfaces/residency/
+  textures/WebGL versions/pipeline, shader WebGL1 and WebGL2, D3DIM GPU Boids.
+  D3DIM render-Worker Boids failed its expected software endpoint assertion.
+  Source shows its empty query selected the current WebGL default. The test
+  now requests each intended renderer explicitly and prints actual endpoint
+  stats on failure; all ownership/fallback/fence assertions remain unchanged.
+  That correction is prepared, not yet executed; original failure retained.
+
+  Backend provenance now captured: Chrome wrapper and actual GPU-process
+  arguments force --use-angle=swiftshader; /dev/dri absent. Reported Intel
+  renderer remains recorded but is not hardware evidence. All browsers closed
+  (/proc check00:15:01Z), runtime released for Silver; no new runtime grant.
+  Original calc SHA256 matches local fixture;38 original Boids manifest files
+  (4,873,822 bytes) copied only to remote and independently SHA256-verified.
+
+  Downloaded run folders under scratch/runs/20261015-palette-validation:
+  worker-next, worker-owned, worker-retire, backend and regressions (all prefixed
+  20261015-palette-), retaining errors, source hashes and per-file receipts.
+  Remaining gaps: default lazy route and explicit Boids routes pending rerun,
+  stencil nonwrites, baseline semantic failure, state144/alpha+key contract.
+  No production source changed, main merge, public deployment or game claim.

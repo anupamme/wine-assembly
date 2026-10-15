@@ -30,11 +30,15 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
   try{
     browser=await puppeteer.launch({headless:true,executablePath:process.env.CHROME||'/usr/bin/chromium',
       args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader'],protocolTimeout:120000});
-    evidence.browser=await browser.version();page=await browser.newPage();
-    page.on('pageerror',error=>console.error('pageerror:',error.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/palette-worker-fixture`);
-    evidence.result=await page.evaluate(()=>runPaletteWorker());
-    console.log('PASS production guest/render Worker palette barriers, generations, ownership and slot reuse');
+    evidence.browser=await browser.version();evidence.results=[];
+    for(const lazySync of [false,true]){
+      page=await browser.newPage();
+      page.on('pageerror',error=>console.error('pageerror:',error.message));
+      await page.goto(`http://127.0.0.1:${server.address().port}/palette-worker-fixture`);
+      evidence.results.push(await page.evaluate(lazy=>runPaletteWorker(lazy),lazySync));
+      console.log(`PASS production guest/render Worker palette barriers, generations, ownership and slot reuse; lazySync=${lazySync}`);
+      await page.close();page=null;
+    }
   }catch(error){
     evidence.error=error.stack||String(error);
     if(page)evidence.partial=await page.evaluate(()=>globalThis.paletteWorkerEvidence||null).catch(()=>null);
