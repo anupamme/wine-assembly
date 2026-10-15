@@ -137,6 +137,30 @@ The native `localservers` handler at `0x40ee70` broadcasts on ports
 master-server list is not the Berrry room directory: native discovery sees
 peers in the browser LAN room, not every published Berrry room.
 
+## Probe-gated room creation (2026-10-15)
+
+The demo's socket routine at `0x4415c0` maps its `localhost` bind string to
+INADDR_ANY (`0.0.0.0`), not loopback. An open UDP socket therefore cannot
+distinguish the menu, solo play, and hosting. `SVC_Info` at `0x433ab0` reads
+`g_gametype` and returns without replying when it equals 2 (single player).
+The constant at `0x4b137c` is float 2.0. This makes the normal `getinfo` probe
+a useful hosting signal without inspecting guest memory in production.
+
+Q3 now enables `lan.openOnProbe`: it initially receives a local-only wire,
+and a valid `infoResponse` promotes it to a public owner room. Native Local
+discovery can open the room picker; choosing a room restarts the guest with
+the assigned member IP and existing connect arguments. Explicit invite links
+continue to join directly.
+
+Reviewed run `20261015-quake3-probe-room3` passed in isolated Chrome workers:
+menu and `spmap q3dm1` (`g_gametype=2`) kept no public room, hosting card,
+room URL, or networked background policy. A multiplayer map promoted to
+owner `.1`; a separate menu stayed offline despite that host, then native
+`localservers` opened the picker and joined gameplay as `.2`. A third browser
+joined gameplay through the invite as `.3`. Safari cross-browser behavior was
+not tested in this run. `test/test-vlan-star.js` also covers response validation
+and discovery filtering without public peers.
+
 ## Install
 
 The package is Installer VISE (MindVision); neither `unzip` nor `7z` opens it,

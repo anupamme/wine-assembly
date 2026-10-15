@@ -5109,7 +5109,8 @@ class WineAssembly {
   // after launch -- the lobby opens when the guest first asks for a room --
   // so this is asked at the moment it matters rather than latched at boot.
   _isNetworked() {
-    return !!(this.vlanWire || (this.hostCtx && this.hostCtx.vlanWire));
+    const wire = this.vlanWire || (this.hostCtx && this.hostCtx.vlanWire);
+    return !!wire && !wire.localOnly;
   }
 
   // Is anything audible in flight? SUPERSET of _isAudioHot(), and the two must

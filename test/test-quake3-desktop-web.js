@@ -93,8 +93,61 @@ async function touch(page, selector, duration=1000) {
   };
   try {
     const host=await open('host');
+    const probeRoom = process.env.Q3_PROBE_ROOM === '1';
     const hostingCard = process.env.Q3_HOSTING_CARD === '1';
-    await host.evaluate(menuOnly=>{apps.quake3_demo.args='+set logfile 2 +set g_logSync 1'+(menuOnly?'':' +set sv_maxclients 4 +map q3dm1');document.getElementById('app-select').value='quake3_demo';launchApp();}, hostingCard);
+    await host.evaluate(menuOnly=>{apps.quake3_demo.args='+set logfile 2 +set g_logSync 1'+(menuOnly?'':' +set sv_maxclients 4 +map q3dm1');document.getElementById('app-select').value='quake3_demo';launchApp();}, hostingCard || probeRoom);
+    if (probeRoom) {
+      const menu = page => page.waitForFunction(()=>{
+        const w=runningApps[0]?.wine;
+        return w?.running && new DataView(w.memory.buffer).getUint32(w.instance.exports.guest_to_wasm(0x6dc1a4),true)===2;
+      },{timeout});
+      const offline = async (page, label) => {
+        await sleep(5000);
+        const state=await page.evaluate(()=>{const w=runningApps[0].wine;return {
+          worker:!!w.guestWorker,room:!!w._lanRoom,local:!!w.vlanWire?.localOnly,
+          hosting:!!w._localLanProbe?.probe.hosting,networked:w._isNetworked(),
+          card:!!document.querySelector('#wine-lan-card,#wine-lan-share'),roomUrl:new URL(location.href).searchParams.has('room')};});
+        assert.deepStrictEqual(state,{worker:WORKERS,room:false,local:true,hosting:false,networked:false,card:false,roomUrl:false},label);
+        metrics[label]=state;
+      };
+      const command=async(page,text)=>{await page.keyboard.press('Backquote');await sleep(300);await page.keyboard.type(text+'\n',{delay:25});};
+      await menu(host);await offline(host,'menuOffline');
+      await host.screenshot({path:path.join(OUT,'menu-local-only.png')});
+      await command(host,'/spmap q3dm1');await gameplay(host);
+      await offline(host,'soloOffline');
+      await host.screenshot({path:path.join(OUT,'single-player-local-only.png')});
+      await command(host,'/g_gametype');await sleep(1000);
+      assert(/"g_gametype" is:"2/.test(await fileText(host,'qconsole.log')),'guest entered real single-player mode');
+      await host.keyboard.press('Backquote');
+      await command(host,'/disconnect');await menu(host);
+      await command(host,'/set g_gametype 0; set sv_maxclients 4; map q3dm1');
+      await host.waitForSelector('#wine-lan-share',{timeout});
+      await dismissHostCard(host);
+      metrics.host=await host.evaluate(async()=>{const w=runningApps[0].wine;return {role:w._lanRoom.role,worker:!!w.guestWorker,ip:await w.callGuest('get_vlan_local_ip'),local:!!w._localLanProbe};});
+      assert.deepStrictEqual(metrics.host,{role:'owner',worker:WORKERS,ip:0x0a000001,local:false});
+      await host.screenshot({path:path.join(OUT,'multiplayer-public.png')});
+      const guest=await open('discovery');
+      await guest.evaluate(()=>{apps.quake3_demo.args='+set logfile 2';document.getElementById('app-select').value='quake3_demo';launchApp();});
+      await menu(guest);await offline(guest,'menuWithHostOffline');
+      await command(guest,'/localservers');
+      await guest.waitForSelector('#wine-lan-card .wine-lan-room button',{timeout:60000});
+      await guest.screenshot({path:path.join(OUT,'discovery-picker.png')});
+      await guest.click('#wine-lan-card .wine-lan-room button');
+      await gameplay(guest);
+      metrics.discovery=await guest.evaluate(async()=>{const w=runningApps[0].wine;return {role:w._lanRoom.role,ip:await w.callGuest('get_vlan_local_ip'),worker:!!w.guestWorker};});
+      assert.deepStrictEqual(metrics.discovery,{role:'member',ip:0x0a000002,worker:WORKERS});
+      await guest.screenshot({path:path.join(OUT,'discovery-joined.png')});
+      const invited=await open('invited');
+      const inviteUrl=host.url();
+      await invited.evaluate(url=>{history.replaceState(null,'',url);apps.quake3_demo.args='+set logfile 2';document.getElementById('app-select').value='quake3_demo';launchApp();},inviteUrl);
+      await gameplay(invited);
+      metrics.invited=await invited.evaluate(async()=>{const w=runningApps[0].wine;return {role:w._lanRoom.role,ip:await w.callGuest('get_vlan_local_ip'),worker:!!w.guestWorker};});
+      assert.deepStrictEqual(metrics.invited,{role:'member',ip:0x0a000003,worker:WORKERS});
+      await invited.screenshot({path:path.join(OUT,'invited-joined.png')});
+      assert.deepStrictEqual(errors,[]);
+      console.log('PASS menu and solo stay local; multiplayer promotes; native discovery and invitation join in requested execution mode');
+      return;
+    }
     if (hostingCard) {
       await host.waitForFunction(()=>{const w=runningApps[0]?.wine;return w?.instance && new DataView(w.memory.buffer).getUint32(w.instance.exports.guest_to_wasm(0x6dc1a4),true)===2;},{timeout});
       await sleep(6000);
@@ -152,14 +205,21 @@ async function touch(page, selector, duration=1000) {
     console.log('PASS desktop WASD and captured mouse alter guest gameplay');
 
     const guest=await open('mobile',true);
+    if (process.env.Q3_RUNNING_JOIN !== '1') {
+      // An explicit room invitation retains the pre-launch join path while
+      // ordinary launches with openOnProbe stay local at their menus.
+      await guest.evaluate(url=>history.replaceState(null,'',url),host.url());
+    } else {
+      // Retain coverage of the legacy running-game recipe for apps that
+      // don't opt into local probing.
+      await guest.evaluate(()=>{apps.quake3_demo.lan.openOnProbe=false;});
+    }
     await guest.evaluate(()=>{apps.quake3_demo.args='+set logfile 2';document.getElementById('app-select').value='quake3_demo';launchApp();});
-    await guest.waitForSelector('#wine-lan-card .wine-lan-room button',{timeout:60000});
     if (process.env.Q3_RUNNING_JOIN === '1') {
+      await guest.waitForSelector('#wine-lan-card .wine-lan-room button',{timeout:60000});
       await guest.evaluate(()=>[...document.querySelectorAll('#wine-lan-card button')].find(b=>b.textContent==='Play offline').click());
       await guest.waitForFunction(()=>runningApps[0]?.wine?.instance && !runningApps[0].wine.vlanWire,{timeout});
       await guest.waitForSelector('#wine-lan-card .wine-lan-room button',{timeout:90000});
-      await guest.click('#wine-lan-card .wine-lan-room button');
-    } else {
       await guest.click('#wine-lan-card .wine-lan-room button');
     }
     await gameplay(guest);
