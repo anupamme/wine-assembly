@@ -1647,7 +1647,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Lords of the Realm II original playable Windows demo
   id: NEW-GAME-LORDS2-DEMO-20261015
-  status: active (original replay reaches GetNextWindow invalid-handle crash)
+  status: blocked (automatic-review hold on GetWindow/GetNextWindow follow-up)
   owner: /root/new_demo_refill
-  Next: Original250171 on d56/e26 delivered both reviewed inputs; GetParent fix advances to USER230 GetNextWindow, same invalid HWND1446, EIP1acbb9. Controller0 is guest failure; archiveee04e843 and independent idle/pins verified. Scoped failure-contract validation and badCWnd provenance continue; no gameplay qualification.
+  Next: Worker turn rejected for possible cybersecurity risk during scoped GetWindow/GetNextWindow follow-up; exact internal action not disclosed. Do not retry/rephrase/delegate. WIP preserved in scratch/runs/20261015-lords2-review-hold and source worktree; original250171 reached GetNextWindow invalid1446 after GetParent fix, no gameplay. Fresh independent new_game_refill_after_lords selects replacement lane.
   Done: Registered original launch, actual ordinary player control and reviewed gameplay screenshot with source/run identity.
