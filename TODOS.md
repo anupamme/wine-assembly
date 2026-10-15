@@ -1160,11 +1160,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: GLD3D-CORPUS-27-20261006
   status: active (renderer fixes merged; scoped transport and gameplay coverage pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/iw_independent_send_fix (source-only transport); /root/outlaws_oemkeyscan_native (serialized build/native validation)
+  worker: /root/darkstone_backend_capture (source preparation; serialized runtime grant required)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Palette/renderer/LINELIST conformance merged; Kkr oneforwardmovement reviewed2193/bee579 but dual-backend/FPS/controlquality open. IW exactnative lifecycle/retirement passed throughdca0e6201, held pending perthread/frame independent-send fix. CMR diagnostic automatic-review hold unchanged/no retry. Original27 membership and per-game software/WebGL pairs remain open.
+  Next: Palette/renderer/LINELIST and IW transport conformance merged; IW fullbuild04ede plus8native arms passed, original IW gameplay still unproved. Fresh Darkstone worker prepares bounded ordinary Town/backend capture from complete installed payload; main-Worker counters must be separated from page counters. Kkr responsiveness/dual-backend/FPS remain open. Original27 membership and software/WebGL pairs unresolved. CMR rejected diagnostic hold unchanged.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
