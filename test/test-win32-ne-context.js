@@ -17,7 +17,7 @@ function form(name) {
 }
 const api = fs.readFileSync(path.join(dir,'09e-win16-api.wat'),'utf8');
 const block = api.slice(api.indexOf(';; BEGIN WIN32 NE INVOCATION CONTEXT'),api.indexOf(';; END WIN32 NE INVOCATION CONTEXT'));
-const helpers = ['win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
+const helpers = ['win16_dll_path_id_valid','win16_handle_table','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
   'win16_arena_take','win16_arena_give','win16_arena_free_head','win16_alloc_segment','win16_arena_slot_base',
   'win16_gseg_field','win16_gseg_store','win16_gseg_count','win16_seg_set','win16_seg_base','win16_seg_limit',
   'win16_sel_to_index','win16_index_to_sel','win16_seg_is_big','win16_set_sreg','esp_arch',

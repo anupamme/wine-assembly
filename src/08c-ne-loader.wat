@@ -1921,7 +1921,7 @@
   ;; BEGIN WIN32 NE MODULE TRANSACTIONS
   ;; 24 process-owned records in the unused hidden-page gap 0x8C00..0x8F00.
   ;; state(0 absent,1 loading,2 initializing,3 ready,4 terminating), owner, refs, dependencies,
-  ;; provisional first/count, reserved, staging-lease flag. Never published
+  ;; provisional first/count, active calls, staging-lease flag. Never published
   ;; to a guest API until real initialization and lifetime semantics are ready.
   (func $win16_bridge_module_record (param $id i32) (result i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))) (then (return (i32.const 0))))
@@ -2068,6 +2068,7 @@
     (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
     (call $lock_acquire (global.get $DLL_LOAD_LOCK))
     (block $reject
+      (br_if $reject (i32.load offset=24 (local.get $rec)))
       (br_if $reject (i32.eqz (i32.load (local.get $rec))))
       (br_if $reject (i32.gt_u (i32.load (local.get $rec)) (i32.const 2)))
       (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
@@ -2134,6 +2135,7 @@
         (then
           (i32.store offset=8 (local.get $rec) (i32.sub (local.get $refs) (i32.const 1)))
           (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 0))))
+      (br_if $reject (i32.load offset=24 (local.get $rec)))
       (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
       (i32.store (call $win16_task_shared (i32.const 44))
         (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
@@ -2150,6 +2152,7 @@
     (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
     (call $lock_acquire (global.get $DLL_LOAD_LOCK))
     (block $reject
+      (br_if $reject (i32.load offset=24 (local.get $rec)))
       (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 4)))
       (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
       (br_if $reject (i32.eqz (i32.load offset=28 (local.get $rec))))
@@ -2198,6 +2201,11 @@
     (if (i32.eq (local.get $field) (i32.const 1)) (then (return (call $win16_dll_data_sel (local.get $id)))))
     (if (i32.eq (local.get $field) (i32.const 2)) (then (return (call $win16_dll_heap_size (local.get $id)))))
     (i32.const 0))
+  (func $win16_bridge_module_data (export "win16_bridge_module_data") (param $id i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (call $win16_dll_data_sel (local.get $id)))
+
   ;; WEP is resolved by its export name, not by a presumed ordinal. The four
   ;; byte Pascal name lives in the owning frame, clear of arguments and CPU files.
   (func $win16_bridge_module_termination (export "win16_bridge_module_termination")

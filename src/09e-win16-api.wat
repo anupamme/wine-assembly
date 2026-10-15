@@ -551,6 +551,9 @@
           (i32.add (i32.load offset=256 (local.get $frame)) (i32.const 1)))
           (then (return (i32.const 0))))))
     (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (if (i32.load offset=312 (local.get $frame))
+      (then (i32.store offset=24 (call $win16_bridge_call_record (i32.load offset=308 (local.get $frame)))
+        (i32.sub (i32.load offset=24 (call $win16_bridge_call_record (i32.load offset=308 (local.get $frame)))) (i32.const 1)))))
     ;; Keep the lock through restoration: another instance must not recycle
     ;; these two slots while this instance still reads its saved context.
     (call $win16_arena_give (i32.load offset=12 (local.get $frame)) (i32.const 2))
@@ -682,6 +685,38 @@
       (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
     (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
 
+  ;; Bind a module call before entry. Pinning happens under DLL_LOAD_LOCK in
+  ;; invoke_begin, and frame_end releases the pin even after a guest trap.
+  (func $win16_bridge_invoke_module (export "win16_bridge_invoke_module")
+    (param $token i64) (param $id i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.load offset=24 (i32.wrap_i64 (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_dll_path_id_valid (local.get $id))) (then (return (i32.const 0))))
+    (i32.store offset=308 (i32.wrap_i64 (local.get $token)) (local.get $id))
+    (i32.const 1))
+
+  (func $win16_bridge_call_record (param $id i32) (result i32)
+    (i32.add (call $win16_handle_table) (i32.add (i32.const 0x8C00)
+      (i32.shl (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)) (i32.const 5)))))
+
+  ;; Called only under the process DLL mutex; zero module means a raw internal
+  ;; conformance invocation, not a guest module call.
+  (func $win16_bridge_call_pin (param $frame i32) (result i32)
+    (local $id i32) (local $rec i32) (local $state i32)
+    (local.set $id (i32.load offset=308 (local.get $frame)))
+    (if (i32.eqz (local.get $id)) (then (return (i32.const 1))))
+    (local.set $rec (call $win16_bridge_call_record (local.get $id)))
+    (local.set $state (i32.load (local.get $rec)))
+    (if (i32.or (i32.lt_u (local.get $state) (i32.const 2))
+      (i32.gt_u (local.get $state) (i32.const 4))) (then (return (i32.const 0))))
+    (if (i32.ne (local.get $state) (i32.const 3))
+      (then (if (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+        (then (return (i32.const 0))))))
+    (if (i32.eq (i32.load offset=24 (local.get $rec)) (i32.const -1)) (then (return (i32.const 0))))
+    (i32.store offset=24 (local.get $rec) (i32.add (i32.load offset=24 (local.get $rec)) (i32.const 1)))
+    (i32.store offset=312 (local.get $frame) (i32.const 1))
+    (i32.const 1))
+
   ;; Stack words are listed nearest-return first. The bounded argument vector
   ;; belongs to this prepared frame, never to the suspended caller's stack.
   (func $win16_bridge_invoke_word (export "win16_bridge_invoke_word")
@@ -719,6 +754,7 @@
         (i32.eqz (call $win16_bridge_selector_valid (local.get $ds) (i32.const 1))))))
       (local.set $owner (i32.load (call $win16_task_shared (i32.const 40))))
       (if (local.get $owner) (then (br_if $reject (i32.ne (local.get $owner) (call $lock_owner_id)))))
+      (br_if $reject (i32.eqz (call $win16_bridge_call_pin (local.get $frame))))
       (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
       (i32.store (call $win16_task_shared (i32.const 44))
         (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))

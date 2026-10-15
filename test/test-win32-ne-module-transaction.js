@@ -211,9 +211,9 @@ console.log('PASS actual NE module transactions: unpublished ownership, mutex-fr
 // these same image bytes with the complete interpreter.
 const {createNeLifecycle}=require('../lib/ne-lifecycle');
 const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
-first.set_sync_msg_depth(0);let calls=0,trapWep=true;
+first.set_sync_msg_depth(0);let calls=0,whileRunning;
 const lifecycleExports={...first,run(){
- calls++;const p=translate(first.get_eip());
+ calls++;whileRunning?.();const p=translate(first.get_eip());
  if(bytes[p]===0x0f && (bytes[p+1]===0x0b))throw Error('controlled guest trap');
  assert.equal(bytes[p],0xb8);view.setUint32(first.get_reg_base(),view.getUint16(p+1,true),true);
  view.setUint32(first.get_reg_base()+8,0,true);
@@ -235,8 +235,20 @@ assert.equal(afterInit,2,'dependency then parent initialized exactly once');
 assert.equal(lifecycle.load('PARENT'),parentId);assert.equal(calls,afterInit,'ready acquisition skips initializer');
 assert(lifecycle.lookup(parentId,'VALUE'));assert.equal(lifecycle.lookup(parentId,'WEP'),lifecycle.lookup(parentId,3));
 assert.equal(lifecycle.lookup(parentId,'MISSING'),0);assert.equal(lifecycle.lookup(parentId,4),0);
-lifecycle.release(parentId);assert.equal(calls,afterInit,'extra reference does not terminate');
-lifecycle.release(parentId);assert.equal(calls,afterInit+2,'parent and sole dependency WEP executed');
+whileRunning=()=>{
+ const r=first.win16_bridge_module_record(parentId);assert.equal(view.getUint32(r+24,true),1,'active module pin');
+ // Two refs: dropping the extra ref is legal; freeing the executing image is not.
+ lifecycle.release(parentId);assert.throws(()=>lifecycle.release(parentId),/release rejected/);
+};
+const savedBuffer=global.Buffer;global.Buffer=undefined;
+try {
+ assert.equal(lifecycle.call(parentId,'VALUE'),0x1234);
+ assert.equal(lifecycle.load('PARENT'),parentId,'browser-like name packing without Buffer');
+} finally {global.Buffer=savedBuffer;whileRunning=undefined;}
+const afterCall=calls;
+
+lifecycle.release(parentId);assert.equal(calls,afterCall,'extra reference does not terminate');
+lifecycle.release(parentId);assert.equal(calls,afterCall+2,'parent and sole dependency WEP executed');
 assert.equal(lifecycle.lookup(parentId,2),0,'retired module not visible');
 for(const name of ['ZERO','TRAP']) {
  assert.throws(()=>lifecycle.load(name),name==='ZERO'?/AX zero/:/controlled guest trap/);
