@@ -62,6 +62,8 @@ async function main() {
     page.on('pageerror', e => fs.appendFileSync(path.join(out, 'browser.log'), 'PAGEERROR: ' + e.message + '\n'));
     const probes = ['arm-backing-census.js', 'arm-memory-series.js'];
     if (process.env.WA_CAPTURE_DECLARATION === '1') probes.push('arm-kkrieger-declaration.js');
+    if (process.env.WA_CAPTURE_AUDIO === '1') probes.push('arm-kkrieger-audio.js');
+    meta.audioCapture = process.env.WA_CAPTURE_AUDIO === '1';
     meta.declarationCapture = process.env.WA_CAPTURE_DECLARATION === '1';
     for (const probe of probes)
       await page.evaluateOnNewDocument(fs.readFileSync(path.join(root, 'tools/page-probes', probe), 'utf8'));
@@ -79,6 +81,7 @@ async function main() {
           bigMemory: wine?.bigMemory ?? null, census: window.__backingCensus || null,
           series: window.__memSeries || null, oom: window.__memOom || null,
           declaration: window.__kkriegerDeclaration || null,
+          audio: window.__kkriegerAudio || null,
           regs: e ? Object.fromEntries(['eip','yield_reason','eax'].map(k => [k, e['get_' + k]?.() >>> 0])) : null};
       });
       fs.writeFileSync(path.join(out, 'state-' + i + '.json'), JSON.stringify(state));

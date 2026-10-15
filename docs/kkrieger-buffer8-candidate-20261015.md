@@ -27,6 +27,42 @@ checks, Lock/Unlock/Play/cursor/Stop on the real host audio model, final voice
 release, and all three explicit extension traps. No external PE is required.
 Runtime tests and canonical build are pending a serialized CPU grant.
 
+Prepared validation controller (source/syntax checked, execution pending):
+`tools/kkrieger-buffer8-validate.js`. From an isolated clean remote clone with
+the existing `node_modules` and pinned calc fixture linked/copied, run:
+
+```sh
+WA_TEST_ROOT=/home/user/wa-kkrieger-buffer8 WA_RUN_OUT=/home/user/kkrieger-buffer8-validation timeout --kill-after=10s 1740s node /home/user/wa-kkrieger-buffer8/tools/kkrieger-buffer8-validate.js
+```
+
+Launch through `boat exec bx_erf37bxf --detach -- ...` only after the runtime
+grant; poll `boat exec bx_erf37bxf --status PID --json`. No SSH. Canonical has
+a 600s ceiling, each of six sequential suites 180s. Expected normal duration
+is a few minutes, but reserve the full bound or shorten deliberately before
+launch if box TTL cannot accommodate it. No tests run concurrently. Each
+exit/log and source hash is retained; failures prevent original-run acceptance.
+The controller requires 2GiB free plus a 512MiB working reserve.
+
+After all seven exits are zero, record canonical SHA256 and source equivalence,
+then launch the existing controller with `WA_MAX_SECONDS=600`,
+`WA_CAPTURE_AUDIO=1`, `WA_EXPECT_WASM_SHA256=<recorded canonical hash>`,
+`WA_TEST_ROOT=/home/user/wa-kkrieger-buffer8` and a new exclusive `WA_RUN_OUT`.
+Use an outer `timeout --kill-after=10s 720s node tools/kkrieger-registered-startup.js`.
+Do not repeat signed-vertex conformance. The original executable and manifest
+come from the retained registered fixture; preserve all archive/member pins.
+
+The before-load audio probe installs the existing main-thread EIP callback
+and arms the diagnostic range as soon as exports appear (recording arming time
+and EIP). It records DirectSoundCreate, cooperative level, primary creation and
+format, secondary creation, QI and release returns. Snapshots contain raw EAX,
+registers, descriptor, requested IID, secondary local and global output pointers,
+object and bounded vtable words. Read errors remain explicit. Return EAX at
+Release/failure-exit is diagnostic data, not an HRESULT assertion. Missing
+points or late arming are incomplete evidence; never infer successful calls.
+The diagnostic switch changes interpreter execution cost, so this is not a
+performance comparison. Main-thread captures do not establish Worker state.
+The probe never patches guest bytes, sets registers or forces success.
+
 Queued validation, in order on the granted box (no concurrent browser/build):
 
 ```sh
