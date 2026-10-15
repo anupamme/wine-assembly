@@ -1,5 +1,12 @@
 # Baldur's Gate II demo
 
+`fetch-candidate-corpus.js --id=baldurs-gate2-demo --prepare` verifies the
+645 required installed files before regenerating browser metadata. It does not
+repeat extraction or require the moved source directory. Extra save files and
+metadata are preserved; changed or missing required files stop preparation
+without replacing them. The coordinator verified the retained 645-file install
+plus its metadata, and synthetic changed/missing-file and extra-save cases.
+
 ## Recovery evidence refresh (2026-10-15)
 
 The original local split package and the 2026-10-09/10 extraction receipts

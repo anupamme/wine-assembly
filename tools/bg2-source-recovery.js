@@ -210,7 +210,7 @@ async function assemble(root, expected) {
 
 async function main() {
   const [mode = 'plan', root, argument] = process.argv.slice(2);
-  if (!root) throw new Error('Usage: bg2-source-recovery.js plan ROOT | recover ROOT | extract ROOT PINS.json | assemble ROOT INVENTORY.json | compare INSTALLED INVENTORY.json');
+  if (!root) throw new Error('Usage: bg2-source-recovery.js plan ROOT | recover ROOT | extract ROOT PINS.json | assemble ROOT INVENTORY.json | compare INSTALLED INVENTORY.json | verify-installed INSTALLED INVENTORY.json');
   if (mode === 'plan') console.log(JSON.stringify(plan(path.resolve(root)), null, 2));
   else if (mode === 'extract') await extract(path.resolve(root), JSON.parse(fs.readFileSync(argument)));
   else if (mode === 'assemble') await assemble(path.resolve(root), JSON.parse(fs.readFileSync(argument)).files);
@@ -226,8 +226,12 @@ async function main() {
     await extract(sourceRoot, pins);
     await assemble(sourceRoot, expected.files);
   }
-  else if (mode === 'compare') {
+  else if (mode === 'compare' || mode === 'verify-installed') {
     const result = await compare(path.resolve(root), JSON.parse(fs.readFileSync(argument)).files);
+    if (mode === 'verify-installed') {
+      result.errors = result.errors.filter(error => error.error !== 'unexpected');
+      result.ok = result.errors.length === 0;
+    }
     console.log(JSON.stringify(result, null, 2)); if (!result.ok) process.exitCode = 1;
   } else throw new Error(`Unknown mode: ${mode}`);
 }

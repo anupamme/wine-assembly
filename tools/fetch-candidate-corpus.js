@@ -492,6 +492,17 @@ function runPostExtract(candidate, destination) {
       }
     } else if (step.type === 'installBaldursGate2Demo') {
       assertSafeRelative(step.source, `${candidate.id}.postExtract[${index}].source`);
+      if (prepare) {
+        // Preparing an installed fixture must not rerun its one-shot extraction.
+        // Verify required original bytes; preserve additional saves and metadata.
+        const checked = spawnSync(process.execPath, [
+          path.join(ROOT, 'tools', 'bg2-source-recovery.js'), 'verify-installed', destination,
+          path.join(ROOT, 'test', 'candidate-corpus', 'baldurs-gate2-demo-files.json'),
+        ], { cwd: ROOT, stdio: 'inherit', timeout: 300000 });
+        if (checked.error) throw checked.error;
+        if (checked.status !== 0) throw new Error('BG2 installed-file verification failed; fixture unchanged');
+        continue;
+      }
       // Preserve original split media and detailed recovery receipts outside the
       // final browser fixture, including when --force removes its staging dir.
       const source = path.join(destination, step.source);
