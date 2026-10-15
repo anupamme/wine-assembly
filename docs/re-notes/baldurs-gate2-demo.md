@@ -1,5 +1,36 @@
 # Baldur's Gate II demo
 
+## Recovery evidence refresh (2026-10-15)
+
+The original local split package and the 2026-10-09/10 extraction receipts
+referenced below are no longer present. The retained installed candidate still
+contains all 644 browser-manifest support files at their recorded sizes, plus
+the original BGMain.exe: 645 files, 850839386 bytes. Fresh SHA256 measurements
+are in `docs/bg2-retained-inventory-20261015.json`; these are a comparison target
+measured from the retained fixture, not the missing historical inventory.
+BGMain independently matches the original SHA256 recorded below.
+
+The Internet Archive member listing at
+https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/
+exposes all seven original parts. Acquisition evidence and complete member URLs
+are in `docs/bg2-recovery-20261015.json`. The EXE digest has a preexisting pin;
+the six W02–W07 digests are fresh source measurements. The containing archive
+metadata records 7169873753 bytes and SHA1
+`c53417bcc617790d9671ec385c49ee6f018846c9`.
+
+Recovery must concatenate EXE, W02, W03, W04, W05, W06, W07 in that order,
+extract with the historical REWise revision below, then extract the inner
+InstallShield cabinets and reproduce the original group destinations and
+case-insensitive Extra overlay. Preserve CD2. The retained 75-byte `baldur.ini`
+contains only `[Alias]`, `HD0:=C:\`, and `CD1:=C:\CD1\` through
+`CD4:=C:\CD4\`, each line terminated by CRLF. Do not synthesize gameplay settings.
+
+Acquisition alone does not establish a repeatable assembly recipe. Exact
+REWise invocation and installer group mapping need reinspection because the
+historical assembly script/audit is missing. Compare every assembled file to
+the fresh 645-file retained inventory before marking recovery reproducible.
+No extraction, build, or game runtime was performed for this acquisition step.
+
 Distinct from the Baldur's Gate 1 previews in baldurs-gate-demos.md. No BG2
 entry exists in the inspected DESKTOP_APPS list or current app registry.
 
