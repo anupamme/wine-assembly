@@ -6,7 +6,8 @@ must be granted by the root coordinator; Kkrieger's menu diagnostic is next.
 
 The recipe uses the nine historical registrations (including both QASF runs),
 explicit native msvcrt/MSDMO/WMASF dependencies and builtin OLE. It requires a
-clean isolated checkout with **no** `test/binaries/dlls` directory. The runner's
+clean isolated checkout with no common DLLs (`test/binaries/dlls` may contain
+only its tracked regular `SOURCES.md` documentation). The runner's
 dynamic lookup searches that directory before the executable directory even
 with `--dlls`; the fresh registration VFS contains only the authenticated
 12 DLL/AX files and regsvr32. No shared directory is renamed or modified.

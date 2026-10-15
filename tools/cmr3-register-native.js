@@ -13,6 +13,14 @@ function verify(p, expected) {
   assert.equal(fs.statSync(p).size, expected.bytes, p);
   assert.equal(sha(p), expected.sha256, p);
 }
+function verifyCommonDirectory(common) {
+  if (!fs.existsSync(common)) return;
+  assert(fs.lstatSync(common).isDirectory(), 'Common DLL directory must not be a symlink');
+  for (const entry of fs.readdirSync(common)) {
+    assert.equal(entry, 'SOURCES.md', 'Unexpected common DLL search entry: ' + entry);
+    assert(fs.lstatSync(path.join(common, entry)).isFile(), 'Common documentation must be a regular file');
+  }
+}
 function assess(log, status, snapshot, dll) {
   assert.equal(status, 0, 'Host did not finish normally');
   assert(!/UNIMPLEMENTED|\[eip-zero\]|RuntimeError|unreachable|timed? out|time limit|maximum.*seconds|\[CRASH\]/i.test(log), 'Guest failure diagnostic');
@@ -48,7 +56,7 @@ function run(config) {
   assert.equal(git(['status', '--porcelain', '--untracked-files=normal']), '', 'Clean checkout required');
   // Dynamic loader searches here BEFORE the app folder, even with explicit --dlls.
   const common = path.join(checkout, 'test/binaries/dlls');
-  assert(!fs.existsSync(common), 'Use a fresh checkout without a common DLL directory; never rename shared directories');
+  verifyCommonDirectory(common);
   const wasm = path.join(checkout, 'build/wine-assembly.wasm');
   assert.equal(sha(wasm), moduleSha256);
   verify(regsvr32, plan.registry.registrationTool);
@@ -110,4 +118,4 @@ if (require.main === module) {
   try { assert.equal(process.argv.length, 3, 'Usage: node tools/cmr3-register-native.js CONFIG.json'); run(JSON.parse(fs.readFileSync(process.argv[2]))); }
   catch (e) { console.error(e); process.exitCode = 1; }
 }
-module.exports = { ORDER, assess, runnerArgs, verify };
+module.exports = { ORDER, assess, runnerArgs, verify, verifyCommonDirectory };

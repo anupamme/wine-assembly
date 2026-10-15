@@ -1,6 +1,20 @@
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict');
-const { ORDER, assess, runnerArgs } = require('../tools/cmr3-register-native');
+const { ORDER, assess, runnerArgs, verifyCommonDirectory } = require('../tools/cmr3-register-native');
+test('common DLL search permits tracked documentation only and rejects files or symlinks', () => {
+  const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmr3-common-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'SOURCES.md'), 'provenance');
+    verifyCommonDirectory(dir);
+    fs.writeFileSync(path.join(dir, 'ole32.dll'), 'native');
+    assert.throws(() => verifyCommonDirectory(dir));
+    fs.unlinkSync(path.join(dir, 'ole32.dll'));
+    fs.unlinkSync(path.join(dir, 'SOURCES.md'));
+    fs.symlinkSync('/dev/null', path.join(dir, 'SOURCES.md'));
+    assert.throws(() => verifyCommonDirectory(dir));
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
 test('source handoff supplies the authenticated original registration tool', () => {
   const pin = require('../docs/cmr3-native-recovery-plan-20261015.json').registry.registrationTool;
   assert(pin, 'Required registration-tool handoff is missing from this checkout');
