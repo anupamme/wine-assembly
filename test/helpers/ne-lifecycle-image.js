@@ -1,8 +1,9 @@
 'use strict';
 // Ordinary two-segment NE DLL: LibEntry at 0, VALUE ordinal 2 at 16, WEP
 // ordinal 3 at 32. WEP returns with one Pascal WORD removed from the stack.
-function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=false}={}) {
-  const b=Buffer.alloc(0x400),n=0x80,w=(o,v)=>b.writeUInt16LE(v,o);
+function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=false, importLocalInit=false}={}) {
+  if(importLocalInit)dependencies=['KERNEL'];
+  const b=Buffer.alloc(importLocalInit?0x500:0x400),n=0x80,w=(o,v)=>b.writeUInt16LE(v,o);
   b.write('MZ');b.writeUInt32LE(n,0x3c);b.write('NE',n);
   w(n+4,0x60);w(n+6,13);w(n+12,0x8001);w(n+14,2);w(n+16,16);
   w(n+0x16,1);w(n+0x1c,2);w(n+0x1e,dependencies.length);w(n+0x22,0x40);w(n+0x32,4);
@@ -17,6 +18,13 @@ function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=fa
   b.set(trapInit?[0xca,2,0]:[0xb8,result&255,result>>>8,0xcb],0x200);
   b.set([0xb8,0x34,0x12,0xcb],0x210);
   b.set(trapWep?[0xcb]:[0xb8,1,0,0xca,2,0],0x220);
+  if(importLocalInit) {
+    // Real ordinal relocation: LocalInit(DS, 0, 16), followed by RETF.
+    // Relocations follow the code segment, so move the data image past them.
+    w(n+0x44,0x100);w(n+0x48,0x40);
+    b.set([0x1e,0x6a,0,0x6a,16,0x9a,0xff,0xff,0,0,0xcb],0x200);
+    w(0x300,1);b.set([3,1,6,0,1,0,4,0],0x302);
+  }
   return b;
 }
 module.exports={neLifecycleImage};

@@ -27,21 +27,17 @@ const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_e
   'win16_call32_begin','win16_call32_arg','win16_call32_end','win16_call32_waited',
   'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release',
   'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16'];
+helpers.push('win16_apply_relocs','win16_module_name','win16_module_id','win16_system_module_id',
+ 'win16_pstr_eq','win16_dynamic_module_id','win16_import_constant','win16_thunk_for',
+ 'win16_thunk_count_get','win16_thunk_count_set');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
-// The rejection control executes the real loader entry. Every unrelated
-// parser/relocator dependency traps if reached, proving rejection precedes it.
-for(const n of ['win16_apply_relocs']) {
- const f=form(n);
- const params=[...f.matchAll(/\(param [^)]*\)/g)].map(m=>m[0]).join(' ');
- const result=f.match(/\(result [^)]*\)/)?.[0]||'';
- code+=`\n(func $${n} ${params} ${result} (unreachable))`;
-}
 
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
- DLL_LOAD_LOCK:0x1100,current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536};
+ DLL_LOAD_LOCK:0x1100,current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
+ WIN16_NAME_KERNEL:0x70000};
 const globalNames=[...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s)]+)/g)].map(m=>m[1]))];
 const declared=new Set([...code.matchAll(/\(global \$([^\s)]+)/g)].map(m=>m[1]));
 const mutable=[];
@@ -211,6 +207,26 @@ console.log('PASS actual NE module transactions: unpublished ownership, mutex-fr
 // these same image bytes with the complete interpreter.
 const {createNeLifecycle}=require('../lib/ne-lifecycle');
 const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
+// The real loader relocates an imported far CALL before any invocation switches
+// stacks. A PE caller's thunk-selector global is still zero at this boundary.
+bytes.set(Buffer.from('KERNEL\0'),fixture.WIN16_NAME_KERNEL);
+first.set_WIN16_THUNK_SEL(0);
+const importCaller=cpu(first),importFrame=first.win16_bridge_frame_begin();assert(importFrame);
+assert.equal(first.win16_bridge_scope_begin(importFrame),1);
+const importedId=claim(first,'IMPORT');assert(importedId>0);
+assert.equal(first.win16_bridge_module_stage_begin(importedId),1);
+const importedImage=neLifecycleImage({importLocalInit:true});
+bytes.set(importedImage,first.win16_dll_staging(importedId));
+assert.equal(first.load_ne_dll_sized(importedId,importedImage.length),1);
+assert.equal(first.win16_bridge_module_stage_end(importedId),1);
+const importedTarget=first.win16_bridge_module_init(importedId,0);
+assert(importedTarget,'owned initializer target');
+const importedCode=translate(first.win16_seg_base(importedTarget>>>19));
+assert.equal(view.getUint16(importedCode+8,true),15,'staged import uses process NE thunk selector');
+assert.equal(view.getUint32(fixture.WIN16_THUNK_TABLE+view.getUint16(importedCode+6,true),true),0x10004,'real KERNEL.LocalInit thunk');
+assert.equal(first.get_WIN16_THUNK_SEL(),0,'relocation does not mutate caller selector');
+assert.equal(first.win16_bridge_module_rollback(importedId),1);
+assert.equal(first.win16_bridge_frame_end(importFrame),1);assert.deepEqual(cpu(first),importCaller);
 first.set_sync_msg_depth(0);let calls=0,whileRunning;
 const lifecycleExports={...first,run(){
  calls++;whileRunning?.();const p=translate(first.get_eip());

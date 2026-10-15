@@ -490,7 +490,7 @@
   ;; arena index base+N. It is zero for the task's own image, whose segment N
   ;; is index N, and non-zero for a DLL placed after it.
   (func $win16_apply_relocs (param $seg_wa i32) (param $seg_len i32) (param $rec_wa i32)
-        (param $ne_off i32) (param $seg_index_base i32)
+        (param $ne_off i32) (param $seg_index_base i32) (param $thunk_sel i32)
     (local $p i32) (local $count i32) (local $i i32)
     (local $addr_type i32) (local $rel_type i32) (local $additive i32)
     (local $site i32) (local $a i32) (local $c i32)
@@ -560,7 +560,7 @@
                   (local.set $tgt_sel (i32.const 0))
                   (local.set $tgt_off (local.get $constant)))
                 (else
-                  (local.set $tgt_sel (global.get $WIN16_THUNK_SEL))
+                  (local.set $tgt_sel (local.get $thunk_sel))
                   (local.set $tgt_off (call $win16_thunk_for
                     (local.get $module) (local.get $c) (i32.const 0))))))
             (else
@@ -570,7 +570,7 @@
               ;; dispatcher report `CARDS.CDTINIT` rather than a bare number.
               ;; OSFIXUP (3) is a floating-point emulator patch, which is not
               ;; an import at all; it lands here with module 0 and says so.
-              (local.set $tgt_sel (global.get $WIN16_THUNK_SEL))
+              (local.set $tgt_sel (local.get $thunk_sel))
               (local.set $tgt_off (call $win16_thunk_for
                 (if (result i32) (i32.eq (local.get $rel_type) (i32.const 2))
                   (then (call $win16_module_id (call $win16_module_name (local.get $ne_off) (local.get $a))))
@@ -726,7 +726,7 @@
             (call $g2w (call $win16_seg_base (i32.add (local.get $i) (i32.const 1))))
             (local.get $len)
             (i32.add (i32.add (global.get $PE_STAGING) (local.get $file_pos)) (local.get $len))
-            (local.get $ne_off) (i32.const 0))))
+            (local.get $ne_off) (i32.const 0) (global.get $WIN16_THUNK_SEL))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $fix)))
 
@@ -1610,7 +1610,15 @@
               (i32.add (local.get $seg_index_base) (i32.add (local.get $i) (i32.const 1)))))
             (local.get $len)
             (i32.add (i32.add (local.get $base) (local.get $file_pos)) (local.get $len))
-            (local.get $ne_off) (local.get $seg_index_base))))
+            (local.get $ne_off) (local.get $seg_index_base)
+            ;; PE staging precedes stack entry: its caller's saved thunk
+            ;; global can be zero or belong to a suspended context. The owned
+            ;; bridge arena reserves selector index 1 at bootstrap. Derive
+            ;; that process identity without changing the caller's registers
+            ;; or globals. The loader's ownership guard already pins the arena.
+            (if (result i32) (global.get $is_win16)
+              (then (global.get $WIN16_THUNK_SEL))
+              (else (call $win16_index_to_sel (i32.const 1)))))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $fix)))
 

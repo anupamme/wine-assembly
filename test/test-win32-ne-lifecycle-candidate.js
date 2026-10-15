@@ -8,6 +8,7 @@ const { createNeLifecycle } = require('../lib/ne-lifecycle');
 const { inspectNeDll } = require('../lib/ne-image');
 const { neLifecycleImage } = require('./helpers/ne-lifecycle-image');
 const SIZE = 944 * 65536, BASE = 0x400000;
+const hostLogTail=[];
 function fixture() {
   const b = Buffer.alloc(0x400), p = 0x80, o = p + 24, s = o + 0xe0;
   b.write('MZ'); b.writeUInt32LE(p, 0x3c); b.writeUInt32LE(0x4550, p);
@@ -23,6 +24,8 @@ function fixture() {
 async function boot(module, memory, init) {
   const imports = createHostImports({ getMemory: () => memory.buffer, renderer: null, resourceJson: {} });
   imports.host.memory = memory;
+  const logI32=imports.host.log_i32;
+  imports.host.log_i32=value=>{hostLogTail.push(value>>>0);if(hostLogTail.length>64)hostLogTail.shift();logI32(value);};
   for (const item of WebAssembly.Module.imports(module)) {
     assert.equal(item.module, 'host');
     if (item.kind === 'function' && !imports.host[item.name])
@@ -43,7 +46,9 @@ async function main() {
     eip:raw.get_eip(),fs:raw.get_fs_base(),ss:raw.get_sreg_ss(),ds:raw.get_sreg_ds(),cs:raw.get_sreg_cs(),depth:raw.get_sync_msg_depth()});
   const caller=snapshot();let invocations=0,whileRunning;
   const e={...raw,win16_bridge_invoke_begin(...args){invocations++;return raw.win16_bridge_invoke_begin(...args);},
-    run(blocks){whileRunning?.();return raw.run(blocks);}};
+    run(blocks){whileRunning?.();try{return raw.run(blocks);}catch(error){
+      console.error(JSON.stringify({guestTrap:{eip:raw.get_eip()>>>0,cs:raw.get_sreg_cs(),ds:raw.get_sreg_ds(),ss:raw.get_sreg_ss(),hostLogTail:[...hostLogTail]}}));throw error;
+    }}};
   const images=new Map([
     ['HELPER',neLifecycleImage()],['PARENT',neLifecycleImage({dependencies:['HELPER']})],
     ['ZERO',neLifecycleImage({result:0,dependencies:['HELPER']})],
@@ -51,6 +56,7 @@ async function main() {
     ['BADWEP',neLifecycleImage({trapWep:true,dependencies:['HELPER']})],
     ['MISSING',neLifecycleImage({dependencies:['ABSENT']})],
     ['CYCLE',neLifecycleImage({dependencies:['CYCLE']})],
+    ['IMPORT',neLifecycleImage({importLocalInit:true})],
   ]);
   let original;
   if(process.env.WA_NE_ORIGINAL) {
@@ -95,6 +101,19 @@ async function main() {
   bytes.set([0xb8,1,0,0xca,2,0],e.guest_to_wasm(base+(target&65535))>>>0);
   e.invalidate_code_range(base+(target&65535),6);
   assert.equal(e.win16_bridge_frame_end(repair),1);lifecycle.retryTermination(bad);clean();
+  // Exercise the real staged KERNEL.4 relocation and far-call dispatcher.
+  // LibEntry calls LocalInit(DS,0,16), whose visible effect grows the data
+  // segment from 0x100 to 0x110, then returns its actual success result.
+  assert.equal(raw.win16_thunk_sel(),0,'PE caller before import staging');
+  const imported=lifecycle.load('IMPORT');clean();
+  const importFrame=e.win16_bridge_frame_begin();assert(importFrame);
+  assert.equal(e.win16_bridge_scope_begin(importFrame),1);
+  const importedEntry=e.win16_bridge_module_entry(imported,1),importedData=e.win16_bridge_module_data(imported);
+  const importedCode=e.guest_to_wasm(e.win16_seg_base(importedEntry>>>19))>>>0;
+  assert.equal(view.getUint16(importedCode+8,true),15,'nonzero process-owned thunk selector');
+  assert.equal(e.win16_seg_limit(importedData>>>3),0x110,'actual imported LocalInit grew data segment');
+  assert.equal(e.win16_bridge_frame_end(importFrame),1);
+  lifecycle.release(imported);clean();assert.equal(raw.win16_thunk_sel(),0,'caller thunk selector restored');
   let originalResult=null;
   if(original) {
     const inspected=inspectNeDll(original),moduleId=lifecycle.load('PMPRO62');clean();
