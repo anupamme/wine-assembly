@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Return Fire native/browser movement and colors verified; audio quality/FPS open. Alice native movement reviewed on held DLL lifecycle candidate; finish correctness review and browser registration. BG2 media extracted; assemble installer-defined game tree and run startup. One worker/runtime, temporary boats only.
+  Next: Kkrieger ordinary held Enter reaches first-person level; movement/audio/logical FPS remain unverified. /root/kkrieger_gameplay_capture owns sole bx_erf37bxf runtime grant for matched idle/W/A/look. CMR3 original302files/native12 recovered; four authentic registrations passed, WMVCORE S_OK with no registry delta halted sequence. /root/cmr3_registry_prepare reviews exact native export before retry. Renderer6b269258 merged after combined validation; saved box snapshot-stopped.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,12 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/legacy_colorkey_contract_audit (source-only defaultFALSE filtered-key contract)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: October9 coverage reconciles retained Morrowind prison movement (4image hashes + module verified), Pirates sailing images (6referenced logs missing, no fresh backend qualification), AoWII software army movement (render defects remain), and BW2 fixed Worker startup/live normal intro. QuakeII/Crimsonland/AlienShooter/WC3 two-backend results retained. PBO standalone Chrome reproduction completed; do not restart speculative renderer diagnosis. Finish ordinary BW2 route, then queued DisciplesII; retain software/WebGL/FPS/audio/current-main gaps per docs/gl-d3d-corpus-status.md. Winamp held, HeroesII laptop-owned.
+  Next: Main6b269258 passed exact combined canonical,16CPU,WebGL1/2 each42checks,actual Worker both22checks/25draws with unchanged cache9->9; durable evidence5f13fe17b. TRUE keyBlend mutation discrimination verified. Fresh source-only audit addresses defaultFALSE filtered-key semantics; original27 membership, alpha/key precedence, border addressing and legacyGPUstencil remain unresolved. Per-game dual-backend gameplay still required.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1505,9 +1506,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Serialize shared DLL mapping and lifetime mutation
   id: DLL-CONCURRENT-MAPPING-20261009
-  status: ready
+  status: review (serialization and unload merged; CMR3/Alice gameplay revalidation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two actual Node workers forced to interleave after PE_STAGING copy reproduce wrong module bytes and same published table slot, even with distinct low destination addresses. Original main280d28eb1/module527004d9 also fails the same staged-image control (worker B receives worker A bytes); shared staging is a pre-existing race. Candidate d5a47f240 additionally needs graph lifetime synchronization. Implement loader serialization without holding a spinlock across host imports or callbacks. Also protect reachability and reference mutation across instances and refresh per-instance DLL counts. Reproducer: scratch/alice-border-20261009/concurrent-loader-control.js; evidence run20261009T2330Z-dll-cycle-worker-review. No merge-ready claim.
+  Next: Load/publication serialization cfe411bdc/1b3c20aec/7a2953021/89524faca and real unload83947f6a6 are on main. Historical comments about stub FreeLibrary and held-branch adaptation are superseded. Current next action is fresh CMR3/Alice original gameplay validation; reproduce a current boundary before changing loader behavior.
   Done: Concurrent load/free/import tests preserve exact images and module ownership, callback execution stays live without deadlock, normal Alice gameplay/browser revalidated.
 
 - [ ] New-game lane: Aliens versus Predator 2 single-player demo
@@ -1518,3 +1519,41 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
   Next: Original launcher-captured lithtech.exe -cmdfile avp2cmds.txt reaches Single Player -> Marine -> Unwelcome Guests but mission launch fails HUDMgr font initialization. Reviewed run20261010T0237Z-avp2-hud-font; replay142017/142024 terminal0 confirms same error, run20261010T0239Z-avp2-font-trace. cshell factory preferred VA1011bfd0 returns null to10036b3b; discriminate argument/allocation/virtual-init failure before implementing a fix. Branch replay controller143279 live on boat bx_hx8msa33 with600s guard; output /home/user/avp2-font-branch-20261010. Menu model textures also corrupt. Missing local installed media test/binaries/candidates/avp2-demo; original payload remains on boat, disk below2GiB prevents bulk restore. No gameplay qualification or public deployment.
   Done: Original demo launch, ordinary player input visibly changes gameplay, reviewed screenshot with exact source/build/run evidence.
+
+- [ ] Validate original .kkrieger startup on separate test box
+  id: KKRIEGER-STARTUP-20261014
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Main fc4901563 contains reviewed menu-input evidence: original60373 reaches first-person level/HUD after ordinary5sEnter, no guest patch;92artifacts verified, photo1382 delivered. /root/kkrieger_gameplay_capture source05d115 owns next bounded900s matched movement capture on main7aa74110e/module d463bdae. No movement/combat/audio/logical FPS qualification yet.
+
+- [ ] Revalidate original CMR3 menu-to-Stages progression
+  id: CMR3-POST-SPLASH-NULL-20261010
+  status: review (historical splash/null boundary superseded; fresh progression unverified)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Lifecycle83947f6a6 is on main; original differential already reached menu with native quartz exits yielding2 instead of traps. Do not re-adapt held unload branch. After authentic registry execution, run one serialized original replay with ordinary menu-to-Stages input and exact module/frame/thread evidence; racing remains unqualified.
+
+- [ ] Validate merged DLL unload and CMR3 progression
+  id: FREELIBRARY-EXITTHREAD-CMR3-20261010
+  status: review (implementation merged; recovered-fixture progression pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Main83947f6a6 integrates real generation-aware unload/thread exit; canonical+6reader+17DLL+2DirectSound suites and negative controls recorded. Later57a148044/321e734aa also landed. Fresh current recovered CMR3 progression remains; no implementation or transport blocker, no race qualification.
+
+
+- [~] New-game lane: Colin McRae Rally 3 demo
+  id: NEW-GAME-CMR3-DEMO-20261010
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
+  runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
+  Next: Authentic registration73364 on6dfbff842 stopped after devenum/quartz/qedit/QASF pass. WMVCORE returns S_OK/Exit0 but zero registry delta/no own InprocServer32; this is not yet a native defect. /root/cmr3_registry_prepare statically reviews exact export before any acceptance change/retry.40artifacts preserved in scratch/runs/20261015-cmr3-native-registration; postflight clean. Original registry remains unrecovered; no game/racing qualification.
+  Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
+  Evidence: scratch/cmr3-demo-20261010/selection.json
+
+- [~] New-game lane: Recoil demo
+  id: NEW-GAME-RECOIL-DEMO-20261011
+  status: review (functional fixes and gameplay notes already merged; device/audio follow-ups remain)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  source: https://archive.org/details/RecoilDemo
+  Next: Main f9376176448849d53c9cfbcfc47e330691457ac0 cherry-picks d189a725a qualification notes; ancestor and exact note content verified2026-10-15. No integration blocker remains. Historical run20261011T2056Z-recoil-main-tap-gameplay records ordinary touch route and padLeft tank/view turn on274902b02.15.10 guest presentation events/s is not logical/display FPS or controlled benchmark. Physical phone/WebKit/audio remain unverified; no new runtime or release qualification from this reconciliation.
+  Done: Ordinary launch and player-controlled gameplay with reviewed screenshot/build identity, registered and pushed main; FPS/audio separately measured.
+  Reconciled 2026-10-12: Tested274902b02 is an ancestor of main0304; notesd189a725a are not. This is a documentation integration dependency, not an unimplemented gameplay fix. Ops retains integration ownership; no live worker/runtime. New audio/device/FPS qualification waits for storage recovery to2GB (currently270MB).

@@ -216,3 +216,80 @@ stall, investigate rendering completion/canonical-surface synchronization while
 preserving GL/GDI ordering. If WASM dominates there, investigate its hot path.
 Do not bypass canonical writes or change resolution to claim a fix. **The cause
 and rate on the user's Mac remain unmeasured; no FPS fix is claimed.**
+
+### 2026-10-15: local M1 hardware GPU baseline
+
+The Mac is now measured in headful Chrome155.0.8059.40, ANGLE Metal Apple M1
+(8 GPU cores), at an actual640×480 GL backend size. CDP GPU information and
+browser arguments confirm hardware rendering. Source45c3d0bff5e95bdde5c4a1b863d241d066431ed3,
+canonical WASM SHA256
+`70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655`.
+Evidence: `scratch/runs/20261015-sam-local-gpu/`.
+
+Normal difficulty Karnak gameplay, stationary views, three20-second samples
+each, logging off, cooperative `?debug&perf&no-threads` route:
+
+| View | Actual GL presents/s | p95 presentation intervals |
+| --- | --- | --- |
+| Upward stone room |25.27,22.83,22.74|48.1,53.8,52.1ms|
+| Torch wall |20.83,20.29,21.37|55.8,58.7,52.5ms|
+
+Counted `OpenGLHostBridge.present` directly, not the double-counted HUD.
+GL replay averaged4.90–6.00ms/frame, including4.00–4.71ms presentation.
+Main slices averaged29.4–35.5ms and cooperative thread phases9.2–12.5ms.
+These nested rendering costs must not be added to main slice time.
+A separate20-second CPU-profile control measured18.50presents/s:
+69.2% of sampled time in WASM,4.7% in `getImageData`,11.9% idle.
+This supports CPU/emulation as the next investigation target on this Chrome
+route; the Boat software-rendering wait does not dominate here. No fix claimed.
+
+Reviewed before/after gameplay screenshots show the gun, health100, stone
+architecture and torch. This is a stationary performance baseline, not a full
+playability test. Safari and the guest-main Worker route remain unmeasured.
+Other laptop applications remained open; timing wrappers/perf collection were
+enabled with HUD hidden. Profiled and unprofiled samples are separate because
+profiling measurably affects throughput. The Boat comparison is not a
+controlled speedup: CPU, browser, logging and renderer differ. Benchmark Chrome
+was closed after capture; no emulator implementation changes were made.
+
+### 2026-10-15: deferred OpenGL window readback
+
+Implementation36d060063 retains top-level GL window frames on the GPU. A
+shared window-surface ownership flag triggers synchronous materialization
+before a GDI source/destination descriptor exposes CPU pixels; ordinary GDI
+does not make an extra host call. Context retirement and surface resize resolve
+pending ownership. Bitmap drawables, child windows and older modules retain
+eager publication. The real WAT GetPixel/SetPixel/resize regression, GL/GDI
+ordering and context-retirement tests, Worker RPC and shared-render protocol
+tests pass, as do existing bitmap, command-stream, frame-state, drawable-size,
+screen-surface and frame-counter checks. Canonical build passes.
+
+Headful Chrome155 on M1 hardware GPU,640×480, logging off, three alternating
+20-second eager/deferred pairs per mode, using the SAME patched module and
+disabling only renderer.deferGpuWindowReadback for the eager control:
+
+| Route / scene | Eager presents/s | Deferred presents/s | Aggregate change |
+| --- | --- | --- | --- |
+| Cooperative / Karnak room floor |33.63,30.08,32.83|33.47,35.43,35.19|32.18→34.70 (+7.8%)|
+| Guest + render Workers / TechTest courtyard |23.44,18.05,23.65|24.54,21.20,28.44|21.71→24.73 (+13.9%)|
+
+These are within-route comparisons, NOT a comparison of threading speed: the
+scenes differ. Laptop background applications remained open and the threaded
+samples are noisy. The cooperative scene submitted exactly57draws/6,384vertices
+per frame in all six samples. Every eager frame performed a window merge;
+all six deferred gameplay samples performed ZERO window merges/readbacks.
+An explicit post-benchmark Worker resolve returned matching GPU/canonical
+RGBA `[83,203,255,255]` and cleared pending ownership. Reviewed screenshots
+retain scene geometry, gun and health100. Both benchmark browsers were closed.
+
+WASM SHA256 `2397fae60cc626a31d7a77c527266d2d8473a0005d1c6bbca27581c007181497`.
+Evidence: `scratch/runs/20261015-sam-gl-lazy/` and
+`scratch/runs/20261015-sam-gl-lazy-worker/`. Earlier Worker samples prefixed
+`diagnostic-console-` were captured with the diagnostic console open and are
+excluded. Safari remains untested; this does not establish full playability.
+
+Scheduling instrumentation recorded no positive _scheduleStep delay in any
+accepted sample. Cooperative gaps between steps totaled0.45–0.62seconds per
+20-second sample. That rules out deliberate scheduler sleep for these samples;
+it does not retrospectively identify every idle sample in the earlier separate
+CPU profile. No scheduler behavior was changed.

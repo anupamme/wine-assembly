@@ -657,6 +657,44 @@ async function main() {
     [...canvas.getContext('2d').getImageData(4, 6, 1, 1).data.subarray(0, 3)],
     [255, 255, 255], 'ScrollWindow must expose the vacated client strip');
 
+  // Simulate GPU-owned blue pixels. The host barrier must run BEFORE the
+  // real WAT GetPixel/SetPixel access, not on the later dirty upload.
+  let pendingGpu = true, gpuResolves = 0;
+  renderer.resolveGpuWindowReadback = owner => {
+    assert.strictEqual(owner, HWND);
+    if (pendingGpu) {
+      pendingGpu = false;
+      gpuResolves++;
+      wat.gl_window_set_gpu_owned(owner, 0);
+      const s = base.gdi.surfacePresentations.get(surfaceId).surface;
+      const rgba = new Uint8ClampedArray(s.width * s.height * 4);
+      for (let i = 0; i < rgba.length; i += 4) { rgba[i + 2] = 255; rgba[i + 3] = 255; }
+      s.writeRgbaRect(0, 0, s.width, s.height, rgba);
+    }
+    return true;
+  };
+  assert.strictEqual(wat.gl_window_readback_version(), 1);
+  assert.strictEqual(wat.gl_window_set_gpu_owned(HWND, 1), 1);
+  assert.strictEqual(wat.test_call_GetPixel(hdc, 1, 1) >>> 0, 0xff0000,
+    'GetPixel reads the current GL front, not stale canonical bits');
+  pendingGpu = true;
+  wat.gl_window_set_gpu_owned(HWND, 1);
+  wat.test_call_SetPixel(hdc, 1, 1, 0x00ff00);
+  assert.strictEqual(wat.test_call_GetPixel(hdc, 1, 1) >>> 0, 0x00ff00,
+    'GDI writes happen after readback and are not overwritten by it');
+  assert.strictEqual(wat.test_call_GetPixel(hdc, 2, 1) >>> 0, 0xff0000,
+    'partial GDI writes preserve untouched GL pixels');
+  assert.strictEqual(gpuResolves, 2);
+  pendingGpu = true;
+  wat.gl_window_set_gpu_owned(HWND, 1);
+  win.w = 54;
+  wat.ctrl_set_geom(HWND, 100, 50, 54, 36);
+  const resizedDc = wat.test_call_GetDC(HWND);
+  assert(resizedDc);
+  assert.strictEqual(gpuResolves, 3,
+    'GetDC resize resolves pending ownership before retiring the old storage');
+  wat.test_call_ReleaseDC(HWND, resizedDc);
+  delete renderer.resolveGpuWindowReadback;
   assert.strictEqual(wat.test_call_ReleaseDC(HWND, hdc), 1);
   assert.strictEqual(wat.test_call_ReleaseDC(HWND, whole), 1);
   assert.strictEqual(wat.test_call_DeleteObject(sourceBitmap), 1);

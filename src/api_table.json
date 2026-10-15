@@ -38846,5 +38846,26 @@
     "convention": "stdcall",
     "hash": 2679068727,
     "handler": "FreeLibraryAndExitThread"
+  },
+  {
+    "id": 4566,
+    "name": "IDirectSoundBuffer8_SetFX",
+    "nargs": 4,
+    "convention": "stdcall",
+    "hash": 1186711363
+  },
+  {
+    "id": 4567,
+    "name": "IDirectSoundBuffer8_AcquireResources",
+    "nargs": 4,
+    "convention": "stdcall",
+    "hash": 2912993206
+  },
+  {
+    "id": 4568,
+    "name": "IDirectSoundBuffer8_GetObjectInPath",
+    "nargs": 5,
+    "convention": "stdcall",
+    "hash": 427308594
   }
 ]
