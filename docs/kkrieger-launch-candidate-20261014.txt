@@ -159,3 +159,31 @@ Before the next run, recheck all144 compiled inputs/module hash and3 original
 file pins, update only the isolated diagnostic source, and retain old evidence.
 Observers must connect with defaultViewport:null. Runtime stays queued behind
 palette and Silver; no source preparation implies launch permission.
+
+Original declaration capture completed 2026-10-15, source0be5e6ac2.
+Controller141465 started00:29:47.781Z, exited0 at00:36:06.080Z after
+true guest exit; zero Chrome processes verified00:36:39.335Z. The fixed
+controller closed the browser automatically. Viewport1100x800. No menu,
+gameplay or ordinary input; final image shows shell after guest exit.
+All144 compiled inputs and3 original file pins reverified; loaded module
+70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655.
+Fixed2GiB memory, no old backing OOM. No quiet-host timing claim.
+
+First rejection00:35:53.183Z: shader register2, type7 SHORT4, offset12,
+usage3 NORMAL0, stride32. Captured declaration ordinal/register1 carries
+that NORMAL; ordinal/register2 instead carries type6 SHORT2 TANGENT0@20.
+Shader semantic binding remaps inputs, so these register numbers differ.
+Original slot72 points to0x8210a8: FLOAT3 POSITION0@0, SHORT4 NORMAL0@12,
+SHORT2 TANGENT0@20, FLOAT2 TEXCOORD0@24, terminator. All6 original tables
+read successfully. Both SHORT formats are signed and unnormalized. The
+read-only table snapshot is non-atomic; bounded prefixes are not a replay.
+Unsupported declarations correlate with exit, not proven sole cause.
+
+Essential evidence (369303 transferred bytes; per-file transfer hashes):
+/home/user/wine-assembly/scratch/runs/20261015-kkrieger-declaration/
+Contains declaration.json, browser.log, meta.json, preflight.json, final.png,
+final-state-summary.json, controller.log, cleanup.json, exact controller/probe,
+empty tested-source.patch, process.json, transfer.json and SHA256SUMS.json.
+Remote full run retained in scratch/runs/kkrieger-declaration-first-failure.
+Runtime released to coordinator; semantic implementation and GPU/CPU checks
+are subsequent work, not a claim that this original run rendered gameplay.
