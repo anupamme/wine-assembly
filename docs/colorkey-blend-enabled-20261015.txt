@@ -207,3 +207,15 @@ raw bytes in evidence and leaving destination X unconstrained. Observed X=0
 is an implementation detail, not a destination-alpha contract.
 All-key, duplicate-index, mixed-filter and rejection software cases passed
 before this assertion. Numeric software evidence is retained before throwing.
+
+Candidate621a6d4e execution PASS: WebGL1/2 each42 observations, Worker both
+sync modes. The separate cache-identity mutant SURVIVED: both routes uploaded
+textures21 times for21 textured draws, so the fixture did not establish cache
+reuse. Its original static mutant-discrimination claim was therefore false.
+Mutant source was restored and every tracked file hash verified afterward.
+One focused fixture correction separates the texture and RT DIB watch pages
+with a retained real padding surface, and isolates palette heap storage with
+retained padding allocations. It records addresses and requires unchanged
+FALSE draws to keep textureUploads constant before testing FALSE-to-TRUE.
+This distinguishes an actually reused decode from a coincidental fresh decode.
+The corrected cache fixture and isolated mutant rerun remain pending.

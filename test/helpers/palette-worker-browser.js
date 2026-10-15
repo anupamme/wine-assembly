@@ -47,21 +47,31 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     await link.start();await raw('pw_init');stack=await alloc(4096)+2048;
     await raw('pa_seed',await alloc(1024));
     const dd=await raw('pa_ddraw'),desc=await alloc(128),out=await alloc(16),entries=await alloc(1024);
-    const surface=async(bpp,caps)=>{
+    const surface=async(bpp,caps,size=4)=>{
       for(let i=0;i<128;i+=4)await write(desc+i,0);
-      for(const [o,v] of [[0,108],[4,0x1007],[8,4],[12,4],[72,32],[76,bpp===8?0x60:0x40],[84,bpp],[104,caps]])await write(desc+o,v);
+      for(const [o,v] of [[0,108],[4,0x1007],[8,size],[12,size],[72,32],[76,bpp===8?0x60:0x40],[84,bpp],[104,caps]])await write(desc+o,v);
       if(bpp===32)for(const [o,v] of [[88,0xff0000],[92,0xff00],[96,0xff]])await write(desc+o,v);
       eq(await call('pa_surface',dd,desc,out),0,'CreateSurface');return read(out);
     };
-    const texture=await surface(8,0x1000),rt=await surface(32,0x2040);
+    const texture=await surface(8,0x1000);
+    // Retain a real surface as padding: RT clears/readback must not dirty the
+    // texture's 4KB watch page merely because both small DIBs share a page.
+    await surface(32,0x1000,128);
+    const rt=await surface(32,0x2040);
     eq(await call('pa_device',rt,out),0,'CreateDevice');const device=await read(out);
     const rgb=[64,128,192],packed=a=>rgb[0]|rgb[1]<<8|rgb[2]<<16|a<<24;
     for(let i=0;i<256;i++)await write(entries+4*i,packed(255));
     const palette=async caps=>{eq(await call('pa_palette',dd,caps,entries,out),0,'CreatePalette');return read(out);};
+    // Keep palette storage away from state/stack/vertex and allocator writes.
+    // Retained allocations are deliberate fixture padding, never freed live.
+    await alloc(8192);
     const alpha=await palette(0x404),alphaSlot=(await raw('pa_entry',alpha))>>>0;
     const palData=(await raw('pa_palette_data',alpha))>>>0;
+    await alloc(8192);
     await raw('pa_bind',device,0,texture);eq(await call('pa_attach',texture,alpha),0,'attach alpha');
     const texDib=await raw('pw_dib',texture),rtDib=await raw('pw_dib',rt),rtEntry=await raw('pa_entry',rt);
+    check((texDib>>>12)!==(rtDib>>>12),'texture and RT watch pages are separate');
+    evidence.watchLayout={texDib,rtDib,palData};
     const texGuest=await raw('pa_w2g',texDib);
     for(let i=0;i<16;i++)await raw('guest_write8',texGuest+i,7);
     const vertices=await alloc(192),fv=new DataView(new ArrayBuffer(4));
@@ -156,6 +166,12 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     // visible if the subsequent TRUE transition omits keyBlend cache identity.
     await rs(41,1);await rs(144,0);
     await renderRGBA('Worker FALSE primes colored zero-alpha cache',[background,opaque,opaque]);
+    await until(()=>lastStats?.stats.drawCalls===drawCount,'FALSE prime stats');
+    const uploadsBefore=lastStats.stats.textureUploads;
+    await renderRGBA('Worker unchanged FALSE uses cached texture',[background,opaque,opaque]);
+    await until(()=>lastStats?.stats.drawCalls===drawCount,'unchanged FALSE stats');
+    evidence.cacheReuse={uploadsBefore,uploadsAfter:lastStats.stats.textureUploads};
+    eq(evidence.cacheReuse.uploadsAfter,uploadsBefore,'unchanged FALSE must hit texture cache');
     await rs(144,1);
     await renderRGBA('Worker FALSE to TRUE replaces cached key RGB',[zero,opaque,opaque]);
     await rs(41,1);await rs(15,1);await rs(25,5);await rs(24,0);
