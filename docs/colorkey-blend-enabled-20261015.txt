@@ -258,3 +258,30 @@ Archive1891804bytes SHA256f9d922759ac4bdbc2bc81bc8f7b1858d47f52fe38ebe7a6ab4d532
 Controller37533 terminal1 at09:39:49.730Z; postflight09:40:17.849Z confirms no
 Node/Chrome/build workers and unchanged tracked source. Runtime released to
 root; no further execution, public deployment, or game-readiness claim.
+
+Replacement palette source follow-up — NOT EXECUTED
+The prior watchLayout.palData named the initial alpha palette, not the later
+ordinary replacement used by the keyed cases. CreatePalette always requests
+fresh1024-byte storage (09a8-handlers-directx.wat2488-2496); dx_free retires the
+COM slot without freeing that palette allocation (1458-1469). The slot reuse
+assertion therefore does not establish data-pointer reuse. heap_alloc checks
+free storage before bump allocation (10-helpers.wat2753-2930), so padding the
+initial palette cannot guarantee placement of this later allocation after
+vertices and pw_exhaust. No exact runtime overlap cause is yet proven.
+
+The fixture now brackets replacement CreatePalette with retained8KB padding,
+records actual replacement data using existing pa_palette_data, and labels
+the original pointer initialAlphaPaletteData. Existing exports also resolve
+device state, vertices and stack addresses; diagnostics list any replacement
+palette watch-page overlap with these ranges, texture or RT. Padding is not
+treated as proof: the unchanged textureUploads assertion remains mandatory.
+
+Read-only diagnostics inspect the published page_watch_root ABI using atomic
+loads, mirroring PageLease table/cell addressing. They preserve texture and
+actual replacement-palette refs/generations, poison/audit flags before clear,
+after clear, after producer draw and after fence, plus known fixture identity
+and changed ranges. These are observations, not replaced cache/decoder/lease
+implementations, and distinguish resource-page invalidation from an unknown
+identity/replay cause without asserting a reason from upload counts alone.
+Only JS syntax and diff checks ran. No production edits or runtime actions;
+latest source follow-up awaits root's next serialized validation grant.

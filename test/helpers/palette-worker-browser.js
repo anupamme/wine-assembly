@@ -71,7 +71,7 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     await raw('pa_bind',device,0,texture);eq(await call('pa_attach',texture,alpha),0,'attach alpha');
     const texDib=await raw('pw_dib',texture),rtDib=await raw('pw_dib',rt),rtEntry=await raw('pa_entry',rt);
     check((texDib>>>12)!==(rtDib>>>12),'texture and RT watch pages are separate');
-    evidence.watchLayout={texDib,rtDib,palData};
+    evidence.watchLayout={texDib,rtDib,initialAlphaPaletteData:palData};
     const texGuest=await raw('pa_w2g',texDib);
     for(let i=0;i<16;i++)await raw('guest_write8',texGuest+i,7);
     const vertices=await alloc(192),fv=new DataView(new ArrayBuffer(4));
@@ -114,7 +114,20 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     eq(await raw('pw_type',alpha),0,'attachment final release retires palette');
     await clear();await draw();await raw('pw_fence');observe('detached grayscale',[7,7,7]);
     await write(entries+7*4,packed(128));
+    // Slot reuse does not reuse palette storage: CreatePalette heap-allocates
+    // a fresh1024 bytes. Isolate this later allocation too, after pw_exhaust
+    // and vertex allocation; the earlier alpha-palette padding cannot do so.
+    await alloc(8192);
     const replacement=await palette(4);
+    const replacementData=(await raw('pa_palette_data',replacement))>>>0;
+    await alloc(8192);
+    const deviceEntry=(await raw('pa_entry',device))>>>0;
+    // d3ddev_state reads the guest pointer at device entry+16.
+    const stateGuest=new DataView(memory.buffer).getUint32(deviceEntry+16,true);
+    Object.assign(evidence.watchLayout,{replacementPaletteData:replacementData,
+      deviceState:(await raw('guest_to_wasm',stateGuest))>>>0,
+      vertices:(await raw('guest_to_wasm',vertices))>>>0,
+      stack:(await raw('guest_to_wasm',stack))>>>0});
     eq((await raw('pa_entry',replacement))>>>0,alphaSlot,'natural retired slot reuse');
     eq(await raw('pw_refs',replacement),1,'new slot ownership');
     eq(await call('pa_attach',texture,replacement),0,'ordinary replacement');
@@ -168,8 +181,41 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     await renderRGBA('Worker FALSE primes colored zero-alpha cache',[background,opaque,opaque]);
     await until(()=>lastStats?.stats.drawCalls===drawCount,'FALSE prime stats');
     const uploadsBefore=lastStats.stats.textureUploads;
-    await renderRGBA('Worker unchanged FALSE uses cached texture',[background,opaque,opaque]);
+    // Read-only diagnostics mirror PageLease's published table ABI. Capture
+    // both actual lease ranges, not the retired alpha palette's address.
+    // No lease generations, decoder, transport or renderer are substituted.
+    const watchRoot=(await raw('page_watch_root'))>>>0;
+    const watch32=new Uint32Array(memory.buffer),watch64=new BigUint64Array(memory.buffer);
+    const watchRange=(address,length)=>{
+      const pages=[];
+      for(let page=address>>>12;page<=((address+length-1)>>>12);page++){
+        const table=Atomics.load(watch32,(watchRoot>>>2)+(page>>>10));
+        const cell=table?table+(page&1023)*16:0;
+        pages.push({page,cell,refs:cell?Atomics.load(watch32,cell>>>2):0,
+          generation:cell?String(Atomics.load(watch64,(cell+8)>>>3)):null});
+      }
+      return {address,length,pages};
+    };
+    const diagnostic=phase=>{
+      const record={phase,texture:watchRange(texDib,16),palette:watchRange(replacementData,1024),
+        poison:Atomics.load(watch32,(watchRoot+2048)>>>2),audit:Atomics.load(watch32,(watchRoot+2052)>>>2)};
+      evidence.cacheDiagnostics.phases.push(record);
+    };
+    evidence.cacheDiagnostics={fixtureIdentity:{texture,texDib,width:4,height:4,pitch:4,bpp:8,
+      palette:replacement,paletteData:replacementData,paletteAlpha:0,keyed:1,keyRaw:7,keyBlend:0},phases:[]};
+    const pagesOf=(address,length)=>Array.from({length:((address+length-1)>>>12)-(address>>>12)+1},(_,i)=>(address>>>12)+i);
+    const palettePages=pagesOf(replacementData,1024);
+    evidence.cacheDiagnostics.paletteOverlaps=Object.entries({
+      deviceState:[evidence.watchLayout.deviceState,4096],vertices:[evidence.watchLayout.vertices,192],
+      stack:[evidence.watchLayout.stack-2048,4096],rt:[rtDib,64],texture:[texDib,16]
+    }).filter(([,range])=>pagesOf(...range).some(page=>palettePages.includes(page))).map(([name])=>name);
+    diagnostic('before clear');await clear(0xff112233);diagnostic('after clear');
+    await draw();diagnostic('after producer draw');await raw('pw_fence');diagnostic('after fence');
+    recordRGBA('Worker unchanged FALSE uses cached texture',[background,opaque,opaque]);
     await until(()=>lastStats?.stats.drawCalls===drawCount,'unchanged FALSE stats');
+    const first=evidence.cacheDiagnostics.phases[0],last=evidence.cacheDiagnostics.phases.at(-1);
+    evidence.cacheDiagnostics.changedRanges=['texture','palette'].filter(name=>
+      JSON.stringify(first[name].pages)!==JSON.stringify(last[name].pages));
     evidence.cacheReuse={uploadsBefore,uploadsAfter:lastStats.stats.textureUploads};
     eq(evidence.cacheReuse.uploadsAfter,uploadsBefore,'unchanged FALSE must hit texture cache');
     await rs(144,1);
