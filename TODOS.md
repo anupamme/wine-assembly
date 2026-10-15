@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (kkrieger runtime; CMR3 allocator investigation)
+  status: active (current source investigation and independent new-game acquisition)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two lanes: /root/kkrieger_long_input ordinary original capture93374 onsolebx_9ef2wdsw; /root/cmr3_native_free_list source-only nextstage-loading native free-list blocker. CMR3 report223604e2f and Kkr reportdb1b8c09d merged; neither newrun qualifies controlledgameplay yet.
+  Next: Two active unqualified lanes: /root/kkrieger_movement_consumer source-traces accepted W versus actual displacement after reviewed166artifact run93374; /root/new_game_refill_20261015 acquires original Jedi Knight demo onsolebx_9ef2wdsw. CMR3 replay is held after automatic rejection, stopped clean; no retry. IW currentmain scopedlifecycle port separate.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1522,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (20-minute original input capture)
+  status: active (current source investigation and independent new-game acquisition)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: /root/kkrieger_long_input owns solebx_9ef2wdsw controller93374 started12:51:05Z source551caaf/canonical937466,1200s bound/15s initialEnter; actual controls still unverified. Prior71680 level evidence mergeddb1b8c09d; no W admitted beforedeadline.
+  Next: Run93374 acceptedW with updatecounter390-400-410 andhost/guestrelease; fiveimages do not distinguish movement fromidle drift. Root independently verified166artifacts24611819B; report d0177304c merged. /root/kkrieger_movement_consumer source-traces original position/timestep consumer before any newruntime.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1597,3 +1597,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: done (bounded implementation and integration validation merged)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Merged6b269258 is an ancestor of main; exact combined canonical build,16CPU suites,42observations eachWebGL1/2 and22each actualWorker syncmode PASS. See docs/palette-combined-validation-20261015.txt; this supersedes stale execution/access/ownership blockers. DefaultFALSE filtered-key semantics and alpha-key precedence remain separate open tasks D3D-FILTERED-KEY-STATE144-20261014 and D3D-ALPHA-KEY-PRECEDENCE-20261014, not completed by these results.
+
+- [~] New-game lane: Jedi Knight Dark Forces II original demo
+  id: NEW-GAME-JEDI-KNIGHT-DEMO-20261015
+  status: active (original package acquisition and licence/readme inspection)
+  owner: /root/new_game_refill_20261015
+  Next: Archived LucasArts original jedidemo.exe source selected; acquire/hash/extract onsolebx_9ef2wdsw, inspect original readme and normal route. No guest/build/browser grant yet; no EULA answer or public deployment.
+  Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.
