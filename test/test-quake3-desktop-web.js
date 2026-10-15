@@ -7,6 +7,8 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const WORKERS = process.env.Q3_WORKERS === '1';
+if (WORKERS && !process.argv.includes('--isolate')) process.argv.push('--isolate');
 const { createServer } = require('../tools/dev-server');
 const ROOT = path.join(__dirname, '..');
 const OUT = process.env.Q3_OUT || path.join(ROOT, 'scratch/runs/quake3-desktop-web');
@@ -85,14 +87,37 @@ async function touch(page, selector, duration=1000) {
     await page.setViewport({width:mobile?844:1000,height:mobile?390:760,deviceScaleFactor:1,isMobile:mobile,hasTouch:mobile});
     page.on('console',m=>{fs.appendFileSync(path.join(OUT,label+'.log'),m.text()+'\n');if(/UNIMPLEMENTED API:|RuntimeError|FATAL:/.test(m.text()))errors.push(m.text());});
     page.on('pageerror',e=>errors.push(String(e)));
-    await page.goto(base+'/?prod&no-threads',{waitUntil:'domcontentloaded'});
+    await page.goto(base+(WORKERS?'/?prod&threads':'/?prod&no-threads'),{waitUntil:'domcontentloaded'});
     await page.waitForFunction('typeof launchApp === "function"');
     return page;
   };
   try {
     const host=await open('host');
-    await host.evaluate(()=>{apps.quake3_demo.args='+set logfile 2 +set g_logSync 1 +set sv_maxclients 4 +map q3dm1';document.getElementById('app-select').value='quake3_demo';launchApp();});
+    const hostingCard = process.env.Q3_HOSTING_CARD === '1';
+    await host.evaluate(menuOnly=>{apps.quake3_demo.args='+set logfile 2 +set g_logSync 1'+(menuOnly?'':' +set sv_maxclients 4 +map q3dm1');document.getElementById('app-select').value='quake3_demo';launchApp();}, hostingCard);
+    if (hostingCard) {
+      await host.waitForFunction(()=>{const w=runningApps[0]?.wine;return w?.instance && new DataView(w.memory.buffer).getUint32(w.instance.exports.guest_to_wasm(0x6dc1a4),true)===2;},{timeout});
+      await sleep(6000);
+      assert.strictEqual(await host.$('#wine-lan-share'),null,'main menu must not claim to host a game');
+      await host.screenshot({path:path.join(OUT,'menu-no-host-card.png')});
+      await host.keyboard.press('Backquote');await sleep(300);
+      await host.keyboard.type('/set sv_maxclients 4\n/map q3dm1\n',{delay:25});
+    }
+    if (hostingCard) {
+      await gameplay(host);
+      await host.waitForSelector('#wine-lan-share',{timeout:15000});
+      await host.screenshot({path:path.join(OUT,'server-host-card.png')});
+      await dismissHostCard(host);await sleep(11000);
+      assert.strictEqual(await host.$('#wine-lan-share'),null,'probe refresh must not reopen a dismissed share card');
+      metrics.hostingCard={absentAtMenu:true,presentWhenServing:true,staysDismissed:true};
+      assert.deepStrictEqual(errors,[]);
+      console.log('PASS no hosting card at menu; card appears for real server and stays dismissed');
+      return;
+    }
     await gameplay(host); console.log('Host entered gameplay'); await dismissHostCard(host);
+    metrics.hostIp=await host.evaluate(async()=>{const w=runningApps[0].wine;return {worker:!!w.guestWorker,assigned:w.vlanLocalIp,actual:await w.callGuest('get_vlan_local_ip')};});
+    assert.strictEqual(metrics.hostIp.worker,WORKERS,'requested host execution mode must be active');
+    assert.strictEqual(metrics.hostIp.actual,0x0a000001,'host guest uses owner IP');
     const cfg=await fileText(host,'q3config.cfg');
     for(const [key,cmd] of Object.entries({w:'+forward',s:'+back',a:'+moveleft',d:'+moveright',MOUSE1:'+attack',SPACE:'+moveup',CTRL:'+movedown'})) assert(cfg.includes(`bind ${key} "${cmd}"`),key+' binding in guest-written config');
     metrics.start=await position(host);
@@ -138,6 +163,9 @@ async function touch(page, selector, duration=1000) {
       await guest.click('#wine-lan-card .wine-lan-room button');
     }
     await gameplay(guest);
+    metrics.clientIp=await guest.evaluate(async()=>{const w=runningApps[0].wine;return {worker:!!w.guestWorker,assigned:w.vlanLocalIp,actual:await w.callGuest('get_vlan_local_ip')};});
+    assert.strictEqual(metrics.clientIp.worker,WORKERS,'requested client execution mode must be active');
+    assert.strictEqual(metrics.clientIp.actual,0x0a000002,'client guest uses assigned member IP');
     await host.waitForFunction(()=>{
       const e=[...runningApps[0].wine._helpCtx.vfs.files].find(([k])=>k.endsWith('games.log'));
       return e && /ClientBegin: 1/.test(new TextDecoder().decode(e[1].data));

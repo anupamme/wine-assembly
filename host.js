@@ -3220,10 +3220,12 @@ class WineAssembly {
     // program runs rather than when a connection is attempted.
     if (this.vlanLocalIp && this.instance.exports.set_vlan_local_ip) {
       this.instance.exports.set_vlan_local_ip(this.vlanLocalIp | 0);
+      if (this.guestWorker) await this.guestWorker.callExport('set_vlan_local_ip', this.vlanLocalIp | 0);
     }
     // Per-app pacing of small virtual-LAN TCP sends (lib/apps.js vlanNagleMs).
     if ((this.vlanNagleMs | 0) > 0 && this.instance.exports.set_vlan_nagle_ms) {
       this.instance.exports.set_vlan_nagle_ms(this.vlanNagleMs | 0);
+      if (this.guestWorker) await this.guestWorker.callExport('set_vlan_nagle_ms', this.vlanNagleMs | 0);
     }
 
     if (canvas && !this.renderer) {
@@ -3247,6 +3249,13 @@ class WineAssembly {
     // to be written into each instance.
     if (this.instance && this.instance.exports.set_vlan_local_ip) {
       this.instance.exports.set_vlan_local_ip(this.vlanLocalIp | 0);
+    }
+    // The guest main worker is not one of ThreadManager's child threads.
+    // Keep the browser mirror for future threads, and queue this update on
+    // the executing instance before its next slice/network call resumes.
+    if (this.guestWorker) {
+      this.guestWorker.callExport('set_vlan_local_ip', this.vlanLocalIp | 0)
+        .catch(error => this.logToUI('[lan] could not update guest address: ' + error.message));
     }
     if (this.threadManager && this.threadManager.setWasmGlobalAll) {
       this.threadManager.setWasmGlobalAll('set_vlan_local_ip', this.vlanLocalIp | 0);

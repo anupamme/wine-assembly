@@ -1,5 +1,39 @@
 # Quake III Arena demo 1.11
 
+## Hosting banner follow-up, 2026-10-15
+
+The shell previously equated owning a browser LAN room with running a game
+server. Q3 opens its socket at the main menu, so it showed the hosting/share
+card too early. Probed games now wait for a positive hosting probe; the card
+is offered once per room. `Q3_HOSTING_CARD=1 node
+test/test-quake3-desktop-web.js` verified no card at the menu, a card after
+starting a server, and no reopening after dismissal across probe refreshes.
+Reviewed captures: `scratch/runs/20261015-quake3-host-card`.
+
+The reported client stuck at “Awaiting challenge” happened with the host
+already in a map, and Q2/Blobby failed too. An isolated-worker probe confirmed
+the shared defect: browser/assigned IP was `10.0.0.2`, while the guest main
+worker retained the default `10.0.0.1`. Initialization and `joinVlan` updated
+the idle browser instance and child threads but skipped the main worker.
+Both paths now propagate the address; startup LAN pacing also reaches the
+worker. `WORKER_VLAN_ONLY=1 node test/test-worker-guest.js` covers startup
+assignment, late reassignment, and pacing on an actual isolated worker.
+
+Reviewed `scratch/runs/20261015-quake3-worker-join` confirms host `.1`, client
+`.2`, both executing in workers, open WebRTC datagrams, and server-side
+`ClientBegin: 0` plus `ClientBegin: 1`. This focused run verifies joining and
+gameplay rendering, not mobile input. The original desktop harness now accepts
+`Q3_WORKERS=1`, serves isolation headers, and asserts the execution mode and
+actual guest IPs. Earlier runs without isolation exercised cooperative mode
+even when `no-threads` was omitted. Safari-to-Chrome was not tested locally.
+
+Cross-game checks with `--isolate`: Q2 room test passed all 35 checks,
+including four players, late console join, and invitation-link join. Blobby
+passed 32 of 33: discovery, both players' movement, slow-peer traffic and
+rehosting passed; hidden-host rendering produced 2/4 distinct sampled frames
+instead of the required 3/4. Its peer kept moving and traffic continued.
+That remaining background-rendering check is not marked passing.
+
 App id `quake3_demo` (2026-10-10, w4). OpenGL only.
 
 ## Provenance and license boundary
