@@ -18,7 +18,8 @@ async function main() {
   const trap=Error('guest trap');f=fixture(()=>{throw trap;});await assert.rejects(invokeNeEntry(f.e,entry),e=>e===trap);assert.equal(f.state().ends,1);
   f=fixture();await assert.rejects(invokeNeEntry(f.e,entry,{maxBlocks:6,sliceBlocks:2}),/budget exhausted/);assert.deepEqual(f.state(),{live:false,ends:1,runs:3});
   f=fixture(r=>r.yield(5));await assert.rejects(invokeNeEntry(f.e,entry),/Unsupported.*5/);assert.equal(f.state().ends,1);
-  const abort=new AbortController();f=fixture(r=>r.yield(5));await assert.rejects(invokeNeEntry(f.e,entry,{signal:abort.signal,serviceYield:async()=>abort.abort(Error('cancel after wait'))}),/cancel after wait/);assert.equal(f.state().ends,1);
+  let serviced=false;f=fixture(r=>r.yield(5));await assert.rejects(invokeNeEntry(f.e,entry,{serviceYield:()=>{serviced=true;return new Promise(()=>{});}}),/owned settlement protocol/);assert.equal(serviced,false);assert.equal(f.state().ends,0);
+  const abort=new AbortController();f=fixture();const pending=invokeNeEntry(f.e,entry,{signal:abort.signal});abort.abort(Error('cancel between slices'));await assert.rejects(pending,/cancel between slices/);assert.equal(f.state().ends,1);
   f=fixture();f.e.win16_bridge_invoke_begin=()=>0;await assert.rejects(invokeNeEntry(f.e,entry),/lease busy/);assert.equal(f.state().ends,1);
   f=fixture(()=>{throw trap;});f.e.win16_bridge_frame_end=()=>0;await assert.rejects(invokeNeEntry(f.e,entry),e=>e instanceof AggregateError&&e.errors[0]===trap);
   console.log('PASS bounded NE host driver: return, trap, wait rejection, cancellation, budget and teardown failure');
