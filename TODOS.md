@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (CMR3 line raster validation; kkrieger progress capture queued)
+  status: active (kkrieger runtime; CMR3 replay preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two lanes: /root/cmr3_software_lines owns sole bx_9ef2wdsw canonical build/raster test slot for579c1eee; kkrieger accepted-input progress probe integrated and next capture queued. CMR3 original menu-to-Stages exposes unsupported LINELIST; no race. Kkr firstperson level verified, movement unverified.
+  Next: Kkrieger corrected capture71680 owns sole bx_9ef2wdsw from12:25:04Z, pinned8bc/02b41,900s bound; prior70716 preguest missingmanifest404 preserved. CMR3 linefix merged78a06540f; /root/cmr3_line_gameplay prepares ordinary original replay next, source-only until runtime release.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,13 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active (renderer merged; per-game dual-backend coverage incomplete)
+  status: active (line raster fix merged; original and dual-backend validation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/cmr3_software_lines (bounded native raster validation)
+  worker: /root/cmr3_line_gameplay (source-only replay preparation)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Renderer merged through9eb485acb after77 actual checks perWebGL1/2 and6 discriminating mutant failures; source30checks PASS. CMR3 software LINELIST tests next. Original27 membership, FALSE filtering contract and per-game coverage remain open.
+  Next: Renderer9eb485 GPU77checks each and line raster78a06540f canonical/foursoftware suites/3negativecontrols merged. CMR3 ordinary replay queued. Original27 membership, defaultFALSE filtering contract and per-game dual-backend coverage remain unresolved.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1522,15 +1522,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (accepted-input capture queued)
+  status: active (accepted-input capture running)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Private WineOps launch fixed40fe91b98; canonical level verified but controls inconclusive. Progress-aware W hold/release probe integrated a505ddc55; five tests PASS including original code pins. Next serialized900s capture after CMR3 raster slot release; accepted state/update counter alone is not displacement.
+  Next: Corrected71680 fresh run after real manifest/fixture/module HTTP200/hash preflight; source8bc173788/module02b41. Prior70716 stopped preguest missingmanifest404, no game/input. Worker /root/kkrieger_progress_capture reviews current menu/level before ordinary input; no controls claim yet.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
-  status: active (current line-list renderer boundary)
+  status: active (line-list fix merged; original replay queued)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Historical splash/null superseded: corrected registered original58821 reaches main menu and rejects primitive2/count12 after Stages input. Source/module/native identities unchanged, no runtime survivors. Real LINELIST implementation under validation; abandoned parked calls also retained, causality unknown.
+  Next: Original58821 mainmenu-toStages exposed primitive2/count12 rejection, fixed78a06540f with real raster validation. Replay original302/native12/972registry/profile on exact newmodule937466db after solebox release; inspect next boundary rather than assuming race works.
 
 - [ ] Validate merged DLL unload and CMR3 progression
   id: FREELIBRARY-EXITTHREAD-CMR3-20261010
@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: active (software line-list implementation validation)
+  status: active (validated line fix merged; original replay preparation)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: Registered original run58821 reached main menu; selectingStages triggers primitive2/count12 unsupported LINELIST. All25 retained artifacts independently hash-verified and menu image reviewed. /root/cmr3_software_lines candidate579c1eee owns next canonical build/raster validation, then original replay only after passing tests. No race/audio/FPS qualification.
+  Next: LINELIST merged78a06540f after canonical/foursoftware suites/expanded16octant-userclip and3negativecontrols. Root checked archives and6512tested source Git blobs. /root/cmr3_line_gameplay prepares original registered replay with module937466db after Kkr runtime release; no race qualification.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
