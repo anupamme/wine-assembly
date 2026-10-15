@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (kkrieger runtime; CMR3 next serialized lane)
+  status: active (CMR3 runtime preparation; kkrieger input investigation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger39718 is live on sole bx_9ef2wdsw with actual canonical delivery verified, bounded900s ordinary-input capture. CMR3 recovery/registration source-ready dc4ab04e4 for next runtime slot. Saved tcen/erf boxes verified snapshot-stopped. Preserve two game lanes; runtime ownership serial, no new gameplay claims until reviewed evidence.
+  Next: Two currentworkers: /root/cmr3_registered_gameplay owns next bx_9ef2wdsw serialized run after all9registrationPASS; /root/kkrieger_input_progress source-only polling/progress-aware input work. Kkrieger level verified but directional control remains inconclusive. Runtime39718 completed, oldboxes snapshot-stopped; no parallel guest/browser.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1522,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (bounded canonical gameplay capture)
+  status: active (level verified; input-progress source investigation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Worker /root/kkrieger_verified_runtime owns sole bx_9ef2wdsw runtime39718, confirmed live; exact dc0611212 fresh canonical SHA02b41f090dacdb461ea0b59a77260d6c17432e9d3993d4cc8878cb76a865a33d, HTTP200/page digest verified with no fallback. One900s capture deadline11:51:20Z; loading observed, ordinary movement/gameplay still unverified. Preserve artifacts and postflight before release.
+  Next: Private WineOps launch repaired40fe91b98, exact module/EXE HTTP200 verified, Telegram1402 delivered. Canonical39718 completed0 with level via ordinaryEnter;172local artifacts independently verified. W/A/look inconclusive with sparse Present observations and5sholds. /root/kkrieger_input_progress investigates original input polling and prepares bounded progress-aware capture; no new runtime yet.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: ready (queued after kkrieger runtime release)
+  status: active (registered original game launch preparation)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: Fresh-box recovery/registration handoff merged dc4ab04e4; four local native seeds and original regsvr32 verified. After39718 terminal/postflight, recover original302 game files/native12 on bx_9ef2wdsw using authenticated recipes, then corrected native registration. Reuse fresh canonical only after source/hash equivalence verification. Saved erf box remains snapshot-stopped; no resume dependency or racing qualification.
+  Next: Authentic original302/native12 recovery and all9 registration steps PASS53813; generated972entry registry and exactWMVCORE profile preserved,108artifacts rootverified. Evidence merged876aa2264. /root/cmr3_registered_gameplay owns sole bx_9ef2wdsw next bounded original launch, preparation only until process receipt; mount actual registry/profile, no historical snapshot fabrication.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
@@ -1557,3 +1557,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Next: Main f9376176448849d53c9cfbcfc47e330691457ac0 cherry-picks d189a725a qualification notes; ancestor and exact note content verified2026-10-15. No integration blocker remains. Historical run20261011T2056Z-recoil-main-tap-gameplay records ordinary touch route and padLeft tank/view turn on274902b02.15.10 guest presentation events/s is not logical/display FPS or controlled benchmark. Physical phone/WebKit/audio remain unverified; no new runtime or release qualification from this reconciliation.
   Done: Ordinary launch and player-controlled gameplay with reviewed screenshot/build identity, registered and pushed main; FPS/audio separately measured.
   Reconciled 2026-10-12: Tested274902b02 is an ancestor of main0304; notesd189a725a are not. This is a documentation integration dependency, not an unimplemented gameplay fix. Ops retains integration ownership; no live worker/runtime. New audio/device/FPS qualification waits for storage recovery to2GB (currently270MB).
+
+- [x] Make .kkrieger launchable in private Wine Ops
+  id: TG87-KKRIEGER-OPS-LAUNCH
+  status: done
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Evidence: 40fe91b98237f5cf21beef64235d78a94fead740; scratch/tg87-ops-launch-verification.json; Telegram1402
+  Done: Private catalog registered and available, launch HTML/module/original EXE HTTP200 with exact hashes;10launch testsPASS including realindex anchor. No public deployment or movement qualification.
