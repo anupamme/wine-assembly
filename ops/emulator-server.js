@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 const PREFIX = '/emulator/';
-const LOCAL_DESKTOP = "    const LOCAL_DESKTOP = !new URLSearchParams(location.search).has('prod') &&\n      /^(localhost|127\\.|0\\.0\\.0\\.0|::1$|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.)/.test(location.hostname);";
+const LOCAL_DESKTOP = "    const LOCAL_DESKTOP = new URLSearchParams(location.search).has('candidates') &&\n      !new URLSearchParams(location.search).has('prod') &&\n      /^(localhost|127\\.|0\\.0\\.0\\.0|::1$|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.)/.test(location.hostname);";
 const crypto = require('node:crypto');
 const {execFile} = require('node:child_process');
 const caches = new Map(), buildCaches = new Map(), wasmDigests = new Map();

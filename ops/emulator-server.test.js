@@ -259,3 +259,11 @@ test('launch links pin the served wasm; a changed module or missing files refuse
   await fs.unlink(path.join(root,'build/wine-assembly.wasm'));assert.match((await readBuildIdentity(root)).reason,/missing/);
  }finally{await new Promise(r=>server.close(r));await fs.rm(root,{recursive:true,force:true});}
 });
+
+test('private launch anchor matches the real shipped entry page', async()=>{
+ const original=await fs.readFile(path.join(__dirname,'../index.html'));
+ const result=privateIndex(original).toString('utf8');
+ assert(result.includes('const LOCAL_DESKTOP = true; // Authenticated private emulator only.'));
+ assert.equal(result.includes(LOCAL_DESKTOP),false);
+ assert.equal(original.toString('utf8').split(LOCAL_DESKTOP).length,2);
+});
