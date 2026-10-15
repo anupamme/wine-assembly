@@ -223,3 +223,27 @@ fixture: VS1 MAD read two distinct constants and correctly failed validator
 error18. Fixtures now use legal MUL then ADD, keeping the validator unchanged.
 Fixed suite20833 PASS. Both failures retained; canonical build and broader
 CPU validation follow this checkpoint on bx_tcen9fqv. No browser/game rerun.
+
+CPU validation completed 2026-10-15, clean source491fd524ff209816d51248a2b8d832c0b4d18898.
+Canonical bash tools/build.sh and all seven CPU suites PASS, zero SKIP:
+test-d3d9-decl-types, test-d3d9-generic-vertex-semantics,
+test-d3d9-software-backend, test-d3d9-fixed-position-types,
+test-d3d9-fixed-cascade, test-d3d9-software-worker,
+test-d3d9-backend-web --validation-only (no browser).
+Driver21560 terminal0 at00:48:01.805Z, Linux x64 Nodev24.18.1 onbx_tcen9fqv.
+Canonical module remains70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655;
+this fix changes JS vertex packing, not WAT. CPU harnesses compile separate
+test-export modules; their individual module hashes were not emitted and must
+not be confused with the canonical hash. Exact source/test pins are retained.
+
+Evidence scratch/runs/20261015-kkrieger-short-cpu in coordinator checkout:
+25 remote artifacts SHA256-verified locally, plus6 terminal status records.
+source-pins.json independently matched the local task tree. Includes actual
+negative20188, invalid-fixture20625, successful20833, canonical/suite logs and
+recovery driver. Initial clean-tree guard21274 stopped before build because
+the dependency-sharing node_modules symlink appeared untracked; ignored only
+in remote .git/info/exclude, unchanged source then passed clean-tree checking.
+No failure log was overwritten. Remote /home/user/kkrieger-short-cpu retained.
+CPU slot released after postflight00:48:11.663Z with no browser/test processes
+reported. No browser was started. GPU signed-short pixels and original-game
+rerun remain pending coordinator grant; no game progress or readiness claim.
