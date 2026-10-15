@@ -63,11 +63,12 @@ async function main() {
           const args = ip === 0x803af6 ? read(regs.esp + 4, 4) : null;
           if (args && (args[1] < 0x100 || args[1] > 0x202)) return;
           const object = read(0x83f868, 1)[0];
+          if (!object) throw Error('Null guest input object');
           const count = read(object + 0x238, 1)[0];
           state.records.push({at: performance.now(), ip, regs, msg, args, object, count,
             queue: read(object + 0x23c, Math.min(count, 32)),
             keyTranslation: args && args[2] < 256 ? read(0x821138 + args[2] * 4, 1)[0] : null,
-            focus: e.get_focus_hwnd?.() >>> 0});
+            focus: e.get_focus_hwnd ? e.get_focus_hwnd() >>> 0 : null});
         } catch (error) { if (state.errors.length < 8) state.errors.push(String(error)); }
       };
       // Trace only this short input experiment, never procedural generation.
