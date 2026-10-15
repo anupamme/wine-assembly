@@ -23,7 +23,8 @@ globalThis.runPaletteWorker=async function(){
     createRenderEndpoint:async options=>{
       eq(options,{api:'legacy',backend:'webgl'},'production requested WebGL endpoint');
       manager=new RenderWorker.Manager({module,memory,sigs,imageBase:0x400000,
-        workerUrl:'/lib/d3d-render-worker.js',sourceVersion:'palette-worker-fixture'});
+        workerUrl:'/lib/d3d-render-worker.js',sourceVersion:'palette-worker-fixture',
+        reclaimHeap:head=>raw('d3d_render_adopt_free_list',head)});
       await manager.ready;port=manager.createEndpoint(options);await port.ready;
       port.addEventListener('message',event=>{if(event.data.t==='stats')lastStats=event.data;});
       const post=port.postMessage.bind(port);
@@ -118,5 +119,10 @@ globalThis.runPaletteWorker=async function(){
     eq(lastStats.stats.textureByteChecks,0,'actual page leases, no byte shadow');
     check(lastStats.stats.pageChecks>0,'watched textures');
     return evidence;
-  }finally{holding=false;for(const send of held.splice(0))send();await link.stop();if(manager)await manager.stop();}
+  }finally{
+    holding=false;for(const send of held.splice(0))send();
+    // Keep the owning guest instance alive until it has adopted the retired
+    // render heap through the production export; then terminate the guest.
+    try{if(manager)evidence.retirement=await manager.stop();}finally{await link.stop();}
+  }
 };
