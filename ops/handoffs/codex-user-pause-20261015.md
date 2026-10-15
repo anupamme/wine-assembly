@@ -24,15 +24,18 @@ Preserved task branches (remote refs verified):
   two generated metadata files (646 rather than644 support entries); review
   this existing generator behavior on resume before integration acceptance.
 - Silver current paired runs148910/152857 completed with clean postflight.
-  Worker is preserving its final checkpoint on `task/silver-evidence-recovery`.
+  Final checkpoint `73c119be3416592c85e50d9f20cc1e3b15fe50c7` is pushed and
+  remote-verified on `task/silver-evidence-recovery`; worktree clean. All148
+  evidence files (25.55MB) downloaded and worker hash-verified locally.
   Root inspected ground-1-20s and ground-2-20s images: David moves from right
   forecourt to left bridge. Worker reports matched stationary20s idle baseline;
   full command/evidence audit remains on resume. No audio/FPS/release claim.
   Evidence `scratch/runs/20261015-silver-600-comparison`.
 
 Separate test boxes: `bx_tgbme2h7` holds Silver/media and `bx_tcen9fqv` holds
-CPU conformance plus fresh BG2 recovery. Stop with snapshot only after evidence
-downloads finish; never force a failed snapshot. No public deploy performed.
+CPU conformance plus fresh BG2 recovery. Evidence downloads finished; normal
+snapshot-stop requested for both: `stop_9fe0a55792e5e713` (CPU completed) and
+`stop_ff66ae979f065ec9` (browser). Never force a failed snapshot. No public deploy performed.
 Local disk remains above2GiB. Keep shared HEAD/index untouched and preserve
 HeroesII laptop ownership. Other agent's QuakeIII commits through main
 `aa53c5c87` were fast-forward reconciled without edits.
