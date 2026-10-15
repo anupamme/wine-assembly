@@ -113,6 +113,34 @@ async function touch(page, selector, duration=1000) {
       const command=async(page,text)=>{await page.keyboard.press('Backquote');await sleep(300);await page.keyboard.type(text+'\n',{delay:25});};
       await menu(host);await offline(host,'menuOffline');
       await host.screenshot({path:path.join(OUT,'menu-local-only.png')});
+      if (process.env.Q3_EMPTY_DISCOVERY === '1') {
+        await host.evaluate(()=>{
+          const original=VlanRoom.hostedRooms;
+          window.emptyDiscoveryCalls=0;
+          VlanRoom.hostedRooms=async (...args)=>{
+            await original(...args);
+            window.emptyDiscoveryCalls++;
+            return []; // Deterministic empty directory, regardless of other tests.
+          };
+        });
+        await host.keyboard.press('ArrowDown');await host.keyboard.press('Enter');
+        await host.waitForFunction(()=>window.emptyDiscoveryCalls>0,{timeout:30000});
+        await offline(host,'emptyMultiplayerOffline');
+        await host.screenshot({path:path.join(OUT,'multiplayer-empty-no-overlay.png')});
+        await host.evaluate(()=>{VlanRoom.hostedRooms=async()=>[
+          {userId:'test-other-host',name:'Other player',hosting:{label:'Test server'}}
+        ];});
+        await command(host,'/localservers');
+        await host.waitForSelector('#wine-lan-card button[data-choice="own"]',{timeout:30000});
+        await host.screenshot({path:path.join(OUT,'picker-host-option.png')});
+        await host.click('#wine-lan-card button[data-choice="own"]');
+        await offline(host,'hostChoiceStillOffline');
+        await host.keyboard.press('Backquote');
+        await host.screenshot({path:path.join(OUT,'host-choice-native-create.png')});
+        assert.deepStrictEqual(errors,[]);
+        console.log('PASS empty discovery stays silent; Host a game returns to native Create without publishing');
+        return;
+      }
       await command(host,'/spmap q3dm1');await gameplay(host);
       await offline(host,'soloOffline');
       await host.screenshot({path:path.join(OUT,'single-player-local-only.png')});

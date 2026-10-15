@@ -1332,7 +1332,8 @@
     (i32.const 0))
 
   ;; Persistent canonical backing for the top-level window composition target.
-  ;; Record: owner hwnd, surface id, width, height, bitsWa, stride, reserved.
+  ;; Record: owner hwnd, surface id, width, height, bitsWa, stride, bpp,
+  ;; GPU-owned flag. The flag avoids any host/RPC call for ordinary GDI.
   ;; owner 0 is not hinted: the scan answers it with the first empty slot, and
   ;; a hint would name whichever slot went empty most recently instead.
   (global $gdi_window_surface_hint (mut i32) (i32.const 0))
@@ -1470,6 +1471,11 @@
     ;; spent the rest of the session with a blank grey strip where the caption
     ;; had been. Mark the window tree dirty so the NC pass and WM_PAINT run
     ;; again over the new surface.
+    ;; A resized DC can be acquired without first making a raster descriptor.
+    ;; Resolve the old frame before retiring its storage, never into the new
+    ;; blank surface later.
+    (if (i32.atomic.load offset=28 (local.get $p))
+      (then (drop (call $host_gpu_gl_call (i32.const 0x10002) (local.get $owner) (i32.const 0)))))
     (local.set $had_surface (i32.load offset=16 (local.get $p)))
     (if (local.get $had_surface)
       (then
@@ -2002,6 +2008,15 @@
             (local.set $binding (load.field.memarg GdiDcState window_binding (local.get $dc)))
             (local.set $hwnd (i32.and (local.get $binding) (i32.const 0x7FFFFFFF)))
             (if (i32.eqz (local.get $hwnd)) (then (return (i32.const 0))))
+            ;; GL window presents may leave their pixels GPU-owned. Both GDI
+            ;; sources and destinations pass here before accessing bits. Sync
+            ;; the owning top-level surface before ensure can resize it.
+            (local.set $owner (call $wnd_top_level (local.get $hwnd)))
+            (if (i32.eqz (local.get $owner)) (then (local.set $owner (local.get $hwnd))))
+            (local.set $surface (call $gdi_window_surface_record (local.get $owner) (i32.const 0)))
+            (if (local.get $surface)
+              (then (if (i32.atomic.load offset=28 (local.get $surface))
+                (then (drop (call $host_gpu_gl_call (i32.const 0x10002) (local.get $owner) (i32.const 0)))))))
             (local.set $surface (call $gdi_window_surface_ensure (local.get $hwnd)))
             (if (i32.eqz (local.get $surface)) (then (return (i32.const 0))))
             (local.set $owner (i32.load (local.get $surface)))
