@@ -20,7 +20,7 @@ const block = api.slice(api.indexOf(';; BEGIN WIN32 NE INVOCATION CONTEXT'),api.
 const loader = fs.readFileSync(path.join(dir,'08c-ne-loader.wat'),'utf8');
 const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'),loader.indexOf(';; END WIN32 NE MODULE TRANSACTIONS'));
 const helpers = ['win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
- 'win16_dll_rec','win16_dll_loaded','win16_dll_unload','win16_dll_run_ptr','win16_dll_refs_ptr','win16_dll_image_size_ptr','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
+ 'load_ne_dll_sized','win16_dll_staging','win16_dll_rec','win16_dll_loaded','win16_dll_unload','win16_dll_run_ptr','win16_dll_refs_ptr','win16_dll_image_size_ptr','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
   'win16_arena_take','win16_arena_give','win16_arena_free_head','win16_alloc_segment','win16_arena_slot_base',
   'win16_gseg_field','win16_gseg_store','win16_gseg_count','win16_seg_set','win16_seg_base','win16_seg_limit',
   'win16_sel_to_index','win16_index_to_sel','win16_seg_is_big','win16_set_sreg','esp_arch',
@@ -28,6 +28,15 @@ const helpers = ['win16_dll_path_id_valid','win16_handle_table','win16_dynamic_m
   'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release',
   'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16'];
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
+// The rejection control executes the real loader entry. Every unrelated
+// parser/relocator dependency traps if reached, proving rejection precedes it.
+for(const n of ['win16_apply_relocs','win16_patch_dll_prologues','memcpy']) {
+ const f=form(n);
+ const params=[...f.matchAll(/\(param [^)]*\)/g)].map(m=>m[0]).join(' ');
+ const result=f.match(/\(result [^)]*\)/)?.[0]||'';
+ code+=`\n(func $${n} ${params} ${result} (unreachable))`;
+}
+
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
@@ -104,6 +113,12 @@ assert.equal(second.win16_bridge_module_rollback(id),0,'wrong-owner rollback rej
 assert.equal(first.win16_bridge_module_load_allowed(id),0,'cannot load without staging lease');
 assert.equal(first.win16_bridge_module_stage_begin(id),1);
 assert.equal(first.win16_bridge_module_load_allowed(id),1);assert.equal(second.win16_bridge_module_load_allowed(id),0,'reject foreign load before allocation');
+const noFrame=instance(3),beforeLoader=Buffer.from(bytes);
+assert.equal(noFrame.load_ne_dll_sized(id,1024),0,'actual loader rejects foreign no-frame owner id');
+assert.equal(noFrame.load_ne_dll_sized(id+1,1024),0,'actual loader rejects foreign no-frame other id');
+assert.equal(second.load_ne_dll_sized(id,1024),0,'actual loader rejects foreign framed instance');
+assert.deepEqual(Buffer.from(bytes),beforeLoader,'rejection performs no allocation or memory writes');
+noFrame.set_is_win16(1);assert.equal(noFrame.win16_bridge_module_load_allowed(id),1,'pure NE path preserved');
 assert.equal(view.getUint32(fixture.DLL_LOAD_LOCK,true),0,'trap-capable staging owns no mutex');
 assert.equal(claim(second,'OTHER'),0,'staging lease excludes another owner');assert.equal(second.win16_bridge_frame_begin(),0n);
 const allocation=first.win16_arena_take(3);assert(allocation);
