@@ -42,6 +42,12 @@ function confirmation(out, stage, startedAt) {
 }
 
 async function main() {
+  const captureMs = Number(process.env.WA_CAPTURE_MS || 900000);
+  const startHoldMs = Number(process.env.WA_START_HOLD_MS || 5000);
+  if (!Number.isSafeInteger(captureMs) || captureMs < 900000 || captureMs > 1800000)
+    throw Error('WA_CAPTURE_MS must be an integer between 900000 and 1800000');
+  if (!Number.isSafeInteger(startHoldMs) || startHoldMs < 1000 || startHoldMs > 15000)
+    throw Error('WA_START_HOLD_MS must be an integer between 1000 and 15000');
   const root = path.resolve(process.env.WA_TEST_ROOT || path.join(__dirname, '..'));
   if (!process.env.WA_RUN_OUT) throw Error('WA_RUN_OUT must be a fresh absolute evidence directory');
   const out = path.resolve(process.env.WA_RUN_OUT);
@@ -72,9 +78,9 @@ async function main() {
   };
   checkPins();
   fs.mkdirSync(out, {recursive: false});
-  const startedAt = Date.now(), deadline = startedAt + 900000;
+  const startedAt = Date.now(), deadline = startedAt + captureMs;
   const meta = {startedAt: new Date(startedAt).toISOString(), deadline: new Date(deadline).toISOString(),
-    head, moduleHash, fixturePins, app, sourceEquivalence: 'Root canonical build receipt required separately',
+    head, moduleHash, fixturePins, app, captureMs, startHoldMs, sourceEquivalence: 'Root canonical build receipt required separately',
     scope: 'Ordinary input; no guest writes, EIP tracing or forced start', gameplayVerified: false};
   const write = (name, value) => fs.writeFileSync(path.join(out, name + '.json'), JSON.stringify(value, null, 2));
   write('meta', meta);
@@ -159,10 +165,10 @@ async function main() {
       });
       write(label, state); return state;
     };
-    const hold = async key => {
+    const hold = async (key, durationMs = 5000) => {
       await assertDelivery();
-      event('keydown', {key}); await page.keyboard.down(key);
-      try { await delay(5000); } finally { await page.keyboard.up(key); event('keyup', {key}); }
+      event('keydown', {key, durationMs}); await page.keyboard.down(key);
+      try { await delay(durationMs); } finally { await page.keyboard.up(key); event('keyup', {key}); }
     };
     let menu = false, level = false, hasStarted = false;
     for (let n = 0; Date.now() < deadline - 30000; n++) {
@@ -170,8 +176,8 @@ async function main() {
       hasStarted ||= !!state.wasmBytes;
       if (hasStarted && state.running === false) { event('guest-stopped'); break; }
       if (!menu && confirmation(out, 'menu', startedAt)) {
-        admit(15000); event('menu-visually-confirmed');
-        await shot('menu-before-enter'); await hold('Enter'); await shot('menu-after-enter'); menu = true;
+        admit(startHoldMs + 10000); event('menu-visually-confirmed');
+        await shot('menu-before-enter'); await hold('Enter', startHoldMs); await shot('menu-after-enter'); menu = true;
       }
       if (menu && confirmation(out, 'level', startedAt)) { level = true; break; }
       await delay(10000);
