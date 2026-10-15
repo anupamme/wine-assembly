@@ -1548,3 +1548,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Next: Authentic registration73364 on6dfbff842 stopped after devenum/quartz/qedit/QASF pass. WMVCORE returns S_OK/Exit0 but zero registry delta/no own InprocServer32; this is not yet a native defect. /root/cmr3_registry_prepare statically reviews exact export before any acceptance change/retry.40artifacts preserved in scratch/runs/20261015-cmr3-native-registration; postflight clean. Original registry remains unrecovered; no game/racing qualification.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
+
+- [~] New-game lane: Recoil demo
+  id: NEW-GAME-RECOIL-DEMO-20261011
+  status: review (functional fixes and gameplay notes already merged; device/audio follow-ups remain)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  source: https://archive.org/details/RecoilDemo
+  Next: Main f9376176448849d53c9cfbcfc47e330691457ac0 cherry-picks d189a725a qualification notes; ancestor and exact note content verified2026-10-15. No integration blocker remains. Historical run20261011T2056Z-recoil-main-tap-gameplay records ordinary touch route and padLeft tank/view turn on274902b02.15.10 guest presentation events/s is not logical/display FPS or controlled benchmark. Physical phone/WebKit/audio remain unverified; no new runtime or release qualification from this reconciliation.
+  Done: Ordinary launch and player-controlled gameplay with reviewed screenshot/build identity, registered and pushed main; FPS/audio separately measured.
+  Reconciled 2026-10-12: Tested274902b02 is an ancestor of main0304; notesd189a725a are not. This is a documentation integration dependency, not an unimplemented gameplay fix. Ops retains integration ownership; no live worker/runtime. New audio/device/FPS qualification waits for storage recovery to2GB (currently270MB).
