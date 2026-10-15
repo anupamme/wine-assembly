@@ -55,12 +55,23 @@ const CASES = {
     write: (v, at) => COLOR.forEach((c, i) => v.setUint16(at + i * 2, Math.round(c * 65535), true)) },
   FLOAT16_4: { type: 16, bytes: 8, color: COLOR,
     write: (v, at) => COLOR.forEach((c, i) => v.setUint16(at + i * 2, half(c), true)) },
-  // The narrow types write only the components they carry; the rest keep the
-  // register's default, which for a colour register is 1. So each case below
-  // names the full four-component colour a correct decode leaves behind, and
-  // the components it does NOT write are 1 on purpose.
-  SHORT2: { type: 6, bytes: 4, color: [0, 1, 1, 1],
+  // Supplied declaration elements expand by type, irrespective of semantic.
+  // Microsoft D3DDECLTYPE defines missing xyz as0 and w as1; the white COLOR
+  // default applies only when the color input is absent altogether.
+  SHORT2: { type: 6, bytes: 4, color: [0, 1, 0, 1],
     write: (v, at) => [0, 1].forEach((c, i) => v.setInt16(at + i * 2, c, true)) },
+  FLOAT1: { type:0, bytes:4, color:[.5,0,0,1],
+    write:(v,at)=>v.setFloat32(at,.5,true) },
+  FLOAT2: { type:1, bytes:8, color:[.5,.25,0,1],
+    write:(v,at)=>[.5,.25].forEach((c,i)=>v.setFloat32(at+i*4,c,true)) },
+  FLOAT3: { type:2, bytes:12, color:[.5,.25,.75,1],
+    write:(v,at)=>[.5,.25,.75].forEach((c,i)=>v.setFloat32(at+i*4,c,true)) },
+  SHORT2N: { type:9, bytes:4, color:[0,1,0,1],
+    write:(v,at)=>[0,32767].forEach((c,i)=>v.setInt16(at+i*2,c,true)) },
+  USHORT2N: { type:11, bytes:4, color:[0,1,0,1],
+    write:(v,at)=>[0,65535].forEach((c,i)=>v.setUint16(at+i*2,c,true)) },
+  FLOAT16_2: { type:15, bytes:4, color:[.5,.25,0,1],
+    write:(v,at)=>[.5,.25].forEach((c,i)=>v.setUint16(at+i*2,half(c),true)) },
   // SHORT4 with usage POSITION is what Black & White 2's land pass asks for --
   // the element measured in drive36 against the old `type > 4` gate.
   SHORT4: { type: 7, bytes: 8, color: [0, 1, 0, 1],
@@ -92,7 +103,9 @@ const triangle = ({ type, bytes, write, color, signedProbe = false }) => {
       { register: 1, usage: 10, usageIndex: 0, type, offset: 12 }],
     vertexConstants: signedProbe ? new Float32Array([1/65536,1/65536,1/65536,1/65536,0.5,0.5,0.5,0.5]) : undefined,
     vertexShader: signedProbe ? new Uint32Array([0xfffe0101,
-      1,0xc00f0000,0x90e40000,4,0xd00f0000,0x90e40001,0xa0e40000,0xa0e40001,0xffff]) : new Uint32Array([0xfffe0101,
+      1,0xc00f0000,0x90e40000,
+      5,0x800f0000,0x90e40001,0xa0e40000, // mul r0,v1,c0
+      2,0xd00f0000,0x80e40000,0xa0e40001,0xffff]) : new Uint32Array([0xfffe0101,
       1, 0xc00f0000, 0x90e40000, 1, 0xd00f0000, 0x90e40001, 0xffff]),
     pixelShader: new Uint32Array([0xffff0101, 1, 0x800f0000, 0x90e40000, 0xffff]),
     state: { cull: 1, zenable: false } };
@@ -130,7 +143,7 @@ const centre = pixels => {
     // Map signed values into visible colors before clamp; normalization and
     // unsigned decoding would produce different pixels from the FLOAT4 control.
     for (const type of [6,7]) {
-      const color = type === 6 ? [-32768,32767,1,1] : [-32768,32767,-12345,16384];
+      const color = type === 6 ? [-32768,32767,0,1] : [-32768,32767,-12345,16384];
       const encoding = {type, bytes:type===6?4:8, color, signedProbe:true,
         write:(view, at) => color.slice(0,type===6?2:4).forEach((v,c)=>view.setInt16(at+c*2,v,true))};
       d.clear([0,0,0,1],1);

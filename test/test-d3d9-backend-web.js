@@ -161,15 +161,20 @@ const puppeteer = require('puppeteer');
           const stride = 32, bytes = new Uint8Array(stride * 3), view = new DataView(bytes.buffer);
           for (let i=0;i<3;i++) {
             for (let c=0;c<4;c++) view.setFloat32(i*stride+c*4, floats[i*4+c], true);
-            const values = type===6?[-32768,32767]:[-32768,32767,-12345,16384];
-            values.forEach((v,c) => asFloat?view.setFloat32(i*stride+16+c*4,v,true):view.setInt16(i*stride+16+c*2,v,true));
+            const values = type===6?[-32768,32767,0,1]:[-32768,32767,-12345,16384];
+            values.slice(0,asFloat?4:type===6?2:4).forEach((v,c) => asFloat?view.setFloat32(i*stride+16+c*4,v,true):view.setInt16(i*stride+16+c*2,v,true));
           }
           const vs = new Uint32Array([0xfffe0101,1,0xc00f0000,0x90e40000,
-            4,0xd00f0000,0x90e40001,0xa0e40000,0xa0e40001,0xffff]); // mad oD0,v1,c0,c1
+            5,0x800f0000,0x90e40001,0xa0e40000,
+            2,0xd00f0000,0x80e40000,0xa0e40001,0xffff]); // mul/add: VS1 permits one constant read per instruction
           device.clear([0,0,0,1],3);
           device.draw({...draw, vertices:bytes, stride, vertexShader:vs,
-            attributes:[{register:0,type:3,offset:0},{register:1,type:asFloat?(type===6?1:3):type,offset:16}],
-            vertexConstants:new Float32Array([1/65536,1/65536,1/65536,1/65536,0.5,0.5,0.5,0.5]),
+            attributes:[{register:0,type:3,offset:0},{register:1,type:asFloat?3:type,offset:16}],
+            // SHORT2's z/w are observed directly, so inheriting z=1 cannot
+            // hide behind the tiny signed-value scale or a shared FLOAT2 bug.
+            vertexConstants:new Float32Array(type===6
+              ? [1/65536,1/65536,1,1,0.5,0.5,0,0]
+              : [1/65536,1/65536,1/65536,1/65536,0.5,0.5,0.5,0.5]),
             pixelConstants:new Float32Array([1,1,1,1]),state:{cull:1,zenable:false}});
           return read();
         };

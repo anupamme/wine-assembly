@@ -204,3 +204,22 @@ for this semantic candidate. Prepared GPU and CPU pixel tests compare signed
 short extremes (-32768,32767) and interior values against float controls using
 shader scale/bias before color clamping. Those pixel tests remain UNRUN pending
 coordinator runtime grant, followed by the registered original-game rerun.
+
+Declaration expansion review — 2026-10-15
+Microsoft D3DDECLTYPE explicitly defines SHORT2 as (value,value,0,1):
+https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3ddecltype
+The software decoder read signed values correctly but supplied COLOR elements
+inherited the absent-color white default, making SHORT2 z=1. Correct expansion
+now uses xyz0/w1 for supplied declarations, preserving white only when COLOR
+is absent. The same normative rule covers FLOAT1/2/3, SHORT2N, USHORT2N and
+FLOAT16_2; added direct-color float-equivalence cases exercise those defaults.
+The GPU test now compares against explicit FLOAT4 z0/w1 and observes SHORT2
+z/w without a small scale hiding a wrong component. No GPU execution yet.
+
+CPU negative20188 on sourcee73d69fd plus corrected oracle: expected failure,
+SHORT2 BGRA actual[255,255,0,255] versus expected[0,255,0,255]. The first fixed
+run20625 passed those cases, then exposed an invalid prepared signed-extreme
+fixture: VS1 MAD read two distinct constants and correctly failed validator
+error18. Fixtures now use legal MUL then ADD, keeping the validator unchanged.
+Fixed suite20833 PASS. Both failures retained; canonical build and broader
+CPU validation follow this checkpoint on bx_tcen9fqv. No browser/game rerun.
