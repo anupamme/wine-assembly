@@ -372,3 +372,47 @@ hold and matched observations. Base that budget on the measured startup/
 cinematic times above; preserve an explicit hard wall-clock limit. Do not
 silently convert the two late request files into completed input evidence,
 force readiness or call the stationary pictures proof that control works.
+
+## 2026-10-15: paired ordinary movement verified
+
+The revised 600-second pair establishes narrowly scoped player-controlled
+movement in the original demo. Evidence is self-contained under
+`scratch/runs/20261015-silver-600-comparison/{idle-600,input-600}`.
+Remote controller source was `77e0380e3fdca6a44f2b31088760285b91192ddb`,
+with the unchanged original C:/silver fixture and original ZIP D:/SILVER
+mount. Both loaded WASM SHA256
+`70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655`.
+The identical source/module/fixture fingerprint was
+`c4a60b4f0954f01a9eb9f56ec206d34a736b6fc78001c4cbcfcccbe67133cbf7`.
+Chrome151.0.7922.108 used Software rendering, isolated guest main Worker,
+and the unchanged1000x800 viewport. All941 source and3147 original fixture
+files passed pre/post integrity; no guest state or clocks were modified.
+
+Idle148910 started00:39:27.392Z and exited cleanly00:45:03.351Z. After normal
+Start and natural cinematic progression, reviewed portrait-free house
+captures idle-0s through idle-20s show David stationary beside Granddad;
+Granddad's animation alone does not establish control. Input152857 started
+00:45:14.550Z and exited early00:54:12.009Z, within its600s deadline.
+Its portrait-free forecourt matched the idle scene with a small camera
+offset, so comparison uses the doorway, bridge and character relationships
+rather than claiming pixel-identical scene alignment.
+
+Input commands.json records every command0..14 executed. Command10 held
+the ordinary left button1000ms at guest(410,330), after relative(+90,-32)
+and inspection of ground-pointer-settled.png. David moved right toward
+Granddad, visible in ground-1-20s.png. Command13 held1000ms at(260,355),
+after relative(-150,+25) and inspection of bridge-pointer-settled.png.
+ground-2-20s.png shows David on the left stone bridge, reversing the first
+displacement while the fixed house scenery remains unchanged. Both holds
+have held-button receipts and complete0/2/5/10/20-second observations.
+This directional response to two ordinary destinations, against the
+stationary20-second idle baseline, establishes player movement for this
+route. It does not establish combat, saving, completion, audio quality,
+performance or broad playability. The controller's conservative automatic
+playerControlVerified:false field remains unchanged; visual review supplies
+the scoped movement assessment in the run result.
+
+Both supervisors returned code0, postflightPassed:true and survivors:[];
+both errors.json files are empty. Runtime was released immediately after
+cleanup. The earlier300s failed-to-execute comparison remains preserved
+unchanged. Work pauses after this evidence checkpoint at the user's request.
