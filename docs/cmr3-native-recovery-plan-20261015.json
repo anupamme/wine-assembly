@@ -2,6 +2,15 @@
   "schemaVersion": 1,
   "status": "source-only; no dependency transfer, extraction or registration performed",
   "expectedNativeInventory": "docs/cmr3-historical-receipts-20261015.json",
+  "acquisitionRecipe": {
+    "script": "tools/cmr3-native-recovery.js",
+    "argv": ["timeout", "600", "node", "tools/cmr3-native-recovery.js", "/home/user/cmr3-native-recovery-20261015", "/home/user/cmr3-native-seeds-20261015"],
+    "seedPreparation": "Copy the four locallyVerifiedExactMatches to a separate seed directory under their native basenames; reverify each historical identity before network activity",
+    "limits": "570-second internal overall budget, <=300-second downloads, <=60-second extraction subprocesses, 2GiB free-space floor plus1GiB expansion budget",
+    "evidence": "Source packages, download headers, subprocess arguments/status/logs, extraction outputs and exact native provenance inventory retained; failure.json on unsuccessful attempt",
+    "validation": "JS syntax plus synthetic same-name/same-size replacement rejection, exact nested-file selection and source SHA1 verification pass; no remote end-to-end execution yet",
+    "registryPrepared": false
+  },
   "locallyVerifiedExactMatches": [
     { "native": "msvcrt.dll", "path": "/home/user/wine-assembly/test/binaries/dlls/msvcrt.dll" },
     { "native": "quartz.dll", "path": "/home/user/wine-assembly/test/binaries/candidates/morrowind/installed/quartz.dll" },
