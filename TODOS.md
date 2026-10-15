@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws and Army Men original demo lanes)
+  status: active
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws original startup OemKeyScan failure now has tested source fix81268 and fullbuild/native worker; Army Men actual installer reaches licence screen, no assent, source diagnostic waits5s to distinguish prematurecapture fromblankedit defect. Both lanes actionable. Jedi remains userlicenceblocked; Kkr coremovement done with responsiveness followup.
+  Next: Two actionable original-demo lanes: Outlaws readable KERNEL32 native direct/sparse checks pass, cooperative DLL exit-code control pending; Lords II renderer fix merged, System Test guest crash captured with CS/SS and WASM stack, source diagnosis active. IW current-main integration is a parallel compatibility task. Army Men/Jedi licences remain unanswered. Runtime serialized on bx_9ef2wdsw.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1108,7 +1108,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   created-by: user via Telegram
   accepted: 2026-10-03T08:30:54.631Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Nine October9 owned records repaired to dashboard schema with original metadata retained; actual reader accepts9/9, zero matching warnings. SimCity reviewed city/budget images now exposed (2 gameplay images); failed startup, EULA hold and native-only tests remain unqualified. Continue existing FPS/audio and two-backend obligations; evidence ops/handoffs/run-metadata-schema-repair-20261009.json.
+  Next: Separate-box runtime access is restored; historical evidence gaps remain (57 paths in scratch/recovery-gl27-20261014/local-audit.json). Recover before repeating captures. Darkstone and AoW2 source-prepared validation routes are in docs/gl-d3d-next-validations-20261015.md; await one runtime slot and live owning-backend attestation. Historical coverage counts are not fresh qualification.
   Done: Each game has a reviewed actual-gameplay screenshot and valid scene-qualified FPS evidence, or an explicit per-game blocker with exact missing paths; menus, intros and raw Flip event rates are not gameplay FPS.
   Evidence: ops/handoffs/migration-core-ready-20261003.md
 
