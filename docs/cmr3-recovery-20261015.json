@@ -33,7 +33,7 @@
     "expectedExeSha256": "50ac9d5efbadd8b9d593ac229e82711a0742f6b2dd4eaac58a1d573cd981408c",
     "cabinetRecords": 333,
     "mappedOriginalFiles": 302,
-    "mappingCountEvidence": "Oct14 validation: 333 CAB records minus32 installer resources plus EXE; exact exclusion list not recovered"
+    "mappingCountEvidence": "Oct14 validation: 333 CAB records minus32 installer resources plus EXE; exact group mapping/exclusions recovered in docs/cmr3-historical-receipts-20261015.json"
   },
   "registry": {
     "gameKey": "HKLM\\SOFTWARE\\CODEMASTERS\\Colin McRae Rally 3 Demo",
@@ -48,10 +48,17 @@
     "bytes": 126895173,
     "reason": "Different installer size; archive includes an upgrade. Not a proven substitute."
   },
+  "historicalReceipts": "docs/cmr3-historical-receipts-20261015.json",
+  "preparedRemoteAcquisition": {
+    "executed": false,
+    "requires": "Root remote-only acquisition grant; fresh working directory with sufficient space",
+    "downloadArgv": ["curl", "--fail", "--location", "--max-time", "300", "--max-filesize", "126663356", "--output", "ColinMcRay-Rally3-pcdemo-D3D.exe.part", "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/ColinMcRay-Rally3-pcdemo-D3D.exe"],
+    "verification": "Require exactly126663356 bytes and SHA256 d1dff3e9e718859c6a127b7efcbd85189198ff823f504db2470dbdeacd183ec0 before rename or extraction. Failed/partial transfer is not accepted."
+  },
   "remainingGates": [
     "Root-authorized remote-only transfer, bounded time and streamed size/SHA256 verification before extraction",
-    "Recover mapping receipt or inspect verified original cabinet records without guessing32 exclusions",
-    "Recover302-file inventory and exact12 native DLL/AX dependencies with provenance/hashes",
+    "Compare verified original cabinet records against recovered historical group mapping and exact32 exclusions",
+    "Recover full302-file inventory; acquire exact12 native DLL/AX bytes matching recovered historical hashes and authenticated provenance",
     "Recover hash-matching registry/controller or reproduce native registration from authenticated packages with new evidence",
     "Add tested corpus recipe only after actual recovery; no executable recipe or manifest asserted here",
     "Fresh runtime grant for software D3D9 programmable Worker; menu progression and racing remain unqualified"
