@@ -150,6 +150,32 @@ const {CommandQueue,OPCODES:OP}=require('../lib/d3d-command-stream');
       assert.deepStrictEqual(lineRed(linePixels(zero)),[36],'zero length line draws one endpoint');
       zero.state.lastPixel=false;assert.deepStrictEqual(lineRed(linePixels(zero)),[]);
     }
+    // Eight octants and both directions through the standalone topology path.
+    // No half-step tie occurs in this 5:2 slope, so reflections preserve the
+    // independent expected sample list without assuming a tie convention.
+    for(const swap of [false,true])for(const flipX of [false,true])for(const flipY of [false,true])for(const reverse of [false,true]){
+      const transform=([x,y])=>{if(swap)[x,y]=[y,x];return [flipX?7-x:x,flipY?7-y:y];};
+      const samples=[[1,1],[2,1],[3,2],[4,2],[5,3],[6,3]].map(transform);
+      if(reverse)samples.reverse();
+      const draw=line([samples[0],samples.at(-1)].map(([x,y])=>[x/4-1,1-y/4]));draw.state.lastPixel=false;
+      assert.deepStrictEqual(lineRed(linePixels(draw)),samples.slice(0,-1).map(([x,y])=>y*8+x).sort((a,b)=>a-b),
+        `standalone line octant swap=${swap} flip=${flipX}/${flipY} reverse=${reverse}`);
+    }
+    {
+      const draw=line([[-.75,.5],[.5,.5]]),planes=new Float32Array(24);planes.set([1,0,0,0],20);
+      draw.vertices.set([0,255,0,255],draw.stride+12);
+      draw.userClipPlanes={space:'clip',mask:32,planes};
+      let pixels=linePixels(draw);
+      assert.strictEqual(pixels[19],0xff000000,'enabled sixth user plane clips line');
+      assert.strictEqual(pixels[20],0xff669900,'user-plane intersection preserves varying interpolation');
+      assert.strictEqual(pixels[22],0xff00ff00);
+      draw.userClipPlanes.mask=0;pixels=linePixels(draw);
+      assert.strictEqual(pixels[17],0xffff0000,'disabled user plane leaves start endpoint');
+      draw.userClipPlanes.mask=32;planes.set([-1,0,0,-2],20);
+      assert(new Uint32Array(linePixels(draw)).every(v=>v===0xff000000),'same-side outside user plane rejects whole line');
+      planes.set([1,0,0,2],20);pixels=linePixels(draw);
+      assert.strictEqual(pixels[17],0xffff0000,'inside user plane retains line');
+    }
     {
       // Homogeneous left-plane clipping must retain the varying gradient.
       const clipped=line([[-2,.5],[.5,.5]]);
