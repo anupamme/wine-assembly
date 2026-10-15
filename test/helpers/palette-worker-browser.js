@@ -110,6 +110,8 @@ globalThis.runPaletteWorker=async function(){
     await until(()=>lastStats?.stats.drawCalls>=6,'all GPU draw stats');evidence.stats=lastStats;
     check(lastStats.stats.drawCalls>=6,'actual GPU draws');
     eq(lastStats.stats.fallbacks,0,'no renderer fallback');
+    eq(lastStats.stats.errors,0,'no GPU errors');
+    eq(lastStats.stats.dirtyAuditMisses,0,'no watch misses');
     eq(lastStats.stats.textureByteChecks,0,'actual page leases, no byte shadow');
     check(lastStats.stats.pageChecks>0,'watched textures');
     return evidence;

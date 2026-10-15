@@ -171,7 +171,7 @@ Prepared follow-up commands, requiring a renewed serialized runtime grant:
   node test/helpers/palette-followup-validation.js scratch/runs/20261015-palette-worker-next worker
   node test/helpers/palette-followup-validation.js scratch/runs/20261015-palette-regressions regressions
 The second runs DirectDraw palette format/QI (original calc.exe required),
-texture-stage alias/page-watch, seven format63 regression configurations,
+texture-stage alias/page-watch, eight format63 regression configurations,
 and both existing Boids route suites. It records SKIP as failure, not acceptance.
 Original Boids assets and external symlink/static-server permissions must be
 verified before running routes. Worker barriers, stencil nonwrites, baseline
