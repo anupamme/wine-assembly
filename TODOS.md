@@ -1621,16 +1621,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (original package verified; ordinary setup preparation)
-  owner: /root/army_men_original_setup
-  Next: Original July1998 demo package187files verified and recovery merged3ba03948d. Fresh setup worker prepares original InstallShield firststartup; no installer/game execution or licence answer yet. Runtime queued after Outlaws cleanrelease.
+  status: active (licence text display investigation; acceptance untouched)
+  owner: /root/army_men_licence_text
+  Next: Original child reaches licence screen; blank pane may be premature capture because controller quits on first licence static text. Source-only worker prepares bounded no-answer paint observation before claiming edit defect; Telegram1405 delivered.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
 
 - [ ] Retain Worker ownership until retirement and termination complete
   id: IW-RETIREMENT-SLOT-OWNERSHIP-20261015
-  status: active
-  owner: /root/iw_retirement_slot_fix
-  Next: Held4050bac dropThread deletes live retiring link; exited TID/stack can be reused before acknowledged retirement and termination. Fix host and scheduler ownership together; regression lost replies, pin cleanup failure, exact successful resource release. Source-only worker; native validation after review.
+  status: active (source fix tested; native validation)
+  owner: /root/iw_retirement_native_validation
+  Next: Fixb5b69a714 rootreview and actualWorkerABI regression PASS. Nativefixture492a queued/running under explicit solegrant; prearm160449 failed gitshow ENOBUFS, narrow maxBuffer correction authorized with failure retained. Independentbrokerdeadlock stillheld.
 
 - [ ] Resolve independent cross-process send deadlocks
   id: IW-INDEPENDENT-SEND-ADMISSION-20261015
@@ -1640,7 +1640,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Implement OEM character to keyboard scan mapping for Outlaws
   id: OUTLAWS-OEMKEYSCAN-20261015
-  status: active (real OemKeyScan implementation and conformance tests)
-  owner: /root/outlaws_oemkeyscan
-  Next: Actual original launch153370 fails batch0 at unimplemented OemKeyScan(0), return43a8f1. Append API entry, implement documented OEM scan/shift mapping and unmappable failure for current US layout, test actual WAT/stack plus representative controls/punctuation/extended OEM characters; no silent zero or question-mark fallback. Native build and original replay serialized after Army Men.
+  status: active (source tested; full build and native API validation queued)
+  owner: /root/outlaws_oemkeyscan_native
+  Next: Source81268f actualWAT unit tests pass, root reviewed; full gatedbuild/thunk/oldmodulemissingcontrol/restored native run follows IW cleanrelease on solebox. OriginalOLDEMO replay only after native proof.
   Evidence: scratch/runs/20261015-outlaws-original-startup; archiveSHA241f8911ad2071909fcdeb368d9ff91bb98f76e950744d6abf6314ccc01285dc; independent postflight14:19:27 unchanged active[].
