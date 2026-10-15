@@ -1651,3 +1651,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/new_demo_refill
   Next: Worker turn rejected for possible cybersecurity risk during scoped GetWindow/GetNextWindow follow-up; exact internal action not disclosed. Do not retry/rephrase/delegate. WIP preserved in scratch/runs/20261015-lords2-review-hold and source worktree; original250171 reached GetNextWindow invalid1446 after GetParent fix, no gameplay. Fresh independent new_game_refill_after_lords selects replacement lane.
   Done: Registered original launch, actual ordinary player control and reviewed gameplay screenshot with source/run identity.
+
+- title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
+  id: USER-FIFA-DEMO-20261012
+  status: active (FIFA 98 original-demo launch preparation)
+  owner: /root/new_game_refill_after_lords
+  prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
+  created: 2026-10-12T00:15:00.000Z
+  created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
+  Next: FIFA98 local-only registration recovered949333e1f, original16MB ZIP recipe and installed tree present; no reviewed gameplay evidence found in audit. Fresh worker verifies original inventory and ordinary launch route, then serial runtime toward match gameplay and touch controls. Do not redo unrelated held Lords diagnostic; no public deployment.
+  Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
