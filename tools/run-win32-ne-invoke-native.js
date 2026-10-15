@@ -3,6 +3,7 @@
 // only; synthetic NE entry execution, no original game or browser execution.
 const fs = require('node:fs'), path = require('node:path'), cp = require('node:child_process');
 const crypto = require('node:crypto'), assert = require('node:assert/strict');
+const { runChild } = require('./fifa98-remote-startup');
 const root = path.resolve(__dirname, '..'), commit = process.env.WA_NE_INVOKE_COMMIT;
 const out = process.env.WA_NE_INVOKE_EVIDENCE;
 assert.match(commit || '', /^[a-f0-9]{40}$/);
@@ -11,7 +12,7 @@ const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const hash = file => sha(fs.readFileSync(file));
 const git = (...args) => cp.execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim();
 assert.equal(git('rev-parse', 'HEAD'), commit);
-assert.equal(git('diff', '--name-only', 'ef4fb3c606414a9f9d728ccc718c1a98c9b5846f', commit, '--', 'src', 'lib'), '', 'reviewed invocation production bytes');
+assert.equal(git('diff', '--name-only', 'bff5375af1e1d7ef688694f4387344c1c65c4241', commit, '--', 'src', 'lib'), '', 'reviewed invocation production bytes');
 const preserved = [
   ['/home/user/wa-ne-context-native/build/wine-assembly.wasm', '9b57583c1ca8887f7195a268c94312ca6352eb646f4071c740c5a75aff1eb69e'],
   ['/home/user/wa-ne-arena-native/build/wine-assembly.wasm', 'ca90c018226b1b002d257dde09e1913fd35c2e22cac43a2128ae88744f80cccd'],
@@ -58,31 +59,49 @@ function inspect(label) {
   });
   save(label, { at: new Date().toISOString(), commit, active, ps, preserved, records });
 }
-function run(label, seconds, args, env = {}) {
+const cleanEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+  !key.startsWith('WA_') && !key.startsWith('WINE_') && key !== 'NODE_OPTIONS' && key !== 'NODE_PATH'));
+async function run(label, seconds, args, env = {}) {
   inspect(label + '-before');
   const fd = fs.openSync(path.join(out, label + '.log'), 'wx'), started = Date.now(); let result;
-  try { result = cp.spawnSync('timeout', ['--kill-after=5s', seconds + 's', ...args], {
-    cwd: root, env: { ...process.env, ...env }, stdio: ['ignore', fd, fd],
-  }); } finally { fs.closeSync(fd); }
-  const status = { label, status: result.status, signal: result.signal, error: result.error?.message, elapsedMs: Date.now() - started };
-  statuses.push(status); save(label + '-status', status); inspect(label + '-after');
-  assert.equal(result.status, 0, label);
+  try { result = await runChild(args[0], args.slice(1), {
+    cwd: root, env: { ...cleanEnv, ...env }, stdio: ['ignore', fd, fd],
+  }, owned => save(label + '-owned-processes', owned), seconds * 1000); }
+  finally { fs.closeSync(fd); }
+  const status = { label, ...result, elapsedMs: Date.now() - started };
+  statuses.push(status); save(label + '-status', status);
+  let childError, verificationError;
+  if (result.status !== 0 || result.timedOut || result.interrupted || result.remainingGroupProcesses.length)
+    childError = new Error(label + ' failed: ' + JSON.stringify(status));
+  try { inspect(label + '-after'); } catch (error) { verificationError = error; }
+  if (childError && verificationError) throw new AggregateError([childError, verificationError], label + ' and verification failed');
+  if (childError || verificationError) throw childError || verificationError;
 }
-try {
+async function main() {
+ let failure, postflightFailure;
+ try {
   const disk = fs.statfsSync(root); assert(disk.bavail * disk.bsize > 2 * 1024 ** 3, 'more than 2 GiB free required');
   inspect('preflight');
-  run('normal-build', 600, ['bash', 'tools/build.sh']);
+  await run('normal-build', 600, ['bash', 'tools/build.sh']);
   moduleSha256 = hash(wasm); save('module', { sha256: moduleSha256, regionMapSha256: hash(path.join(root, 'lib/region-map.generated.js')) });
-  run('host-driver', 30, [process.execPath, 'test/test-ne-invoke-driver.js']);
-  run('native-invocation', 90, [process.execPath, 'test/test-win32-ne-invoke-candidate.js'], { WA_TEST_WASM: wasm });
-  run('tiny-context', 30, [process.execPath, 'test/test-win32-ne-context.js']);
-  run('native-context', 90, [process.execPath, 'test/test-win32-ne-context-candidate.js'], { WA_TEST_WASM: wasm });
-  run('tiny-arena', 30, [process.execPath, 'test/test-win32-ne-arena.js']);
-  run('real-allocator', 90, [process.execPath, 'test/test-win32-ne-arena-candidate.js'], { WA_TEST_WASM: wasm });
-  run('pure-ne-bounds', 30, [process.execPath, 'test/test-win16-arena-bounds.js']);
-  run('pure-ne-loader', 60, [process.execPath, 'test/test-ne-additive-far.js', wasm]);
+  await run('host-driver', 30, [process.execPath, 'test/test-ne-invoke-driver.js']);
+  await run('native-invocation', 90, [process.execPath, 'test/test-win32-ne-invoke-candidate.js'], { WA_TEST_WASM: wasm });
+  await run('tiny-context', 30, [process.execPath, 'test/test-win32-ne-context.js']);
+  await run('native-context', 90, [process.execPath, 'test/test-win32-ne-context-candidate.js'], { WA_TEST_WASM: wasm });
+  await run('tiny-arena', 30, [process.execPath, 'test/test-win32-ne-arena.js']);
+  await run('real-allocator', 90, [process.execPath, 'test/test-win32-ne-arena-candidate.js'], { WA_TEST_WASM: wasm });
+  await run('pure-ne-bounds', 30, [process.execPath, 'test/test-win16-arena-bounds.js']);
+  await run('pure-ne-loader', 60, [process.execPath, 'test/test-ne-additive-far.js', wasm]);
   passed = true;
+} catch (error) {
+  failure = error; passed = false;
 } finally {
-  inspect('postflight');
-  save('summary', { passed, commit, moduleSha256, statuses, originalGameRun: false, browserRun: false, syntheticNeEntryExecution: true, moduleLifecycle: false, qtThunk: false });
+  try { inspect('postflight'); } catch (error) { postflightFailure = error; passed = false; }
+  save('summary', { passed, commit, moduleSha256, statuses,
+    failure: failure?.stack, postflightFailure: postflightFailure?.stack,
+    originalGameRun: false, browserRun: false, syntheticNeEntryExecution: true, moduleLifecycle: false, qtThunk: false });
 }
+ if (failure && postflightFailure) throw new AggregateError([failure, postflightFailure], 'Validation and postflight failed');
+ if (failure || postflightFailure) throw failure || postflightFailure;
+}
+main().catch(error => { console.error(error.stack); process.exitCode = 1; });
