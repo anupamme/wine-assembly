@@ -2,7 +2,7 @@
 'use strict';
 
 // Source extraction only: never starts the installer or game. Assembly is a
-// separate reviewed step after examining setup.inx and the extracted inventory.
+// separate mode based on the inspected original setup.inx and cabinet header.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -152,15 +152,72 @@ async function extract(root, pins) {
   return receipt;
 }
 
+// data1.hdr names these destinations explicitly; setup.inx names root docs
+// and Extra overlays. CD2 is original outer media retained for CD2: alias.
+const GROUPS = { hd0_cab: '', hd0_cache: 'cache', hd0_characters: 'characters',
+  hd0_data: 'data', hd0_music: 'music', hd0_override: 'override',
+  hd0_scripts: 'scripts', hd0_sounds: 'sounds' };
+function destination(root, name) {
+  let current = root;
+  for (const segment of relative(name).split('/')) {
+    const matches = fs.existsSync(current) ? fs.readdirSync(current).filter(n => n.toLowerCase() === segment.toLowerCase()) : [];
+    if (matches.length > 1) throw new Error(`Case collision beneath ${current}`);
+    current = path.join(current, matches[0] || segment);
+    if (fs.existsSync(current) && fs.lstatSync(current).isSymbolicLink()) throw new Error('Destination symlink');
+  }
+  return current;
+}
+async function assemble(root, expected) {
+  const p = plan(root), outer = path.join(p.outer, 'MAINDIR');
+  const output = path.join(root, 'installed');
+  if (fs.existsSync(output)) throw new Error('Installed output exists; preserve it');
+  const checks = {
+    'data1.hdr': '1b006399559c55ff08fa517e8b721bfba33825175be9e37562b3c53fd6029c6d',
+    'setup.inx': '5acac56439c38e52d506916c9f3ccd7a94b69bb8742e65a700c4220a24172dfd'
+  };
+  for (const [name, hash] of Object.entries(checks))
+    if (await digest(path.join(outer, name)) !== hash) throw new Error(`Installer metadata mismatch: ${name}`);
+  const receipt = { startedAt: new Date().toISOString(), output, metadata: checks,
+    groups: GROUPS, copies: [], complete: false };
+  fs.mkdirSync(output);
+  const copy = (from, name) => {
+    const to = destination(output, name);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    receipt.copies.push({ source: path.relative(root, from), destination: path.relative(output, to), overwrite: fs.existsSync(to) });
+    fs.copyFileSync(from, to);
+  };
+  const tree = (from, prefix = '') => {
+    for (const name of files(from)) copy(path.join(from, name), prefix + name);
+  };
+  try {
+    for (const [group, dest] of Object.entries(GROUPS)) tree(path.join(p.inner, group), dest ? dest + '/' : '');
+    for (const name of ['README.TXT', 'LICENSE.TXT', 'Autorun.ini']) copy(path.join(outer, name), name);
+    tree(path.join(outer, 'Extra'));
+    tree(path.join(outer, 'CD2'), 'CD2/');
+    const aliases = '[Alias]\r\nHD0:=C:\\\r\nCD1:=C:\\CD1\\\r\nCD2:=C:\\CD2\\\r\nCD3:=C:\\CD3\\\r\nCD4:=C:\\CD4\\\r\n';
+    fs.writeFileSync(destination(output, 'baldur.ini'), aliases);
+    receipt.reconstructedAliases = aliases;
+    receipt.comparison = await compare(output, expected);
+    if (!receipt.comparison.ok) throw new Error('Assembled tree differs from retained fixture');
+    receipt.complete = true;
+  } catch (error) { receipt.error = error.stack; throw error; }
+  finally {
+    receipt.finishedAt = new Date().toISOString();
+    fs.writeFileSync(path.join(root, 'assembly.json'), JSON.stringify(receipt, null, 2) + '\n');
+  }
+  return receipt;
+}
+
 async function main() {
   const [mode = 'plan', root, argument] = process.argv.slice(2);
-  if (!root) throw new Error('Usage: bg2-source-recovery.js plan ROOT | extract ROOT PINS.json | compare INSTALLED INVENTORY.json');
+  if (!root) throw new Error('Usage: bg2-source-recovery.js plan ROOT | extract ROOT PINS.json | assemble ROOT INVENTORY.json | compare INSTALLED INVENTORY.json');
   if (mode === 'plan') console.log(JSON.stringify(plan(path.resolve(root)), null, 2));
   else if (mode === 'extract') await extract(path.resolve(root), JSON.parse(fs.readFileSync(argument)));
+  else if (mode === 'assemble') await assemble(path.resolve(root), JSON.parse(fs.readFileSync(argument)).files);
   else if (mode === 'compare') {
     const result = await compare(path.resolve(root), JSON.parse(fs.readFileSync(argument)).files);
     console.log(JSON.stringify(result, null, 2)); if (!result.ok) process.exitCode = 1;
   } else throw new Error(`Unknown mode: ${mode}`);
 }
 if (require.main === module) main().catch(e => { console.error(e.stack); process.exitCode = 1; });
-module.exports = { compare, inventory, plan, relative };
+module.exports = { compare, inventory, plan, relative, destination };

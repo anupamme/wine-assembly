@@ -48,6 +48,32 @@ INVENTORY.json` mode compares all file sizes/hashes case-insensitively and
 rejects missing, unexpected, duplicate-case, or changed files. Compare the
 645-file assembled tree before adding the generated browser manifest.
 
+### Fresh extraction completed; assembly queued
+
+Controller `145974` exited 0 at `2026-10-15T00:37:17.048Z`. The pinned nine-unit
+gcc build succeeded with `-lz` last. REWise produced 46 files directly under
+`extraction/outer/MAINDIR`; no alternate-path fallback was needed. unshield
+produced 651 files under `extraction/inner`. Complete commands, source hashes,
+extractor hash and all output hashes are in `docs/bg2-extraction-20261015.json`.
+No compiler or extractor processes remained at source-slot release.
+
+`data1.hdr` SHA256 `1b006399559c55ff08fa517e8b721bfba33825175be9e37562b3c53fd6029c6d`
+explicitly pairs `hd0_cab` with `<TARGETDIR>` and the seven other `hd0_*`
+groups with `cache`, `characters`, `data`, `music`, `override`, `scripts`,
+and `sounds` beneath it. `setup.inx` SHA256
+`5acac56439c38e52d506916c9f3ccd7a94b69bb8742e65a700c4220a24172dfd`
+contains root README/license/autorun copy names at offsets 0x4dea–0x4e78,
+Extra root and subdirectory overlay names at 0x4e9c–0x50a1, and HD0/CD1–CD4
+aliases. The outer original CD2 tree contains three resource files.
+
+An explicit `assemble ROOT INVENTORY.json` mode now implements this mapping,
+checks both metadata hashes, applies case-insensitive overlays, writes only
+the documented 75-byte CRLF alias file, and requires the complete byte
+comparison before success. **Assembly remains unexecuted**: the source slot
+was released for the next browser task first. The helper's case-insensitive
+directory/file overwrite behavior passed a small synthetic test. No fixture
+recovery completion or automatic corpus recipe is claimed yet.
+
 Distinct from the Baldur's Gate 1 previews in baldurs-gate-demos.md. No BG2
 entry exists in the inspected DESKTOP_APPS list or current app registry.
 
