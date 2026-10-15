@@ -490,6 +490,40 @@ function runPostExtract(candidate, destination) {
       if (result.status !== 0) {
         throw new Error(`Warcraft III demo MPQ install failed with exit ${result.status}`);
       }
+    } else if (step.type === 'installBaldursGate2Demo') {
+      assertSafeRelative(step.source, `${candidate.id}.postExtract[${index}].source`);
+      if (prepare) {
+        // Preparing an installed fixture must not rerun its one-shot extraction.
+        // Verify required original bytes; preserve additional saves and metadata.
+        const checked = spawnSync(process.execPath, [
+          path.join(ROOT, 'tools', 'bg2-source-recovery.js'), 'verify-installed', destination,
+          path.join(ROOT, 'test', 'candidate-corpus', 'baldurs-gate2-demo-files.json'),
+        ], { cwd: ROOT, stdio: 'inherit', timeout: 300000 });
+        if (checked.error) throw checked.error;
+        if (checked.status !== 0) throw new Error('BG2 installed-file verification failed; fixture unchanged');
+        continue;
+      }
+      // Preserve original split media and detailed recovery receipts outside the
+      // final browser fixture, including when --force removes its staging dir.
+      const source = path.join(destination, step.source);
+      if (!fs.statSync(source).isDirectory()) throw new Error('BG2 source directory missing');
+      const recovery = fs.mkdtempSync(path.join(ASSET_ROOT, '.bg2-recovery-'));
+      const retainedSource = path.join(recovery, 'source');
+      fs.renameSync(source, retainedSource);
+      console.log(`BG2 original sources and recovery receipts: ${recovery}`);
+      if (fs.readdirSync(destination).length) {
+        throw new Error(`BG2 fresh fixture must be empty; original sources retained at ${recovery}`);
+      }
+      const result = spawnSync(process.execPath, [
+        path.join(ROOT, 'tools', 'bg2-source-recovery.js'), 'recover', retainedSource,
+      ], { cwd: ROOT, stdio: 'inherit', timeout: 1500000, killSignal: 'SIGKILL' });
+      if (result.error) throw result.error;
+      if (result.status !== 0) throw new Error(`BG2 original recovery failed; evidence retained at ${recovery}`);
+      const receipt = JSON.parse(fs.readFileSync(path.join(retainedSource, 'assembly.json'), 'utf8'));
+      if (!receipt.complete || !receipt.comparison.ok || receipt.comparison.actual !== 645 || receipt.comparison.expected !== 645)
+        throw new Error('BG2 requires all645 original-file comparisons before publication');
+      const installed = path.join(retainedSource, 'installed');
+      for (const name of fs.readdirSync(installed)) fs.renameSync(path.join(installed, name), path.join(destination, name));
     } else if (step.type === 'installUnrealDemo') {
       for (const field of ['id', 'source', 'into']) {
         assertSafeRelative(step[field], `${candidate.id}.postExtract[${index}].${field}`);
@@ -648,7 +682,15 @@ function writeBrowserManifest(candidate, destination) {
   const metadataPath = path.join(destination, '.wine-assembly-file-metadata.json');
   const fileMetadata = fs.existsSync(metadataPath)
     ? JSON.parse(fs.readFileSync(metadataPath, 'utf8')) : {};
-  const files = walkBrowserFiles(fileRoot).sort((a, b) => a.localeCompare(b))
+  // These exact fixture-root sidecars belong to the host, not the guest.
+  // Exclude by full path so nested game files and other dotfiles survive.
+  const hostSidecars = new Set([
+    '.candidate-source.json', '.wine-assembly-browser.json',
+    '.wine-assembly-file-metadata.json',
+  ].map(name => path.join(destination, name)));
+  const files = walkBrowserFiles(fileRoot)
+    .filter(relative => !hostSidecars.has(path.join(fileRoot, relative)))
+    .sort((a, b) => a.localeCompare(b))
     .map(relative => {
       const fixtureRelative = path.join(browser.fileRoot, relative);
       const url = fixtureRelative.split(path.sep).join('/');

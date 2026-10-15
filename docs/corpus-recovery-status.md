@@ -1,10 +1,17 @@
 # Candidate recovery status
 
-Snapshot including AVP2 original-payload recovery, 2026-10-15. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
+Snapshot including AVP2 and BG2 original-payload recovery, 2026-10-15. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
 
-135 candidates:120 package recipes,14 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 17 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages.
+135 candidates:121 package recipes,13 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 18 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages. Audit reports zero malformed references; manifest SHA256 is `6570ac6636b1f40cc3b616347370caa432241fd3dc09326c7dfebfc964342496`.
 
 ## Completed bounded recovery work
+
+BG2 now has seven pinned original source parts and tested REWise/cabinet
+assembly. Fresh generic recovery matched all645 installed files; prepare and
+cached reuse passed. Browser metadata excludes host sidecars, with644 support
+entries and all645 original bytes verified unchanged on the retained fixture.
+See `docs/bg2-generic-validation-20261015.json` and the BG2 re-note. This does
+not claim new gameplay, audio or performance verification.
 
 Forced refresh preserves the prior fixture until replacement preparation succeeds (14cc377a7). Publication uses two renames, so process-death/concurrent-writer recovery is still not guaranteed.
 
@@ -27,7 +34,6 @@ Fresh recoveries were verified and committed for .kkrieger,Sanity,Nocturne,Urban
 | reflexive-crimsonland | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | reflexive-collapse-crunch | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
 | reflexive-alien-shooter | Existing external recovery tool pinned to615d946772e344e54ee3a7444d5f0010b68b79ac; original installers/source receipts and output hashes documented in docs/re-notes/reflexive.md. Not implemented by generic fetcher; no fresh external-tool recovery in this audit. |
-| baldurs-gate2-demo | Original multipart media and REWise/cabinet merge described in notes; pin every source part and exact case-insensitive overrides before automation. |
 | disciples2-demo | Pinned local Wise installer; complete installed-tree export and upstream provenance still needed. |
 | beyond-good-evil-demo | Pinned local installer only; upstream URL absent. Preserve original settings registry and complete installation export. |
 

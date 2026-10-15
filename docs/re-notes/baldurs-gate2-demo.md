@@ -1,5 +1,22 @@
 # Baldur's Gate II demo
 
+## Retained fixture metadata verification (2026-10-15, resumed work)
+
+The merged generator at `8ef8e1073` regenerated the retained local fixture's
+browser manifest with 644 support entries. Its existing manifest already had
+644 entries; parsed file records remained identical (only serialization changed).
+All 645 required installed files matched their recorded hashes both before and
+after generation. The extra file is host browser metadata. This is a local
+metadata check, not a new game run or deployment. Before/after manifests and
+hash receipt are preserved in `scratch/runs/20261015-bg2-manifest-regeneration`.
+
+`fetch-candidate-corpus.js --id=baldurs-gate2-demo --prepare` verifies the
+645 required installed files before regenerating browser metadata. It does not
+repeat extraction or require the moved source directory. Extra save files and
+metadata are preserved; changed or missing required files stop preparation
+without replacing them. The coordinator verified the retained 645-file install
+plus its metadata, and synthetic changed/missing-file and extra-save cases.
+
 ## Recovery evidence refresh (2026-10-15)
 
 The original local split package and the 2026-10-09/10 extraction receipts
@@ -30,6 +47,73 @@ REWise invocation and installer group mapping need reinspection because the
 historical assembly script/audit is missing. Compare every assembled file to
 the fresh 645-file retained inventory before marking recovery reproducible.
 No extraction, build, or game runtime was performed for this acquisition step.
+
+The pinned REWise source is now checked out cleanly at
+`bx_tgbme2h7:/home/user/bg2-recovery-20261015/REWise`. Its README confirms
+ordered concatenation and `rewise -x OUTPUT -p -t TMP INPUT`; the Makefile lists
+nine C source units and places `-lz` before objects. The prepared
+`tools/bg2-source-recovery.js` compiles those same units with `-lz` last,
+preserves all original parts, checks their pins and the extractor identity,
+and records extraction logs and hashed outer/inner inventories. It refuses
+an existing extraction directory and requires 6 GiB free. `plan ROOT` is
+read-only. The compile/extract path remains **unexecuted**, pending a separate
+resource grant; use the external 1500-second timeout recorded in the JSON.
+
+The controller stops before assembly. `setup.inx`, group inventory, and Extra
+paths must establish the exact mapping first. Its `compare INSTALLED
+INVENTORY.json` mode compares all file sizes/hashes case-insensitively and
+rejects missing, unexpected, duplicate-case, or changed files. Compare the
+645-file assembled tree before adding the generated browser manifest.
+
+### Fresh extraction completed; assembly queued
+
+Controller `145974` exited 0 at `2026-10-15T00:37:17.048Z`. The pinned nine-unit
+gcc build succeeded with `-lz` last. REWise produced 46 files directly under
+`extraction/outer/MAINDIR`; no alternate-path fallback was needed. unshield
+produced 651 files under `extraction/inner`. Complete commands, source hashes,
+extractor hash and all output hashes are in `docs/bg2-extraction-20261015.json`.
+No compiler or extractor processes remained at source-slot release.
+
+`data1.hdr` SHA256 `1b006399559c55ff08fa517e8b721bfba33825175be9e37562b3c53fd6029c6d`
+explicitly pairs `hd0_cab` with `<TARGETDIR>` and the seven other `hd0_*`
+groups with `cache`, `characters`, `data`, `music`, `override`, `scripts`,
+and `sounds` beneath it. `setup.inx` SHA256
+`5acac56439c38e52d506916c9f3ccd7a94b69bb8742e65a700c4220a24172dfd`
+contains root README/license/autorun copy names at offsets 0x4dea–0x4e78,
+Extra root and subdirectory overlay names at 0x4e9c–0x50a1, and HD0/CD1–CD4
+aliases. The outer original CD2 tree contains three resource files.
+
+An explicit `assemble ROOT INVENTORY.json` mode implements this mapping,
+checks both metadata hashes, applies case-insensitive overlays, writes only
+the documented 75-byte CRLF alias file, and requires the complete byte
+comparison before success. The helper's case-insensitive directory/file
+overwrite behavior passed a small synthetic test.
+
+### Exact installed-tree recovery verified
+
+Assembly-only controller `150474` exited 0 at `2026-10-15T00:41:16.986Z`.
+The first source-backed mapping passed without adjustments: **645 expected,
+645 actual, zero missing/extra/changed files**, totaling 850839386 bytes.
+All contents match the fresh retained inventory by SHA256. The 663 source
+copies include 19 case-insensitive replacements; the separately reconstructed
+alias file is exactly 75 bytes and matches the retained original layout.
+Receipt and exact copy/overwrite history: `docs/bg2-assembly-20261015.json`.
+Recovered tree: `bx_tgbme2h7:/home/user/bg2-recovery-20261015/installed`.
+
+The corpus recipe now pins all seven source URLs/digests, retains source media
+and recovery receipts in a sibling `.bg2-recovery-*` directory, runs the pinned
+REWise and unshield stages, and requires the full installed-tree comparison
+before publishing. It preserves the existing root fixture layout and hence
+the 644-support-file browser manifest. Dependencies are git, gcc, zlib headers,
+and the pinned `/usr/bin/unshield` binary from Debian package 1.5.1-1; dependency
+or identity mismatches fail explicitly. `recover ROOT` wraps the individual
+steps for a fresh directory containing the seven original parts.
+
+The individual original-media extraction and assembly stages are tested.
+The newly connected generic fetcher route has only source-level validation
+so far; a fresh end-to-end `fetch-candidate-corpus.js --id=baldurs-gate2-demo
+--force` remains pending a separate extraction grant. This recovery does not
+add a browser/gameplay/audio/FPS claim.
 
 Distinct from the Baldur's Gate 1 previews in baldurs-gate-demos.md. No BG2
 entry exists in the inspected DESKTOP_APPS list or current app registry.
