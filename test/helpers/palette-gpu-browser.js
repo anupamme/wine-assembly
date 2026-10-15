@@ -30,8 +30,14 @@ globalThis.runPaletteGpu = async function (version) {
   // Production surface creation emits this diagnostic-only, void import.
   // Preserve its arguments as evidence; all behavioral imports remain strict.
   imports.host.dx_trace = (...args) => diagnostics.push(args);
-  let gpu;
+  let gpu, gpuRouteEnabled=true;
   imports.host.gpu_gl_call = (op, p) => {
+    if(!gpuRouteEnabled){
+      // No endpoint: readiness/fence decline. Any actual GPU operation is a
+      // fixture failure, not a hidden fallback to the software oracle.
+      check(op===0x20002||op===0x20001,'unexpected GPU operation in software phase');
+      return 0;
+    }
     check(gpu, 'GPU host call before executor initialization');
     return gpu.call(op, p);
   };
@@ -247,6 +253,7 @@ globalThis.runPaletteGpu = async function (version) {
   const debug=gl.getExtension('WEBGL_debug_renderer_info');
   const result={actualVersion,renderer:gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER),observations,stats,diagnostics};
   gpu.stop();
+  gpuRouteEnabled=false;
   // Run the same ordinary indexed samples through the real software draw.
   // Fixed-point software filtering truncates alpha to127 at half coverage;
   // GPU RGBA8 readback rounds it to128. RGB is exact in both paths.

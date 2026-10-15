@@ -165,3 +165,25 @@ the minimal new-fixture command from the recipe above is:
 PALETTE_WORKER_EVIDENCE=/tmp/colorkey-worker-evidence.json node test/test-d3dim-palette-worker-web.js
 Both lazySync modes and all assertions must pass. No runtime/build/browser was
 started by this source reviewer; the kkrieger worker owns bx_erf37bxf.
+
+First browser execution — exact ec015c10, 2026-10-15 09:28-09:29 UTC
+Root granted serialized bx_erf37bxf after CMR3 released its acquisition slot.
+Canonical build and all four recipe CPU suites PASS. WebGL1 GPU assertions
+reached the software section, where the host still advertised READY after
+the Wasm GPU enable flag was cleared: actual GPU draw count32 vs expected31.
+The corrected fixture declines only READY/fence with no endpoint, and throws
+on any other GPU operation in its software phase. The no-GPU draw-count
+assertion and exact software pixel expectations remain unchanged.
+
+Real Worker reached the first keyed observation and reported [0,0,0,255],
+not [0,0,0,0]. This is the documented production DIB fence behavior:
+lib/d3dim-gpu.js writes X=255 during readback. Worker observations now identify
+that ABI explicitly and expect opaque X; they do not claim direct framebuffer
+alpha measurements. Application alpha test/blend/stage and depth assertions
+still test effective source alpha. The separate direct GPU fixture reads
+actual framebuffer RGBA. The cache mutant remains discriminated by nonzero
+stale RGB, independently of DIB X normalization.
+
+Original failures are retained in /home/user/colorkey-runtime-evidence-run1
+on bx_erf37bxf (gpu.json/log, worker.json/log and per-command exit records).
+These corrections change only test helpers; candidate reruns are pending.

@@ -118,7 +118,11 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     eq(await call('pa_key',texture,out),0,'Worker SetColorKey native index 7');
     const rs=(id,v)=>raw('pa_rs',device,id,v);
     await rs(27,0);await rs(41,1);await rs(144,1);
-    const opaque=[...rgb,255],zero=[0,0,0,0],background=[17,34,51,255];
+    // Production fence writes opaque DIB X bytes, not framebuffer alpha.
+    // Source alpha is checked by application rejection/blend/stage behavior;
+    // the direct GPU fixture separately reads actual framebuffer RGBA.
+    evidence.readback='production DIB BGRA with X normalized to 255';
+    const opaque=[...rgb,255],zero=[0,0,0,255],background=[17,34,51,255];
     const recordRGBA=(label,expected)=>{
       const actual=[0,1,2].map(x=>{
         const b=new Uint8Array(memory.buffer,rtDib+16+x*4,4);
