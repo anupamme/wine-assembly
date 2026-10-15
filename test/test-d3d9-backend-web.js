@@ -7,7 +7,7 @@ const path = require('path');
 const { Device } = require('../lib/d3d9-backend');
 const vertexShader = new Uint32Array([0xfffe0101, 1, 0xc00f0000, 0x90e40000, 0xffff]);
 const pixelShader = new Uint32Array([0xffff0101, 1, 0x800f0000, 0xa0e40000, 0xffff]);
-for (const [type, offset] of [[5, 0], [3, 2], [3, -4], [3, 0.5]]) {
+for (const [type, offset] of [[5, 0], [9, 0], [10, 0], [0, 2], [1, 2], [2, 2], [4, 2], [3, 2], [3, -4], [3, 0.5], [6, 1], [7, 3], [6, -2], [7, 0.5]]) {
   const draw = { vertexShader, pixelShader, primitive: 4, primitiveCount: 1,
     stride: 16, vertices: new Uint8Array(48),
     attributes: [{ register: 0, usage: 0, usageIndex: 2, type, offset }] };
@@ -22,6 +22,35 @@ for (const [type, offset] of [[5, 0], [3, 2], [3, -4], [3, 0.5]]) {
     return true;
   });
   assert.strictEqual(JSON.stringify(draw.attributes), before, 'diagnostic must not mutate declaration');
+}
+// Accepted declarations must reach the GPU boundary with the correct numeric
+// conversion, without replacing or rewriting the original vertex bytes.
+{
+  let command, uploaded;
+  const gl = new Proxy({FLOAT: 5126, SHORT: 5122, UNSIGNED_BYTE: 5121, colorMask() {}},
+    {get: (target, name) => target[name] ?? 1});
+  const gpu = new Proxy({gl, canvas: {width: 16, height: 16}, renderHeight: 16,
+    createProgram: () => ({}), updateBuffer: (_b, _t, bytes) => {uploaded = bytes;},
+    draw: value => {command = value;}}, {get: (target, name) => target[name] ?? (() => {})});
+  const device = {gpu, programs: new Map(), bindDepth() {}, stencilState() {}, touchColor() {}};
+  const submit = (type, offset, stride, length = stride * 3) => {
+    const vertices = new Uint8Array(length);
+    Device.prototype.draw.call(device, {vertexShader, pixelShader, primitive: 4, primitiveCount: 1,
+      stride, vertices, pixelConstants: new Float32Array(4), attributes: [{register: 0, type, offset}]});
+    assert.strictEqual(uploaded, vertices);
+    return command.attributes[0];
+  };
+  for (const [type, size, offset, stride] of [[0,1,0,4], [1,2,0,8], [2,3,0,12], [3,4,0,16],
+    [4,4,0,4], [6,2,20,32], [7,4,12,32], [6,2,2,6], [7,4,2,10]]) {
+    const a = submit(type, offset, stride);
+    assert.deepStrictEqual({size:a.size, offset:a.offset, type:a.type, normalized:a.normalized},
+      {size, offset, type:type===4?gl.UNSIGNED_BYTE:type>=6?gl.SHORT:gl.FLOAT, normalized:type===4});
+  }
+  for (const type of [6,7]) {
+    assert.throws(() => submit(type, 0, 17), /unsupported vertex declaration/);
+    assert.throws(() => submit(type, 14, 16), /outside buffer/);
+    assert.throws(() => submit(type, 0, 16, 33), /outside buffer/);
+  }
 }
 // The first-failure probe must preserve the actual draw result/error and all
 // guest bytes. A synthetic original table tests bounded direct-image reads.
@@ -74,7 +103,7 @@ for (const [type, offset] of [[5, 0], [3, 2], [3, -4], [3, 0.5]]) {
   assert.strictEqual(contextRoot.__kkriegerDeclaration.attributes[0].type, 10);
 }
 if (process.argv.includes('--validation-only')) {
-  console.log('PASS D3D9 unsupported type and invalid offsets still reject with exact element detail');
+  console.log('PASS D3D9 declaration mapping, signed SHORT2/4 bounds/alignment, rejection detail and read-only probe');
   process.exit(0);
 }
 const puppeteer = require('puppeteer');
@@ -124,10 +153,36 @@ const puppeteer = require('puppeteer');
         pixelConstants:new Float32Array([1,1,1,1]),state:{cull:1,zenable:false}};
       device.draw(relativeDraw);const relativePixel=read();
       constants[0]=-2.25;device.draw(relativeDraw);const relativeOutside=read();
+      // Signed extremes distinguish SHORT from normalized or unsigned inputs.
+      // Scale and bias in the shader before pixel clamping can hide mistakes.
+      const shortPixels = [];
+      for (const type of [6,7]) {
+        const render = asFloat => {
+          const stride = 32, bytes = new Uint8Array(stride * 3), view = new DataView(bytes.buffer);
+          for (let i=0;i<3;i++) {
+            for (let c=0;c<4;c++) view.setFloat32(i*stride+c*4, floats[i*4+c], true);
+            const values = type===6?[-32768,32767]:[-32768,32767,-12345,16384];
+            values.forEach((v,c) => asFloat?view.setFloat32(i*stride+16+c*4,v,true):view.setInt16(i*stride+16+c*2,v,true));
+          }
+          const vs = new Uint32Array([0xfffe0101,1,0xc00f0000,0x90e40000,
+            4,0xd00f0000,0x90e40001,0xa0e40000,0xa0e40001,0xffff]); // mad oD0,v1,c0,c1
+          device.clear([0,0,0,1],3);
+          device.draw({...draw, vertices:bytes, stride, vertexShader:vs,
+            attributes:[{register:0,type:3,offset:0},{register:1,type:asFloat?(type===6?1:3):type,offset:16}],
+            vertexConstants:new Float32Array([1/65536,1/65536,1/65536,1/65536,0.5,0.5,0.5,0.5]),
+            pixelConstants:new Float32Array([1,1,1,1]),state:{cull:1,zenable:false}});
+          return read();
+        };
+        shortPixels.push({type, actual:render(false), expected:render(true)});
+      }
       const error = device.gpu.getError(); device.destroy();
-      return { initial, depthRejected, blended, relativePixel, relativeOutside, bounded, error,
+      return { shortPixels, initial, depthRejected, blended, relativePixel, relativeOutside, bounded, error,
         probe:D3D9Backend.probe(document.createElement('canvas')) };
     });
+    for (const sample of result.shortPixels) {
+      assert.deepStrictEqual(sample.actual, sample.expected, "signed SHORT"+sample.type+" float equivalence");
+      assert.strictEqual(sample.actual[0],0); assert.strictEqual(sample.actual[1],255);
+    }
     assert.strictEqual(result.error, 0); assert.ok(result.bounded);
     assert.ok(result.probe,'programmable profile requires a real textured/indexed pixel probe');
     const near = (actual, expected) => expected.forEach((v,i) =>

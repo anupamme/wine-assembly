@@ -78,7 +78,7 @@ const CASES = {
 };
 
 // A triangle that covers the whole target, flat-shaded from its vertices.
-const triangle = ({ type, bytes, write, color }) => {
+const triangle = ({ type, bytes, write, color, signedProbe = false }) => {
   const stride = 12 + bytes, corners = [[-3, -1], [1, -1], [1, 3]];
   const vertices = new Uint8Array(corners.length * stride);
   const view = new DataView(vertices.buffer);
@@ -90,7 +90,9 @@ const triangle = ({ type, bytes, write, color }) => {
   return { primitive: 4, primitiveCount: 1, stride, vertices, textures: [],
     attributes: [{ register: 0, usage: 0, usageIndex: 0, type: 2, offset: 0 },
       { register: 1, usage: 10, usageIndex: 0, type, offset: 12 }],
-    vertexShader: new Uint32Array([0xfffe0101,
+    vertexConstants: signedProbe ? new Float32Array([1/65536,1/65536,1/65536,1/65536,0.5,0.5,0.5,0.5]) : undefined,
+    vertexShader: signedProbe ? new Uint32Array([0xfffe0101,
+      1,0xc00f0000,0x90e40000,4,0xd00f0000,0x90e40001,0xa0e40000,0xa0e40001,0xffff]) : new Uint32Array([0xfffe0101,
       1, 0xc00f0000, 0x90e40000, 1, 0xd00f0000, 0x90e40001, 0xffff]),
     pixelShader: new Uint32Array([0xffff0101, 1, 0x800f0000, 0x90e40000, 0xffff]),
     state: { cull: 1, zenable: false } };
@@ -123,6 +125,20 @@ const centre = pixels => {
       assert.doesNotThrow(() => d.draw(triangle(encoding)), `${name} must not fail the draw`);
       const got = centre(d.present().pixels);
       assert.deepStrictEqual(got, want, `${name} decoded to ${got}, expected ${want}`);
+    }
+
+    // Map signed values into visible colors before clamp; normalization and
+    // unsigned decoding would produce different pixels from the FLOAT4 control.
+    for (const type of [6,7]) {
+      const color = type === 6 ? [-32768,32767,1,1] : [-32768,32767,-12345,16384];
+      const encoding = {type, bytes:type===6?4:8, color, signedProbe:true,
+        write:(view, at) => color.slice(0,type===6?2:4).forEach((v,c)=>view.setInt16(at+c*2,v,true))};
+      d.clear([0,0,0,1],1);
+      d.draw(triangle({...CASES.FLOAT4, color, signedProbe:true}));
+      const expected = centre(d.present().pixels);
+      d.clear([0,0,0,1],1); d.draw(triangle(encoding));
+      assert.deepStrictEqual(centre(d.present().pixels),expected, 'signed SHORT'+type+' float equivalence');
+      assert(expected.includes(0) && expected.includes(255), 'signed extremes remain visible');
     }
 
     // The gate still holds where the backend genuinely cannot read: an element

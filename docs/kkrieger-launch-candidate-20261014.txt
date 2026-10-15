@@ -187,3 +187,20 @@ empty tested-source.patch, process.json, transfer.json and SHA256SUMS.json.
 Remote full run retained in scratch/runs/kkrieger-declaration-first-failure.
 Runtime released to coordinator; semantic implementation and GPU/CPU checks
 are subsequent work, not a claim that this original run rendered gameplay.
+
+Signed-short implementation candidate (source-only after runtime release):
+WebGL declaration lowering now maps SHORT2/SHORT4 to gl.SHORT with size2/4,
+normalized=false and4/8 byte bounds. Signed-short offsets and strides must
+be2-byte aligned. Existing FLOAT1..4/color paths retain their prior alignment
+and conversion; normalized SHORT2N/4N remain unsupported by this GPU path.
+The existing software decoder already reads little-endian signed int16.
+
+Cheap production-validator tests PASS for accepted float/color/short mappings,
+original offsets12/20 at stride32, valid2-byte offsets, unchanged vertex bytes,
+odd offset/stride rejection, negative/fractional offsets, truncated vertex
+buffers and stride overflow. Existing unsupported types still reject. Browser
+cache-version gate and syntax checks PASS. No browser/build/WASM run performed
+for this semantic candidate. Prepared GPU and CPU pixel tests compare signed
+short extremes (-32768,32767) and interior values against float controls using
+shader scale/bias before color clamping. Those pixel tests remain UNRUN pending
+coordinator runtime grant, followed by the registered original-game rerun.
