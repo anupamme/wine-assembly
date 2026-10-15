@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (kkrieger runtime; CMR3 replay preparation)
+  status: active (kkrieger runtime; CMR3 allocator investigation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger corrected capture71680 owns sole bx_9ef2wdsw from12:25:04Z, pinned8bc/02b41,900s bound; prior70716 preguest missingmanifest404 preserved. CMR3 linefix merged78a06540f; /root/cmr3_line_gameplay prepares ordinary original replay next, source-only until runtime release.
+  Next: Two lanes: /root/kkrieger_long_input ordinary original capture93374 onsolebx_9ef2wdsw; /root/cmr3_native_free_list source-only nextstage-loading native free-list blocker. CMR3 report223604e2f and Kkr reportdb1b8c09d merged; neither newrun qualifies controlledgameplay yet.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1522,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (accepted-input capture running)
+  status: active (20-minute original input capture)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Corrected71680 fresh run after real manifest/fixture/module HTTP200/hash preflight; source8bc173788/module02b41. Prior70716 stopped preguest missingmanifest404, no game/input. Worker /root/kkrieger_progress_capture reviews current menu/level before ordinary input; no controls claim yet.
+  Next: /root/kkrieger_long_input owns solebx_9ef2wdsw controller93374 started12:51:05Z source551caaf/canonical937466,1200s bound/15s initialEnter; actual controls still unverified. Prior71680 level evidence mergeddb1b8c09d; no W admitted beforedeadline.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: active (validated line fix merged; original replay preparation)
+  status: active (stage loading reached; allocator blocker under investigation)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: LINELIST merged78a06540f after canonical/foursoftware suites/expanded16octant-userclip and3negativecontrols. Root checked archives and6512tested source Git blobs. /root/cmr3_line_gameplay prepares original registered replay with module937466db after Kkr runtime release; no race qualification.
+  Next: Original85638 reached UK Warwick Special Stage1 via ordinarymenus on78a06540f/module937466. First invalid native free list afterbatch2402; no driving. Root independently verified26artifacts2044242B and viewed loadingmap; report merged223604e2f. /root/cmr3_native_free_list owns source-only allocator diagnosis; actual damaged-node snapshot missing.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
