@@ -1,0 +1,73 @@
+DX7 explicitly enabled color-key blending — source checkpoint 2026-10-15
+
+Base: 27f60c4133305a4d7558afbb8c067691b868434e
+Branch: task/colorkey-blend-enabled
+Disposition: SOURCE ONLY; compilation, VM and browser execution pending the
+coordinator's serialized runtime grant. Not ready to merge or deploy.
+
+Contract
+Original Microsoft DX7 D3DRENDERSTATETYPE reference:
+https://library.thedatadungeon.com/directx7/devdoc/live/directx/imref_5fdw.content.htm
+COLORKEYBLENDENABLE=144, explicitly TRUE: replace matching sample color AND
+alpha with zero; application alpha-test/blend states determine the outcome.
+Coordinator evidence: 4036a92f5:docs/legacy-colorkey-sdk-contract.md.
+
+Implementation
+- Effective keying still requires COLORKEYENABLE and an attached surface key.
+  Explicit state144=1 selects transparent-black substitution before filtering.
+- Draw descriptor field40 captures state144 and participates in texture-cache
+  identity. Decode mode2 clears RGBA for keyed native indices (including when
+  nonkey palette entries have identical RGB); truecolor retains RGB key match.
+- GPU lowering disables only the implicit legacy key cutoff for this mode.
+  The existing application's alpha stage, alpha test, blending and depth apply.
+- Software carries this mode through the existing draw/span argument. A keyed
+  sampler replaces each tap before the existing fixed-point bilinear filter.
+  Explicit mode uses the general sampler for 16-bit textures, bypassing the
+  unmodified SIMD fast16 filter. Wrap, mirror and edge-clamp retain their
+  existing addressing. The GL border interface is unchanged.
+- DDPCAPS_ALPHA plus an effective explicitly enabled key fails visibly: GPU
+  reports unresolved precedence before acquiring leases, software/decode trap.
+  Unkeyed alpha-palette draws are unaffected by that guard. No precedence is
+  invented; old FALSE behavior is retained, not declared normative.
+
+Conformance cases added, NOT EXECUTED
+- test-gl-software-raster: actual Wasm sampler, key/nonkey duplicate RGB,
+  point, mixed/all/none linear footprints, zero-weight taps, wrap seam, mirror,
+  and both clamp edges.
+- test-d3dim-indexed-texture: real software 565 draw, explicit black/depth
+  write, application rejection/depth nonwrite, blending without rejection,
+  state144 alone, FALSE control, mixed magenta/green wrap and clamp filtering.
+- test-d3dim-palette-gpu-web (shared browser/WAT helpers): real SetColorKey,
+  duplicate-index RGBA pixels, mode-switch cache regeneration with unchanged
+  pixels/palette, point/linear, mixed filtering, application tests/blending,
+  rejected-depth nonwrite, unresolved alpha/key fail-fast. The same browser
+  fixture then disables GPU and checks actual indexed software draw pixels.
+  Half-coverage CPU alpha truncates to127; GPU RGBA8 expectation is128; this
+  expected quantization difference must be checked, not hidden by tolerance.
+
+Static checks PASS at source checkpoint
+node --check: all five changed JavaScript files
+node tools/check-parens.js src/09ab-handlers-d3dim-core.wat --no-diff --quiet
+node tools/check-wat-logical-and.js
+node tools/check-silent-stubs.js
+git diff --check
+
+Queued runtime recipe (only after explicit slot grant)
+1. Build exact branch with bash tools/build.sh; record source and module SHA256.
+2. Run test/test-d3dim-indexed-texture.js, test/test-gl-software-raster.js,
+   test/test-d3dim-palette-alpha-page-watch.js, test/test-d3dim-device7-load.js.
+3. PALETTE_GPU_EVIDENCE=<absolute-output.json> node test/test-d3dim-palette-gpu-web.js
+   Require both WebGL versions and every assertion; retain partial failures.
+4. Re-run existing palette Worker lazySync=false/true lifetime suites as route
+   regression. Their existing cases do not establish keyed queued snapshots;
+   explicit state144 Worker pixel coverage remains a separate pending gap.
+
+Open boundaries
+State144 default and FALSE mixed-filter rejection contract remain UNKNOWN.
+DDPCAPS_ALPHA/key precedence remains UNKNOWN and deliberately unsupported in
+the new explicit path. D3D border-address behavior is not added or qualified;
+the GL border sampler is unaffected. Legacy GPU stencil is still unsupported.
+No genuine-alpha regression baseline rerun is needed merely to repeat the
+already retained main901f negative control; the changed candidate needs its
+own new executions. Previous palette passes do not validate this checkpoint.
+No original-game readiness or complete palette conformance claim follows.

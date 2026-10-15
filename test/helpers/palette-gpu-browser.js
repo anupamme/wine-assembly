@@ -98,17 +98,18 @@ globalThis.runPaletteGpu = async function (version) {
   // SELECTARG1(TEXTURE), including alpha, with point sampling and clamp.
   for (const [id,value] of [[1,2],[2,2],[4,2],[5,2],[13,3],[14,3],[16,1],[17,1]]) tss(id,value);
   e.pa_tss(device,1,1,1);
-  const draw = (z=.5, color=0xffffffff) => {
+  const draw = (z=.5, color=0xffffffff, uv=null, expectGpu=true) => {
     [[-.5,-.5,0,0],[3.5,-.5,1,0],[-.5,3.5,0,1],
       [3.5,-.5,1,0],[3.5,3.5,1,1],[-.5,3.5,0,1]].forEach(([x,y,u,v],i) => {
       const p=vertices+i*32;
       [x,y,z,1].forEach((n,j)=>float(p+j*4,n));
       e.guest_write32(p+16,color); e.guest_write32(p+20,0);
-      float(p+24,u); float(p+28,v);
+      float(p+24,uv ? uv[0] : u); float(p+28,uv ? uv[1] : v);
     });
     const before = gpu.stats.drawCalls;
     e.pa_draw(device,4,3,vertices,6);
-    check(gpu.stats.drawCalls > before, 'draw must use actual GPU, no software fallback');
+    if (expectGpu) check(gpu.stats.drawCalls > before, 'draw must use actual GPU, no software fallback');
+    else eq(gpu.stats.drawCalls,before,'software draw must not use GPU');
   };
   const read = () => {
     gpu.fence();
@@ -162,6 +163,52 @@ globalThis.runPaletteGpu = async function (version) {
   rs(15,0); e.pa_bind(device,0,0); // Untextured diffuse, green and opaque.
   draw(.5,0xff00ff00);
   record('alpha rejection preserves depth',[[0,255,0,255],[...rgb,128],[...rgb,255]]);
+
+  // Explicit DX7 key blending, ordinary palette only. Duplicate RGB entries
+  // 7/8/9 distinguish native membership from comparing expanded colors.
+  e.pa_bind(device,0,texture); eq(call(e.pa_attach,texture,ordinary),0,'key ordinary attach');
+  e.guest_write32(out,7); e.guest_write32(out+4,7);
+  eq(call(e.pa_key,texture,out),0,'SetColorKey native index 7');
+  rs(7,0); rs(14,0); rs(15,0); rs(27,0); rs(41,1); rs(144,1);
+  eq(gpu._describe(device).keyBlend,1,'state144 descriptor');
+  clear(0); draw(); record('explicit key writes zero RGBA',[[0,0,0,0],[...rgb,255],[...rgb,255]]);
+  const blendKey=gpu.textures.get(d.texture).key;
+  rs(144,0); clear(0); draw();
+  record('FALSE legacy key rejection',[[0,0,0,255],[...rgb,255],[...rgb,255]]);
+  check(gpu.textures.get(d.texture).key!==blendKey,'key mode invalidates identical texture cache');
+  rs(144,1); clear(0); draw();
+  record('TRUE restored with same palette and bytes',[[0,0,0,0],[...rgb,255],[...rgb,255]]);
+  rs(41,0); clear(0); draw(); record('state144 alone unkeyed',rgba([255,255,255]));
+  rs(41,1);
+  const uniform = color => [color,color,color];
+  for (const filter of [1,2]) {
+    tss(16,filter); tss(17,filter);
+    clear(0); draw(.5,0xffffffff,[.125,.5]);
+    record(`filter${filter} all-key zero`,uniform([0,0,0,0]));
+    clear(0); draw(.5,0xffffffff,[.375,.5]);
+    record(`filter${filter} duplicate nonkey zero-weight key`,uniform([...rgb,255]));
+  }
+  clear(0); draw(.5,0xffffffff,[.25,.5]);
+  record('mixed taps zero RGB before linear filtering',uniform([32,64,96,128]));
+  // GREATER 127 keeps the half-coverage fragment, GREATER 128 rejects it.
+  rs(15,1); rs(25,5); rs(24,127); clear(0); draw(.5,0xffffffff,[.25,.5]);
+  record('mixed app alpha pass',uniform([32,64,96,128]));
+  rs(24,128); clear(0); draw(.5,0xffffffff,[.25,.5]);
+  record('mixed app alpha reject',uniform([0,0,0,255]));
+  rs(15,0); rs(27,1); rs(19,5); rs(20,6); clear(0); draw(.5,0xffffffff,[.125,.5]);
+  record('key app blend preserves destination',uniform([0,0,0,255]));
+  rs(27,0); rs(7,1); rs(14,1); rs(23,2); rs(15,1); rs(24,0);
+  eq(e.pa_clear(d.rt,3,0xff000000,1,0,0,4,4,0),1,'key color/depth clear');
+  draw(.1,0xffffffff,[.125,.5]);
+  rs(15,0); e.pa_bind(device,0,0); draw(.5,0xff00ff00);
+  record('key app rejection preserves depth',uniform([0,255,0,255]));
+  // The unresolved combination must fail visibly rather than select precedence.
+  e.pa_bind(device,0,texture); eq(call(e.pa_attach,texture,alpha),0,'unknown key alpha attach');
+  let unresolved=false;
+  try { gpu._texture(gpu.targets.get(d.rt),gpu._describe(device)); }
+  catch (error) { unresolved=String(error).includes('precedence unresolved'); }
+  check(unresolved,'explicit alpha palette/key combination fails fast');
+  rs(41,0); rs(144,0); e.pa_bind(device,0,0);
   const stats = gpu.snapshot();
   check(stats.pageChecks>0 && stats.textureClears>0,'watch and clear routes exercised');
   eq(stats.textureByteChecks,0,'no byte-shadow cache fallback');
@@ -171,5 +218,28 @@ globalThis.runPaletteGpu = async function (version) {
   check(actualVersion.includes(`WebGL ${version}.0`),actualVersion);
   const debug=gl.getExtension('WEBGL_debug_renderer_info');
   const result={actualVersion,renderer:gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER),observations,stats,diagnostics};
-  gpu.stop(); return result;
+  gpu.stop();
+  // Run the same ordinary indexed samples through the real software draw.
+  // Fixed-point software filtering truncates alpha to127 at half coverage;
+  // GPU RGBA8 readback rounds it to128. RGB is exact in both paths.
+  e.d3dim_gpu_enable(0);
+  e.pa_bind(device,0,texture); eq(call(e.pa_attach,texture,ordinary),0,'software ordinary attach');
+  rs(7,0); rs(14,0); rs(15,0); rs(27,0); rs(41,1); rs(144,1);
+  tss(16,2); tss(17,2);
+  const rtGuest=e.pa_w2g(d.dib)>>>0;
+  const softwareRecord = (label,u,expected) => {
+    for(let y=0;y<4;y++) for(let x=0;x<4;x++) e.guest_write32(rtGuest+y*d.pitch+x*4,0xff0000ff);
+    draw(.5,0xffffffff,[u,.5],false);
+    const packed=e.guest_read32(rtGuest+d.pitch+4)>>>0;
+    const actual=[packed>>>16&255,packed>>>8&255,packed&255,packed>>>24];
+    eq(actual,expected,label); observations.push({label,actual});
+  };
+  softwareRecord('software indexed all-key RGBA',.125,[0,0,0,0]);
+  softwareRecord('software indexed duplicate RGB nonkey',.375,[...rgb,255]);
+  softwareRecord('software indexed mixed prefilter zero',.25,[32,64,96,127]);
+  rs(15,1); rs(24,0); rs(25,5);
+  softwareRecord('software indexed application rejection',.125,[0,0,255,255]);
+  rs(15,0); rs(27,1); rs(19,5); rs(20,6);
+  softwareRecord('software indexed application blend',.125,[0,0,255,255]);
+  return result;
 };

@@ -38,6 +38,10 @@ module.exports = String.raw`
     (load.field DxObject misc1 (call $dx_from_this (local.get $palette))))
 
   (export "pa_rs" (func $d3dim_set_render_state))
+  (func (export "pa_key") (param $surface i32) (param $key i32) (result i32)
+    (call $handle_IDirectDrawSurface_SetColorKey (local.get $surface) (i32.const 8)
+      (local.get $key) (i32.const 0) (i32.const 0) (i32.const 0))
+    (i32.load (global.get $reg_base)))
   (export "pa_tss" (func $d3dim_set_tss))
   (export "pa_draw" (func $d3dim_draw_primitive))
   (export "pa_clear" (func $d3dim_gpu_try_clear))

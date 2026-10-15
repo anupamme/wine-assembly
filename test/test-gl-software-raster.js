@@ -46,7 +46,8 @@ const VP = 64; // viewport is VP x VP, so a surface of the same size
 
 async function main() {
   const { exports: e, memory } = await bootRenderHarness({
-    extraWat: '(export "border_sample_test" (func $gl_sw_border_sample))',
+    extraWat: `(export "border_sample_test" (func $gl_sw_border_sample))
+      (export "key_sample_test" (func $d3dim_texture_sample_keyed))`,
   });
   const guestBase = e.get_guest_base() >>> 0, imageBase = e.get_image_base() >>> 0;
   const toWasm = guest => guestBase + (guest >>> 0) - imageBase;
@@ -76,6 +77,24 @@ async function main() {
     'an outside border tap returns without dereferencing invalid image backing');
   assert.strictEqual(borderSample(0.25, 1.5, CLAMP, REPEAT, 1), 0xff0000ff,
     'the other axis retains its own wrap mode');
+
+  // DX7 explicit TRUE: index 7 is keyed, index 8 has identical RGB. Retained
+  // keyed RGB, RGB membership and post-filter matching all give wrong results.
+  const keyPixels = toWasm(e.guest_alloc(4)), keyPalette = toWasm(e.guest_alloc(1024));
+  new Uint8Array(memory.buffer, keyPixels, 4).set([7,8,7,8]);
+  const paletteView = new DataView(memory.buffer);
+  for (const index of [7,8]) paletteView.setUint32(keyPalette+index*4,0xffc08040,true);
+  const keySample = (u,v,linear=1,au=3,av=3) => e.key_sample_test(
+    2,2,8,2,keyPixels,0,keyPalette,0,u,v,au,av,linear,1,7) >>> 0;
+  assert.strictEqual(keySample(.25,.25,0),0,'key point substitutes RGBA zero');
+  assert.strictEqual(keySample(.75,.25,0),0xff4080c0,'duplicate RGB nonkey survives');
+  assert.strictEqual(keySample(.5,.5),0x7f204060,'mixed native indices filter zeroed taps');
+  assert.strictEqual(keySample(.25,.5),0,'zero-weight nonkey contributes nothing');
+  assert.strictEqual(keySample(.75,.5),0xff4080c0,'zero-weight key cannot reject');
+  assert.strictEqual(keySample(0,.5,1,1),0x7f204060,'wrap crosses keyed/nonkey seam');
+  assert.strictEqual(keySample(-.25,.5,1,2),0,'mirror resolves native keyed tap');
+  assert.strictEqual(keySample(-10,.5),0,'clamp keyed edge is all-key');
+  assert.strictEqual(keySample(10,.5),0xff4080c0,'clamp nonkey edge is all-nonkey');
 
   // --- somewhere to put three GL vertices -------------------------------
   const verts = toWasm(e.guest_alloc(VERT_BYTES * 3));
