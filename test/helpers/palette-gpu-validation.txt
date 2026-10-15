@@ -222,3 +222,37 @@ still separate gaps. Passing unkeyed cooperative pixels resolves none of them.
   Remaining gaps: default lazy route and explicit Boids routes pending rerun,
   stencil nonwrites, baseline semantic failure, state144/alpha+key contract.
   No production source changed, main merge, public deployment or game claim.
+
+Independent stencil feasibility review (source only, no runtime grant):
+  Legacy d3dim_set_render_state (09ab-handlers-d3dim-core.wat) stores RS slots,
+  but d3dim_gpu_describe's descriptor has no stencil enable/function/reference/
+  operation fields. lib/d3dim-gpu.js _describe and _draw consequently transport
+  only depth/blend/cull state. Its _clear explicitly masks flags with &3,
+  excluding D3DCLEAR_STENCIL=4. IDirect3DDevice7_Clear reads depth from stack
+  but never forwards the stencil argument to d3dim_device7_clear.
+  The shared software triangle raster's rast_stencil_state is populated by
+  GL context setup; that separate GL stencil route cannot establish legacy
+  D3DIM palette GPU behavior. Therefore no rejected-fragment stencil-nonwrite
+  acceptance case is added: with stencil disabled/absent, an unchanged stencil
+  result would be vacuous. Production stencil transport/attachment support is
+  a distinct prerequisite requiring its own design and implementation review.
+
+Matched baseline preparation (not compiled or executed):
+  test-d3dim-palette-gpu-web.js accepts PALETTE_GPU_SOURCE_ROOT pointing at a
+  separate pinned checkout. It uses that checkout's test/compile-src.js,
+  canonical WAT closure/compiler and production GPU JS. Only the same test
+  export adapters and browser oracle are supplied by the candidate fixture.
+  No candidate production source is injected into baseline. Both source and
+  fixture commits/diffs, test-export hash, JS hashes and module hash are saved.
+  Compilation exceptions are saved with stage=compile before any browser;
+  these are fixture/build incompatibility evidence, never pixel oracle failure.
+  Pixel expectations remain identical. Source-only review found all14 adapter
+  function references in pinned main901f27cc2d14f1fcbadda5746557b94b06b6ccb3;
+  this does not prove compiler compatibility or runtime export availability.
+  Also retain df987a415f5969ea2a0857dc839093738b2a462a as the candidate's
+  pre-palette baseline; current main and that parent are different controls.
+  After runtime grant and verification of the intended clean baseline checkout:
+    PALETTE_GPU_SOURCE_ROOT=/absolute/pinned/baseline PALETTE_GPU_EVIDENCE=/new/baseline.json node test/test-d3dim-palette-gpu-web.js
+  Use existing remote dependencies via NODE_PATH and record CHROME/backend
+  provenance identically. Do not change expected alpha values to obtain a pass.
+  Explicit Boids renderer and default-lazy Worker reruns remain pending intact.
