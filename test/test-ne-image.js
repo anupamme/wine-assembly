@@ -18,6 +18,7 @@ const reloc=neLifecycleImage({dependencies:['KERNEL']});reloc.writeUInt16LE(0x10
 reloc.writeUInt16LE(1,0x300);reloc.set([5,1,8,0,1,0,4,0],0x302);
 reloc.writeUInt16LE(10,0x208);reloc.writeUInt16LE(0xffff,0x20a);
 assert.deepEqual(inspectNeDll(reloc).imports,[{module:'KERNEL',symbol:4}]);
+const overlap=Buffer.from(reloc);overlap.writeUInt16LE(2,0x300);overlap.copy(overlap,0x30a,0x302,0x30a);assert.throws(()=>inspectNeDll(overlap),/Overlapping/);
 reloc.writeUInt16LE(8,0x20a);assert.throws(()=>inspectNeDll(reloc),/chain/);
 reloc.writeUInt16LE(0xffff,0x20a);reloc.writeUInt16LE(255,0x304);assert.throws(()=>inspectNeDll(reloc),/chain/);
 console.log('PASS NE image bounds, entries, dependencies, input copy and relocation chain rejection');

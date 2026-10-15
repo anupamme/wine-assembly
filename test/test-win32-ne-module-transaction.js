@@ -214,7 +214,7 @@ const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
 first.set_sync_msg_depth(0);let calls=0,whileRunning;
 const lifecycleExports={...first,run(){
  calls++;whileRunning?.();const p=translate(first.get_eip());
- if(bytes[p]===0x0f && (bytes[p+1]===0x0b))throw Error('controlled guest trap');
+ if(bytes[p]===0xca || bytes[p]===0xcb) {first.th_retf16(bytes[p]===0xca?view.getUint16(p+1,true):0);return;}
  assert.equal(bytes[p],0xb8);view.setUint32(first.get_reg_base(),view.getUint16(p+1,true),true);
  view.setUint32(first.get_reg_base()+8,0,true);
  first.th_retf16(bytes[p+3]===0xca?view.getUint16(p+4,true):0);
@@ -251,14 +251,14 @@ lifecycle.release(parentId);assert.equal(calls,afterCall,'extra reference does n
 lifecycle.release(parentId);assert.equal(calls,afterCall+2,'parent and sole dependency WEP executed');
 assert.equal(lifecycle.lookup(parentId,2),0,'retired module not visible');
 for(const name of ['ZERO','TRAP']) {
- assert.throws(()=>lifecycle.load(name),name==='ZERO'?/AX zero/:/controlled guest trap/);
+ assert.throws(()=>lifecycle.load(name),name==='ZERO'?/AX zero/:WebAssembly.RuntimeError);
  for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0,'failed-init restores lease/frame');
  const inspect=first.win16_bridge_frame_begin();
  for(let id=13;id<37;id++)assert.equal(view.getUint32(first.win16_bridge_module_record(id),true),0,'all failed-init ownership cleared');
  assert.equal(first.win16_bridge_frame_end(inspect),1);
 }
 const failing=lifecycle.load('BADWEP');
-assert.throws(()=>lifecycle.release(failing),/controlled guest trap/);
+assert.throws(()=>lifecycle.release(failing),WebAssembly.RuntimeError);
 assert.equal(view.getUint32(shared+36,true),0,'caller context restored after failed WEP');
 assert.equal(view.getUint32(shared+44,true),1,'failed termination retains lease');
 assert.throws(()=>lifecycle.load('BADWEP'),/busy/);assert.equal(lifecycle.lookup(failing,2),0);

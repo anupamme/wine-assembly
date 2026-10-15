@@ -14,9 +14,9 @@ function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=fa
   let offset=0;
   for(let i=0;i<dependencies.length;i++) {const name=dependencies[i];w(n+0x90+2*i,offset);b[n+0xb0+offset]=name.length;b.write(name,n+0xb1+offset,'ascii');offset+=name.length+1;}
   if(n+0xb0+offset>0x200)throw new Error('Fixture dependency names too large');
-  b.set(trapInit?[0x0f,0x0b]:[0xb8,result&255,result>>>8,0xcb],0x200);
+  b.set(trapInit?[0xca,2,0]:[0xb8,result&255,result>>>8,0xcb],0x200);
   b.set([0xb8,0x34,0x12,0xcb],0x210);
-  b.set(trapWep?[0x0f,0x0b]:[0xb8,1,0,0xca,2,0],0x220);
+  b.set(trapWep?[0xcb]:[0xb8,1,0,0xca,2,0],0x220);
   return b;
 }
 module.exports={neLifecycleImage};
