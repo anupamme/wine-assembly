@@ -265,15 +265,40 @@
       "kind": "game",
       "version": "Original Windows single-player demo installer",
       "executables": [
-        "AVP2.exe",
-        "lithtech.exe"
+        "game/AVP2.exe",
+        "game/lithtech.exe"
       ],
       "sourcePage": "https://archive.org/details/Aliens_Versus_Predator_2_Demo_20th_Century_Fox_2001",
       "license": "Proprietary demo; local compatibility fixture only, no redistribution grant recorded",
       "localOnly": true,
-      "packages": [],
-      "manual": "Recover avp2spdemo.exe from https://archive.org/details/Aliens_Versus_Predator_2_Demo_20th_Century_Fox_2001 ISO (233406464 bytes, SHA1 0527a9c9ab662b0747ed0ca764b58fcf6376ebc2). Extracted installer is byte-identical to the prior local original: 165836576 bytes, SHA256 e335063b508f5b4bc8c8235787d839567f16ce13eb63b74a96ccb5a839d3fbe3. Extract complete AVP2_Demo_Files payload with 7z then unshield. Run original AVP2.exe to generate avp2cmds.txt and launch lithtech.exe -cmdfile avp2cmds.txt; launcher export remains manual, not fabricated. See docs/re-notes/avp2-demo.md.",
-      "notes": "Reviewed original Marine mission movement and texture repair: runs/20261011T0836Z-avp2-bltfast-gameplay. The capture used retained source plus the BltFast repair, subsequently merged as6613fe863; it is not a new current-main run. Logical FPS and audio remain unverified. No registered dashboard launch route or public desktop release yet. AVP1 Alien/Marine demos are different titles."
+      "packages": [
+        {
+          "url": "https://archive.org/download/Aliens_Versus_Predator_2_Demo_20th_Century_Fox_2001/Aliens_Versus_Predator_2_Demo_20th_Century_Fox_2001.iso",
+          "sha1": "0527a9c9ab662b0747ed0ca764b58fcf6376ebc2",
+          "type": "archive",
+          "into": "source-cd"
+        }
+      ],
+      "manual": "Original 18-file cabinet payload recovery verified from the pinned ISO; requires unshield for the IS6 cabinet. Run original game/AVP2.exe to generate avp2cmds.txt and capture its actual lithtech.exe child launch. Generated command file/launcher export are not synthesized by acquisition. See docs/re-notes/avp2-demo.md.",
+      "notes": "Reviewed original Marine mission movement and texture repair: runs/20261011T0836Z-avp2-bltfast-gameplay. The capture used retained source plus the BltFast repair, subsequently merged as6613fe863; it is not a new current-main run. Logical FPS and audio remain unverified. No registered dashboard launch route or public desktop release yet. AVP1 Alien/Marine demos are different titles.",
+      "postExtract": [
+        {
+          "type": "extractArchive",
+          "archive": "source-cd/avp2spdemo.exe",
+          "into": "cabinet"
+        },
+        {
+          "type": "unshield",
+          "cab": "cabinet/Disk1/data1.cab",
+          "into": "extracted",
+          "group": "AVP2 Demo Files"
+        },
+        {
+          "type": "copyTree",
+          "from": "extracted/AVP2_Demo_Files",
+          "into": "game"
+        }
+      ]
     },
     {
       "id": "turok2-demo",
