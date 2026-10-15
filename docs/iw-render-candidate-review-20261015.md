@@ -80,3 +80,30 @@ positive/negative alpha tests and keyed/non-keyed stencil fail/depth-fail/pass,
 masked RGB blend factors, and visible missing-varying rejection. Runtime
 authorization and current-build qualification remain separate. Invisible War
 gameplay/transport stays held; this review makes no new gameplay claim.
+
+## Prepared browser regression follow-up
+
+`test/test-d3d9-stencil-web.js` now contains the actual WebGL1/2 test adaptation,
+without running it. Current-main's original stencil test block is preserved
+byte-for-byte, checked by the source tool. Both original candidate additions
+are retained, with named observations for new cases and a requested-version
+check. The explicit shader fixture outputs nonzero diffuse RGB 64/128/192 and
+texture coordinates from separate constant registers. Missing-texture
+SELECTARG1/SELECTARG2/MODULATE must preserve those RGB values with mask 7;
+the same draws with a position-only shader must reject live missing color
+linkage. Both checks discriminate against historical `1d5243e`.
+
+Source-alpha factors 5/6/11 cover both blend slots. Alpha-test and color-key
+fixtures each have surviving and discarded controls for stencil fail,
+depth-fail and pass. A subsequent same-depth LESS probe checks whether depth
+remained clear or was written; only a surviving pass may write depth. Thus a
+no-op or always-discarding draw cannot satisfy the control matrix. GPU results
+will include per-version observations and GL errors rather than a bare pass.
+
+Preparation validation: **30 source checks pass**, browser test syntax and
+diff checks pass. Actual shader compilation confirms oD0=c0 and oT0=c1;
+an initial ad-hoc source assertion expected direct assignment, failed on the
+compiler's intermediate temporaries, and was corrected to verify that actual
+dataflow. This was a source-check issue, not a renderer/GPU result. No browser,
+GPU, build or sandbox execution occurred. Run the prepared browser regression
+only after the runtime grant; this follow-up does not remove the integration hold.

@@ -66,4 +66,17 @@ const p=lower(colorless);
 assert.deepEqual(apply(candidate,colorless,p,{stage:'pixel'}),p); checks++;
 assert.deepEqual(apply(candidate,colorless,p,null,true),p); checks++;
 assert.deepEqual(apply(candidate,colorless,p,null,false,{enabled:true}),p); checks++;
+// Validate the prepared real-browser fixture without running its browser body.
+const web=fs.readFileSync(path.join(root,'test/test-d3d9-stencil-web.js'),'utf8');
+const baselineWeb=execFileSync('git',['show',
+  '343befcb182f3582a3214df5636c49f1176b435e:test/test-d3d9-stencil-web.js'],{cwd:root,encoding:'utf8'});
+const legacyStart=baselineWeb.indexOf('   for(const [func,expected]of [[1,false]');
+const legacyEnd=baselineWeb.indexOf('   const error=g.getError()');
+assert(legacyStart>=0&&legacyEnd>legacyStart);
+assert(web.includes(baselineWeb.slice(legacyStart,legacyEnd)), 'original main stencil oracles preserved byte-for-byte'); checks++;
+const fixture=web.match(/const colorVS=new Uint32Array\((\[[\s\S]*?\])\);/);
+assert(fixture,'real browser VS fixture exists');
+const compiled=require('../lib/d3d9-shader').compile(new Uint32Array(Function('return '+fixture[1])()));
+assert.match(compiled.source,/vec4 (result\d+) = \(d3d_vs_c0.xyzw\);\s*d3d_color0.xyzw = \1.xyzw;/); checks++;
+assert.match(compiled.source,/vec4 (result\d+) = \(d3d_vs_c1.xyzw\);\s*d3d_tex0.xyzw = \1.xyzw;/); checks++;
 console.log(`PASS ${checks} source checks; held missing-texture RGB regression reproduced for SELECTARG1/2/MODULATE; adapted guard retains diffuse. GPU effects untested.`);
