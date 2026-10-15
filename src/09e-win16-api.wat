@@ -8795,6 +8795,15 @@
       (then
         (call $gs16 (local.get $dst) (call $gl32 (local.get $tmp)))
         (local.set $proc (call $gl32 (i32.add (local.get $tmp) (i32.const 4))))
+        ;; System classes expose a Win32 marker internally. A Win16 caller
+        ;; must receive the callable per-class far thunk, just as it does
+        ;; through GWL_WNDPROC. VB1 saves this value before subclassing EDIT.
+        (if (i32.eq (i32.and (local.get $proc) (i32.const 0xFFFFFF00))
+                    (global.get $WNDPROC_SYSCLASS))
+          (then (local.set $proc
+            (i32.or (i32.shl (global.get $WIN16_THUNK_SEL) (i32.const 16))
+              (i32.add (global.get $WIN16_BUILTIN_CLASS_PROC)
+                (i32.and (local.get $proc) (i32.const 0xFF)))))))
         (call $gs16 (i32.add (local.get $dst) (i32.const 2)) (local.get $proc))
         (call $gs16 (i32.add (local.get $dst) (i32.const 4))
           (i32.shr_u (local.get $proc) (i32.const 16)))

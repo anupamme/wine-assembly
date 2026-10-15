@@ -265,3 +265,111 @@ and available extents around the refused commits. These messages alone do
 not distinguish actual capacity exhaustion from fragmentation or retained
 allocations; neither a larger budget nor a forced successful allocation is
 established as a remedy.
+
+### Memory census preparation (2026-10-14; no new guest run)
+
+Source and log review corrects the queued handoff's reason numbers: the
+2097160/1398488-byte payload failures in `20261014-kkrieger-heap-fix/browser.log`
+are **reason 1**, "bump arena full, low reserve and sparse arena both refused".
+They are not reason 4, which specifically denotes the separate 1024-slot
+`HEAP_ARENAS` table. The preceding reason 3 follows a successful reservation,
+failed sparse commit, and attempted free-arena reclamation; it is printed
+after releasing the unsuccessful reservation. No backing measurements have
+yet been made at this boundary.
+
+`tools/page-probes/arm-backing-census.js` prepares that measurement without
+changing allocator state. Use its source as `profile-web-frames.js --before-load`
+and relay `backing-census`; retrieve `JSON.stringify(window.__backingCensus)`
+with `--report-eval`. It can be concatenated with the existing
+`arm-memory-series.js` source before launch (both console wrappers chain).
+The bounds are eight 20-second periodic snapshots and the first four OOM
+messages. Preserve console output even if the guest exits before report-eval.
+Confirm the expected app is the first/only running app before using its data.
+
+The probe reads the loaded page's `RegionMap` and reports its layout hash;
+record the actually loaded WASM hash and retain its generated region mirror
+alongside the capture. It copies map state, map records, reservations, released
+hole metadata and heap-arena headers, including allocated end and charged live
+bytes. It derives physical free extents from the union of live map backings,
+rather than adding advertised holes to wilderness (which could double-count).
+Map count is bounded by its region capacity, as are all other copied tables.
+Synthetic checks cover known gaps, an extension window, overlapping backings,
+corrupt counts and unchanged source bytes. Evidence and the standalone check
+are in `scratch/runs/20261014-kkrieger-memory-census-preparation/`.
+
+Interpretation constraints for the runtime owner:
+
+- Neither `heap_free_census` nor `get_free_list` is observational: both flush
+  instance bins. This probe calls neither, and makes no allocator/lock calls.
+- `virtual_backing_available` reports cursor tails, excluding released holes;
+  a low value alone does not establish capacity exhaustion.
+- Commits already recursively split down to 64KB. A largest gap smaller than
+  the request does not establish failure; total free space, gap distribution
+  and remaining map slots matter together. The reported 64KB granule count
+  is only an upper bound, not a simulation of recursive placement.
+- Double-copy equality detects some concurrent changes but is not an atomic
+  snapshot. Worker activity and asynchronous console forwarding must be
+  recorded. The OOM snapshot is after failed split rollback, so low final map
+  occupancy alone cannot exclude transient slot exhaustion during a split.
+- Arena charged bytes include allocation headers and are not guest payload
+  size. An arena with zero charged bytes is not automatically reclaimable:
+  reclamation also requires a retired sparse arena, excluding the caller's
+  current sparse arena. Preserve raw rows for that distinction.
+
+Sam profiling owns the sole testbox during this preparation. No build,
+browser run, increased memory budget, or gameplay acceptance is claimed.
+
+### First-failure backing census (2026-10-14)
+
+The original demo was subsequently run on the same fixed module
+`d823bf96e9ad51b0ef029fdaf12596350d040889cb187e85d8cf607d8eb74279`,
+with the read-only backing probe and memory series. Chrome151.0.7922.108,
+cooperative route, 512MiB WASM, loaded layout hash `185e9318241d3aef`.
+Run:23:39:43.557–23:42:59.730 UTC on `bx_tgbme2h7`. No new build or allocator
+change. The first reason3 failure is at181474.9ms after page start:
+
+| Measurement at first failure | Bytes/count |
+| --- | ---: |
+| Refused sparse commit | 2,162,688 |
+| Primary backing capacity; no extension | 301,989,888 |
+| Live mapped backing | 301,551,616 |
+| Total free backing | 438,272 |
+| Largest of14 free gaps | 61,440 |
+| Live maps / map capacity | 207 / 8192 |
+| Reservations / capacity | 188 / 8192 |
+| Arena high-water slots / capacity | 241 / 1024 |
+
+There are no overlapping backing records, no invalid metadata rows, and all
+12 snapshot pairs compare equal. All14 gaps are smaller than64KB, but even
+perfect compaction could not provide the refused request: total free backing
+is already smaller. This establishes actual backing-capacity shortage at this
+boundary, rather than merely a largest-gap or table-capacity failure. The
+reservation had succeeded before the failed commit; the shared reserve cursor
+was1760886784. The snapshot follows rollback of unsuccessful split commits.
+
+This is **not** evidence that every mapped byte is live payload, or that there
+is no leak. Of236 active arena records (five slots recycled),187 sparse arenas
+account for all301551616 mapped bytes. They report236509192 charged live bytes,
+301338672 allocated bytes, and212944 bytes of unallocated current-arena tail.
+Thus65042424 reserved bytes are not charged live, including64829480 bytes inside
+allocated extents. No sparse arena has zero charged live bytes, so none is
+wholly free for normal arena reclamation. The probe deliberately did not flush
+or inspect free lists/bins; it does not determine reusable block distribution
+or allocation lifetimes. Charged bytes also include allocation headers.
+
+The run logs12 OOM messages and exits at `0x801924`. Reviewed120-second image
+shows a partial loading bar; the final image is the desktop after guest exit.
+No menu, gameplay, input or audio qualification. The initial180-second capture
+bound was extended by pausing only its Node controller23:42:43–23:42:59 while
+Chrome continued; a second read-only CDP collector observed the failure and
+resumed it. Both controllers exited0 and the browser closed. These times are
+instrumented evidence, not a startup performance benchmark.
+
+Self-contained reviewed evidence: `scratch/runs/20261014-kkrieger-memory-census/`,
+with raw snapshots/log, exact loaded region mirror, source patch, screenshots,
+controller/probe sources and reproducible `node analyze.js` assertions.
+The next candidate can test the existing measured-memory `bigMemory` opt-in
+and extension backing against original startup, while retaining the live-charge
+versus retained-space question. Do not weaken allocation checks or claim the
+larger budget fixes gameplay before that acceptance run. Runtime was released
+to the user-priority Pirates validation lane; no memory opt-in is changed here.

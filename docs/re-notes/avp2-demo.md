@@ -97,3 +97,51 @@ Guarded memory replay157591/157598 terminal1 at03:25:33Z repeats D3D7 Load (run2
 Paired idle/input runs on module09116cb69758880ee0613d33d050e5427be2063d34ec604cb9baa187e91ce90f complete successfully. Pre-input frames are pixel-identical; after500 steps with W held,156225/307200 pixels differ from the same-step idle frame, and the viewpoint advances toward the teammate. Run20261010T0344Z-avp2-main-paired-input proves ordinary control; severe texture corruption still blocks release readiness, audio/FPS remain unqualified.
 
 Built-in --dump-dx-surfaces at the Marine menu (controller165558/guest165565 terminal0 at03:44:47Z) confirms corruption exists in stored textures: slots441/496 RGB565 and443 ARGB4444 show vertical coloured stripes and zero lower rows, run20261010T0347Z-avp2-corrupt-textures. Full dump remains /home/user/avp2-menu-surfaces-20261010/surfaces on bx_hx8msa33. Compression treated as ordinary pixels is a hypothesis. The previous live census finding no DXT only described surviving surfaces; it does not rule out a temporary compressed source released after upload. Next trace source/destination formats at Texture::Load.
+
+## Original installer source recovered (2026-10-14)
+
+The archived [original demo CD](https://archive.org/details/Aliens_Versus_Predator_2_Demo_20th_Century_Fox_2001) supplies the exact previously recorded installer. The complete ISO is 233,406,464 bytes, SHA1 `0527a9c9ab662b0747ed0ca764b58fcf6376ebc2`. Its `avp2spdemo.exe` is 165,836,576 bytes and SHA256 `e335063b508f5b4bc8c8235787d839567f16ce13eb63b74a96ccb5a839d3fbe3`, matching the old local file exactly. The multiplayer installer on that disc is a separate fixture.
+
+Source ISO and verification receipt are preserved under `scratch/runs/20261014-avp2-source-recovery/`. Only source acquisition and exact installer identity were verified here. Complete installed payload recovery, original launcher-generated avp2cmds.txt export and current gameplay still require validation; no command file was synthesized. The obsolete Archive item avp2spdemo returned no file metadata and is not used by this recovery.
+
+### Original cabinet payload recovered (2026-10-14)
+
+The verified original installer was unpacked with 7z, then unshield 1.5.1
+using group `AVP2 Demo Files`. Extraction succeeded for all 18 original
+files (247851457 bytes), including AVP2.exe, lithtech.exe, four REZ files,
+and Profiles/Default.prf. Per-file SHA256 inventory, extraction logs, original
+ISO and payload are retained in
+`scratch/runs/20261014-avp2-source-recovery/`. Evidence copies were byte-compared.
+
+Recovery commands, after verifying the installer hash above:
+
+```sh
+7z x avp2spdemo.exe -ocabinet
+unshield -d payload -g 'AVP2 Demo Files' x cabinet/Disk1/data1.cab
+```
+
+This recovers original source files, not the previously captured 67-file
+launcher handoff. No avp2cmds.txt was synthesized and no launcher was run.
+Automating the recipe and validating the real launcher-generated command file
+remain open; this extraction does not establish current-main gameplay.
+
+### Generic recovery recipe preparation (2026-10-15)
+
+The task-branch recipe now pins the original ISO above, extracts its
+`avp2spdemo.exe`, unpacks `Disk1/data1.cab`, and copies only the original
+`AVP2 Demo Files` group into `game/`. It does not manufacture `avp2cmds.txt`.
+`node tools/verify-avp2-recovery.js PATH_TO_GAME` checks all 18 original
+file sizes and SHA256 values, failing on missing files or mismatches.
+
+The verifier passed against the retained independently recovered payload and
+a fresh forced generic recovery on bx_tgbme2h7. The original ISO hash, exact
+installer SHA256 and all 18 original payload sizes/hashes passed. Run
+20261015-avp2-generic-recovery preserves both attempts: first extraction failed
+because unshield was absent and the early-IS5 fallback rejects this IS6 cabinet
+(version 0x100600c). Installing unshield 1.5.1 resolved that dependency; the
+fresh forced fetch/verification process122200 exited0 at00:08:22.982Z.
+
+Use `node tools/fetch-candidate-corpus.js --id=avp2-demo` with unshield
+installed, then `node tools/verify-avp2-recovery.js`. The durable receipt is
+`docs/avp2-recovery-20261015.json`. Original launcher execution and its generated
+command file remain separate runtime work; no gameplay claim follows.

@@ -50,6 +50,22 @@ Gameplay (`Play Sid Meier's Pirates!`), audio, the WebGL arm at this build.
 `ole32.dll` is absent from this box's `test/binaries/dlls`, so the Miles
 providers' ole32 imports fall to WAT stubs.
 
+## TG77 cooperative thread attach (2026-10-14, unresolved)
+
+Safari reported `DllMain did not complete` for module `0x9f1000`, reason 2,
+with restored caller EIP `0x9fc4bb`. Chrome cooperative evidence supplied by
+the runtime investigator (`scratch/runs/20261014-pirates-browser-cooperative`)
+places the actual msvcr71.dll callback at `0x7503fc0`, yield 9 / halt 4:
+a critical-section wait. The section owner remains to be captured.
+
+Source inspection and the cheap `node tools/pirates-attach-gap.js` witness
+confirm that the synchronous callback runner restores the caller and releases
+the callback gate on this wait; retrying the notification repeats previously
+completed DLL callbacks. This mock reproduction is not real-PE acceptance.
+See [continuation interface and regression plan](../pirates-attach-continuation-plan-20261014.txt)
+for the required owning-thread scheduler integration, cleanup contracts and
+unexecuted real-PE/browser gates. No production fix is included.
+
 ## Cooperative thread-attach regression (2026-10-14, TG77)
 
 The Safari report on module SHA256
@@ -80,3 +96,27 @@ Evidence: `scratch/runs/20261014-pirates-browser-cooperative/` contains the
 90-second probe, six captures/state snapshots, browser log and process receipt.
 The final fatal-error screenshot was reviewed. The original user report is in
 `scratch/runs/20261014-pirates-user-crash/report.txt`.
+
+## Cooperative continuation candidate (2026-10-14, runtime verified)
+
+Task branch `task/pirates-attach-fix` now retains the notification generator,
+module cursor, snapshot pins and loader gate through ordinary scheduler turns.
+Candidate production source `16961623b` freshly built to WASM SHA256
+`70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655` passes
+the real-PE contended-section regression and existing main/Worker DllMain
+completion, load-context and callback-serialization tests.
+
+The original cooperative Chrome startup now reaches the visible Main Menu.
+The actual msvcr71 callback still parks at `0x7503fc0`, yield9; captured section
+guest `0xa3c190` (WASM `0x64e190`) is owned by **thread1/main**, recursion1.
+First recorded tid6 park retains its actual frame and loader gate `[6,1]`;
+5.415ms later its callback returns, followed by sequence completion and gate
+release `[0,0]`. Four such waits complete during the 90-second run. Thus this
+route's owner can run and release the section with ordinary scheduling.
+
+Evidence `scratch/runs/20261014-pirates-attach-candidate/` includes raw traces,
+test/build receipts and reviewed final menu capture. The baseline module is
+older, so the screenshots alone are not a controlled version A/B. No gameplay
+input, affected Safari validation, merge or deployment is claimed. Blocking
+nested initialization and synchronous exit-detach remain existing boundaries;
+see `docs/pirates-attach-candidate-20261014.txt` for exact test scope.

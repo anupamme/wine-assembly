@@ -1,4 +1,19 @@
-# OpenGL / Direct3D corpus status, reconciled 2026-10-09
+# OpenGL / Direct3D corpus status, reconciled 2026-10-15
+
+## October 14–15 targeted follow-up
+
+Authorized Boat exec access now supports separate-box builds and browser tests.
+The older blanket remote-access blocker is resolved; missing historical runs
+and incomplete per-app software/WebGL qualification remain separate gaps.
+
+| Scope | Verified change and evidence | Remaining work |
+|---|---|---|
+| .kkrieger D3D9 startup | `c79b943bb` implements signed Q8W8V8U8 storage/upload/sampling; full build and resource, software, WebGL1/2 and pipeline checks pass. `2e1d68489` fixes recycled sparse heap clearing that overwrote live mesh edges; baseline regression fails and fixed regression passes. Original demo advances beyond the persistent mesh loop. Runs `20261014-kkrieger-q8w8v8u8`, `20261014-kkrieger-mesh-writer`, `20261014-kkrieger-heap-fix`. Both fixes are on main. | Census `20261014-kkrieger-memory-census` proves backing shortage: 2,162,688 requested versus438,272 free; tables have capacity. Report on main `6cb760da2`. Registered2GiB route merged9e8afa2e5 uses174,718,976 extension bytes with OOM0 through300s. Follow-up `20261015-kkrieger-registered-600s` then exits around306s after243 generic declaration errors; correlation is not proven causality. Diagnostics/exit guard mergedcb0bf751a; exact original declaration capture is next. Retained heap space is not classified as a leak. No gameplay or both-backend acceptance. |
+| Serious Sam cooperative startup | `43f04c7c4` prevents the reproduced low-EIP crash by making synchronous-fault file consumers resident on the cooperative backend. Four browser arms distinguish original failure, eager control, fixed policy and Worker behavior; runs `20261014-sam-browser-*`. Fix is on main. | Karnak gameplay/profile `20261014-sam-low-fps` measures3.18–4.05 actual GLfps on forced SwiftShader; pending GPU completion dominates this box. Report/probe `9b53a3795` on main. Logging-off control and Safari hardware cause remain unmeasured. HUD double-count fix `471dee7c2` passes focused mixed GL/GDI regression, not a performance improvement. |
+| Legacy indexed palette candidates | Preserved `c2192e014` passes a separate-box full build and four real-VM CPU/page-watch/resource/software tests. Evidence `20261014-palette-remote-validation`. | Still unmerged. Source reconciliation `f8e4676ce` preserves candidate and main format63 changes. Exact reconciled candidate164dc33ad passed canonical build/four CPU suites; diagnostic-only fixture correction2b28b3e27 passed17 actual framebuffer checks each on WebGL1/2, zero fallback. Root reviewed original runtime hashes and pixel results in `20261015-palette-validation`; forced SwiftShader, reported Intel string is spoofed. Worker reports clean explicit-sync lifetime run125426 with7pixel observations/3blocked-before-drain barriers, pending root receipt review.13of14 follow-up configs pass; Boids route test assumes software default despite current WebGL default and needs explicit route selection. Default-lazy Worker variant, stencil rejection, baseline GPU failure and filtered-key/alpha-key contracts remain gaps. |
+
+These are scoped results, not a new full-corpus sweep. Preserve the historical
+rows below as dated evidence; no original 27-app completion is claimed.
 
 The user's goal: every OpenGL and Direct3D app in the registry works on both the
 **software** and the **WebGL** backend. This is the one shared status table for
