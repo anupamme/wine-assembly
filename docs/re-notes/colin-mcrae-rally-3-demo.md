@@ -584,3 +584,14 @@ Postflight10:34:53 found no survivors and unchanged6491sources/module/native12/
 original302. Evidence `scratch/runs/20261015-cmr3-native-registration` retains
 40 verified artifacts plus terminal receipts. Full registry remains incomplete;
 no game or retry executed. Runtime released to root.
+
+Static followup resolves WMVCORE's distinct contract: exact native SHAe79cace0
+DllRegisterServer ordinal7/RVA76e7d writes embedded PRXFILE/200/1033 to
+C:\WINDOWS\WMSysPr9.prx; it does not register an InprocServer32 class. Profile
+is316640bytes/SHA25695f1edbc3cb9aa70a374a61b43bd16818636b0190aa841504130bb718c39c2c7.
+Source recipe now requires fresh exact VFS output plus unchanged registry,
+HRESULT/Exit0; other DLL native-class checks remain. Genuine output is carried
+into the next staging VFS and must later be mounted for game replay. Six JS
+tests and offline authentic-resource exporter roundtrip pass; no guest retry.
+Failed73364 lacks VFS capture, so file effect remains inconclusive. Full static
+proof and preservation contract: docs/cmr3-registry-preparation-20261015.md.

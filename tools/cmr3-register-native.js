@@ -7,6 +7,9 @@ const plan = require('../docs/cmr3-native-recovery-plan-20261015.json');
 const historical = require('../docs/cmr3-historical-receipts-20261015.json');
 const { inventory } = require('./cmr3-assemble-original');
 const ORDER = ['devenum.dll', 'quartz.dll', 'qedit.dll', 'qasf.dll', 'WMVCORE.DLL', 'WMADMOD.DLL', 'WMVDMOD.DLL', 'qasf.dll', 'MLANG.DLL'];
+// Exact authenticated WMVCORE PRXFILE/200/1033 resource; see static review notes.
+const WMV_PROFILE = Object.freeze({ path: 'windows/wmsyspr9.prx', bytes: 316640,
+  sha256: '95f1edbc3cb9aa70a374a61b43bd16818636b0190aa841504130bb718c39c2c7' });
 const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 function verify(p, expected) {
   assert(fs.lstatSync(p).isFile(), 'Regular file required: ' + p);
@@ -21,7 +24,7 @@ function verifyCommonDirectory(common) {
     assert(fs.lstatSync(path.join(common, entry)).isFile(), 'Common documentation must be a regular file');
   }
 }
-function assess(log, status, snapshot, dll) {
+function assess(log, status, snapshot, dll, effects = {}) {
   assert.equal(status, 0, 'Host did not finish normally');
   assert(!/UNIMPLEMENTED|\[eip-zero\]|RuntimeError|unreachable|timed? out|time limit|maximum.*seconds|\[CRASH\]/i.test(log), 'Guest failure diagnostic');
   const exits = [...log.matchAll(/\[Exit\] code=(-?\d+)/g)].map(m => Number(m[1]));
@@ -29,6 +32,15 @@ function assess(log, status, snapshot, dll) {
   const results = [...log.matchAll(/\[TRACE-AT #[^\]]+\][^\n]*EIP=0x0*401341 EAX=0x([0-9a-f]+)/gi)].map(m => parseInt(m[1], 16));
   assert.deepEqual(results, [0], 'Require one observed DllRegisterServer S_OK');
   assert(snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot));
+  if (dll.toLowerCase() === 'wmvcore.dll') {
+    assert(effects.before, 'WMVCORE requires its prior registry snapshot');
+    assert.deepEqual(snapshot, effects.before, 'WMVCORE must leave registry unchanged');
+    assert(Array.isArray(effects.files), 'WMVCORE requires captured VFS profile evidence');
+    assert.equal(effects.files.length, 1, 'Require exactly one profile output, no missing or duplicate files');
+    const file = effects.files[0];
+    assert.deepEqual({ ...file, path: file.path.toLowerCase() }, WMV_PROFILE, 'Wrong WMVCORE profile location or bytes');
+    return { hresult: '0x00000000', guestExit: 0, registryUnchanged: true, profile: file, entries: Object.keys(snapshot).length };
+  }
   const servers = Object.entries(snapshot).filter(([key, value]) => {
     if (!/\\inprocserver32$/i.test(key) || typeof value !== 'string') return false;
     const values = JSON.parse(value).values || {};
@@ -38,12 +50,17 @@ function assess(log, status, snapshot, dll) {
   assert(servers.length, 'No native InprocServer32 registration for ' + dll);
   return { hresult: '0x00000000', guestExit: 0, servers, entries: Object.keys(snapshot).length };
 }
-function runnerArgs(stage, dll, previous, next) {
-  return ['test/run.js', '--exe=' + path.join(stage, 'regsvr32.exe'), '--args=/s ' + dll,
+function runnerArgs(stage, dll, previous, next, vfsOutput) {
+  const args = ['test/run.js', '--exe=' + path.join(stage, 'regsvr32.exe'), '--args=/s ' + dll,
     '--vfs-tree=' + stage, '--dlls=' + ['msvcrt.dll', 'msdmo.dll', 'WMASF.DLL'].map(n => path.join(stage, n)).join(','),
     '--no-build', '--quiet-api', '--max-batches=20000', '--max-seconds=45',
     '--trace-at=0x401341', '--trace-at-limit=2', '--trace-api=LoadLibraryA,LoadLibraryExA,GetProcAddress,ExitProcess',
     '--reg-import=' + previous, '--reg-export=' + next];
+  if (dll.toLowerCase() === 'wmvcore.dll') {
+    assert(path.isAbsolute(vfsOutput || ''), 'WMVCORE requires a fresh absolute VFS export directory');
+    args.push('--save-vfs=' + vfsOutput, '--save-vfs-suffix=.prx');
+  }
+  return args;
 }
 function run(config) {
   const { checkout, output, nativeRoot, gameRoot, regsvr32, commit, moduleSha256, gameInventorySha256 } = config;
@@ -85,7 +102,9 @@ function run(config) {
       assert(Date.now() - start < 570000 - 55000, 'Insufficient remaining overall budget');
       const prefix = String(index + 1).padStart(2, '0') + '-' + dll;
       const next = path.join(output, prefix + '.registry.json');
-      const args = runnerArgs(stage, dll, previous, next);
+      const vfsOutput = dll.toLowerCase() === 'wmvcore.dll' ? path.join(output, prefix + '.vfs') : null;
+      if (vfsOutput) fs.mkdirSync(vfsOutput);
+      const args = runnerArgs(stage, dll, previous, next, vfsOutput);
       save(prefix + '.args.json', { executable: process.execPath, args, cwd: checkout, timeoutMs: 55000 });
       const fd = fs.openSync(path.join(output, prefix + '.log'), 'wx');
       let result;
@@ -93,7 +112,16 @@ function run(config) {
       finally { fs.closeSync(fd); }
       save(prefix + '.status.json', { status: result.status, signal: result.signal, error: result.error?.message });
       assert(!result.error && !result.signal, 'Host timeout or spawn failure');
-      const verdict = assess(fs.readFileSync(path.join(output, prefix + '.log'), 'utf8'), result.status, JSON.parse(fs.readFileSync(next)), dll);
+      const effects = vfsOutput ? { before: JSON.parse(fs.readFileSync(previous)), files: inventory(vfsOutput) } : {};
+      if (vfsOutput) save(prefix + '.vfs-inventory.json', effects.files);
+      const verdict = assess(fs.readFileSync(path.join(output, prefix + '.log'), 'utf8'), result.status, JSON.parse(fs.readFileSync(next)), dll, effects);
+      if (vfsOutput) {
+        // Retain the genuinely guest-written profile in the next process's VFS.
+        const destination = path.join(stage, WMV_PROFILE.path);
+        fs.mkdirSync(path.dirname(destination), { recursive: true });
+        fs.copyFileSync(path.join(vfsOutput, effects.files[0].path), destination, fs.constants.COPYFILE_EXCL);
+        verify(destination, WMV_PROFILE);
+      }
       steps.push({ dll, ...verdict, snapshot: path.basename(next), bytes: fs.statSync(next).size, sha256: sha(next) });
       save(prefix + '.assessment.json', steps.at(-1)); previous = next;
     }
@@ -109,6 +137,7 @@ function run(config) {
     assert.equal(git(['status', '--porcelain', '--untracked-files=normal']), '');
     for (const r of historical.native) verify(path.join(output, 'registration', r.path), r);
     verify(path.join(output, 'registration/regsvr32.exe'), plan.registry.registrationTool);
+    if (steps.some(step => step.profile)) verify(path.join(output, 'registration', WMV_PROFILE.path), WMV_PROFILE);
     save('postflight.json', { identitiesUnchanged: true });
     } catch (error) { save('postflight-failure.json', { error: error.stack }); throw error; }
   }
@@ -118,4 +147,4 @@ if (require.main === module) {
   try { assert.equal(process.argv.length, 3, 'Usage: node tools/cmr3-register-native.js CONFIG.json'); run(JSON.parse(fs.readFileSync(process.argv[2]))); }
   catch (e) { console.error(e); process.exitCode = 1; }
 }
-module.exports = { ORDER, assess, runnerArgs, verify, verifyCommonDirectory };
+module.exports = { ORDER, WMV_PROFILE, assess, runnerArgs, verify, verifyCommonDirectory };

@@ -20,8 +20,9 @@ call at `0x40133d`, and HRESULT test at `0x401341`; negative HRESULT sets
 exit 5. The `.data` string at `0x406040` is `DllRegisterServer`. The existing
 runner `--trace-at=0x401341` observes registers without modifying guest data.
 Acceptance requires exactly one observed EAX zero, exactly one guest Exit
-zero, no trap/NULL/timeout diagnostic, and a native InprocServer32 entry for
-the target DLL. Host exit zero alone fails. Unexpected successful nonzero
+zero and no trap/NULL/timeout diagnostic. The target DLL must leave its native
+InprocServer32 entry, except WMVCORE, whose actual export writes an embedded
+profile file instead (see static review below). Host exit zero alone fails. Unexpected successful nonzero
 HRESULT also stops for review. Partial exports remain diagnostic evidence.
 An absent return trace is an inconclusive acceptance failure; it does not
 diagnose a defect in the native DLL. Review the bounded log before attributing
@@ -117,3 +118,77 @@ All source manifest entries independently match the local tested candidate.
 Remote run and build evidence remain in `/home/user/cmr3-registry-run-20261015`
 and `/home/user/cmr3-registry-build-20261015`. No game was launched, no complete
 registry was produced, and no retry was made after the acceptance failure.
+
+## WMVCORE export review and corrected per-DLL contract
+
+Root authorized a read-only transfer of the exact original DLL for local
+static analysis while Kkrieger owned runtime. No guest, build or remote
+mutation occurred. The 2,058,888-byte file matches historical SHA256
+`e79cace0a0c1495275b794cda6c96f0bada550cf2ce4bdf435cd59dc8f1f48d2`.
+`objdump -p` identifies ImageBase `0x08530000` and ordinal 7
+`DllRegisterServer`, RVA `0x76e7d`. Its runtime address in 73364 was
+`0x00899000 + 0x76e7d = 0x0090fe7d`, exactly the observed GetProcAddress
+result. This file exports no DllGetClassObject or DllUnregisterServer.
+
+Local disassembly of original VAs `0x085a6e7d` through `0x085a6fde` shows:
+
+1. GetModuleHandle for `wmvcore.dll`, then FindResource type `PRXFILE`, ID
+   200. LoadResource, LockResource and SizeofResource provide its bytes.
+2. GetSystemDirectory A/W through helper `0x0864716b`. The export searches
+   backward for the case-insensitive seven-character `\system` suffix,
+   terminates just after its leading slash, and appends `WMSysPr9.prx`
+   (wide string pointed to by global `0x086c7cec`). The current Win98 directory
+   helper returns `C:\WINDOWS\SYSTEM`, so the exact target is
+   `C:\WINDOWS\WMSysPr9.prx`.
+3. SetFileAttributes NORMAL, CreateFile A/W through helper `0x08547e3b`
+   with access `0xc0000000`, share 1, creation disposition 2 (CREATE_ALWAYS),
+   attributes `0x80`, then WriteFile of the resource size and CloseHandle.
+   Missing resource/module/path/file or false WriteFile yields E_FAIL.
+   The export does not compare bytes-written with the requested length,
+   so the external exact-file check is necessary even after S_OK.
+4. No RegCreateKey/RegSetValue/COM-registration call occurs on this export's
+   paths. Those imports elsewhere in WMVCORE do not establish a registration
+   effect. Its lack of an own InprocServer32 entry is legitimate.
+
+The PE resource directory identifies `PRXFILE/200/1033` at RVA `0x1a3460`,
+316,640 bytes, SHA256
+`95f1edbc3cb9aa70a374a61b43bd16818636b0190aa841504130bb718c39c2c7`.
+It is a UTF-16 profile document beginning with `<PRX>`. Static evidence
+(exact DLL, PE dump, full export/helper disassembly, extracted resource and
+identity manifest) is retained under the failed run's `static-review/`.
+Reproduce the export listing with `objdump -p WMVCORE.DLL` and its body with
+`objdump -d --start-address=0x085a6e7d --stop-address=0x085a6fdf WMVCORE.DLL`.
+
+Historical source evidence is consistent but weaker: retained session
+`01a1373b-0a03-7af0-8752-f2ddc42f7ace`, event 3322, prints the original
+`register-wmp9.js`. It chained registry snapshots and checked host status
+and export existence; it did not require a WMVCORE class or preserve VFS
+output. The old aggregate 677→770 key count describes the four-DLL group,
+not WMVCORE's individual effect. It does not justify synthesizing keys.
+
+The source recipe now treats only WMVCORE specially: require observed S_OK,
+guest exit zero, no failure diagnostic, an unchanged imported registry, and
+exactly one freshly exported `.prx` file at `windows/wmsyspr9.prx` with the
+resource size/hash above. All other DLLs retain their native InprocServer32
+checks. `test/run.js` invokes `saveVfsToHost` after guest execution; resident
+created files are exported. `lib/vfs-export.js` strips `c:\` and converts
+backslashes to host separators. The `.prx` suffix filter captures duplicates
+at other paths too; no prefix filter hides them. The source tests exercise
+the production exporter and reject missing/wrong/duplicate outputs.
+
+The WMVCORE input VFS initially contains only the authenticated native files
+and regsvr32, with no seeded profile. After validation, COPYFILE_EXCL copies
+the actual guest-produced file into the owned staging VFS at
+`registration/windows/wmsyspr9.prx`, preserving it for every subsequent
+registration process. Postflight verifies that staged copy. Any eventual
+game launch must explicitly mount this retained file at its Windows path
+along with the new registry; the original 302-file game tree stays unchanged.
+The extracted static resource is used only as a comparison identity, never
+as a registration input or substitute generated output.
+
+Six focused tests pass, including downstream DLL contract retention and
+missing/wrong/duplicate file rejection. An additional offline roundtrip
+through the production exporter with the authenticated extracted resource
+passes (synthetic trace, not a guest result). No retry has run. Failed73364
+remains an inconclusive file-effect run because it did not request VFS export;
+its S_OK/exit and unchanged registry are not retroactively a complete pass.
