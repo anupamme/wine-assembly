@@ -124,3 +124,18 @@ This recovers original source files, not the previously captured 67-file
 launcher handoff. No avp2cmds.txt was synthesized and no launcher was run.
 Automating the recipe and validating the real launcher-generated command file
 remain open; this extraction does not establish current-main gameplay.
+
+### Generic recovery recipe preparation (2026-10-15)
+
+The task-branch recipe now pins the original ISO above, extracts its
+`avp2spdemo.exe`, unpacks `Disk1/data1.cab`, and copies only the original
+`AVP2 Demo Files` group into `game/`. It does not manufacture `avp2cmds.txt`.
+`node tools/verify-avp2-recovery.js PATH_TO_GAME` checks all 18 original
+file sizes and SHA256 values, failing on missing files or mismatches.
+
+The verifier passed against the retained independently recovered payload.
+Static manifest audit passes. Full generic acquisition/extraction on the
+separate test box is still pending; this preparation is not a fresh recovery
+receipt or gameplay validation. Keep this recipe on its task branch until
+that execution passes. Original launcher execution and its generated command
+file remain a separate runtime step after recovery.
