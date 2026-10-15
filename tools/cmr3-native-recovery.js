@@ -32,8 +32,16 @@ function selectExact(root, pin) {
   if (!matching.length) throw Error('No exact native identity for ' + pin.path + '; candidates: ' + candidates.join(', '));
   return matching[0];
 }
-function recover(root, seeds) {
+function selectDirectOrCabinet(root, pin, extract) {
+  const files = walk(root);
+  if (files.some(p => path.basename(p).toLowerCase() === pin.path.toLowerCase())) return selectExact(root, pin);
+  const cabinets = files.filter(p => path.basename(p).toLowerCase() === 'directx.cab');
+  assert.equal(cabinets.length, 1, 'Expected one original DirectX.cab or direct native payload');
+  return selectExact(extract(cabinets[0]), pin);
+}
+function recover(root, seeds, sourceCache) {
   if (![root, seeds].every(p => path.isAbsolute(p || ''))) throw Error('Usage: cmr3-native-recovery.js ABSOLUTE_FRESH_OUTPUT ABSOLUTE_SEED_DIRECTORY');
+  if (sourceCache && !path.isAbsolute(sourceCache)) throw Error('Source cache must be absolute');
   requireCapacity(path.dirname(root), BUDGET);
   fs.mkdirSync(root);
   const startedAt = new Date().toISOString(), deadline = Date.now() + 570000;
@@ -64,6 +72,13 @@ function recover(root, seeds) {
     function acquire(pkg, name) {
       requireCapacity(root, BUDGET);
       const target = path.join(sources, name), partial = target + '.part';
+      if (sourceCache) {
+        const cached = path.join(sourceCache, name);
+        verifyIdentity(cached, pkg);
+        fs.copyFileSync(cached, target, fs.constants.COPYFILE_EXCL); verifyIdentity(target, pkg);
+        save(name + '-source.json', { url: pkg.url, recoveredFrom: cached, bytes: fs.statSync(target).size, sha256: digest(target), sha1: digest(target, 'sha1') });
+        return target;
+      }
       const seconds = Math.max(1, Math.min(300, Math.floor((deadline - Date.now() - 5000) / 1000)));
       run('fetch-' + name, 'curl', ['--fail', '--location', '--max-time', String(seconds), '--max-filesize', String(pkg.bytes),
         '--dump-header', path.join(sources, name + '.headers'), '--output', partial, pkg.url], seconds * 1000 + 3000);
@@ -95,11 +110,8 @@ function recover(root, seeds) {
     assert.equal(dxExes.length, 1, 'Expected one listed DirectX installer');
     assert.equal(fs.statSync(dxExes[0]).size, dx.listedMemberBytes);
     const dxRoot = extract(dxExes[0], 'dx81');
-    const dxCab = walk(dxRoot).filter(p => path.basename(p).toLowerCase() === 'directx.cab');
-    assert.equal(dxCab.length, 1, 'Expected one original DirectX.cab');
-    const dxFiles = extract(dxCab[0], 'dx81-files');
     const qedit = expected.find(p => p.path === 'qedit.dll');
-    copy(selectExact(dxFiles, qedit), qedit, 'candidate dx81.zip/DX81eng.exe/DirectX.cab; exact native hash required');
+    copy(selectDirectOrCabinet(dxRoot, qedit, cab => extract(cab, 'dx81-files')), qedit, 'dx81.zip/DX81eng.exe direct or cabinet payload; exact native hash required');
     assert.equal(walk(native).length, 12);
     for (const pin of expected) verifyIdentity(path.join(native, pin.path), pin);
     save('native-inventory.json', provenance);
@@ -109,5 +121,5 @@ function recover(root, seeds) {
     save('failure.json', { startedAt, finishedAt: new Date().toISOString(), error: String(e.stack || e) }); throw e;
   }
 }
-if (require.main === module) { try { recover(process.argv[2], process.argv[3]); } catch (e) { console.error(e); process.exitCode = 1; } }
-module.exports = { digest, verifyIdentity, selectExact, recover };
+if (require.main === module) { try { recover(process.argv[2], process.argv[3], process.argv[4]); } catch (e) { console.error(e); process.exitCode = 1; } }
+module.exports = { digest, verifyIdentity, selectExact, selectDirectOrCabinet, recover };
