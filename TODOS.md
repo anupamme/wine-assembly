@@ -1621,9 +1621,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (source pinned; acquisition preparation)
-  owner: /root/army_men_original_acquisition
-  Next: Verify original18373265-byte archive and inner executable/readme/licence via bounded acquisition on sole remote lane after Outlaws release. No binary downloaded or original executable run yet. docs/re-notes/army-men-demo.md records source and recovery pins.
+  status: active (original package verified; ordinary setup preparation)
+  owner: /root/army_men_original_setup
+  Next: Original July1998 demo package187files verified and recovery merged3ba03948d. Fresh setup worker prepares original InstallShield firststartup; no installer/game execution or licence answer yet. Runtime queued after Outlaws cleanrelease.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
 
 - [ ] Retain Worker ownership until retirement and termination complete
