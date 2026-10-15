@@ -9,6 +9,7 @@ valid[0]=0;assert.equal(result.bytes[0],0x4d,'private immutable input copy');
 for(const edit of [b=>b.writeUInt32LE(0xffffffff,0x3c),b=>b.writeUInt16LE(0xffff,0x80+0x22),
  b=>b.writeUInt16LE(0xffff,0x80+4),b=>b.writeUInt16LE(40,0x80+0x32),
  b=>b.writeUInt16LE(3,0x80+14),b=>b.writeUInt16LE(2,0x80+0x16),
+ b=>b.writeUInt16LE(0x400,0x80+0x3e),b=>b.writeUInt16LE(0x8000,0x80+12),
  b=>b.writeUInt16LE(0x8002,0x80+12),b=>b.writeUInt16LE(8,0x80+0x44),
  b=>b.writeUInt16LE(1,0x80+0x46),b=>b[0x80+0x61]=9]) {
  const bad=neLifecycleImage();edit(bad);assert.throws(()=>inspectNeDll(bad));
