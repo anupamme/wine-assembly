@@ -30,12 +30,13 @@ globalThis.runPaletteGpu = async function (version) {
   // Production surface creation emits this diagnostic-only, void import.
   // Preserve its arguments as evidence; all behavioral imports remain strict.
   imports.host.dx_trace = (...args) => diagnostics.push(args);
-  let gpu, gpuRouteEnabled=true;
+  let gpu, gpuRouteEnabled=true, softwareDrawProbes=0;
   imports.host.gpu_gl_call = (op, p) => {
     if(!gpuRouteEnabled){
-      // No endpoint: readiness/fence decline. Any actual GPU operation is a
-      // fixture failure, not a hidden fallback to the software oracle.
-      check(op===0x20002||op===0x20001,'unexpected GPU operation in software phase');
+      // Nonindexed Worker routing probes DRAW directly: return0 selects the
+      // software rasterizer (d3dim_worker_try_draw). Never invoke the executor.
+      check(op===0x20000||op===0x20002||op===0x20001,'unexpected GPU operation in software phase');
+      if(op===0x20000)softwareDrawProbes++;
       return 0;
     }
     check(gpu, 'GPU host call before executor initialization');
@@ -113,9 +114,13 @@ globalThis.runPaletteGpu = async function (version) {
       float(p+24,uv ? uv[0] : u); float(p+28,uv ? uv[1] : v);
     });
     const before = gpu.stats.drawCalls;
+    const probesBefore=softwareDrawProbes;
     e.pa_draw(device,4,3,vertices,6);
     if (expectGpu) check(gpu.stats.drawCalls > before, 'draw must use actual GPU, no software fallback');
-    else eq(gpu.stats.drawCalls,before,'software draw must not use GPU');
+    else {
+      eq(softwareDrawProbes,probesBefore+1,'software draw declined exactly one Worker probe');
+      eq(gpu.stats.drawCalls,before,'software draw must not use GPU');
+    }
   };
   const read = () => {
     gpu.fence();
@@ -289,5 +294,6 @@ globalThis.runPaletteGpu = async function (version) {
   try { draw(.5,0xffffffff,[.125,.5],false); }
   catch (error) { softwareUnresolved=error instanceof WebAssembly.RuntimeError; }
   check(softwareUnresolved,'actual software draw of explicit alpha palette/key combination traps');
+  result.softwareDrawProbes=softwareDrawProbes;
   return result;
 };

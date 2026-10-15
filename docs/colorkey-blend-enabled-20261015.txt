@@ -187,3 +187,14 @@ stale RGB, independently of DIB X normalization.
 Original failures are retained in /home/user/colorkey-runtime-evidence-run1
 on bx_erf37bxf (gpu.json/log, worker.json/log and per-command exit records).
 These corrections change only test helpers; candidate reruns are pending.
+
+Follow-up d582f0da5 execution: actual Worker PASS in both lazySync modes,
+including the corrected DIB checks, held snapshots, discriminating cache
+transition, and three depth cases. Canonical build/four CPU suites PASS.
+The strict software host guard exposed that nonindexed routing probes DRAW
+directly, not READY: core d3dim_worker_try_draw documents return0 as selecting
+the synchronous rasterizer. The helper now declines this exact probe without
+invoking the GPU executor, counts it, and asserts exactly one declined probe
+per successful software draw alongside unchanged GPU draw count and exact
+pixels. Other GPU operation types still fail. Initial and follow-up failures
+remain retained; this refined fixture still needs execution.
