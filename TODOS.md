@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (full native NE lifecycle validation queued)
+  status: active (original NE initializer trap diagnosis)
   owner: /root/outlaws_kernel_module
-  Next: Actual NE runner merged6789c835e with native d618/all9 arms passed. Host lifecycle, dependency references, active-call pins and strict NE image staging now tested in tiny actual loader suites. Reviewed934109 native packet queued after FIFA independent release: normal build, full-module lifecycle and unchanged original PMPRO62 load/init/lookup/unload. Original Outlaws/QT and broader guest-created resource ownership remain unproved.
+  Next: Native332007 exact934109/module497bc: canonical build, driver, invocation, context, image, tiny lifecycle and full native synthetic lifecycle passed; original unchanged PMPRO62 initializer trapped unreachable. Four later arms unrun. Lifecycle source remains unmerged; preserve failure and diagnose retained native map/source before retry. Original gameplay/QT and guest-created resource ownership unproved.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1654,12 +1654,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (original keyboard assignment capture)
+  status: active (keyboard assigned; match readiness follow-up queued)
   owner: /root/new_game_refill_after_lords
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Read-only capture307000 verified two original records reach blank Controller Select slots; merged6515ebfbb. Original executable activation handler requires horizontal keyboard input, absent from prior mouse/Enter route. Reviewed e9f controller now runs bounded ArrowLeft/ordinary visible continuation as sole PID323637 on bx_9ef2wdsw; gameplay/touch still unproved.
+  Next: Original ArrowLeft assigned keyboard England Config.1 in323637; root reviewed screenshots, raw assigned count0→1 and archiveabcaed. Enter delivered but stayed Controller Select. Result merged47b987f7b; source-backed S action readiness route3399 tested and merged13a22cf91, queued after Darkstone software comparison. Actual match control/touch unproved.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
