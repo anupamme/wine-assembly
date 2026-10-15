@@ -16,7 +16,7 @@ if (!fs.existsSync(CHROME) || !fs.existsSync(path.join(ROOT, require('../lib/app
   process.exit(0);
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const timeout = 480000;
+const timeout = 240000;
 const metrics = {};
 let dumpId = 0;
 function fileText(page, suffix) {
