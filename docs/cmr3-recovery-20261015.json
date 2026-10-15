@@ -81,7 +81,7 @@
     "verification": "Require exactly126663356 bytes and SHA256 d1dff3e9e718859c6a127b7efcbd85189198ff823f504db2470dbdeacd183ec0 before rename or extraction. Failed/partial transfer is not accepted."
   },
   "remainingGates": [
-    "Acquire exact12 native DLL/AX bytes matching recovered historical hashes and authenticated provenance",
+    "Exact12 native DLL/AX bytes recovered; see docs/cmr3-native-recovery-result-20261015.json and preserve sources before remote expiry",
     "Recover hash-matching registry/controller or reproduce native registration from authenticated packages with new evidence",
     "Add tested corpus recipe only after actual recovery; no executable recipe or manifest asserted here",
     "Fresh runtime grant for software D3D9 programmable Worker; menu progression and racing remain unqualified"
