@@ -442,3 +442,31 @@ transferred remote artifacts; every local file hash was verified with a 2 GiB
 free-space floor. `investigation.json` records reviewed screenshot paths and
 limits. No corpus candidate ID exists, so no dashboard result was attached
 to an unrelated game. The shared HEAD/index and production files were untouched.
+
+## Original-source recovery research (15 October)
+
+The original upstream is recorded in `test/binaries/SOURCES.md`: Internet
+Archive item `win-98-games-a-d.-7z`, archive `Win98_Games-A-D.7z`.
+Its current metadata matches the historical 7,169,873,753-byte archive and
+SHA-1 `c53417bcc617790d9671ec385c49ee6f018846c9`. The archive viewer lists
+the exact `ColinMcRay-Rally3-pcdemo-D3D.exe` member at 126,663,356 bytes.
+The [single-member URL](https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/ColinMcRay-Rally3-pcdemo-D3D.exe)
+returned HEAD 200 on 15 October, so a remote recovery can try this member
+without downloading the entire archive. No payload was fetched during this
+research: matching the recorded SHA-256 remains mandatory before extraction.
+
+`docs/cmr3-recovery-20261015.json` preserves the source links, historical
+half-open carve ranges, EXE identity, and outstanding recovery gates. These
+ranges come from the earlier extraction notes, not fresh byte inspection.
+Keep both named cabinet volumes; the separate EXE occupies 1,556,480 bytes
+starting at 119,757,306. Do not confuse the 333 CAB records with the later
+302-file mounted original tree: the latter excludes 32 installer resources
+and includes the separate EXE. The exact exclusion list is still missing.
+
+The startup INSTALL_PATH/CD_PATH values alone cannot recreate the later
+saved registry, native media registrations, or twelve-file DLL/AX set.
+Recover their receipts/snapshot or reproduce the authentic registration
+sequence with new evidence before claiming equivalent launch preparation.
+No installer, mapping, registry, app registration, or runtime was fabricated.
+The separate IA `cmr3-pc-demo.7z` item contains a 126,895,173-byte installer
+and an upgrade; it is not a verified replacement for this tested original.
