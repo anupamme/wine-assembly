@@ -318,3 +318,57 @@ then use `HttpRangeProvider.open('/SilverDemo.zip')` and
 root:'D:/SILVER/'})` in the recovered route's `beforeRun` hook. Preserve
 D-drive CD-ROM semantics. This is fixture readiness only: no new browser,
 build, game, input comparison, or player-control result has been produced.
+
+## Bounded idle/input attempt, 2026-10-15
+
+Evidence: `scratch/runs/20261015-silver-idle-input`. Both authorized300s
+sessions used source9449e6c0d, identical fingerprint
+`dc29bc7dc19724ea78671352de90649b6e6dbc1adaf9339c5850de733d16d50a`,
+Chrome151.0.7922.108 headless1000x800, Software backend and isolated guest
+main Worker. Both actual browser module responses matched70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655.
+Pre/postflight941source and3147original fixture hashes passed. No guest file,
+clock, save or runtime state was patched.
+
+Idle131122 ran00:15:17.793–00:20:28.992Z; input134433 ran00:21:11.543–00:26:14.916Z.
+Both controllers closed at their300s deadlines and supervisors exited0 with
+no survivors, postflightPassed:true and errors:[]. The deadline includes
+launch, original media mounting, image review and cinematic progression;
+supervisor completion includes cleanup. Each run executed only the same
+reviewed relative(0,+112) Start positioning and one-second normal left hold.
+Held snapshots record hostMouseButtons:1 and later release0. This proves
+host delivery, not actual guest input consumption by itself. Actual menu
+departure and natural dock progression were visually reviewed.
+
+Idle naturally reached the house by00:19:55.351Z. The world marker was
+processed00:20:07.162Z; idle0/2/5/10-second captures were retained, but no20s
+capture fits the deadline. They show David beside Granddad while the portrait
+disappears, without world input. Control readiness remains unproven. A brief
+read-only attachment to the same browser during startup used
+defaultViewport:null, preserved1000x800, saved passive-observation.json and
+disconnected; it showed the apparent DLL-loading pause had progressed.
+
+The second run reached the house by00:25:28.062Z; house-ready-check at
+00:25:54.468Z shows the portrait gone. Its camera/character placement has a
+small offset from the idle image, so do not claim exact scene alignment.
+Crucially, controller shutdown was00:26:12.877Z. The attempted mark-world
+request8 and relative ground request9 were written only at00:26:21.118Z and
+00:26:21.590Z, after shutdown. They are retained with timestamps in
+input/late-unexecuted-requests.json; executed commands.json ends at7. Neither
+world request executed, no ground hold was sent, and no movement response
+was tested. A missing after-command-9 capture is therefore expected. This is
+an incomplete comparison due to the observation/input window, not evidence
+of rejected game input or a game bug.
+
+The runtime slot was released after terminal cleanup confirmation; no restart
+or extension was attempted. The two complete artifact inventories comprise
+61idle files/8771557bytes and48input files/5942831bytes, independently
+byte/SHA256-verified on transfer. Representative reviewed images are
+idle/pointer-settled.png, idle/idle-10s.png, input/house-ready-check.png and
+input/final.png. No gameplay qualification results from this attempt.
+
+Next execution needs a separately coordinated budget with enough time after
+natural house arrival for image review, a settled pointer capture, a normal
+hold and matched observations. Base that budget on the measured startup/
+cinematic times above; preserve an explicit hard wall-clock limit. Do not
+silently convert the two late request files into completed input evidence,
+force readiness or call the stationary pictures proof that control works.
