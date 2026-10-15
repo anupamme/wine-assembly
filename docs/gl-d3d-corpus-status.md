@@ -1,6 +1,6 @@
 # OpenGL / Direct3D corpus status, reconciled 2026-10-15
 
-## October 15 current integration status (12:20 UTC)
+## October 15 current integration status (12:55 UTC)
 
 This section supersedes the earlier same-day startup and unmerged-palette
 statuses below; those sections remain dated evidence.
@@ -22,11 +22,15 @@ statuses below; those sections remain dated evidence.
   sparse presentation observations are not logical FPS. Its next capture uses
   [accepted input and update observations](kkrieger-input-progress-20261015.md)
   plus visual review; counters alone cannot qualify player control.
-- CMR3's original registered demo reaches its main menu. Selecting Stages
-  encounters unsupported software LINELIST drawing (primitive 2, count 12).
-  [The retained replay](cmr3-registered-gameplay-20261015.md) supersedes the
-  older DLL-unload startup blocker. A line implementation is being tested on
-  its task branch; it is not merged or a successful race capture.
+- CMR3's software LINELIST implementation is merged in `78a06540f` after
+  canonical build, native raster suites and three failing negative controls.
+  The [original-game replay](cmr3-lines-gameplay-20261015.md) now passes Stages,
+  player/car/transmission/country selection and reaches the UK Warwick stage
+  loading map. Rendering then reports `invalid native free list` after batch
+  2402. The exact damaged node has not been captured; allocator diagnosis is
+  active. Neither driving nor a software/WebGL gameplay pair is qualified.
+  [Line conformance evidence](cmr3-software-line-lists-20261015.md) establishes
+  the bounded raster fix, not the remaining game's correctness.
 
 The original 27-app membership evidence and per-game software/WebGL gameplay
 coverage remain incomplete. None of these focused tests closes that goal.
