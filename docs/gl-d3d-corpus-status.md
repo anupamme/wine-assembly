@@ -1,5 +1,36 @@
 # OpenGL / Direct3D corpus status, reconciled 2026-10-15
 
+## October 15 current integration status (12:20 UTC)
+
+This section supersedes the earlier same-day startup and unmerged-palette
+statuses below; those sections remain dated evidence.
+
+- Palette candidate `6b269258560cb24c4370d0cd270d95c2eed7a00b` is now an
+  ancestor of main. Its canonical build, sixteen CPU suites, actual WebGL1/2
+  observations and both Worker synchronization modes passed. See
+  [the exact validation receipt](palette-combined-validation-20261015.txt).
+  Default/FALSE filtered-key semantics remain a separate contract question;
+  the explicit TRUE-state tests do not settle that question.
+- Fixed-function stencil/diffuse handling is merged through `9eb485acb`.
+  Actual WebGL1 and WebGL2 each passed 77 observations. Removing the
+  missing-texture guard caused six RGB/linkage failures, establishing that
+  the oracle detects that regression. See
+  [the actual GPU result](iw-render-gpu-result-20261015.json). This validates
+  renderer behavior, not Invisible War gameplay or its held transport changes.
+- Original .kkrieger now reaches a first-person level through ordinary Enter
+  on canonical source `dc0611212`. Matched movement captures are inconclusive;
+  sparse presentation observations are not logical FPS. Its next capture uses
+  [accepted input and update observations](kkrieger-input-progress-20261015.md)
+  plus visual review; counters alone cannot qualify player control.
+- CMR3's original registered demo reaches its main menu. Selecting Stages
+  encounters unsupported software LINELIST drawing (primitive 2, count 12).
+  [The retained replay](cmr3-registered-gameplay-20261015.md) supersedes the
+  older DLL-unload startup blocker. A line implementation is being tested on
+  its task branch; it is not merged or a successful race capture.
+
+The original 27-app membership evidence and per-game software/WebGL gameplay
+coverage remain incomplete. None of these focused tests closes that goal.
+
 ## October 15 source-only next-validation reconciliation
 
 Against `73f27af1b`, Age of Wonders II's viewport repairs `9a438f1b9` /
