@@ -81,10 +81,15 @@ async function main() {
     });
     const shot = async label => {
       await page.screenshot({path: path.join(out, label + '.png')});
-      const state = await page.evaluate(() => ({at: new Date().toISOString(),
+      const state = await page.evaluate(() => {
+        const e = window.wineShell?.currentWine?.instance?.exports;
+        return {at: new Date().toISOString(),
         viewport: {width: innerWidth, height: innerHeight},
         active: {tag: document.activeElement?.tagName, id: document.activeElement?.id},
-        probe: window.__kkriegerMenuProbe}));
+        focus: e?.get_focus_hwnd ? e.get_focus_hwnd() >>> 0 : null,
+        mainHwnd: e?.get_main_hwnd ? e.get_main_hwnd() >>> 0 : null,
+        probe: window.__kkriegerMenuProbe};
+      });
       fs.writeFileSync(path.join(out, label + '.json'), JSON.stringify(state));
     };
     const key = async name => {
