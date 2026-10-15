@@ -78,12 +78,14 @@ globalThis.runPaletteWorker=async function(){
     const observe=(label,expected)=>{const actual=pixel();eq(actual,expected,label);evidence.observations.push({label,actual});};
     const barrier=async(label,mutation,expected)=>{
       await clear();const before=new Uint8Array(memory.buffer,palData,1024).slice();
+      const ownership=new Uint8Array(memory.buffer,alphaSlot,32).slice();
       const record={label,messages:[]};evidence.barriers.push(record);holding=true;
       await draw();await until(()=>held.length>0,'held draw');
       let settled=false;const result=mutation().then(v=>{settled=true;return v;});
       await until(()=>record.messages.includes('legacy-fence'),'actual producer fence');
       check(!settled,'mutation cannot return before drain');
       eq(Array.from(new Uint8Array(memory.buffer,palData,1024)),Array.from(before),'palette unchanged before drain');
+      eq(Array.from(new Uint8Array(memory.buffer,alphaSlot,32)),Array.from(ownership),'ownership unchanged before drain');
       record.blockedBeforeDrain=true;holding=false;for(const send of held.splice(0))send();
       const value=await result;record.value=value;observe(label+' old generation',expected);return value;
     };
@@ -96,6 +98,7 @@ globalThis.runPaletteWorker=async function(){
     eq(await barrier('final detach',()=>call('pa_attach',texture,0),[32,64,96]),0,'detach');
     eq(await raw('pw_type',alpha),0,'attachment final release retires palette');
     await clear();await draw();await raw('pw_fence');observe('detached grayscale',[7,7,7]);
+    await write(entries+7*4,packed(128));
     const replacement=await palette(4);
     eq((await raw('pa_entry',replacement))>>>0,alphaSlot,'natural retired slot reuse');
     eq(await raw('pw_refs',replacement),1,'new slot ownership');
@@ -104,7 +107,7 @@ globalThis.runPaletteWorker=async function(){
     eq(await call('pw_release',replacement),1,'replacement attachment ownership');
     eq(await call('pa_attach',texture,0),0,'replacement final detach');
     eq(await raw('pw_type',replacement),0,'replacement retired');
-    await until(()=>lastStats,'GPU stats');evidence.stats=lastStats;
+    await until(()=>lastStats?.stats.drawCalls>=6,'all GPU draw stats');evidence.stats=lastStats;
     check(lastStats.stats.drawCalls>=6,'actual GPU draws');
     eq(lastStats.stats.fallbacks,0,'no renderer fallback');
     eq(lastStats.stats.textureByteChecks,0,'actual page leases, no byte shadow');
