@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const {execFileSync} = require('node:child_process');
+const {containedModule, preflightDelivery, verifyDelivery, installPageDeliveryGuard} = require('./kkrieger-canonical-delivery');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 
@@ -50,6 +51,7 @@ async function main() {
   if (git('status', '--porcelain', '--untracked-files=no')) throw Error('Tracked checkout must be clean');
   const moduleHash = sha(fs.readFileSync(path.join(root, 'build/wine-assembly.wasm')));
   if (moduleHash !== process.env.WA_EXPECT_WASM_SHA256) throw Error('Canonical module pin mismatch');
+  containedModule(root, moduleHash);
   const {APPS} = require(path.join(root, 'lib/apps'));
   const app = APPS.kkrieger_beta;
   if (!app?.bigMemory || !app.requiredFiles) throw Error('Original registered memory route missing');
@@ -59,6 +61,7 @@ async function main() {
     'scene.org.txt': '0fd9764f56d835e0f3dd6209737bce241881902e6aa3ead91f2d02ad9d34b1c0',
   };
   const checkPins = () => {
+    containedModule(root, moduleHash);
     if (git('rev-parse', 'HEAD') !== head || git('status', '--porcelain', '--untracked-files=no') ||
         sha(fs.readFileSync(path.join(root, 'build/wine-assembly.wasm'))) !== moduleHash)
       throw Error('Source/module changed');
@@ -79,6 +82,8 @@ async function main() {
   const {startStaticServer, closeServer} = require(path.join(root, 'test/static-server'));
   const puppeteer = require(path.join(root, 'node_modules/puppeteer'));
   let browser, server, page;
+  const loadedModules = [], moduleReads = [];
+  let deliveryFailure;
   // Absolute owner bound includes launch, input, screenshots and shutdown.
   const watchdog = setTimeout(() => {
     try { event('hard-deadline'); } finally { browser?.process()?.kill('SIGKILL'); process.exit(124); }
@@ -86,24 +91,46 @@ async function main() {
   const admit = ms => { if (Date.now() + ms > deadline - 30000) throw Error('Insufficient owner time'); };
   try {
     server = await startStaticServer({root});
+    const origin = 'http://127.0.0.1:' + server.address().port;
+    meta.deliveryPreflight = await preflightDelivery(root, origin + '/build/wine-assembly.wasm', moduleHash);
+    write('delivery-preflight', meta.deliveryPreflight);
     browser = await puppeteer.launch({executablePath: '/usr/bin/google-chrome', headless: true,
       args: ['--no-sandbox', '--enable-unsafe-swiftshader'], protocolTimeout: 5000});
     meta.browser = await browser.version();
     write('browser-endpoint', {wsEndpoint: browser.wsEndpoint(), deadline: meta.deadline});
     page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setBypassServiceWorker(true);
+    await page.evaluateOnNewDocument(installPageDeliveryGuard, moduleHash);
     await page.setViewport({width: 1100, height: 800});
-    page.on('console', m => fs.appendFileSync(path.join(out, 'browser.log'), m.type() + ': ' + m.text() + '\n'));
-    page.on('pageerror', e => fs.appendFileSync(path.join(out, 'browser.log'), 'PAGEERROR: ' + e.message + '\n'));
-    const loadedModules = [];
-    const moduleReads = [];
-    page.on('response', response => {
-      if (/wine-assembly\.wasm(?:\?|$)/.test(response.url()))
-        moduleReads.push(response.buffer().then(bytes => loadedModules.push({url: response.url(), sha256: sha(bytes)}))
-          .catch(error => loadedModules.push({url: response.url(), error: String(error)})));
+    page.on('console', m => {
+      fs.appendFileSync(path.join(out, 'browser.log'), m.type() + ': ' + m.text() + '\n');
+      if (/compiling WAT sources/.test(m.text())) deliveryFailure = Error('Browser attempted WAT fallback');
     });
-    meta.route = 'http://127.0.0.1:' + server.address().port + '/?debug&perf&app=kkrieger_beta';
+    page.on('pageerror', e => fs.appendFileSync(path.join(out, 'browser.log'), 'PAGEERROR: ' + e.message + '\n'));
+    page.on('response', response => {
+      if (/wine-assembly(?:\.[^/?]+)?\.wasm(?:\?|$)/.test(response.url()))
+        moduleReads.push(response.buffer().then(bytes => loadedModules.push(verifyDelivery({url: response.url(),
+          status: response.status(), bytes}, moduleHash))).catch(error => {
+          deliveryFailure = error;
+          loadedModules.push({url: response.url(), status: response.status(), error: String(error)});
+        }));
+    });
+    meta.route = origin + '/?debug&perf&app=kkrieger_beta';
     await page.goto(meta.route, {waitUntil: 'domcontentloaded', timeout: 30000});
+    await page.waitForFunction(() => window.__kkriegerDelivery?.status !== 'pending', {timeout: 30000});
+    const assertDelivery = async () => {
+      await Promise.all(moduleReads);
+      const receipt = await page.evaluate(() => window.__kkriegerDelivery);
+      if (deliveryFailure) throw deliveryFailure;
+      if (receipt?.status !== 'verified' || receipt.sha256 !== moduleHash || !loadedModules.length)
+        throw Error('Browser canonical delivery unverified: ' + JSON.stringify(receipt));
+      return receipt;
+    };
+    meta.browserDelivery = await assertDelivery();
+    write('browser-delivery', meta.browserDelivery);
     const shot = async label => {
+      await assertDelivery();
       await page.screenshot({path: path.join(out, label + '.png')});
       const state = await page.evaluate(() => {
         const w = window.wineShell?.currentWine, e = w?.instance?.exports;
@@ -126,6 +153,7 @@ async function main() {
       write(label, state); return state;
     };
     const hold = async key => {
+      await assertDelivery();
       event('keydown', {key}); await page.keyboard.down(key);
       try { await delay(5000); } finally { await page.keyboard.up(key); event('keyup', {key}); }
     };
@@ -185,6 +213,8 @@ async function main() {
     if (!loadedModules.length || loadedModules.some(m => m.sha256 !== moduleHash)) throw Error('Loaded module identity unverified');
   } catch (error) { meta.error = error.stack; throw error; }
   finally {
+    await Promise.all(moduleReads);
+    write('loaded-modules', loadedModules);
     if (page) for (const key of ['Enter', 'w', 'a']) await page.keyboard.up(key).catch(() => {});
     if (page) await page.evaluate(() => window.__kkriegerGameplayRestore?.()).catch(() => {});
     if (browser) await browser.close().catch(error => { meta.closeError = String(error); browser.process()?.kill('SIGKILL'); });

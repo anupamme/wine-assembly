@@ -16,11 +16,37 @@ Movement, combat, audible audio and logical FPS remain unqualified.
 
 ## Runtime recipe, only after parent grant
 
+The next attempt must pin current main (at preparation, `e86bf1640`) and a fresh
+matching canonical build receipt: newer production GL changes invalidate reuse
+of the old `d463bdae` module as current-main evidence. Resolve the full commit at
+grant time. The saved box is stopped; this source change grants no box resume,
+build or runtime. Resume requires the authorized laptop path and root's runtime
+grant. Keep the previous partial evidence directory intact.
+
+After that grant, build the pinned checkout with `bash tools/build.sh`, retaining
+its complete receipt and source manifest. Use a real directory at
+`WA_TEST_ROOT/build` and a physically contained `wine-assembly.wasm`. If reusing
+a separately verified build of exactly the same source, copy only its canonical
+module into that real directory and retain the provenance receipt; do not link
+an external build directory or broaden the server's allowlist. Hash that new
+module for `WA_EXPECT_WASM_SHA256`; an old recipe hash is not a new build receipt.
+
 Retain preflight process list, full source hash manifest, clean tracked status,
 canonical build receipt, module SHA256 and three fixture pins. Minimum free
 disk2GiB. Verify the granted box has no surviving runtime before starting.
 Controller checks sourceHEAD/clean tracked status, module and all three fixtures
-before and after; it also hashes the actual loaded WASM response. Parent retains
+before and after. It checks real-path containment and fetches the module through
+the actual static server before launching Chrome or navigating the app route.
+Only HTTP200 with the pinned SHA256 passes. The fresh page bypasses caches and
+service workers; its fetch guard withholds module bytes from the host until the
+actual response is HTTP200, unredirected and matches the pin. Compatibility
+module substitution and WAT/WATX source fetches fail closed. The independent
+browser response hash and page guard must both pass before screenshots or input;
+guards are rechecked at each snapshot and key hold. A WAT-fallback console
+message also invalidates admission. `delivery-preflight.json`,
+`browser-delivery.json` and `loaded-modules.json` retain delivery receipts (the
+last is written on failure too). These checks consume the existing900s budget.
+Parent retains
 full source manifest pre/post as an additional guard against restored edits.
 
 ```sh
