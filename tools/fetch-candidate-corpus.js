@@ -682,7 +682,15 @@ function writeBrowserManifest(candidate, destination) {
   const metadataPath = path.join(destination, '.wine-assembly-file-metadata.json');
   const fileMetadata = fs.existsSync(metadataPath)
     ? JSON.parse(fs.readFileSync(metadataPath, 'utf8')) : {};
-  const files = walkBrowserFiles(fileRoot).sort((a, b) => a.localeCompare(b))
+  // These exact fixture-root sidecars belong to the host, not the guest.
+  // Exclude by full path so nested game files and other dotfiles survive.
+  const hostSidecars = new Set([
+    '.candidate-source.json', '.wine-assembly-browser.json',
+    '.wine-assembly-file-metadata.json',
+  ].map(name => path.join(destination, name)));
+  const files = walkBrowserFiles(fileRoot)
+    .filter(relative => !hostSidecars.has(path.join(fileRoot, relative)))
+    .sort((a, b) => a.localeCompare(b))
     .map(relative => {
       const fixtureRelative = path.join(browser.fileRoot, relative);
       const url = fixtureRelative.split(path.sep).join('/');
