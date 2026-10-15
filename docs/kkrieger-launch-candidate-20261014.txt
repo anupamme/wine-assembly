@@ -247,3 +247,22 @@ No failure log was overwritten. Remote /home/user/kkrieger-short-cpu retained.
 CPU slot released after postflight00:48:11.663Z with no browser/test processes
 reported. No browser was started. GPU signed-short pixels and original-game
 rerun remain pending coordinator grant; no game progress or readiness claim.
+
+Fresh authorized box GPU validation — 2026-10-15 09:13Z
+Source498aead6ee4921ac237d787fbcdd65d949f38bce, clean public task clone
+on bx_erf37bxf. Serialized test/test-d3d9-backend-web.js --webgl=1 and
+--webgl=2 both PASS (controller18263 terminal0). Each requested context
+matches its actual version; SHORT2 RGBA[0,255,0,255] and SHORT4
+RGBA[0,255,79,191] exactly match explicit FLOAT4 controls. GLerror0;
+indexed/textured probe, depth rejection, blending and bounds also pass.
+Chrome151.0.7922.108/Node24.18.1/Linuxx64. The installed Chrome wrapper
+forces SwiftShader: WebKit WebGL renderer text is not hardware evidence.
+
+Canonical build18987 passed every gate; module70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655.
+That driver's later corpus extraction failed because7z was absent; original
+failure retained. Installing p7zip-full then reusing the pinned corpus fetch
+and --prepare passed19570. All three original file hashes match prior runs.
+Compact numeric logs, environment/wrapper, canonical build, dependency and
+recovery logs retained at scratch/runs/20261015-kkrieger-short-gpu in the
+coordinator checkout. Original600s registered run21221 started09:14:52Z;
+its outcome is pending, and these conformance results do not prove gameplay.
