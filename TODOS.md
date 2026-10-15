@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
+  status: active (user resumed; two source lanes, saved runtime box awaiting resume)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger ordinary held Enter reaches first-person level; movement/audio/logical FPS remain unverified. /root/kkrieger_gameplay_capture owns sole bx_erf37bxf runtime grant for matched idle/W/A/look. CMR3 original302files/native12 recovered; four authentic registrations passed, WMVCORE S_OK with no registry delta halted sequence. /root/cmr3_registry_prepare reviews exact native export before retry. Renderer6b269258 merged after combined validation; saved box snapshot-stopped.
+  Next: Telegram85 supersedespause84. Kkrieger canonical delivery worker fixes pre-launch HTTP/hash guard after403/WATfallback; CMR3 worker prepares fresh currentmain build and corrected native registration. Saved bx_erf37bxf snapshot intact; scoped API denies sandbox.resume403, laptop resume requested. No runtime granted.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,13 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
+  status: active (resume; unresolved contracts retained)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/legacy_colorkey_contract_audit (source-only defaultFALSE filtered-key contract)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Main6b269258 passed exact combined canonical,16CPU,WebGL1/2 each42checks,actual Worker both22checks/25draws with unchanged cache9->9; durable evidence5f13fe17b. TRUE keyBlend mutation discrimination verified. Fresh source-only audit addresses defaultFALSE filtered-key semantics; original27 membership, alpha/key precedence, border addressing and legacyGPUstencil remain unresolved. Per-game dual-backend gameplay still required.
+  Next: Combinedrenderer validation6b remains historical scoped evidence; currentmain e86bf1640 adds GL readback changes. FALSE-filtering audit e11317579 does not resolve nativecontract; original27membership/alpha-key/border/stencil/per-game dualbackend qualification remain open. No speculative implementation.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1522,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
+  status: active (canonical delivery guard; movement still pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Main fc4901563 contains reviewed menu-input evidence: original60373 reaches first-person level/HUD after ordinary5sEnter, no guest patch;92artifacts verified, photo1382 delivered. /root/kkrieger_gameplay_capture source05d115 owns next bounded900s matched movement capture on main7aa74110e/module d463bdae. No movement/combat/audio/logical FPS qualification yet.
+  Next: /root/kkrieger_canonical_delivery fixes HTTP403/fallback acceptance before fresh gameplay capture. Prior ordinary Enter level evidence remains distinct; partial76858 intro is not canonical-module validation. Current main e86bf1640 requires fresh build; actual loaded hash must be verified before evidence/input.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
+  status: active (corrected registration ready; fresh currentmain build required)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: Authentic registration73364 on6dfbff842 stopped after devenum/quartz/qedit/QASF pass. WMVCORE returns S_OK/Exit0 but zero registry delta/no own InprocServer32; this is not yet a native defect. /root/cmr3_registry_prepare statically reviews exact export before any acceptance change/retry.40artifacts preserved in scratch/runs/20261015-cmr3-native-registration; postflight clean. Original registry remains unrecovered; no game/racing qualification.
+  Next: WMVCORE exact profile-effect verification merged5f43d41f5, tests pass; corrected guest retry unexecuted. /root/cmr3_registry_prepare updates run plan for currentmain e86bf1640 productionchanges; prior d463 module cannot qualify currentmain. Original302/native12/regsvr and prior evidence remain on stopped bx_erf37bxf.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
