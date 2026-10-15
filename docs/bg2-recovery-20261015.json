@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "Source acquisition only; assembly and 645-file byte comparison pending",
+  "scope": "Source acquisition, extraction and exact645-file assembly comparison complete; generic fetcher integration unexecuted",
   "sandbox": "bx_tgbme2h7",
   "remoteRoot": "/home/user/bg2-recovery-20261015",
   "acquisition": {
@@ -103,21 +103,33 @@
     "rewise": {
       "repository": "https://codeberg.org/CYBERDEV/REWise",
       "historicalRevision": "c3d3b68903a90ec53ff7b0a4ae704adc6302814b",
-      "available": false,
-      "inspection": "No matching path found under /home/user or /tmp to depth4"
+      "available": true,
+      "inspection": "Clone cmd_j0omiid7rzdp terminal0 at2026-10-15T00:33:16.099Z; detached exact historical revision; git status clean; no compilation/extraction",
+      "path": "/home/user/bg2-recovery-20261015/REWise",
+      "readmeSha256": "58384dc065b5cc90062d19a52bbdf7340f5d6b88da883148bcf7c242e969ae82",
+      "makefileSha256": "9eedf72e0d9d562d732c5e46366d5095dd6f47edf5eb9ef834def5c2770645b0"
     },
     "unshield": {
       "path": "/usr/bin/unshield",
       "packageVersion": "1.5.1-1",
       "libunshieldPackageVersion": "1.5.1-1",
       "sha256": "b3068676d8c931bb98ed339f696a28def9077ea7433939f651448da47c18a35a",
-      "executed": false
+      "executed": true
     }
   },
   "gaps": [
     "Historical W02-W07 hash receipt absent; acquisition measurements are fresh source pins",
     "Historical assembly script and audit absent",
-    "REWise build/invocation and exact installer destination mapping require reinspection",
-    "No assembly or byte comparison performed"
-  ]
+    "New generic corpus fetcher integration requires fresh end-to-end validation; individual real-media stages passed"
+  ],
+  "preparedController": {
+    "path": "tools/bg2-source-recovery.js",
+    "execution": "Pinned extraction145974 and assembly150474 terminal0; docs/bg2-extraction-20261015.json and docs/bg2-assembly-20261015.json contain fullreceipts",
+    "sourceInspectionCommands": [
+      "cmd_xcyucigcdtfo",
+      "cmd_nrugjcobm2vs"
+    ],
+    "assembly": "Inspected original metadata mapping passed all645file size/SHA256 comparisons without modifications",
+    "invocation": "timeout --signal=TERM --kill-after=10 1500 node tools/bg2-source-recovery.js extract /home/user/bg2-recovery-20261015 docs/bg2-recovery-20261015.json"
+  }
 }
