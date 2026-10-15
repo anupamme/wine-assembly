@@ -139,3 +139,29 @@ No new production behavior, Wasm build, browser or Worker execution occurred.
 The saved runtime host cannot currently resume (403 sandbox.resume); no
 alternate transport or host was attempted. GPU/Worker and browser-embedded
 software tests remain pending, and this branch is not merge/deploy ready.
+
+Independent Worker oracle review follow-up — 2026-10-15, NOT EXECUTED
+The first nine keyed observations did not by themselves prove cache identity:
+retaining a TRUE transparent-black decoded cache through FALSE still passes
+the legacy alpha cutoff, then passes TRUE again. The direct GPU fixture does
+separately assert a changed texture-cache serial. Worker now additionally
+primes FALSE after the unkeyed draw (forcing keyed-identity regeneration), then
+switches TRUE without changing palette/texture bytes. Deleting keyBlend from
+cache identity would retain colored RGB with alpha zero and fail the TRUE
+zero-RGBA assertion. Both new observations preserve the original nine.
+
+Three further Worker observations enable ZENABLE/ZWRITE and LESS, draw near
+keyed geometry followed by far untextured green geometry, and check RGBA:
+application GREATER0 rejection leaves depth unwritten; surviving transparent
+black writes depth; opaque diffuse stage alpha passes GREATER0 and writes
+depth. An erroneous rejected-fragment depth write hides the far green pixel;
+an erroneous surviving-fragment depth omission exposes it. Vertex and state
+updates use production exports/Encoder snapshots; depth is observed through
+occlusion, not a synthetic depth buffer. Every actual draw remains counted.
+
+Only JavaScript syntax and git diff checks validate this follow-up so far.
+After root grants the serialized runtime slot and the exact branch is built,
+the minimal new-fixture command from the recipe above is:
+PALETTE_WORKER_EVIDENCE=/tmp/colorkey-worker-evidence.json node test/test-d3dim-palette-worker-web.js
+Both lazySync modes and all assertions must pass. No runtime/build/browser was
+started by this source reviewer; the kkrieger worker owns bx_erf37bxf.

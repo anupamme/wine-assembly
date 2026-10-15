@@ -73,7 +73,7 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     for(const [id,v] of [[7,0],[14,0],[15,0],[22,1],[27,1],[19,5],[20,6],[28,0],[41,0]])await raw('pa_rs',device,id,v);
     for(const [id,v] of [[1,2],[2,2],[4,2],[5,2],[13,3],[14,3],[16,1],[17,1]])await raw('pa_tss',device,0,id,v);
     await raw('pa_tss',device,1,1,1);await raw('set_page_watch_audit',0);
-    const clear=async(color=0xff000000)=>eq(await raw('pa_clear',rtEntry,1,color,1,0,0,4,4,0),1,'real clear');
+    const clear=async(color=0xff000000,flags=1)=>eq(await raw('pa_clear',rtEntry,flags,color,1,0,0,4,4,0),1,'real clear');
     let drawCount=0;
     const draw=()=>{drawCount++;return raw('pa_draw',device,4,3,vertices,6);};
     const pixel=()=>{const b=new Uint8Array(memory.buffer,rtDib+20,4);return [b[2],b[1],b[0]];};
@@ -148,6 +148,12 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     await renderRGBA('Worker TRUE cache restore unchanged bytes',[zero,opaque,opaque]);
     await rs(41,0);
     await renderRGBA('Worker state144 alone does not key',[opaque,opaque,opaque]);
+    // Rebuild first in legacy mode: stale legacy RGB/zero-alpha must become
+    // visible if the subsequent TRUE transition omits keyBlend cache identity.
+    await rs(41,1);await rs(144,0);
+    await renderRGBA('Worker FALSE primes colored zero-alpha cache',[background,opaque,opaque]);
+    await rs(144,1);
+    await renderRGBA('Worker FALSE to TRUE replaces cached key RGB',[zero,opaque,opaque]);
     await rs(41,1);await rs(15,1);await rs(25,5);await rs(24,0);
     await renderRGBA('Worker application GREATER0 rejects zero alpha',[background,opaque,opaque]);
     await rs(15,0);await rs(27,1);
@@ -157,6 +163,26 @@ globalThis.runPaletteWorker=async function(lazySync=false){
     // must use stage output, while the keyed sample RGB remains zero.
     await raw('pa_tss',device,0,4,3);await raw('pa_tss',device,0,6,0);await rs(15,1);
     await renderRGBA('Worker opaque stage alpha passes application test',[[0,0,0,255],opaque,opaque]);
+    // The near keyed draw and far opaque draw use actual queued geometry.
+    // A discarded near fragment must leave depth untouched; a surviving zero
+    // alpha fragment (or opaque stage alpha) must occlude the far green draw.
+    const geometry=async(z,color)=>{
+      for(let i=0;i<6;i++){await float(vertices+i*32+8,z);await write(vertices+i*32+16,color);}
+    };
+    const depth=async(label,test,stageAlpha,expected)=>{
+      await raw('pa_bind',device,0,texture);await raw('pa_tss',device,0,4,stageAlpha);
+      await rs(15,test);await clear(0xff112233,3);
+      await geometry(.1,0xffffffff);await draw();
+      await rs(15,0);await raw('pa_bind',device,0,0);
+      await geometry(.5,0xff00ff00);await draw();await raw('pw_fence');
+      recordRGBA(label,expected);
+    };
+    await rs(7,1);await rs(14,1);await rs(23,2);
+    await depth('Worker rejected key leaves depth unwritten',1,2,[[0,255,0,255],opaque,opaque]);
+    await depth('Worker surviving zero alpha writes depth',0,2,[zero,opaque,opaque]);
+    await depth('Worker opaque stage alpha passes test and writes depth',1,3,[[0,0,0,255],opaque,opaque]);
+    await rs(7,0);await rs(14,0);await raw('pa_bind',device,0,texture);
+    await geometry(.5,0xffffffff);
     await rs(15,0);await raw('pa_tss',device,0,4,2);await rs(41,0);await rs(144,0);
     eq(await call('pw_release',replacement),1,'replacement attachment ownership');
     eq(await call('pa_attach',texture,0),0,'replacement final detach');
