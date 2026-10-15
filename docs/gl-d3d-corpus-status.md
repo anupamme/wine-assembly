@@ -32,6 +32,16 @@ statuses below; those sections remain dated evidence.
   [Line conformance evidence](cmr3-software-line-lists-20261015.md) establishes
   the bounded raster fix, not the remaining game's correctness.
 
+Invisible War callback transport remains on held task branches. The latest
+source-only checkpoint `e2d10ebb0` shares ancestor `4fde32fa2` with current
+main; its loader predates main's existing lock, generation pins and
+INITIALIZING/LIVE/FAILED lifecycle. Passing tiny-Wasm Worker/local tests on
+that branch does not establish compatibility with current production.
+The next step is to port its scoped callback operations onto main's existing
+lifecycle and rerun both protocol and native loader tests. A missing lock in
+the held branch is not evidence that main lacks one; do not replace current
+loader behavior with that older implementation.
+
 The original 27-app membership evidence and per-game software/WebGL gameplay
 coverage remain incomplete. None of these focused tests closes that goal.
 
