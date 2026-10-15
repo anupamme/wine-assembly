@@ -214,3 +214,31 @@ Durable receipt: docs/silver-remote-readiness-20261015.json. Self-contained
 small metadata, transfer receipts and preparation script are retained at
 scratch/runs/20261015-silver-remote-prep. Await an explicit coordinator runtime
 grant after the queued lanes, then use the exact staged configs above.
+
+Revised600s source staged, 2026-10-15 00:32 UTC (no runtime)
+
+The isolated remote checkout is now77e0380e3, transferred in a9018-byte
+incremental git bundle. This supersedes the earlier staging prerequisite;
+the old300s run artifacts/configs are preserved as historical evidence.
+Use only the NEW configs and fresh outputs for the next grant:
+  /home/user/silver-comparison-20261015/config-idle-600.json
+  /home/user/silver-comparison-20261015/config-input-600.json
+  /home/user/silver-comparison-20261015/runs/idle-600
+  /home/user/silver-comparison-20261015/runs/input-600
+The two outputs do not yet exist. No browser, build or guest was started.
+
+source-manifest-600.json contains941 entries independently matched against
+the local committed source. SHA256:
+0d3cbe8e51a7a3930145d5957714010bc9bb98b19785e22a20bb30915fd8d362.
+Controller SHA256:
+0f03844771718423fa8e69bfe90d5ea0264d4a5bb58f7afcdce256b738b3098c.
+All3147 original files, original ZIP and unchanged70c6 module were rehashed;
+all144 canonical build inputs still match. No game config/media was changed.
+Both new configs explicitly choose600s with60s world/25s ground reserves.
+Use --submit on the runtime host for every request; the process/deadline
+checks prevent the previous late-write ambiguity. Do not extend a live timer
+or reuse these output paths if the new comparison does not complete.
+
+Receipt: docs/silver-600-readiness-20261015.json. Small staging metadata and
+transfer hashes: scratch/runs/20261015-silver-600-prep. Runtime remains gated
+on a new coordinator grant after the current kkrieger lane releases.
