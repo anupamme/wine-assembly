@@ -1625,3 +1625,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/army_men_original_acquisition
   Next: Verify original18373265-byte archive and inner executable/readme/licence via bounded acquisition on sole remote lane after Outlaws release. No binary downloaded or original executable run yet. docs/re-notes/army-men-demo.md records source and recovery pins.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
+
+- [ ] Retain Worker ownership until retirement and termination complete
+  id: IW-RETIREMENT-SLOT-OWNERSHIP-20261015
+  status: active
+  owner: /root/iw_retirement_slot_fix
+  Next: Held4050bac dropThread deletes live retiring link; exited TID/stack can be reused before acknowledged retirement and termination. Fix host and scheduler ownership together; regression lost replies, pin cleanup failure, exact successful resource release. Source-only worker; native validation after review.
+
+- [ ] Resolve independent cross-process send deadlocks
+  id: IW-INDEPENDENT-SEND-ADMISSION-20261015
+  status: ready
+  owner: unowned
+  Next: Held process-send-broker PID-wide same-chain stack deadlocks independent A/B sends and blocks unrelated destination threads. Use exact destination thread and waiting frame ownership; turn both retained cycle reproductions into passing regressions without admitting same-frame siblings. Follow retirement fix before integration.
