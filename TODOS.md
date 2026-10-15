@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (kkrieger menu input; CMR3 registry preparation)
+  status: active (kkrieger level reached; CMR3 registration oracle review)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Kkrieger sound fix47249aff2 merged; original reaches animated3D menu, no player control. /root/kkrieger_menu_input prepares next ordinary-input diagnostic. CMR3 original302files and12exact nativeDLLs recovered; /root/cmr3_registry_prepare prepares real original registration. One runtime box bx_erf37bxf; palette56700 finished, renderer integration review independent.
+  Next: Kkrieger ordinary held Enter reaches first-person level; movement/audio/logical FPS remain unverified. /root/kkrieger_gameplay_capture owns sole bx_erf37bxf runtime grant for matched idle/W/A/look. CMR3 original302files/native12 recovered; four authentic registrations passed, WMVCORE S_OK with no registry delta halted sequence. /root/cmr3_registry_prepare reviews exact native export before retry. Renderer6b269258 merged after combined validation; saved box snapshot-stopped.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,12 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active (Worker cache regression discriminates; integration review pending)
+  status: active (combined palette renderer merged; remaining contracts and corpus gaps)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/legacy_colorkey_contract_audit (source-only defaultFALSE filtered-key contract)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Palette56700 exact2e4bd5f passes bothWorker modes22observations/25draws, unchangedcache9->9; deletingonlycached.keyBlend fails expectedpixel. Root124artifacts hashverified. /root/palette_final_review independently reviews full productiondelta before merge. Prior WebGL1/2 each42observations PASS; original27 membership/defaultFALSE/alpha-keyprecedence/legacy stencil remain open.
+  Next: Main6b269258 passed exact combined canonical,16CPU,WebGL1/2 each42checks,actual Worker both22checks/25draws with unchanged cache9->9; durable evidence5f13fe17b. TRUE keyBlend mutation discrimination verified. Fresh source-only audit addresses defaultFALSE filtered-key semantics; original27 membership, alpha/key precedence, border addressing and legacyGPUstencil remain unresolved. Per-game dual-backend gameplay still required.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1521,9 +1522,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (animated menu verified; ordinary-input level start unresolved)
+  status: active (ordinary-input level start verified; movement capture next)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Sound fix47249aff2 and evidence2d29f0b92 on main. Original46631 reached animated menu; root verified81artifacts and screenshot, Telegram1381 delivered. /root/kkrieger_menu_input owns next bounded input diagnostic, no guestpatch. hwnd0 log precedes routing, not proven bug; no gameplay qualification.
+  Next: Main fc4901563 contains reviewed menu-input evidence: original60373 reaches first-person level/HUD after ordinary5sEnter, no guest patch;92artifacts verified, photo1382 delivered. /root/kkrieger_gameplay_capture source05d115 owns next bounded900s matched movement capture on main7aa74110e/module d463bdae. No movement/combat/audio/logical FPS qualification yet.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1536,3 +1537,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: review (implementation merged; recovered-fixture progression pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Main83947f6a6 integrates real generation-aware unload/thread exit; canonical+6reader+17DLL+2DirectSound suites and negative controls recorded. Later57a148044/321e734aa also landed. Fresh current recovered CMR3 progression remains; no implementation or transport blocker, no race qualification.
+
+
+- [~] New-game lane: Colin McRae Rally 3 demo
+  id: NEW-GAME-CMR3-DEMO-20261010
+  status: active (four registrations pass; WMVCORE acceptance under review)
+  runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
+  Next: Authentic registration73364 on6dfbff842 stopped after devenum/quartz/qedit/QASF pass. WMVCORE returns S_OK/Exit0 but zero registry delta/no own InprocServer32; this is not yet a native defect. /root/cmr3_registry_prepare statically reviews exact export before any acceptance change/retry.40artifacts preserved in scratch/runs/20261015-cmr3-native-registration; postflight clean. Original registry remains unrecovered; no game/racing qualification.
+  Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
+  Evidence: scratch/cmr3-demo-20261010/selection.json
