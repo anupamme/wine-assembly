@@ -78,3 +78,10 @@ Reader, WMA/WMV decoders and MultiLanguage) and preserve all evidence before
 any separately authorized game replay. Registry generation is not a gameplay
 qualification. Synthetic acceptance/order tests and the test-manifest gate
 passed; this is not an end-to-end registration result.
+
+Root review found that the initial source checkpoint omitted the registration
+tool handoff from its branch base, leaving `registry.registrationTool`
+undefined. The exact reviewed `a86527eb6065aa623225fa440a0f1df07b8cfd20`
+handoff is now incorporated. A source-contract regression fails on the old
+checkpoint and passes with the handoff, checking the tool's presence, size,
+SHA256 and historical provenance marker. All three focused tests pass.

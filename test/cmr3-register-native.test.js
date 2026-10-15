@@ -1,6 +1,14 @@
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict');
 const { ORDER, assess, runnerArgs } = require('../tools/cmr3-register-native');
+test('source handoff supplies the authenticated original registration tool', () => {
+  const pin = require('../docs/cmr3-native-recovery-plan-20261015.json').registry.registrationTool;
+  assert(pin, 'Required registration-tool handoff is missing from this checkout');
+  assert.equal(pin.bytes, 30720);
+  assert.equal(pin.sha256, 'ea8bb5cb31357ee2866e0fce651a29694cb286be9b5e2f96508a92b5f4b3dfeb');
+  assert.equal(pin.matchesHistoricalSupportReceipt, true);
+  assert.equal(pin.localPath, '/tmp/wa-recovery-20261014/test/binaries/candidates/outcast-demo/disc/Demos/Outcast/DIRECTX/REGSVR32.EXE');
+});
 const snapshot = { 'reg:HKCR\\CLSID\\{example}\\InprocServer32': JSON.stringify({ values: { '': { type: 1, data: 'C:\\quartz.dll' } } }) };
 const good = '[TRACE-AT #1] batch=10 EIP=0x00401341 EAX=0x00000000 ECX=0x00000000\n[Exit] code=0\n';
 test('host zero cannot hide absent HRESULT, guest failure, trap, timeout or missing native registration', () => {
