@@ -1,0 +1,20 @@
+'use strict';
+const test = require('node:test'), assert = require('node:assert/strict');
+const { ORDER, assess, runnerArgs } = require('../tools/cmr3-register-native');
+const snapshot = { 'reg:HKCR\\CLSID\\{example}\\InprocServer32': JSON.stringify({ values: { '': { type: 1, data: 'C:\\quartz.dll' } } }) };
+const good = '[TRACE-AT #1] batch=10 EIP=0x00401341 EAX=0x00000000 ECX=0x00000000\n[Exit] code=0\n';
+test('host zero cannot hide absent HRESULT, guest failure, trap, timeout or missing native registration', () => {
+  assert.equal(assess(good, 0, snapshot, 'quartz.dll').hresult, '0x00000000');
+  for (const log of ['', '[Exit] code=0', good.replace('EAX=0x00000000', 'EAX=0x80004005'), good.replace('code=0', 'code=5'), good + '[eip-zero]', good + 'UNIMPLEMENTED API', good + 'RuntimeError: unreachable', good + 'timed out', good + good]) {
+    assert.throws(() => assess(log, 0, snapshot, 'quartz.dll'));
+  }
+  assert.throws(() => assess(good, null, snapshot, 'quartz.dll'));
+  assert.throws(() => assess(good, 0, {}, 'quartz.dll'));
+  assert.throws(() => assess(good, 0, snapshot, 'qedit.dll'));
+});
+test('historical ordered chain and bounded read-only HRESULT trace', () => {
+  assert.deepEqual(ORDER, ['devenum.dll', 'quartz.dll', 'qedit.dll', 'qasf.dll', 'WMVCORE.DLL', 'WMADMOD.DLL', 'WMVDMOD.DLL', 'qasf.dll', 'MLANG.DLL']);
+  const args = runnerArgs('/stage', ORDER[0], '/before.json', '/after.json');
+  for (const flag of ['--max-seconds=45', '--max-batches=20000', '--no-build', '--trace-at=0x401341', '--reg-import=/before.json', '--reg-export=/after.json', '--args=/s devenum.dll']) assert(args.includes(flag));
+  assert.equal(args.find(a => a.startsWith('--dlls=')), '--dlls=/stage/msvcrt.dll,/stage/msdmo.dll,/stage/WMASF.DLL');
+});

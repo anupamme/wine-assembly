@@ -559,3 +559,16 @@ packages, extracted files and failed attempts remain on the remote box.
 No registry registration, Windows guest or game was executed. The full
 registry snapshot remains missing; actual native registration is the next
 preparation prerequisite, not a claim that launch is ready.
+
+## Native registration recipe prepared (15 October)
+
+`tools/cmr3-register-native.js` and
+`docs/cmr3-registry-preparation-20261015.md` prepare the historical nine-step
+sequence in an isolated clean checkout, without executing it. Authenticated
+regsvr32 disassembly identifies the DllRegisterServer return at 0x401341;
+the existing runner trace will record EAX there. Acceptance requires S_OK,
+guest exit zero and an exported native InprocServer32 entry at every step.
+Host exit zero alone is insufficient. Pure JS rejection/order tests pass.
+No runtime/build/remote action occurred in preparation; canonical source/module
+pinning and a fresh root runtime grant remain prerequisites. The output is a
+newly generated registry, never asserted equal to the missing historical bytes.
