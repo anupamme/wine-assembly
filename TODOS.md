@@ -1628,15 +1628,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Retain Worker ownership until retirement and termination complete
   id: IW-RETIREMENT-SLOT-OWNERSHIP-20261015
-  status: review (native regression passed; held chain integration pending)
+  status: done (merged main3fdb29373; combined native conformance passed)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Root independently verified archive22140338 logs: native lostreply/pincleanup cases PASS, old4050code fails intendedretentionassertion, restoredPASS; actualstack releaseexactonce. Sourceb5b nativevalidationdca0e6201; independentbroker correction remainsblockingcombinedintegration.
+  Next: Combined canonical04ede fullbuild passed; retry237863 all8 native arms passed including exact negative receiver control/restored result. Independent16:18:59.497 source/dependency/donor preservation and idle verified. Root production diff vs tested6c221 is empty; merged/pushed main3fdb29373. Original Invisible War gameplay and pointer-message marshalling remain separate unproved work.
 
 - [ ] Resolve independent cross-process send deadlocks
   id: IW-INDEPENDENT-SEND-ADMISSION-20261015
-  status: active (native retirement proof passed; current-main integration)
-  owner: /root/iw_main_integration
-  Next: Native218603 candidate/old/restored0/1/0 verified archive5fa94ff8, exact old failure RECEIVER_RETIREMENT_DID_NOT_SETTLE. Canonicala948 and270 source pins unchanged, runtime released. Fresh source integration onto main88cb preserves cooperative crash diagnostics; combined current-main build/conformance still required. No original IW gameplay claim.
+  status: done (merged main3fdb29373; combined native conformance passed)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Combined canonical04ede fullbuild passed; retry237863 all8 native arms passed including exact negative receiver control/restored result. Independent16:18:59.497 source/dependency/donor preservation and idle verified. Root production diff vs tested6c221 is empty; merged/pushed main3fdb29373. Original Invisible War gameplay and pointer-message marshalling remain separate unproved work.
 
 - [ ] Implement OEM character to keyboard scan mapping for Outlaws
   id: OUTLAWS-OEMKEYSCAN-20261015
