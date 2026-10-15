@@ -1614,16 +1614,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (original replay exposes PM/Pro loader error)
-  owner: /root/outlaws_oemkeyscan_native
-  Next: Original replay173098 candidate5d02 passes batch0 and reaches batch29 PM/Pro Error: Unable to link to KERNEL32.DLL. Root reviewed original screenshot; no gameplay. Collect bounded run terminal and unchanged-source postflight, then diagnose actual pmpro62.dll initialization without bypasses.
+  status: active (PM/Pro loader compatibility investigation)
+  owner: /root/outlaws_pmpro_loader
+  Next: Fresh source worker investigates actual NE pmpro62/PE pmpro62f universal-thunk boundary after reviewed original replay173098. OemKeyScan merged; no gameplay. Existing150s watchdog required SIGKILL, independent14:49:51 postflight unchanged active[]. No rerun until source/conformance review.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (licence text display investigation; acceptance untouched)
-  owner: /root/army_men_licence_text
-  Next: Original child reaches licence screen; blank pane may be premature capture because controller quits on first licence static text. Source-only worker prepares bounded no-answer paint observation before claiming edit defect; Telegram1405 delivered.
+  status: blocked (original licence requires user decision)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
 
 - [ ] Retain Worker ownership until retirement and termination complete
