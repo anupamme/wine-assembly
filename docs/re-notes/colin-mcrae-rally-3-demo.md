@@ -492,3 +492,106 @@ documented conflicting renderer query before later correction. They must be
 reviewed/adapted before reuse. The recovery JSON includes the bounded remote
 single-member acquisition arguments, still unexecuted pending runtime-owner
 coordination. No native registration or guest execution occurred in this audit.
+
+The subsequent authorized remote recovery succeeded on `bx_erf37bxf`:
+installer download/hash/carves process 26104 exited zero at 09:24:23;
+unshield installation 26582 and extraction/mapping 27812 exited zero.
+Original installer and EXE SHA-256 values match. Distro unshield 1.5.1-1
+extracted exactly 333 records; the recovered 32 exclusions matched exactly,
+with 301 mapped cabinet files plus the separate EXE, zero case-insensitive
+collisions and every copied file hash verified. The 302 original files total
+158,742,926 bytes. `docs/cmr3-original-inventory-20261015.json` preserves their
+paths, lengths and hashes; this is a fresh verified-source inventory, not a
+recovery of the missing historical 302-file manifest.
+
+Reproduce in a fresh remote workspace using `tools/cmr3-source-recovery.js`
+with an absolute fresh acquisition output, then `tools/cmr3-assemble-original.js`
+with that acquisition and a separate absolute fresh assembly output. Curl
+and `/usr/bin/unshield` are required. Both preserve originals and failure
+receipts; neither executes a Windows binary or creates registry settings.
+The tested acquisition has a 360-second outer deadline and assembly 180
+seconds, in addition to their internal subprocess bounds.
+
+Evidence: `scratch/runs/20261015-cmr3-original-recovery` contains 16 transferred
+artifacts (221,846 bytes), all size/SHA-256 checked, plus terminal process
+records. Sources, carved cabinets and extracted originals remain remotely
+under `/home/user/cmr3-recovery-20261015`. Postflight at 09:26:01 found no
+remaining acquisition/extraction processes and released the slot. Native
+DLL/AX bytes and full saved registry remain prerequisites for launch; this
+milestone makes no menu, racing or gameplay claim.
+
+Post-run source review hardened both recipes to reserve a 2 GiB free-space
+floor plus a conservative 512 MiB expansion budget before writes. Assembly
+now independently compares every carved byte range against the verified
+installer, so changing a cabinet and its editable receipt together cannot
+pass validation. Two synthetic tests cover the space boundary, an authentic
+range, a tampered carve with a matching edited receipt, and truncated bytes.
+These checks pass locally; the revised recipes have not been rerun end to
+end. The successful original-byte recovery above used the earlier script
+versions preserved with its evidence.
+
+## Native dependency recovery (15 October, 10:07 UTC)
+
+All twelve historical native DLL/AX identities are now recovered under
+`/home/user/cmr3-native-recovery-r3-20261015/native` on `bx_erf37bxf`.
+Four seed files matched retained local originals; archived WMP9 and IE6
+packages matched their historical SHA-256 pins and supplied seven more.
+The public IA DirectX 8.1 ZIP matched its metadata SHA-1 and supplied the
+exact 519,680-byte `qedit.dll` hash. Full package and native identities are
+in `docs/cmr3-native-recovery-result-20261015.json`.
+
+Initial acquisition 53906 failed after successful downloads/extractions
+because the recipe expected a nested DirectX.cab. The verified DX81eng.exe
+instead exposes its original files directly to 7z. That failed tree/log is
+retained. Corrected recipe `00a4d0a33` supports direct or cabinet layouts,
+always requiring the exact native identity. Three synthetic tests cover
+both layouts, same-size wrong bytes and source-package hash rejection.
+Final fresh-output run 56105 reverified all three retained package pins,
+extracted and checked all twelve native files, and exited zero at 10:06:44.
+No network transfer was repeated. The earlier direct-only repair 55537 is
+preserved separately; final validation uses the committed corrected recipe.
+
+Evidence `scratch/runs/20261015-cmr3-native-recovery` retains 58 remote
+artifacts (66,282 bytes), all size/SHA-256 verified, plus three terminal
+records and staging identity receipts. Postflight at 10:07:11 found no
+remaining recovery processes and released the runtime slot. Original
+packages, extracted files and failed attempts remain on the remote box.
+No registry registration, Windows guest or game was executed. The full
+registry snapshot remains missing; actual native registration is the next
+preparation prerequisite, not a claim that launch is ready.
+
+## Native registration recipe prepared (15 October)
+
+`tools/cmr3-register-native.js` and
+`docs/cmr3-registry-preparation-20261015.md` prepare the historical nine-step
+sequence in an isolated clean checkout, without executing it. Authenticated
+regsvr32 disassembly identifies the DllRegisterServer return at 0x401341;
+the existing runner trace will record EAX there. Acceptance requires S_OK,
+guest exit zero and an exported native InprocServer32 entry at every step.
+Host exit zero alone is insufficient. Pure JS rejection/order tests pass.
+No runtime/build/remote action occurred in preparation; canonical source/module
+pinning and a fresh root runtime grant remain prerequisites. The output is a
+newly generated registry, never asserted equal to the missing historical bytes.
+
+First bounded native registration on 15 October tested `6dfbff842` after a
+fresh canonical build (module `d463bdae09d9a4e8926c31f0a594535331a2a85d39d494c0e281b920ce9f0fa5`).
+Process73364 exited1 at10:34:13: devenum/quartz/qedit/QASF passed real HRESULT,
+guest exit and native COM checks; WMVCORE returned S_OK and exited0 but left
+the 671-entry snapshot byte-identical and no WMVCORE InprocServer32 value.
+The strict recipe stopped before the remaining four steps. Review the real
+export's intended effects before changing the oracle; no DLL defect inferred.
+Postflight10:34:53 found no survivors and unchanged6491sources/module/native12/
+original302. Evidence `scratch/runs/20261015-cmr3-native-registration` retains
+40 verified artifacts plus terminal receipts. Full registry remains incomplete;
+no game or retry executed. Runtime released to root.
+
+Static followup resolves WMVCORE's distinct contract: exact native SHAe79cace0
+DllRegisterServer ordinal7/RVA76e7d writes embedded PRXFILE/200/1033 to
+C:\WINDOWS\WMSysPr9.prx; it does not register an InprocServer32 class. Profile
+is316640bytes/SHA25695f1edbc3cb9aa70a374a61b43bd16818636b0190aa841504130bb718c39c2c7.
+Source recipe now requires fresh exact VFS output plus unchanged registry,
+HRESULT/Exit0; other DLL native-class checks remain. Genuine output is carried
+into the next staging VFS and must later be mounted for game replay. Six JS
+tests and offline authentic-resource exporter roundtrip pass; no guest retry.
+Failed73364 lacks VFS capture, so file effect remains inconclusive. Full static
+proof and preservation contract: docs/cmr3-registry-preparation-20261015.md.

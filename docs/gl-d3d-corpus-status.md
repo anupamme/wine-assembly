@@ -1,5 +1,49 @@
 # OpenGL / Direct3D corpus status, reconciled 2026-10-15
 
+## October 15 reviewed follow-up (09:36 UTC)
+
+The dated table below preserves earlier results. Signed SHORT2/SHORT4 GPU
+inputs and software declaration-component defaults are now on main
+`ec4844f16`: canonical build, seven CPU suites and actual WebGL1/2 pixel
+comparisons passed. Coordinator independently checked twelve GPU artifacts
+and 266 tested-source hashes. Original `.kkrieger` run
+`20261015-kkrieger-short-original` eliminates the earlier declaration errors
+but still reaches EIP zero near 310 seconds, with 2 GiB memory and no OOM.
+Its 42 artifacts were independently hash-checked and final screenshot viewed.
+No gameplay is qualified. The next lead is a missing Buffer8 interface;
+the game's actual QueryInterface HRESULT remains uncaptured. See
+`docs/re-notes/kkrieger-beta.md` for the bounded diagnosis and uncertainty.
+
+The palette candidate remains unmerged. Explicit state144 TRUE zero-RGBA
+handling passed canonical build and CPU checks; new Worker coverage passed
+both synchronization modes on `d582f0da5`, including native-index duplicate
+RGB, held state snapshots, cache transitions and depth. Worker observations
+read an XRGB DIB whose unused byte is normalized to 255, not framebuffer
+alpha. Source-alpha behavior is checked through blend/test/depth effects;
+direct GPU tests separately read framebuffer RGBA. Browser software-path
+fixtures exposed incorrect endpoint routing and an assertion on XRGB's unused
+byte; their failures are retained, corrected tests are being rerun, and no
+full browser acceptance is claimed yet. A cache-identity mutation must still
+fail the strengthened oracle. Default/FALSE filtered-key semantics,
+alpha-palette/key precedence and legacy stencil remain separate open work.
+
+## Original 27-app membership evidence
+
+The original census commit is
+`2d722ab3766c288d13796ed9dad3f1ceeca8f1eb` (22 September). Its message records
+27 of 225 apps and seven D3DRM screensavers, but the commit contains only the
+census tool and a CLAUDE.md edit, not the complete per-app output. The tool
+depends on the executable/DLL files present when run. A current-asset rerun
+therefore cannot authenticate the historical membership. The later expanded
+69-app census is a different set, not a recovered original list.
+
+The original stdout or session transcript associated with memory session
+`bd610256-7b4f-4ed1-afa0-9c3cf3412fbb` is still missing from the inspected local
+archives. The 57 references in `scratch/recovery-gl27-20261014/REPORT.txt`
+refer to later dated run IDs, not 57 original September runs. Recover the
+original output, or explicitly label a historically matched reconstruction;
+do not infer a completed 27-app denominator from the current status table.
+
 ## October 14–15 targeted follow-up
 
 Authorized Boat exec access now supports separate-box builds and browser tests.

@@ -6,7 +6,7 @@ const assert=require('assert'),fs=require('fs'),vm=require('vm'),path=require('p
 const {Manager}=require('../lib/render-worker');
 const Stream=require('../lib/d3d-command-stream');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
-function fixture(legacy=false){
+function fixture(legacy=false,nativeMemory=false){
   const events=[],pending=[],listeners=new Map();let init=0,retire=0,terminated=0,transients=0;
   const self={postMessage(message,transfer){
     const owned=structuredClone(message,{transfer:transfer||[]});
@@ -29,7 +29,8 @@ function fixture(legacy=false){
   }};
   Object.assign(self,{GlideRenderWorker:factory,GLRenderWorker:factory,D3DIMRenderWorker:factory,
     D3D9RenderWorker:factory,D3DCommandStream:Stream});
-  const sharedMemory={buffer:new SharedArrayBuffer(legacy?6*1024*1024:1024)};
+  const sharedMemory=nativeMemory ? new WebAssembly.Memory({initial:96,maximum:96,shared:true})
+    : {buffer:new SharedArrayBuffer(legacy?6*1024*1024:1024)};
   let allocation=4096,override=0;
   const exports={d3d_render_reset_transients(){transients=0;override=0;},d3dim_worker_init(){init++;},d3d_render_retire_heap(){retire++;return 1234;},
     d3dim_worker_draw(...args){events.push(['software-draw',...args]);},
@@ -165,6 +166,34 @@ encoderScopedFence();
   assert.deepStrictEqual(f.adopted,[1234]);
   assert.deepStrictEqual(f.counts(),{init:1,retire:1,terminated:1});
   await f.manager.stop();assert.strictEqual(f.counts().retire,1,'idempotent process shutdown');
+  // Production Encoder -> Manager endpoint -> worker legacy decoder ->
+  // D3DIM adapter, with only the WASM/GPU executor and event delivery mocked.
+  // Queued render-state generations survive producer scratch reuse. Palette
+  // payloads are not copied by this protocol: this is NOT a COM lifetime test.
+  {
+    // A real Memory handle follows the manager's initialization-handle byte
+    // accounting; a plain {buffer} mock would charge the entire shared heap.
+    const q=fixture(true,true),port=q.manager.createEndpoint({api:'legacy',backend:'webgl'});
+    await port.ready;
+    const encoder=new Stream.Encoder({workerFactory:()=>port,memory:q.sharedMemory,module:{},
+      getImageBase:()=>0x400000,guestToWasm:p=>p,capacity:32+4096+96});
+    await tick();
+    const d=new DataView(q.sharedMemory.buffer),descriptor=65536,state=131072,vertices=140000;
+    [123,4,3,vertices,3,state].forEach((v,i)=>d.setUint32(descriptor+i*4,v,true));
+    for(const [generation,vertex] of [[31,41],[32,42]]){
+      d.setUint32(state,generation,true);d.setUint32(vertices,vertex,true);
+      assert.strictEqual(encoder.enqueue(descriptor),1);
+    }
+    d.setUint32(state,99,true);d.setUint32(vertices,99,true);
+    assert.strictEqual(q.events.filter(e=>e[0]==='gpu-draw').length,0,'producer changes precede drain');
+    await tick();
+    assert.deepStrictEqual(q.events.filter(e=>e[0]==='gpu-draw'),
+      [['gpu-draw',31,41],['gpu-draw',32,42]],'both queued snapshots retain FIFO generation');
+    assert.strictEqual(encoder.snapshot().replayCommands,2);
+    assert.strictEqual(encoder.snapshot().fallbacks,0);
+    assert.strictEqual(q.events.filter(e=>e[0]==='software-draw').length,0,'no software fallback');
+    encoder.stop();await tick();await q.manager.stop();
+  }
   // Actual legacy decoder + production D3DIM worker adapter. A GPU call is
   // recorded rather than rendered, so the fixture isolates ordering and owns
   // the expected snapshot values independently of rasterization.
