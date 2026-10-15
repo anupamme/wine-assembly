@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "date": "2026-10-15",
   "task": "NEW-GAME-CMR3-DEMO-20261010",
-  "status": "source-located-payload-not-fetched",
+  "status": "original-installer-recovered-and302-files-mapped-native-registry-pending",
   "source": {
     "provenance": "test/binaries/SOURCES.md records the original 2026-09-03 acquisition",
     "metadataUrl": "https://archive.org/metadata/win-98-games-a-d.-7z",
@@ -18,11 +18,12 @@
     "headStatus": 200,
     "headObservedAt": "2026-10-15T09:14:33Z",
     "headFinalUrl": "https://ia800605.us.archive.org/view_archive.php?archive=/35/items/win-98-games-a-d.-7z/Win98_Games-A-D.7z&file=ColinMcRay-Rally3-pcdemo-D3D.exe",
-    "bodyFetched": false
+    "bodyFetched": true,
+    "bodyVerifiedAt": "2026-10-15T09:24:23.592Z"
   },
   "historicalExtraction": {
     "evidence": "docs/re-notes/colin-mcrae-rally3-demo.md",
-    "freshlyVerified": false,
+    "freshlyVerified": true,
     "rangesHalfOpen": [
       { "output": "data1.cab", "start": 103051, "end": 657893 },
       { "output": "data1.hdr", "start": 657893, "end": 706495 },
@@ -49,16 +50,38 @@
     "reason": "Different installer size; archive includes an upgrade. Not a proven substitute."
   },
   "historicalReceipts": "docs/cmr3-historical-receipts-20261015.json",
+  "recoveryEvidence": {
+    "run": "scratch/runs/20261015-cmr3-original-recovery",
+    "remoteRoot": "/home/user/cmr3-recovery-20261015",
+    "sandbox": "bx_erf37bxf",
+    "acquisitionProcess": 26104,
+    "dependencyProcess": 26582,
+    "assemblyProcess": 27812,
+    "allExitCodes": 0,
+    "postflightAt": "2026-10-15T09:26:01.332Z",
+    "postflightSurvivors": [],
+    "unshieldVersion": "1.5.1-1",
+    "unshieldSha256": "b3068676d8c931bb98ed339f696a28def9077ea7433939f651448da47c18a35a",
+    "extracted": 333,
+    "exactExcluded": 32,
+    "mappedIncludingExe": 302,
+    "mappedBytes": 158742926,
+    "inventory": "docs/cmr3-original-inventory-20261015.json",
+    "transferredArtifacts": 16,
+    "transferredBytes": 221846,
+    "scripts": ["tools/cmr3-source-recovery.js", "tools/cmr3-assemble-original.js", "tools/cmr3-recovery-guards.js"],
+    "laterGuardValidation": "Source review added floor+512MiB capacity checks and independent source-range/carve comparison. Two synthetic positive/negative guard tests pass; revised recipe not rerun end to end. Actual original-byte recovery evidence predates these guard changes.",
+    "noGuestExecuted": true
+  },
   "preparedRemoteAcquisition": {
-    "executed": false,
+    "executed": true,
+    "executionNote": "Equivalent bounded curl arguments executed through tools/cmr3-source-recovery.js; actual receipt in acquisition/download.json",
     "requires": "Root remote-only acquisition grant; fresh working directory with sufficient space",
     "downloadArgv": ["curl", "--fail", "--location", "--max-time", "300", "--max-filesize", "126663356", "--output", "ColinMcRay-Rally3-pcdemo-D3D.exe.part", "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/ColinMcRay-Rally3-pcdemo-D3D.exe"],
     "verification": "Require exactly126663356 bytes and SHA256 d1dff3e9e718859c6a127b7efcbd85189198ff823f504db2470dbdeacd183ec0 before rename or extraction. Failed/partial transfer is not accepted."
   },
   "remainingGates": [
-    "Root-authorized remote-only transfer, bounded time and streamed size/SHA256 verification before extraction",
-    "Compare verified original cabinet records against recovered historical group mapping and exact32 exclusions",
-    "Recover full302-file inventory; acquire exact12 native DLL/AX bytes matching recovered historical hashes and authenticated provenance",
+    "Acquire exact12 native DLL/AX bytes matching recovered historical hashes and authenticated provenance",
     "Recover hash-matching registry/controller or reproduce native registration from authenticated packages with new evidence",
     "Add tested corpus recipe only after actual recovery; no executable recipe or manifest asserted here",
     "Fresh runtime grant for software D3D9 programmable Worker; menu progression and racing remain unqualified"
