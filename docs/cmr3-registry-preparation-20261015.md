@@ -1,5 +1,9 @@
 # CMR3 native registry preparation
 
+Current resumed sequence: use the **fresh-build controller** described at the
+end of this document. The pre-pause `5f43d41f` / `d463bdae` reuse plan is
+historical and does not qualify current main `e86bf1640`.
+
 Source-only recipe: `tools/cmr3-register-native.js`. No guest, build, remote
 command or registration was executed during preparation. Runtime ownership
 must be granted by the root coordinator; Kkrieger's menu diagnostic is next.
@@ -192,3 +196,59 @@ through the production exporter with the authenticated extracted resource
 passes (synthetic trace, not a guest result). No retry has run. Failed73364
 remains an inconclusive file-effect run because it did not request VFS export;
 its S_OK/exit and unchanged registry are not retroactively a complete pass.
+
+## Resumed current-main preparation: fresh canonical build required
+
+Main `e86bf1640aded49ece2b5d80efd2fe4e040f9b03` changes compiled WAT in
+`src/10f-gdi-dc.wat` and `src/13-exports.wat`, plus host renderer/GL/RPC code.
+GPU-owned window surfaces now defer readback until GDI needs canonical pixels;
+the host synchronizes through opcode `0x10002`, with new ownership exports.
+Registration/COM/filesystem implementations and `test/run.js` are unchanged.
+Silent regsvr32 runs do not normally produce GL frames, so these changes do
+not explain the previous WMVCORE file-effect oracle mismatch. Nevertheless,
+the compiled source changed and the old `d463bdae` module cannot validate this
+main. This review is source evidence, not a runtime regression claim.
+
+`tools/cmr3-build-register.js` sequences a fresh canonical build and the same
+nine registration steps. The standalone controller can be staged outside an
+isolated checkout, so the reviewed target commit need not contain this new
+controller. It verifies the exact configured commit and clean tree, records
+all tracked source hashes, refuses shared/symlink build paths, and moves old
+module artifacts to its own `prior-build/` evidence directory. A failed build
+cannot fall back to an old artifact. The controller derives moduleSha256 from
+the newly produced regular WASM file only after `tools/build.sh` exits zero
+and tracked sources remain unchanged. It then writes a separate generated
+registration config and invokes the existing native-registration recipe.
+
+The updated `docs/cmr3-registry-r2-config-20261015.json` is a **controller
+request**, with exact target `e86bf1640` and `moduleSha256: null`. Passing it
+directly to the guest-registration recipe fails its hash gate. A supplied old
+module hash also fails the fresh-build controller. The old preflight JSON is
+explicitly superseded but retained as a historical receipt.
+
+After the box is restored through authorized means and root grants the sole
+runtime slot, stage the reviewed controller separately at
+`/home/user/cmr3-build-register.js` and the request at
+`/home/user/cmr3-registry-config-r2-20261015.json`. Checkout exactly the request's
+commit in the owned isolated checkout; if main changes again, review and pin
+that concrete commit before staging. Require both output directories to be
+fresh. Record the staged controller/config hashes, then run:
+
+```sh
+timeout --signal=TERM --kill-after=5s 900s node /home/user/cmr3-build-register.js /home/user/cmr3-registry-config-r2-20261015.json
+```
+
+Canonical build is bounded at240s (+5s kill grace); registration at600s (+5s),
+with the existing per-DLL45/55s bounds. Build/config/source/terminal evidence
+is retained in `cmr3-registry-fresh-build-r2-20261015`; guest evidence remains
+in the separate fresh `cmr3-registry-run-r2-20261015`. The original73364,
+original/native bytes, and all old build/static evidence remain intact.
+Any build or registration failure stops the sequence; no game launch is part
+of this controller. Process-survivor checks and runtime release remain the
+coordinator's postflight responsibility even after a timeout.
+
+Eight focused pure-JS tests pass, including stale-pin, failed/interrupted-build,
+missing/malformed/symlink-module rejection and prior native/profile tests.
+Syntax, diff and1937-test manifest checks pass. No canonical build, remote
+command or guest execution occurred during resumed preparation; the future
+module hash is deliberately unknown until that build succeeds.
