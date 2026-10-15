@@ -159,6 +159,31 @@ sailing evidence, current Age of Wonders II movement, and the Black & White 2
 startup repair. This is not a new full-corpus or both-backend run. Missing
 Pirates logs are listed below; the log provenance gaps are not passes.
 
+### October 15 retained evidence update
+
+Darkstone now has a fresh, recovered browser run:
+`scratch/runs/20261015-darkstone-town-2`, source controller `c7e23d5f0`,
+loaded module `04ede400070b3acbdcc2ad5f3c033bcf051e3d2da9a4d28a449324d23ab0ba17`.
+Ordinary character creation reaches Town. The road and gate remain fixed during
+five idle seconds, then rotate under held ArrowRight. This proves camera
+control; it does not prove champion locomotion, combat, FPS or audio.
+The recovered archive SHA-256 is
+`60900452d07daac7bfa60ba9e08cf5217ef66bcb1e1bca93388c034477053540`.
+
+The software backend was requested, but the owning snapshot only exposed replay
+progress, which also includes non-draw commands. Backend qualification therefore
+remains unknown for this run. The October 10 paired-backend claim below remains
+a historical report; its `scratch/runs/20261010T2116Z-darkstone` bundle is absent
+on this host, so it has not been independently revalidated here. Do not replace
+that historical claim with a fresh both-backend pass.
+
+Main `99932f66b` adds endpoint-owned D3DIM completed-call counters, separately
+for requested software and GPU fallback, published on existing natural fences.
+Focused dispatcher/adapter tests cover endpoint isolation, flips and GL exclusion,
+and throwing native calls. These counters were **not** in the Town run and are
+not pixel-write counters. A fresh paired software/WebGL validation is queued;
+no original 27-app membership or full-corpus completion follows from this update.
+
 ### October 10 follow-up, without a new corpus sweep
 
 - Black & White 2 has further shader fixes on main: `eaf7d0316` aligns
