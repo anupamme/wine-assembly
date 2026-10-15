@@ -1,0 +1,133 @@
+Silver matched idle/input harness — SOURCE PREPARATION, NOT RUNTIME ACCEPTANCE
+
+Files: tools/silver-control-comparison.js and its adjacent .test.js.
+Preparation checks: node --check tools/silver-control-comparison.js;
+node --test tools/silver-control-comparison.test.js; git diff --check.
+These exercise input rejection/review contracts and a real local HTTP server
+with tiny synthetic files, including mixed-case DLL lookup, ZIP ranges and
+fallback-denial paths. They do not launch Chrome, compile WASM, or run Silver.
+
+Prerequisites before any runtime
+
+Obtain the coordinator's sole browser/build/runtime reservation. The CLI
+--runtime-grant marker records that operational requirement; possession of
+the string is not a grant. No assets have been transferred for this harness.
+The existing isolated worktree can be used for source. The complete local
+/tmp/silver-source fixture has all3147 original hashes verified; original ZIP
+is /home/user/wine-assembly/scratch/runs/20261014-silver-recovery/SilverDemo.zip.
+Reserve sufficient space on the eventual runtime box before staging either.
+Do not resume the old box or replace a running/unknown job to obtain access.
+
+Choose a canonical build under root and record its actual SHA256; this pass
+does not provide a new build. Supply an exact source manifest (an array of
+{path,sha256}, or an object with a source array) rooted at that checkout.
+The recovered preflight manifest describes the historical02f module, not a
+new main build: never substitute it for a new source identity. Keep the
+inventory path tied to test/candidate-corpus/silver-demo-files.json. Chrome
+and Puppeteer must already be available on the runtime box. No dependencies
+are installed by the harness. Use absolute paths in config:
+
+{
+  "root": "/ABS/checkout",
+  "fixture": "/ABS/silver-source",
+  "zip": "/ABS/SilverDemo.zip",
+  "inventory": "/ABS/checkout/test/candidate-corpus/silver-demo-files.json",
+  "sourceManifest": "/ABS/exact-source-manifest.json",
+  "wasmSha256": "REPLACE_WITH_ACTUAL_64_HEX_SHA256",
+  "chrome": "/usr/bin/google-chrome"
+}
+
+The original source ZIP and EXE pins are mandatory. All3147 files, source
+manifest entries, built module, and original ZIP are hashed before and after
+each session. The browser-loaded module response is independently hashed.
+The pair fingerprint covers harness/module/source/fixture/ZIP/chrome hash,
+launch flags, URL, viewport and300s limit. Browser version must also match.
+Chrome wrapper hash is not proof of the underlying executable bytes; actual
+version and the captured launch settings remain part of the record.
+
+Exact preserved route
+
+Original files are mounted at C:/silver, EXE C:/silver/silver.exe, original
+Mss32.dll and Smackw32.dll. Fixture HTTP lookup is case insensitive while
+serving the original path bytes. No fallback native-DLL directory is served.
+beforeRun opens /SilverDemo.zip with HttpRangeProvider and calls
+ZipMount.mountZip(wine._helpCtx.vfs,provider,
+  {zipPath:'SilverDemo.zip',root:'D:/SILVER/'}).
+This preserves the established D-drive CD-ROM route. apps.silver_probe is a
+temporary browser registration, not a permanent lib/apps.js app entry.
+UI route uses debug, d3d-renderer=software, d3d9-renderer=software and
+d3d9-programmable. Browser is headless1000x800, unsafe-swiftshader enabled,
+autoplay allowed, background timer throttling disabled. Original clocks,
+guest files, guest state and audio behavior are not modified.
+
+Execution after grant (each output path must not exist)
+
+node tools/silver-control-comparison.js --runtime-grant /ABS/config-idle.json /ABS/scratch/runs/UNIQUE-silver-idle idle
+
+Drive only through fresh command-N.json files in that output, starting at0
+and incrementing. Write to a temporary file and rename atomically so the
+controller never sees partial JSON. The polling interval is250ms. The
+controller saves commands, held-button observations, screenshots and hashes.
+
+1. Request {"action":"shot","name":"menu-ready"}. Inspect that image.
+2. Send a reviewed Start relative move:
+   {"action":"relative","purpose":"start","x":320,"y":362,"dx":0,"dy":112,
+    "review":{"name":"menu-ready","sha256":"ACTUAL_IMAGE_SHA256",
+      "scene":"menu","description":"Describe reviewed menu and Start location"}}
+   The renderer receives relative:true. Exactly one such Start move is allowed.
+3. Inspect after-command-N.png, verifying the guest pointer visibly on Start.
+   Send left-hold with purpose:start,x320,y362,holdMs1000 and that image's
+   reviewed SHA/scene/description. The normal down/up has a passive sample
+   after500ms and releases after another500ms. There is no Escape/skip input.
+4. Request snapshots as needed while waiting naturally for the house scene.
+   After reviewing the scene, send:
+   {"action":"mark-world","readiness":"Describe avatar position, dialogue and uncertainty",
+    "review":{"name":"WORLD_IMAGE_NAME","sha256":"ACTUAL_IMAGE_SHA256",
+      "scene":"world","description":"Describe fixed scenery and visible scene"}}
+   Idle mode captures idle-0s/2s/5s/10s/20s and rejects all world actions.
+   Continued natural animation or movement is the no-input control.
+5. Quit with {"action":"quit"}, or allow the300s deadline. Inspect clean
+   cleanup-supervisor.json, postflight, errors, module hashes and images.
+   Failure, missing world checkpoint, or changed source blocks the input run.
+
+Create input config with identical values plus "idleRun":"/ABS/...-silver-idle".
+After the idle browser/controller have exited and the slot remains granted:
+
+node tools/silver-control-comparison.js --runtime-grant /ABS/config-input.json /ABS/scratch/runs/UNIQUE-silver-input input
+
+Repeat the same reviewed Start route and mark-world at a comparably observed
+scene/dialogue/readiness checkpoint. The harness cannot infer readiness from
+pixels or prove the checkpoints equivalent; record any mismatch and do not
+claim a matched comparison. Then send a reviewed relative move with
+purpose:ground,x/y in the640x480 guest surface,dx/dy from the inspected current
+pointer. Inspect the resulting image before left-hold purpose:ground,
+holdMs1000 at that visible destination. Capture series ground-1-0s/2s/5s/10s/20s
+follows release. At most two world holds are permitted. Use a distinct second
+destination only when useful; no guest writes, saves, config bypass or keys.
+
+Capture and cleanup limits
+
+Each session has a300s controller deadline,8MiB retained console budget,
+28-screenshot cap and20s observation windows. The outer supervisor bounds
+setup/hung cleanup at320s TERM/325s KILL, targeting only observed descendants
+whose PID start time still matches. Normal exit closes browser/server and
+rechecks source/media. Actual browser termination/PID absence remains untested
+until runtime; inspect cleanup rather than assuming it worked. Do not run a
+second browser if cleanup is unknown. Run outputs are self-contained except
+historical config/source paths, which identify inputs rather than artifacts.
+The supervisor records postflight but does not publish a dashboard result:
+the reviewer must inspect images/logs, hash the final artifacts and write
+result.json last using ops/README.md. Never mark gameplay from normal exit.
+
+Remaining acceptance
+
+The saved held-button field is host state, not proof that the guest consumed
+input. No new guest input-poll tracing is implemented. If needed, use an
+existing bounded diagnostic under a separate agreed comparison; do not turn
+tracing into a silent clock/performance confound. The old readmes do not
+specify the ground-click/selection contract, so failed clicks alone cannot
+diagnose an input bug. Establish repeatable displacement of the hero relative
+to fixed scenery that follows ordinary input and differs from the idle
+control. Compare actual reviewed captures and retain full source/input/backend
+identity. Runtime setup, scene readiness, matched-clock timing, cleanup,
+actual control interpretation and player control all remain unverified here.
