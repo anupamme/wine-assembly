@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "Source acquisition only; assembly and 645-file byte comparison pending",
+  "scope": "Source acquisition and extraction complete; assembly and645-file byte comparison pending",
   "sandbox": "bx_tgbme2h7",
   "remoteRoot": "/home/user/bg2-recovery-20261015",
   "acquisition": {
@@ -114,23 +114,22 @@
       "packageVersion": "1.5.1-1",
       "libunshieldPackageVersion": "1.5.1-1",
       "sha256": "b3068676d8c931bb98ed339f696a28def9077ea7433939f651448da47c18a35a",
-      "executed": false
+      "executed": true
     }
   },
   "gaps": [
     "Historical W02-W07 hash receipt absent; acquisition measurements are fresh source pins",
     "Historical assembly script and audit absent",
-    "Exact installer destination mapping requires extraction and reinspection",
     "No assembly or byte comparison performed"
   ],
   "preparedController": {
     "path": "tools/bg2-source-recovery.js",
-    "execution": "Not executed; only syntax and small synthetic comparison tests run",
+    "execution": "Pinned compile/extraction tested by controller145974 terminal0; see docs/bg2-extraction-20261015.json. Assembly mode prepared but unexecuted.",
     "sourceInspectionCommands": [
       "cmd_xcyucigcdtfo",
       "cmd_nrugjcobm2vs"
     ],
-    "assembly": "No inferred mapping; must inspect extracted setup.inx and inventories before implementation",
+    "assembly": "Exact mapping inspected in original data1.hdr and setup.inx; awaiting serialized assembly/hash IO grant",
     "invocation": "timeout --signal=TERM --kill-after=10 1500 node tools/bg2-source-recovery.js extract /home/user/bg2-recovery-20261015 docs/bg2-recovery-20261015.json"
   }
 }
