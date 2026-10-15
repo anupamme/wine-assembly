@@ -1,5 +1,21 @@
 # OpenGL / Direct3D corpus status, reconciled 2026-10-15
 
+## October 15 paired Darkstone result (17:40 UTC)
+
+Fresh source `fadaff08a`, module `9b57583c…`, reached Town through ordinary
+character creation on both software and WebGL. Root reviewed before/idle/held
+ArrowRight screenshots in both arms: camera control is verified. Main renderer
+endpoint 1 reported advancing completed native software draws in the software
+arm and advancing WebGL submissions in the WebGL arm. Reported WebGL errors
+and all six fallback sites were zero; `declinedClears=1` remains a caveat.
+Both arms exited normally and independent postflight verified idle/preserved
+inputs. Full archive SHA-256 is
+`25252b50372c11589f30439d0a13ab39b09576b5844c1855721c26a429c2aa8f`.
+See [the paired receipt](darkstone-backend-checkpoint-20261015.md).
+This supersedes backend-unknown for this new run only. Locomotion, combat,
+audio, FPS, child renderer ownership and original-27 membership remain open.
+
+
 ## October 15 current integration status (14:38 UTC)
 
 This section supersedes the earlier same-day startup and unmerged-palette

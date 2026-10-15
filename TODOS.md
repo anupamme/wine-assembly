@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two original-demo lanes remain active: FIFA98 ordinary menus reached Controller Select but no player assignment; guarded read-only state capture being prepared. Outlaws actual NE invocation/lifecycle work continues with synchronous ownership correction before native validation. Darkstone software/WebGL paired validation owns sole bx_9ef2wdsw runtime. Review-held diagnostics remain inactive.
+  Next: FIFA98 and Outlaws are active original-demo lanes. FIFA player assignment unresolved; exacte5c read-only MainMenu/ControllerSelect capture granted sole runtime after native302790 clean release. Outlaws runner native-tested/merged, lifecycle source work continues. Darkstone paired Town/camera coverage verified; ordinary locomotion source audit next. Review holds unchanged.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1164,7 +1164,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Darkstone281716 original ordinary creation reaches Town; root reviewed stable idle road/gate then ArrowRight camera rotation, report9e85b64bf. Backend unknown in that04ede run. D3DIM-only completed native draw/fallback counters merged99932f66b with actual dispatcher/adapter tests; paired software/WebGL validation preparing on fresh current-main build. Kkr responsiveness/FPS and original27 membership/pairs remain unresolved; CMR review hold unchanged.
+  Next: Darkstone paired software295780/WebGL298325 completed, root reviewed Town/camera and owning renderer counters. Full recovered25252 archive includes root reviews; report/controller merged6789c835e. WebGL six fallback sites/errors zero but declinedClears1 retained. Locomotion/combat/FPS/audio/children/original27 membership unresolved; worker audits ordinary locomotion instructions source-only.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1616,7 +1616,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (private NE stacks and caller-context implementation)
   owner: /root/outlaws_kernel_module
-  Next: Private NE context/native prerequisites merged9e9020159. Root-reviewed invocation driver tests pass, but inter-slice timer suspension lacks scheduler reservation; worker removes this gap for bounded synchronous LibEntry and tests synchronous callback cancellation. Native invocation fixture prepared, not yet executed; controller process cleanup correction required before queued runtime. Module transaction/lifecycle active; no original-game qualification.
+  Next: Actual NE runner merged through6789c835e after normalbuildd618 and all9native302790 arms passed; root verified archiveaf173 and independent17:43:36 release. Real synthetic NE return/zero/nested/trap/budget/cancellation restore caller. Module lifecycle3cd/a926 remains separate source-only with tiny tests; host dependency/unload/QT/original-game work remains.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
