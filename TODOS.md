@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (native KERNEL32 concurrency validation)
+  status: active (cooperative DLL ownership integration; NE bridge source work)
   owner: /root/outlaws_kernel_module
-  Next: Source88360 test-only Worker lifetime repair running bounded attempt4 PID227059 on sole bx_9ef2wdsw. Previous c384 full build and direct native arm passed; sparse arm timed out after64 references, not a gameplay pass. Await independent result/postflight. Original NE/QT support remains unimplemented.
+  Next: KERNEL stage native direct/sparse passed; original still needs real NE/QT support. Separate cooperative owner fix passed candidate/control/restored on005; integrated current-main862 source tests independently pass, native04ede proof queued behind Darkstone. Worker identified required process-owned NE arena and private stacks/full caller context; do not expose unsupported ordinals.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1647,7 +1647,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Lords of the Realm II original playable Windows demo
   id: NEW-GAME-LORDS2-DEMO-20261015
-  status: active (original System Test guest crash diagnosis)
+  status: active (GetParent fix validated; original replay queued)
   owner: /root/new_demo_refill
-  Next: Original System Test action212340 trapped guest Thread1 EIP1a84eb then teal screen; harness0 is not guest success. Renderer fix5870 is merged; crash diagnostics88cb tested and pushed. Reviewed exact historical diagnostic replay a867 waits for Outlaws release; only Install then System Test Yes, all source restored. Gameplay unproved.
+  Next: Scoped invalid GetParent fix a24 passed normal build and five conformance suites on d56 canonicale26a; root verified recovered archive abf2fcac and independent idle/preservation postflight. Reviewed7bc original replay uses exact new candidate and only screenshot-gated Install then System Test Yes; queued after Darkstone and cooperative-owner proof. Gameplay and bad CWnd provenance remain unproved.
   Done: Registered original launch, actual ordinary player control and reviewed gameplay screenshot with source/run identity.
