@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two actionable original-demo lanes: FIFA98 rendered attract match, interactive browser287054 seeks ordinary player control; Outlaws context/arena prerequisites now native-tested and merged, actual invocation/lifecycle source stage active. Darkstone camera control verified as GL coverage; fresh paired-backend validation preparing. Lords review-held diagnostic remains inactive; Army Men/Jedi licences unanswered. Runtime serialized on bx_9ef2wdsw.
+  Next: Two original-demo lanes remain active: FIFA98 ordinary menus reached Controller Select but no player assignment; guarded read-only state capture being prepared. Outlaws actual NE invocation/lifecycle work continues with synchronous ownership correction before native validation. Darkstone software/WebGL paired validation owns sole bx_9ef2wdsw runtime. Review-held diagnostics remain inactive.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1616,7 +1616,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (private NE stacks and caller-context implementation)
   owner: /root/outlaws_kernel_module
-  Next: Private NE stacks/context merged4caf85660/09496af8b with fullbuild9b575 plus seven native285459 stages, root archive450d/independent17:18:12 verified; receipt9e9020159. Worker implements actual invocation runner with validated far targets, cache pinning, owned continuation/cancellation. No NE initialization/QT/original-game qualification yet.
+  Next: Private NE context/native prerequisites merged9e9020159. Root-reviewed invocation driver tests pass, but inter-slice timer suspension lacks scheduler reservation; worker removes this gap for bounded synchronous LibEntry and tests synchronous callback cancellation. Native invocation fixture prepared, not yet executed; controller process cleanup correction required before queued runtime. Module transaction/lifecycle active; no original-game qualification.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1659,5 +1659,5 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Original no-input277353 reaches rendered Demo Match stadium; root reviewed startup image and all10 artifact hashes, report367f10a35. Player control unproved. Browser287054 active on sole bx_9ef2wdsw using8119 controller, immutable7405/04ede and seven donor pins; observe ordinary menus/controller assignment and match input in bounded persistent session. Touch layout remains open.
+  Next: Browser287054 completed and independently released; original ordinary menus reached Controller Select with blank assignment rows, Enter delivered but no player-control proof. Evidence/report merged6870922fe. Source e212767fe inserts controller records before joystick discovery; zero joysticks alone does not justify API changes. Root-reviewed bounded read-only state observer passed tests; worker prepares pinned MainMenu/ControllerSelect snapshots after Darkstone runtime release. Touch layout remains open.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
