@@ -27,6 +27,36 @@ checks, Lock/Unlock/Play/cursor/Stop on the real host audio model, final voice
 release, and all three explicit extension traps. No external PE is required.
 Runtime tests and canonical build are pending a serialized CPU grant.
 
+Queued validation, in order on the granted box (no concurrent browser/build):
+
+```sh
+bash tools/build.sh
+node test/test-directsound-buffer8.js
+node test/test-directsound-buffer-query-interface.js
+node test/test-directsound-notify.js
+node test/test-directsound-buffer-format.js
+node test/test-directsound-ring-wrap.js
+node test/test-directsound-play-cursor.js
+```
+
+The format suite covers creation and duplication. The last two cover host
+PCM ring wrapping and cursor progression. Preserve each exit code/log and
+canonical module/source hashes separately; the tests compile their own
+export-augmented module and are not canonical-module executions. Existing QI
+and format suites need `test/binaries/calc.exe` solely to initialize the PE:
+94208bytes, SHA256 `cb71fcc9726f756421519a215c39cf89efd930c9ae0fa5bbb59b64050faef52b`
+in the coordinator checkout. Transfer that pinned small fixture if absent;
+do not silently skip those tests or substitute the canonical module.
+
+Only after conformance passes, an authorized original registered run must
+retain the same original archive/file pins and capture the secondary
+CreateSoundBuffer return at0x80490d, QI return at0x804927, and output pointer
+0x83f890. Before-load read-only instrumentation should use the established
+EIP hook and record both HRESULT and interface/vtable bytes. Do not set
+registers, skip the call or edit guest state. Compare against the previous
+310second EIP-zero run without treating timing as a benchmark. Existing
+600second bound and viewport-preserving observer rules still apply.
+
 Official contract references:
 
 - [Buffer8 identity and primary-buffer restriction](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee418055(v=vs.85))
