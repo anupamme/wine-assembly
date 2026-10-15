@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (original package verified; ordinary launch preparation)
-  owner: /root/outlaws_original_startup
-  Next: Corrected JavaScript extraction verified all31 inventory records, merged32a28da07. Fresh startup worker prepares full original VFS and bounded ordinary oldemo.exe launch after Army Men acquisition releases sole runtime. No game executed yet.
+  status: active (real OemKeyScan implementation and conformance tests)
+  owner: /root/outlaws_oemkeyscan
+  Next: Original startup failed batch0 OemKeyScan(0), evidence reviewed and merged fe9757c05; no screenshot/menu. Fresh API worker implements real mapping/tests; new canonical build and original replay require serialized grant after Army Men.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1640,7 +1640,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Implement OEM character to keyboard scan mapping for Outlaws
   id: OUTLAWS-OEMKEYSCAN-20261015
-  status: ready
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  status: active (real OemKeyScan implementation and conformance tests)
+  owner: /root/outlaws_oemkeyscan
   Next: Actual original launch153370 fails batch0 at unimplemented OemKeyScan(0), return43a8f1. Append API entry, implement documented OEM scan/shift mapping and unmappable failure for current US layout, test actual WAT/stack plus representative controls/punctuation/extended OEM characters; no silent zero or question-mark fallback. Native build and original replay serialized after Army Men.
   Evidence: scratch/runs/20261015-outlaws-original-startup; archiveSHA241f8911ad2071909fcdeb368d9ff91bb98f76e950744d6abf6314ccc01285dc; independent postflight14:19:27 unchanged active[].
