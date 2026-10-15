@@ -1661,3 +1661,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
   Next: Read-only capture307000 verified two original records reach blank Controller Select slots; merged6515ebfbb. Original executable activation handler requires horizontal keyboard input, absent from prior mouse/Enter route. Reviewed e9f controller now runs bounded ArrowLeft/ordinary visible continuation as sole PID323637 on bx_9ef2wdsw; gameplay/touch still unproved.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
+
+- [x] Implement documented explicitly enabled DX7 color-key blending
+  id: D3D-COLORKEY-BLEND-ENABLED-20261015
+  status: done (explicit TRUE implementation and combined validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main. Exact combined canonical build,16CPU suites,42 observations each WebGL1/2 and22 each actual Worker sync mode passed, including state144 TRUE RGBA substitution and alpha/depth cases. Retained archive68e7b0f SHA independently reverified. This closes the stale test-box blocker only for explicit TRUE; default/FALSE filtering and alpha-key precedence remain open.
+  Evidence: docs/palette-combined-validation-20261015.txt; docs/legacy-colorkey-sdk-contract.md; scratch/runs/20261015-palette-combined
