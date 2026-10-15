@@ -126,3 +126,36 @@ occurred after the independently recorded guest failure. Palette owns runtime
 next. Viewport remained1100x800 throughout this follow-up. Concurrent AVP2/
 Silver source download/extraction, logging and SwiftShader preclude quiet-host
 startup performance claims. No main merge or deployment by this worker.
+
+Next diagnostic preparation (source-only; no runtime grant yet):
+  WA_CAPTURE_DECLARATION=1 WA_MAX_SECONDS=600 \
+  WA_RUN_OUT=/home/user/wa-kkrieger-launch/scratch/runs/kkrieger-declaration-first-failure \
+  WA_EXPECT_WASM_SHA256=70c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655 \
+  node tools/kkrieger-registered-startup.js
+
+tools/page-probes/arm-kkrieger-declaration.js installs before library load.
+On the first matching production rejection it captures the richer error,
+draw attributes/stride/primitive counts, bounded vertex/index prefixes, and
+the original guest table0x008210e0 (84bytes) with its6 declaration pointers.
+Each original declaration gets at most136bytes plus decoded elements through
+its terminator. Guest VAs come from the retained original disassembly; WASM
+addresses are computed using loaded get_image_base and RegionMap.GUEST_BASE.
+Pointers outside that direct image region are reported, never followed into
+an assumed sparse mapping. This is read-only, not an atomic Worker snapshot.
+
+The wrapper preserves this/arguments/return values and rethrows the identical
+original error even if capture fails. It does not change declaration bytes,
+validator decisions, allocator state or guest registers. The packet survives
+guest exit in window.__kkriegerDeclaration, per-sample state and a console JSON
+line. This is first-failing-draw metadata, not a complete pixel replay: only
+256 vertex bytes and32 indices are retained. The exact original type/usage
+remains unknown until this opt-in is actually run and reviewed.
+
+Existing --validation-only test also verifies six bounded original-table
+reads, terminator decode, unchanged memory, bad-pointer refusal, successful
+draw passthrough, nonmatching error passthrough, one captured matching error,
+and identity-preserving rethrow using synthetic immutable draw metadata.
+Before the next run, recheck all144 compiled inputs/module hash and3 original
+file pins, update only the isolated diagnostic source, and retain old evidence.
+Observers must connect with defaultViewport:null. Runtime stays queued behind
+palette and Silver; no source preparation implies launch permission.

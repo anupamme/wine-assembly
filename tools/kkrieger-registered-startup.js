@@ -60,7 +60,10 @@ async function main() {
     await page.setViewport({width: 1100, height: 800});
     page.on('console', m => fs.appendFileSync(path.join(out, 'browser.log'), m.type() + ': ' + m.text() + '\n'));
     page.on('pageerror', e => fs.appendFileSync(path.join(out, 'browser.log'), 'PAGEERROR: ' + e.message + '\n'));
-    for (const probe of ['arm-backing-census.js', 'arm-memory-series.js'])
+    const probes = ['arm-backing-census.js', 'arm-memory-series.js'];
+    if (process.env.WA_CAPTURE_DECLARATION === '1') probes.push('arm-kkrieger-declaration.js');
+    meta.declarationCapture = process.env.WA_CAPTURE_DECLARATION === '1';
+    for (const probe of probes)
       await page.evaluateOnNewDocument(fs.readFileSync(path.join(root, 'tools/page-probes', probe), 'utf8'));
     meta.route = 'http://127.0.0.1:' + server.address().port + '/?debug&app=kkrieger_beta';
     await page.goto(meta.route, {waitUntil: 'domcontentloaded', timeout: 30000});
@@ -75,6 +78,7 @@ async function main() {
           running: wine?.running ?? null, wasmBytes: wine?.memory?.buffer?.byteLength ?? null,
           bigMemory: wine?.bigMemory ?? null, census: window.__backingCensus || null,
           series: window.__memSeries || null, oom: window.__memOom || null,
+          declaration: window.__kkriegerDeclaration || null,
           regs: e ? Object.fromEntries(['eip','yield_reason','eax'].map(k => [k, e['get_' + k]?.() >>> 0])) : null};
       });
       fs.writeFileSync(path.join(out, 'state-' + i + '.json'), JSON.stringify(state));

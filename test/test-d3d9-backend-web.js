@@ -23,6 +23,56 @@ for (const [type, offset] of [[5, 0], [3, 2], [3, -4], [3, 0.5]]) {
   });
   assert.strictEqual(JSON.stringify(draw.attributes), before, 'diagnostic must not mutate declaration');
 }
+// The first-failure probe must preserve the actual draw result/error and all
+// guest bytes. A synthetic original table tests bounded direct-image reads.
+{
+  const {install, originalDeclarations} = require('../tools/page-probes/arm-kkrieger-declaration');
+  const buffer = new ArrayBuffer(1024), view = new DataView(buffer);
+  for (let index = 12; index < 84; index += 12) view.setUint32(0xe0 + index + 4, 0x821200, true);
+  view.setUint8(512 + 4, 10); view.setUint8(512 + 6, 3);
+  view.setUint16(520, 255, true); view.setUint8(524, 17);
+  const root = {RegionMap: {REGIONS: {GUEST_BASE: {base: 0, end: 1024}}},
+    wineShell: {currentWine: {memory: {buffer}, instance: {exports: {get_image_base: () => 0x821000}}}}};
+  const before = Buffer.from(buffer).toString('hex');
+  const declaration = originalDeclarations(root);
+  assert.strictEqual(declaration.rows.length, 6);
+  assert.strictEqual(declaration.rows[0].elements[0].type, 10);
+  assert.strictEqual(declaration.rows[0].elements[0].usage, 3);
+  assert.strictEqual(declaration.rows[0].terminated, true);
+  const error = Error('D3D9 draw: unsupported vertex declaration element: synthetic');
+  const other = Error('another validation error'), captured = [], context = {token: 17};
+  const api = {Device: function () {}};
+  api.Device.prototype.draw = function (draw) {
+    assert.strictEqual(this, context);
+    if (draw.error) throw draw.error;
+    return draw.value;
+  };
+  install(api, root, packet => captured.push(packet));
+  assert.strictEqual(api.Device.prototype.draw.call(context, {value: 42}), 42);
+  assert.throws(() => api.Device.prototype.draw.call(context, {error: other}), e => e === other);
+  assert.strictEqual(captured.length, 0);
+  const draw = Object.freeze({error, stride: 16, vertices: new Uint8Array(48),
+    attributes: Object.freeze([Object.freeze({type: 10, offset: 0, usage: 3, usageIndex: 0})])});
+  for (let i = 0; i < 2; i++) assert.throws(() => api.Device.prototype.draw.call(context, draw), e => e === error);
+  assert.strictEqual(captured.length, 1, 'only first matching rejection captured');
+  assert.strictEqual(captured[0].attributes[0].type, 10);
+  assert.strictEqual(Buffer.from(buffer).toString('hex'), before, 'no guest writes');
+  view.setUint32(0xe0 + 16, 0xdeadbeef, true);
+  assert.match(originalDeclarations(root).rows[0].error, /outside direct image region/);
+  const failureApi = {Device: function () {}};
+  failureApi.Device.prototype.draw = () => {throw error;};
+  install(failureApi, {}, () => {throw Error('diagnostic sink failure');});
+  assert.throws(() => failureApi.Device.prototype.draw(draw), e => e === error);
+  const contextRoot = {...root, console: {log() {}}};
+  require('vm').runInNewContext(require('fs').readFileSync(
+    path.join(__dirname, '../tools/page-probes/arm-kkrieger-declaration.js'), 'utf8'), contextRoot);
+  const delayedApi = {Device: function () {}};
+  delayedApi.Device.prototype.draw = () => {throw error;};
+  contextRoot.D3D9Backend = delayedApi;
+  assert.strictEqual(Object.getOwnPropertyDescriptor(contextRoot, 'D3D9Backend').writable, true);
+  assert.throws(() => delayedApi.Device.prototype.draw(draw), e => e === error);
+  assert.strictEqual(contextRoot.__kkriegerDeclaration.attributes[0].type, 10);
+}
 if (process.argv.includes('--validation-only')) {
   console.log('PASS D3D9 unsupported type and invalid offsets still reject with exact element detail');
   process.exit(0);
