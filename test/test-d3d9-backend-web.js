@@ -107,6 +107,9 @@ if (process.argv.includes('--validation-only')) {
   process.exit(0);
 }
 const puppeteer = require('puppeteer');
+const versionArg = process.argv.find(arg => arg.startsWith('--webgl='));
+const webglVersion = versionArg ? Number(versionArg.slice('--webgl='.length)) : 'auto';
+if (versionArg && ![1, 2].includes(webglVersion)) throw new Error('--webgl must be 1 or 2');
 (async () => {
   const browser = await puppeteer.launch({ headless: true,
     executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -115,9 +118,9 @@ const puppeteer = require('puppeteer');
     const page = await browser.newPage();
     for (const file of ['gpu-backend.js', 'd3d9-shader.js', 'd3d9-fixed.js', 'd3d9-backend.js'])
       await page.addScriptTag({ path: path.join(__dirname, '../lib', file) });
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(webglVersion => {
       const canvas = document.createElement('canvas'); canvas.width = canvas.height = 16;
-      const device = new D3D9Backend.Device(canvas), gl = device.gpu.gl;
+      const device = new D3D9Backend.Device(canvas, {webglVersion}), gl = device.gpu.gl;
       const vertexShader = new Uint32Array([0xfffe0101,
         1, 0xc00f0000, 0x90e40000, // oPos = v0
         1, 0xd00f0000, 0xa0e40000, // oD0 = VS c0
@@ -180,10 +183,14 @@ const puppeteer = require('puppeteer');
         };
         shortPixels.push({type, actual:render(false), expected:render(true)});
       }
-      const error = device.gpu.getError(); device.destroy();
-      return { shortPixels, initial, depthRejected, blended, relativePixel, relativeOutside, bounded, error,
+      const error = device.gpu.getError(), version = device.gpu.version;
+      const renderer = gl.getParameter(gl.RENDERER);
+      device.destroy();
+      return { version, renderer, shortPixels, initial, depthRejected, blended, relativePixel, relativeOutside, bounded, error,
         probe:D3D9Backend.probe(document.createElement('canvas')) };
-    });
+    }, webglVersion);
+    console.log(JSON.stringify({requestedVersion:webglVersion, ...result}));
+    if (versionArg) assert.strictEqual(result.version, webglVersion, 'requested real WebGL context');
     for (const sample of result.shortPixels) {
       assert.deepStrictEqual(sample.actual, sample.expected, "signed SHORT"+sample.type+" float equivalence");
       assert.strictEqual(sample.actual[0],0); assert.strictEqual(sample.actual[1],255);
