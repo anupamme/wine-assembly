@@ -66,13 +66,37 @@ contains root README/license/autorun copy names at offsets 0x4dea–0x4e78,
 Extra root and subdirectory overlay names at 0x4e9c–0x50a1, and HD0/CD1–CD4
 aliases. The outer original CD2 tree contains three resource files.
 
-An explicit `assemble ROOT INVENTORY.json` mode now implements this mapping,
+An explicit `assemble ROOT INVENTORY.json` mode implements this mapping,
 checks both metadata hashes, applies case-insensitive overlays, writes only
 the documented 75-byte CRLF alias file, and requires the complete byte
-comparison before success. **Assembly remains unexecuted**: the source slot
-was released for the next browser task first. The helper's case-insensitive
-directory/file overwrite behavior passed a small synthetic test. No fixture
-recovery completion or automatic corpus recipe is claimed yet.
+comparison before success. The helper's case-insensitive directory/file
+overwrite behavior passed a small synthetic test.
+
+### Exact installed-tree recovery verified
+
+Assembly-only controller `150474` exited 0 at `2026-10-15T00:41:16.986Z`.
+The first source-backed mapping passed without adjustments: **645 expected,
+645 actual, zero missing/extra/changed files**, totaling 850839386 bytes.
+All contents match the fresh retained inventory by SHA256. The 663 source
+copies include 19 case-insensitive replacements; the separately reconstructed
+alias file is exactly 75 bytes and matches the retained original layout.
+Receipt and exact copy/overwrite history: `docs/bg2-assembly-20261015.json`.
+Recovered tree: `bx_tgbme2h7:/home/user/bg2-recovery-20261015/installed`.
+
+The corpus recipe now pins all seven source URLs/digests, retains source media
+and recovery receipts in a sibling `.bg2-recovery-*` directory, runs the pinned
+REWise and unshield stages, and requires the full installed-tree comparison
+before publishing. It preserves the existing root fixture layout and hence
+the 644-support-file browser manifest. Dependencies are git, gcc, zlib headers,
+and the pinned `/usr/bin/unshield` binary from Debian package 1.5.1-1; dependency
+or identity mismatches fail explicitly. `recover ROOT` wraps the individual
+steps for a fresh directory containing the seven original parts.
+
+The individual original-media extraction and assembly stages are tested.
+The newly connected generic fetcher route has only source-level validation
+so far; a fresh end-to-end `fetch-candidate-corpus.js --id=baldurs-gate2-demo
+--force` remains pending a separate extraction grant. This recovery does not
+add a browser/gameplay/audio/FPS claim.
 
 Distinct from the Baldur's Gate 1 previews in baldurs-gate-demos.md. No BG2
 entry exists in the inspected DESKTOP_APPS list or current app registry.

@@ -4109,15 +4109,76 @@
       "name": "Baldur's Gate II: Shadows of Amn Demo",
       "kind": "game",
       "version": "Original split Wise / InstallShield playable demo",
-      "executables": ["BGMain.exe"],
+      "executables": [
+        "BGMain.exe"
+      ],
       "sourcePage": "https://archive.org/details/win-98-games-a-d.-7z",
       "license": "Proprietary publisher demo; local compatibility fixture, redistribution rights not verified",
       "localOnly": true,
-      "packages": [],
-      "manual": "Concatenate original bg2demogs.EXE and W02-W07 in order, extract with REWise, then unshield the inner cabinet. Assemble hd0 groups and case-insensitive Extra demo overrides as documented in docs/re-notes/baldurs-gate2-demo.md. Preserve original CD2 tree. BGMain.exe SHA256 944db091d82c6144db8c9a21c085e4504bdc549fca8003c31e309646567bb98b. Generate the complete browser manifest, including audio resources.",
-      "browser": { "fileRoot": ".", "exe": "BGMain.exe" },
-      "cli": { "maxBatches": 1000, "batchSize": 100000, "timeoutMs": 90000, "vfsInclude": ["**/*"] },
-      "notes": "Native ordinary character creation, dialogue and player movement verified in run20261009T2236Z-bg2-player-movement on main module527004d9. Browser gameplay, audio and FPS remain unverified. No public release."
+      "packages": [
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.EXE",
+          "sha1": "b5e8e77c5481982e91ca864255a865085f6e3b08",
+          "type": "file",
+          "destination": "source/bg2demogs.EXE"
+        },
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.W02",
+          "sha1": "030242aaaf308b9589a75c38421f3672632e46da",
+          "type": "file",
+          "destination": "source/bg2demogs.W02"
+        },
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.W03",
+          "sha1": "533a5f541dfe75996234859aa37bd32ce85388c6",
+          "type": "file",
+          "destination": "source/bg2demogs.W03"
+        },
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.W04",
+          "sha1": "0cb2670fd95a8ff413267533be98517e796957c6",
+          "type": "file",
+          "destination": "source/bg2demogs.W04"
+        },
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.W05",
+          "sha1": "d96b41c176fc8747ea0f1efb2d4fdbc3e758248a",
+          "type": "file",
+          "destination": "source/bg2demogs.W05"
+        },
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.W06",
+          "sha1": "461a445170fa4a3617af54156228f2962237c7af",
+          "type": "file",
+          "destination": "source/bg2demogs.W06"
+        },
+        {
+          "url": "https://archive.org/download/win-98-games-a-d.-7z/Win98_Games-A-D.7z/Baldurs-Gate-2_demo-SW-OpenGL%2Fbg2demogs.W07",
+          "sha1": "ff17ea80a443a2fd55ba6b9c9a1cfc213a644e52",
+          "type": "file",
+          "destination": "source/bg2demogs.W07"
+        }
+      ],
+      "manual": "Pinned original seven-part Wise demo, REWise c3d3b68903a90ec53ff7b0a4ae704adc6302814b and unshield1.5.1-1. Requires git, gcc, zlib headers and the pinned unshield binary. Recovery retains sources/receipts in a sibling .bg2-recovery-* directory, assembles installer-backed groups and case-insensitive Extra overrides, and compares all645 original installed files before publication. See docs/re-notes/baldurs-gate2-demo.md; no gameplay qualification from recovery.",
+      "browser": {
+        "fileRoot": ".",
+        "exe": "BGMain.exe"
+      },
+      "cli": {
+        "maxBatches": 1000,
+        "batchSize": 100000,
+        "timeoutMs": 90000,
+        "vfsInclude": [
+          "**/*"
+        ]
+      },
+      "notes": "Native ordinary character creation, dialogue and player movement verified in run20261009T2236Z-bg2-player-movement on main module527004d9. Browser gameplay, audio and FPS remain unverified. No public release.",
+      "postExtract": [
+        {
+          "type": "installBaldursGate2Demo",
+          "source": "source"
+        }
+      ]
     },
     {
       "id": "return-fire-demo",

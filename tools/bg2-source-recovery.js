@@ -81,7 +81,7 @@ function plan(root) {
   const inner = path.join(out, 'inner');
   const cab = path.join(outer, 'MAINDIR', 'data1.cab');
   return { source, out, binary, joined, outer, inner, cab,
-    revision: REVISION, assembly: 'Pending inspection; no inferred group mapping',
+    revision: REVISION, assembly: 'Explicit assemble mode uses inspected original metadata and requires all645 byte comparison',
     compile: ['gcc', '-Wall', '-I' + path.join(source, 'src'),
       ...SOURCES.map(s => path.join(source, 'src', s + '.c')), '-o', binary, '-lz'],
     extractOuter: [binary, '-x', outer, '-p', '-t', path.join(out, 'tmp'), joined],
@@ -210,10 +210,22 @@ async function assemble(root, expected) {
 
 async function main() {
   const [mode = 'plan', root, argument] = process.argv.slice(2);
-  if (!root) throw new Error('Usage: bg2-source-recovery.js plan ROOT | extract ROOT PINS.json | assemble ROOT INVENTORY.json | compare INSTALLED INVENTORY.json');
+  if (!root) throw new Error('Usage: bg2-source-recovery.js plan ROOT | recover ROOT | extract ROOT PINS.json | assemble ROOT INVENTORY.json | compare INSTALLED INVENTORY.json');
   if (mode === 'plan') console.log(JSON.stringify(plan(path.resolve(root)), null, 2));
   else if (mode === 'extract') await extract(path.resolve(root), JSON.parse(fs.readFileSync(argument)));
   else if (mode === 'assemble') await assemble(path.resolve(root), JSON.parse(fs.readFileSync(argument)).files);
+  else if (mode === 'recover') {
+    const sourceRoot = path.resolve(root);
+    const source = path.join(sourceRoot, 'REWise');
+    if (fs.existsSync(source)) throw new Error('Fresh recover requires no existing REWise checkout');
+    cp.execFileSync('git', ['clone', '--filter=blob:none', '--no-checkout',
+      'https://codeberg.org/CYBERDEV/REWise', source], { stdio: 'inherit', timeout: 120000 });
+    cp.execFileSync('git', ['-C', source, 'checkout', '--detach', REVISION], { stdio: 'inherit', timeout: 60000 });
+    const pins = JSON.parse(fs.readFileSync(path.join(__dirname, '../docs/bg2-recovery-20261015.json')));
+    const expected = JSON.parse(fs.readFileSync(path.join(__dirname, '../test/candidate-corpus/baldurs-gate2-demo-files.json')));
+    await extract(sourceRoot, pins);
+    await assemble(sourceRoot, expected.files);
+  }
   else if (mode === 'compare') {
     const result = await compare(path.resolve(root), JSON.parse(fs.readFileSync(argument)).files);
     console.log(JSON.stringify(result, null, 2)); if (!result.ok) process.exitCode = 1;
