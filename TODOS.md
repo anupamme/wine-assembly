@@ -1520,11 +1520,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Next: Original launcher-captured lithtech.exe -cmdfile avp2cmds.txt reaches Single Player -> Marine -> Unwelcome Guests but mission launch fails HUDMgr font initialization. Reviewed run20261010T0237Z-avp2-hud-font; replay142017/142024 terminal0 confirms same error, run20261010T0239Z-avp2-font-trace. cshell factory preferred VA1011bfd0 returns null to10036b3b; discriminate argument/allocation/virtual-init failure before implementing a fix. Branch replay controller143279 live on boat bx_hx8msa33 with600s guard; output /home/user/avp2-font-branch-20261010. Menu model textures also corrupt. Missing local installed media test/binaries/candidates/avp2-demo; original payload remains on boat, disk below2GiB prevents bulk restore. No gameplay qualification or public deployment.
   Done: Original demo launch, ordinary player input visibly changes gameplay, reviewed screenshot with exact source/build/run evidence.
 
-- [ ] Validate original .kkrieger startup on separate test box
+- [x] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (bounded original position capture)
+  status: done (original launch and one ordinary forward movement reviewed)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Merged read-only original-code-pinned position probe5f69500eb. /root/kkrieger_position_capture runs frozen46691eb61 canonical937466 on sole bx_9ef2wdsw PID118738, deadline13:45:07.840Z. Compare completed body/camera positions against idle; accepted W alone is not directional qualification.
+  Next: Root reviewed4fullframes and completedbodyz0 to0.686228 afterordinaryW, stableorientation, host/guestrelease observed. All160artifacts23116287B independentlyhashverified; report2193c3869. Core one-input/screenshot criterion met; smoothcontrol/FPS/audio/combat and dualbackend remainunqualified under KKRIEGER-CONTROL-LATENCY-20261015.
 
 - [ ] Revalidate original CMR3 menu-to-Stages progression
   id: CMR3-POST-SPLASH-NULL-20261010
@@ -1604,3 +1604,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/jedi_installer_handoff
   Next: Original39files verified; setup116272 exits plain teal with B0071612 staging failure before child execution proved. Review source capture coverage before preparing a bounded ordinary setup-child capture/replay. Runtime queued after Kkrieger; no fabricated install state, EULA answer or gameplay claim.
   Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.
+
+- [ ] Improve and validate original .kkrieger control responsiveness
+  id: KKRIEGER-CONTROL-LATENCY-20261015
+  status: ready (one forward movement verified; response quality unresolved)
+  owner: unowned
+  Next: Run118738 records22.154s first accepted input lag and18.125s observed guest release lag; strict within-phase comparison lacks two completed times. Use retained source/time/input evidence to distinguish simulation work, presentation and input service before choosing a performance change. No logicalFPS, combat, audio, repeated-control or software/WebGL pair claim. Do not repeat long runs merely to chase displacement.
+  Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
