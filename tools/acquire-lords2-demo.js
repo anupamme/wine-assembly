@@ -10,7 +10,8 @@ const hash = (b, algorithm = 'sha256') => crypto.createHash(algorithm).update(b)
 function main(dir) {
   assert(path.isAbsolute(dir) && !fs.existsSync(dir), 'new absolute destination required');
   const disk = fs.statfsSync(path.dirname(dir));
-  assert(disk.bavail * disk.bsize > 2 ** 30, '1 GiB remote free space required');
+  assert(disk.bavail * disk.bsize > 2 * 2 ** 30 + 64 * 2 ** 20,
+    '2 GiB free-space floor plus 64 MiB acquisition reserve required');
   fs.mkdirSync(dir);
   const receipt = {started: new Date().toISOString(), url, expectedSha1: sha1, guestExecution: false, licenceAnswer: false};
   const save = (name, data) => fs.writeFileSync(path.join(dir, name), typeof data === 'string' ? data : JSON.stringify(data, null, 2) + '\n');
