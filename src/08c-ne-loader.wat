@@ -1920,7 +1920,7 @@
 
   ;; BEGIN WIN32 NE MODULE TRANSACTIONS
   ;; 24 process-owned records in the unused hidden-page gap 0x8C00..0x8F00.
-  ;; state(0 absent,1 loading,2 initializing,3 ready), owner, refs, dependencies,
+  ;; state(0 absent,1 loading,2 initializing,3 ready,4 terminating), owner, refs, dependencies,
   ;; provisional first/count, reserved, staging-lease flag. Never published
   ;; to a guest API until real initialization and lifetime semantics are ready.
   (func $win16_bridge_module_record (param $id i32) (result i32)
@@ -2075,6 +2075,85 @@
         (then (call $win16_dll_unload (local.get $id)))
         (else (if (i32.load offset=20 (local.get $rec))
           (then (call $win16_arena_give (i32.load offset=16 (local.get $rec)) (i32.load offset=20 (local.get $rec)))))))
+      (call $win16_bridge_module_stage_release (local.get $rec))
+      (call $win16_dynamic_module_release (local.get $id))
+      (call $zero_memory (local.get $rec) (i32.const 32))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+  ;; Transfer one already-acquired dependency reference to an unpublished
+  ;; parent. The caller retains it on rejection; duplicate links never consume
+  ;; another reference. Cycles are rejected by claim's unpublished-state rule.
+  (func $win16_bridge_module_link (export "win16_bridge_module_link")
+    (param $id i32) (param $dependency i32) (result i32)
+    (local $rec i32) (local $dep i32) (local $bit i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (local.set $dep (call $win16_bridge_module_record (local.get $dependency)))
+    (if (i32.or (i32.eqz (local.get $rec)) (i32.eqz (local.get $dep))) (then (return (i32.const 0))))
+    (if (i32.eq (local.get $id) (local.get $dependency)) (then (return (i32.const 0))))
+    (local.set $bit (i32.shl (i32.const 1) (i32.sub (local.get $dependency) (global.get $WIN16_DYNAMIC_BASE))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.eqz (i32.load (local.get $rec))))
+      (br_if $reject (i32.gt_u (i32.load (local.get $rec)) (i32.const 2)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.ne (i32.load (local.get $dep)) (i32.const 3)))
+      (br_if $reject (i32.and (i32.load offset=12 (local.get $rec)) (local.get $bit)))
+      (i32.store offset=12 (local.get $rec) (i32.or (i32.load offset=12 (local.get $rec)) (local.get $bit)))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  ;; Owned dependency snapshot for rollback/final unload. The host must retain
+  ;; this mask before destroying the parent and release each transferred ref.
+  (func $win16_bridge_module_dependencies (export "win16_bridge_module_dependencies")
+    (param $id i32) (result i32)
+    (local $rec i32) (local $mask i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const -1))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (local.set $mask (i32.const -1))
+    (if (i32.eq (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+      (then (local.set $mask (i32.load offset=12 (local.get $rec)))))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (local.get $mask))
+
+  ;; -1 rejected, 0 reference dropped, 1 final owner must terminate then finish.
+  ;; The lease spans guest termination but no mutex does. It prevents another
+  ;; instance executing or allocating while the last reference is retired.
+  (func $win16_bridge_module_release_begin (export "win16_bridge_module_release_begin")
+    (param $id i32) (result i32)
+    (local $rec i32) (local $refs i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const -1))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 3)))
+      (if (i32.load (call $win16_task_shared (i32.const 40)))
+        (then (br_if $reject (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))))
+      (local.set $refs (i32.load offset=8 (local.get $rec)))
+      (br_if $reject (i32.eqz (local.get $refs)))
+      (if (i32.gt_u (local.get $refs) (i32.const 1))
+        (then
+          (i32.store offset=8 (local.get $rec) (i32.sub (local.get $refs) (i32.const 1)))
+          (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 0))))
+      (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
+      (i32.store (call $win16_task_shared (i32.const 44))
+        (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+      (i32.store offset=28 (local.get $rec) (i32.const 1))
+      (i32.store offset=4 (local.get $rec) (call $lock_owner_id))
+      (i32.store (local.get $rec) (i32.const 4))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const -1))
+
+  (func $win16_bridge_module_release_finish (export "win16_bridge_module_release_finish")
+    (param $id i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 4)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.eqz (i32.load offset=28 (local.get $rec))))
+      (call $win16_dll_unload (local.get $id))
       (call $win16_bridge_module_stage_release (local.get $rec))
       (call $win16_dynamic_module_release (local.get $id))
       (call $zero_memory (local.get $rec) (i32.const 32))
