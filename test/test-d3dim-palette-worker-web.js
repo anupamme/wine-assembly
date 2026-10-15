@@ -10,7 +10,7 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 (async()=>{
   const root=path.resolve(__dirname,'..');
   const wasm=compileSrcWasm((file,source)=>file==='13-exports.wat'?source+'\n'+extraWat:source);
-  const scripts=['lib/region-map.generated.js','lib/gl-command-stream.js','lib/guest-rpc.js',
+  const scripts=['lib/region-map.generated.js','lib/gl-command-stream.js','lib/d3d-command-stream.js','lib/guest-rpc.js',
     'lib/guest-thread-host.js','lib/render-worker.js','test/helpers/palette-worker-browser.js'];
   const evidence={source:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),
     diff:cp.execFileSync('git',['diff','--stat'],{encoding:'utf8'}).trim(),

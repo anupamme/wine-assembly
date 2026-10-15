@@ -125,3 +125,55 @@ hash there differs from the production build hash. The driver does not run
 the still-missing faithful guest/render Worker palette lifetime fixture, add
 stencil coverage, establish a baseline failure, or resolve state144/key rules.
 It is preparation only until actual remote logs and hashes are reviewed.
+
+Actual serialized execution, 2026-10-14/15 (supersedes preparation status only
+for the specific checks below; production candidate remains unmerged):
+  164dc33adf392937315ba73f782a8372aa709857 canonical build PASS;
+  production module SHA256 fe8466ec2205e6f1ef7ea82bcc518027265370497b50f44a6852f8c5d39ef696.
+  Full-VM palette-alpha-page-watch (including natural slot reuse), Device7
+  Load, indexed texture and software raster suites all PASS. Process113615
+  finished23:57:21Z with exit1 because the subsequent GPU fixture omitted
+  diagnostic host.dx_trace and failed during CreateSurface, before pixels.
+  This original harness failure is preserved, not a palette semantic failure.
+
+  2b28b3e27a346e362f7353b3babd53c0f3974a0d adds only explicit dx_trace
+  recording to the GPU fixture. Actual WebGL1 and WebGL2 each PASS all17 RGBA
+  checks; zero fallback/errors/byte-shadow checks,29 page checks and8 texture
+  generations each. Instrumented module SHA256
+  5475d316690829a5d155df7d6b330cbdd764cd71219837503759cb0eb5fc7c67.
+  Chrome151.0.7922.108, requested SwiftShader arguments; returned renderer is
+  ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6 (Core Profile) Mesa 23.2.1).
+  The coordinator identifies this host's existing Chrome wrapper as forcing
+  SwiftShader and spoofing that string; wrapper/process verification remains
+  to be captured here. The renderer string is not evidence of hardware Intel.
+  Process115217 exited0 at23:58:18Z, browser closed.
+
+  5cd513331 actual guest/render Worker fixture attempt117106 failed before
+  guest setup at the crossOriginIsolated assertion; custom test document
+  lacked COOP/COEP headers. 8c9f0a30b fixes those fixture headers only.
+  ab73cedb7 strengthens pre-drain ownership-byte checks and ordinary replacement
+  peFlags=128 initialization. These Worker checks have NOT passed yet. No real
+  Release/SetEntries/detach barrier acceptance follows from this early attempt.
+  All browsers/processes closed; runtime released to kkrieger at00:01:47Z.
+
+Downloaded evidence: scratch/runs/20261015-palette-validation in the main
+checkout,26 files byte/SHA256-verified against remote originals. Contains
+20261014-palette-runtime,20261014-palette-gpu-diagnostic and
+20261015-palette-worker-first subdirectories, including original failures,
+source identities, actual pixels/stats and transfer receipts. This is a
+synthetic conformance investigation, not attached to an unrelated game ID.
+The append-only messageboard records runtime ownership and remote branch
+receipts. Recovery: import the task branch/bundle onto the recorded baseline,
+reuse dependencies, run the exact commands with fresh evidence directories.
+No local assets, dependencies, module binaries or full checkout were copied.
+
+Prepared follow-up commands, requiring a renewed serialized runtime grant:
+  node test/helpers/palette-followup-validation.js scratch/runs/20261015-palette-worker-next worker
+  node test/helpers/palette-followup-validation.js scratch/runs/20261015-palette-regressions regressions
+The second runs DirectDraw palette format/QI (original calc.exe required),
+texture-stage alias/page-watch, seven format63 regression configurations,
+and both existing Boids route suites. It records SKIP as failure, not acceptance.
+Original Boids assets and external symlink/static-server permissions must be
+verified before running routes. Worker barriers, stencil nonwrites, baseline
+semantic failure, these remaining regressions, and state144/key semantics are
+still separate gaps. Passing unkeyed cooperative pixels resolves none of them.
