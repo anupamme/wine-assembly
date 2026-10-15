@@ -31,6 +31,23 @@ historical assembly script/audit is missing. Compare every assembled file to
 the fresh 645-file retained inventory before marking recovery reproducible.
 No extraction, build, or game runtime was performed for this acquisition step.
 
+The pinned REWise source is now checked out cleanly at
+`bx_tgbme2h7:/home/user/bg2-recovery-20261015/REWise`. Its README confirms
+ordered concatenation and `rewise -x OUTPUT -p -t TMP INPUT`; the Makefile lists
+nine C source units and places `-lz` before objects. The prepared
+`tools/bg2-source-recovery.js` compiles those same units with `-lz` last,
+preserves all original parts, checks their pins and the extractor identity,
+and records extraction logs and hashed outer/inner inventories. It refuses
+an existing extraction directory and requires 6 GiB free. `plan ROOT` is
+read-only. The compile/extract path remains **unexecuted**, pending a separate
+resource grant; use the external 1500-second timeout recorded in the JSON.
+
+The controller stops before assembly. `setup.inx`, group inventory, and Extra
+paths must establish the exact mapping first. Its `compare INSTALLED
+INVENTORY.json` mode compares all file sizes/hashes case-insensitively and
+rejects missing, unexpected, duplicate-case, or changed files. Compare the
+645-file assembled tree before adding the generated browser manifest.
+
 Distinct from the Baldur's Gate 1 previews in baldurs-gate-demos.md. No BG2
 entry exists in the inspected DESKTOP_APPS list or current app registry.
 
