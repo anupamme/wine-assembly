@@ -559,3 +559,39 @@ packages, extracted files and failed attempts remain on the remote box.
 No registry registration, Windows guest or game was executed. The full
 registry snapshot remains missing; actual native registration is the next
 preparation prerequisite, not a claim that launch is ready.
+
+## Native registration recipe prepared (15 October)
+
+`tools/cmr3-register-native.js` and
+`docs/cmr3-registry-preparation-20261015.md` prepare the historical nine-step
+sequence in an isolated clean checkout, without executing it. Authenticated
+regsvr32 disassembly identifies the DllRegisterServer return at 0x401341;
+the existing runner trace will record EAX there. Acceptance requires S_OK,
+guest exit zero and an exported native InprocServer32 entry at every step.
+Host exit zero alone is insufficient. Pure JS rejection/order tests pass.
+No runtime/build/remote action occurred in preparation; canonical source/module
+pinning and a fresh root runtime grant remain prerequisites. The output is a
+newly generated registry, never asserted equal to the missing historical bytes.
+
+First bounded native registration on 15 October tested `6dfbff842` after a
+fresh canonical build (module `d463bdae09d9a4e8926c31f0a594535331a2a85d39d494c0e281b920ce9f0fa5`).
+Process73364 exited1 at10:34:13: devenum/quartz/qedit/QASF passed real HRESULT,
+guest exit and native COM checks; WMVCORE returned S_OK and exited0 but left
+the 671-entry snapshot byte-identical and no WMVCORE InprocServer32 value.
+The strict recipe stopped before the remaining four steps. Review the real
+export's intended effects before changing the oracle; no DLL defect inferred.
+Postflight10:34:53 found no survivors and unchanged6491sources/module/native12/
+original302. Evidence `scratch/runs/20261015-cmr3-native-registration` retains
+40 verified artifacts plus terminal receipts. Full registry remains incomplete;
+no game or retry executed. Runtime released to root.
+
+Static followup resolves WMVCORE's distinct contract: exact native SHAe79cace0
+DllRegisterServer ordinal7/RVA76e7d writes embedded PRXFILE/200/1033 to
+C:\WINDOWS\WMSysPr9.prx; it does not register an InprocServer32 class. Profile
+is316640bytes/SHA25695f1edbc3cb9aa70a374a61b43bd16818636b0190aa841504130bb718c39c2c7.
+Source recipe now requires fresh exact VFS output plus unchanged registry,
+HRESULT/Exit0; other DLL native-class checks remain. Genuine output is carried
+into the next staging VFS and must later be mounted for game replay. Six JS
+tests and offline authentic-resource exporter roundtrip pass; no guest retry.
+Failed73364 lacks VFS capture, so file effect remains inconclusive. Full static
+proof and preservation contract: docs/cmr3-registry-preparation-20261015.md.
