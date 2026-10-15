@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (cooperative DLL ownership integration; NE bridge source work)
+  status: active (process-owned NE arena implementation)
   owner: /root/outlaws_kernel_module
-  Next: KERNEL stage native direct/sparse passed; original still needs real NE/QT support. Separate cooperative owner fix passed candidate/control/restored on005; integrated current-main862 source tests independently pass, native04ede proof queued behind Darkstone. Worker identified required process-owned NE arena and private stacks/full caller context; do not expose unsupported ordinals.
+  Next: Cooperative DLL owner fix merged9b19b3549 after current-IW native249384 candidate/control/restored PASS; root verified archiveeccc5075 and postflight. Worker implements process-owned NE arena/publication and caller-context prerequisites in separate branch; KERNEL stage direct/sparse passed, NE/QT exports remain absent until real lifecycle tests.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1647,7 +1647,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Lords of the Realm II original playable Windows demo
   id: NEW-GAME-LORDS2-DEMO-20261015
-  status: active (GetParent fix validated; original replay queued)
+  status: active (original replay reaches GetNextWindow invalid-handle crash)
   owner: /root/new_demo_refill
-  Next: Scoped invalid GetParent fix a24 passed normal build and five conformance suites on d56 canonicale26a; root verified recovered archive abf2fcac and independent idle/preservation postflight. Reviewed7bc original replay uses exact new candidate and only screenshot-gated Install then System Test Yes; queued after Darkstone and cooperative-owner proof. Gameplay and bad CWnd provenance remain unproved.
+  Next: Original250171 on d56/e26 delivered both reviewed inputs; GetParent fix advances to USER230 GetNextWindow, same invalid HWND1446, EIP1acbb9. Controller0 is guest failure; archiveee04e843 and independent idle/pins verified. Scoped failure-contract validation and badCWnd provenance continue; no gameplay qualification.
   Done: Registered original launch, actual ordinary player control and reviewed gameplay screenshot with source/run identity.
