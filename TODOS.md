@@ -1090,7 +1090,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (kkrieger level reached; CMR3 registration oracle review)
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
@@ -1158,7 +1158,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active (combined palette renderer merged; remaining contracts and corpus gaps)
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/legacy_colorkey_contract_audit (source-only defaultFALSE filtered-key contract)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
@@ -1522,7 +1522,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate original .kkrieger startup on separate test box
   id: KKRIEGER-STARTUP-20261014
-  status: active (ordinary-input level start verified; movement capture next)
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Main fc4901563 contains reviewed menu-input evidence: original60373 reaches first-person level/HUD after ordinary5sEnter, no guest patch;92artifacts verified, photo1382 delivered. /root/kkrieger_gameplay_capture source05d115 owns next bounded900s matched movement capture on main7aa74110e/module d463bdae. No movement/combat/audio/logical FPS qualification yet.
 
@@ -1541,7 +1541,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: active (four registrations pass; WMVCORE acceptance under review)
+  status: paused (user Telegram84; see ops/handoffs/codex-user-pause84-20261015.md)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
