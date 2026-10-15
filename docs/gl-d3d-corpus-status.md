@@ -40,7 +40,16 @@ statuses below; those sections remain dated evidence.
   [Line conformance evidence](cmr3-software-line-lists-20261015.md) establishes
   the bounded raster fix, not the remaining game's correctness.
 
-Invisible War callback transport remains on held task branches. Selective
+The earlier Invisible War transport review below is historical: the corrected
+chain was subsequently merged as `3fdb29373`, an ancestor of current main,
+after all eight combined native arms completed with their expected results.
+The exact negative control failed with `RECEIVER_RETIREMENT_DID_NOT_SETTLE`
+and the restored receiver suite passed. See the
+[combined native result and merge receipt](iw-combined-native-result-20261015.md).
+Original Invisible War gameplay, pointer marshalling and both renderer routes
+remain unproved; native conformance does not establish those results.
+
+Before that integration, callback transport remained on task branches. Selective
 port `8793e9f47` and endpoint checkpoint `17e713cd2` preserve main's existing
 lock, generation pins and INITIALIZING/LIVE/FAILED lifecycle; the older
 `e2d10ebb0` branch must not replace those semantics. Exact candidate canonical
@@ -58,13 +67,14 @@ verified archive SHA-256
 `22140338c794795536c124019079412943316e4a879b24014b4d51ea763f04fe`
 under `scratch/runs/20261015-iw-retirement-native/` and its logs/postflight.
 
-The combined chain still cannot merge: PID-wide broker admission deadlocks
-independent send chains and blocks a second receiver thread behind the first.
+The earlier review blocked integration because PID-wide broker admission
+deadlocked independent send chains and blocked a second receiver thread behind
+the first.
 Root reproduced both failures with real Node Workers, without guest WAT, in
 `scratch/runs/20261015-iw-broker-root-review/`. Worker
-`/root/iw_independent_send_fix` owns per-thread, exact-waiting-frame admission
-and regressions. Original Invisible War gameplay and both renderer routes
-remain unproved; native loader results do not establish either.
+`/root/iw_independent_send_fix` implemented per-thread, exact-waiting-frame
+admission and regressions before the combined validation linked above. Do not
+reopen this historical merge blocker as though that correction were absent.
 
 The original 27-app membership evidence and per-game software/WebGL gameplay
 coverage remain incomplete. None of these focused tests closes that goal.
