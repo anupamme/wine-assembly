@@ -272,7 +272,7 @@ globalThis.runPaletteGpu = async function (version) {
     draw(.5,0xffffffff,[u,.5],false);
     const packed=e.guest_read32(rtGuest+d.pitch+4)>>>0;
     const actual=[packed>>>16&255,packed>>>8&255,packed&255,packed>>>24];
-    eq(actual,expected,label); observations.push({label,actual});
+    observations.push({label,actual,expected}); eq(actual,expected,label);
   };
   softwareRecord('software indexed all-key RGBA',.125,[0,0,0,0]);
   softwareRecord('software indexed duplicate RGB nonkey',.375,[...rgb,255]);
@@ -280,7 +280,10 @@ globalThis.runPaletteGpu = async function (version) {
   rs(15,1); rs(24,0); rs(25,5);
   softwareRecord('software indexed application rejection',.125,[0,0,255,255]);
   rs(15,0); rs(27,1); rs(19,5); rs(20,6);
-  softwareRecord('software indexed application blend',.125,[0,0,255,255]);
+  // This XRGB target has no alpha mask. Existing software blend_rgb writes
+  // RGB only (X=0); GPU fence separately normalizes DIB X=255. Assert the
+  // destination RGB preservation without claiming destination alpha support.
+  softwareRecord('software indexed application blend (DIB X=0)',.125,[0,0,255,0]);
   rs(27,0); rs(15,1); tss(4,3); tss(6,0);
   softwareRecord('software opaque diffuse alpha passes application test',.125,[0,0,0,255]);
   rs(15,0); tss(4,2);

@@ -198,3 +198,11 @@ invoking the GPU executor, counts it, and asserts exactly one declined probe
 per successful software draw alongside unchanged GPU draw count and exact
 pixels. Other GPU operation types still fail. Initial and follow-up failures
 remain retained; this refined fixture still needs execution.
+
+The next execution reached real software pixels and exposed a second X-byte
+oracle mismatch: software d3dim_blend_rgb returns RGB only, storing X=0 in
+this XRGB target (no alpha mask), while the GPU DIB fence normalizes X=255.
+The software blend expectation now explicitly pins [0,0,255,0], testing blue
+destination RGB preservation without claiming destination-alpha support.
+All-key, duplicate-index, mixed-filter and rejection software cases passed
+before this assertion. Numeric software evidence is retained before throwing.
