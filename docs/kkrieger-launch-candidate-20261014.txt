@@ -87,3 +87,42 @@ WA_MAX_SECONDS=600 raises the bound. Stop sampling on an observed OOM or exit.
 browser-endpoint.json allows an authorized observer to connect with
 defaultViewport:null and inspect menu/gameplay without the earlier incidental
 resize. Endpoint is local ephemeral diagnostic data, not a hosted service.
+
+600s follow-up result (2026-10-15, actual guest exit before bound):
+scratch/runs/20261015-kkrieger-registered-600s records source906f93501 with
+the same70c6 module, all144 inputs rechecked and all3 original file pins exact.
+The registered game held2GiB/OOM0 through the last live304006ms memory sample.
+At300s the loading bar was full; the next stage emitted243 copies of
+"D3D9 draw: unsupported vertex declaration element" and exited before306001ms.
+Last block0x00801c31, preceding0x00801c25, eax0; stack0x00805400,
+0x0080545f,0x007f6095,0x0c10080c. Rejection followed by exit is correlation;
+the errors are not yet proven the sole cause. No menu/gameplay appeared in
+reviewed captures, and no controls were sent. No game FPS measurement exists.
+
+The precise failing declaration type/usage/offset is UNKNOWN: the production
+WebGL validator accepted types0..4 and nonnegative integral offsets aligned
+to4 bytes, but emitted no element details. The host accepts types0..16 and
+the software path decodes them. A supported type with an unaligned offset
+also reaches this error; do not assume a packed type from the message alone.
+Retained original disassembly locates CreateVertexDeclaration at0x00803cef
+(vtable+0x158), reading table pointers at0x008210e4 plus its index; the
+retained128KiB image ends0x00820000 and lacks that table. Next runtime needs
+the original table and first rejected draw snapshot before a semantic fix.
+
+Diagnostic-only source follow-up adds register/type/offset/usage/usageIndex/
+stride to the same error, leaving the rejection predicate unchanged. Existing
+test/test-d3d9-backend-web.js --validation-only checks production rejection
+for type5 and offsets2/-4/0.5 with exact detail and no declaration mutation,
+without a browser or guest. These are synthetic witnesses, not the original
+game's uncaptured type. No unsupported declaration is accepted by this change.
+
+Harness correction: shell cleanup clears currentWine.memory, so the old
+condition requiring memory missed the completed guest. Track prior startup
+and stop on running=false even after memory disappears; four JS cases verify
+cleared-memory exit, not-yet-started state, active run, and OOM. The observer
+saved guest-exit.png and closed Chrome00:08:32.863Z; controller117519 then
+exited1 during detached-frame cleanup00:08:45.294Z. This controller error
+occurred after the independently recorded guest failure. Palette owns runtime
+next. Viewport remained1100x800 throughout this follow-up. Concurrent AVP2/
+Silver source download/extraction, logging and SwiftShader preclude quiet-host
+startup performance claims. No main merge or deployment by this worker.

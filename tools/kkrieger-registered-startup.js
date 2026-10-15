@@ -14,6 +14,11 @@ if (!Number.isInteger(seconds) || seconds < 15 || seconds > 600) throw Error('WA
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const hashFile = name => sha(fs.readFileSync(path.join(root, name)));
 const git = (...args) => execFileSync('git', ['-C', root, ...args], {encoding: 'utf8'}).trim();
+// The shell drops currentWine.memory on exit, so memory cannot be an exit
+// predicate. Require evidence that this run started, then trust running=false.
+function shouldStop(state, hasStarted) {
+  return !!state.oom?.count || (hasStarted && state.running === false);
+}
 
 async function main() {
   const {APPS} = require(path.join(root, 'lib/apps'));
@@ -60,6 +65,7 @@ async function main() {
     meta.route = 'http://127.0.0.1:' + server.address().port + '/?debug&app=kkrieger_beta';
     await page.goto(meta.route, {waitUntil: 'domcontentloaded', timeout: 30000});
     const start = Date.now();
+    let hasStarted = false;
     for (let i = 0; Date.now() - start < seconds * 1000; i++) {
       await new Promise(resolve => setTimeout(resolve, Math.min(15000, seconds * 1000 - (Date.now() - start))));
       const state = await page.evaluate(() => {
@@ -72,10 +78,11 @@ async function main() {
           regs: e ? Object.fromEntries(['eip','yield_reason','eax'].map(k => [k, e['get_' + k]?.() >>> 0])) : null};
       });
       fs.writeFileSync(path.join(out, 'state-' + i + '.json'), JSON.stringify(state));
+      hasStarted ||= !!state.wasmBytes;
       if (i % 2 === 0 || state.oom?.count || state.running === false)
         await page.screenshot({path: path.join(out, 'screen-' + i + '.png')});
       console.log(JSON.stringify({sample: i, wasmBytes: state.wasmBytes, running: state.running, oom: state.oom?.count, regs: state.regs}));
-      if (state.oom?.count || (state.wasmBytes && state.running === false)) break;
+      if (shouldStop(state, hasStarted)) break;
     }
     await page.screenshot({path: path.join(out, 'final.png')});
   } catch (error) {
@@ -89,4 +96,5 @@ async function main() {
     await closeServer(server);
   }
 }
-main().catch(error => {console.error(error); process.exitCode = 1;});
+module.exports = {shouldStop};
+if (require.main === module) main().catch(error => {console.error(error); process.exitCode = 1;});
