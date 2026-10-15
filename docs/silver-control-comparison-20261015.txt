@@ -131,3 +131,45 @@ to fixed scenery that follows ordinary input and differs from the idle
 control. Compare actual reviewed captures and retain full source/input/backend
 identity. Runtime setup, scene readiness, matched-clock timing, cleanup,
 actual control interpretation and player control all remain unverified here.
+
+Remote source/media staging, 2026-10-15 00:06 UTC
+
+bx_tgbme2h7 is prepared at /home/user/wa-silver-comparison, detached9449e6c0d,
+using a verified67288-byte git bundle and existing
+/home/user/wa-rodent/node_modules reference. This did not modify any active
+runtime checkout. No browser/build/game was executed. Source/media operations
+were authorized separately while kkrieger retained the sole runtime slot.
+
+No Silver ZIP/EXE was found in the bounded retained-file search. The original
+public URL https://archive.org/download/SilverDemo/SilverDemo.zip was therefore
+downloaded on the remote box only; its129637371 bytes match the independent
+local original SHA256645db1f10f9fd77fcc22f3140648fc154e3d5680a9f88cd7fe8d834268e887ea.
+The remote download process119751 and extraction120276 exited0. Native ZIP
+extraction plus existing is5-extract restored3147 files/200374425 bytes and
+every inventory SHA256 passed. No local duplicate media/archive was created.
+
+Remote configuration and inputs:
+  /home/user/silver-comparison-20261015/config-idle.json
+  /home/user/silver-comparison-20261015/config-input.json
+  /home/user/silver-comparison-20261015/source-manifest.json
+  /home/user/silver-comparison-20261015/fixture
+  /home/user/silver-comparison-20261015/SilverDemo.zip
+Planned fresh outputs: /home/user/silver-comparison-20261015/runs/idle and
+/home/user/silver-comparison-20261015/runs/input (not created/executed here).
+
+All941 recorded source hashes independently match the local committed tree.
+All144 recorded canonical build inputs match the existing kkrieger/Pirates
+module; a private copy of its1801276-byte WASM is staged under the Silver
+checkout, SHA25670c6d329d51eee5db553715f53ffc47f3e6e2491b54ae5327f1b8b012427d655.
+This is source-equivalent module reuse, not a new build or a Silver runtime
+result. Browser response hashing remains mandatory when it is finally run.
+The source-manifest SHA256 is
+d5ac8d6533b5a596e88092160880442ecf4a8285546d220c65ca432b9ac3946e;
+controller SHA256c6e1823906f20466ef07e01357cfb0adab1900ca34bb8c4b471223a7ef3237c2.
+Chrome/Puppeteer paths exist; neither was started. Remote free space after
+staging37306597376 bytes; local floor remained above2GiB.
+
+Durable receipt: docs/silver-remote-readiness-20261015.json. Self-contained
+small metadata, transfer receipts and preparation script are retained at
+scratch/runs/20261015-silver-remote-prep. Await an explicit coordinator runtime
+grant after the queued lanes, then use the exact staged configs above.
