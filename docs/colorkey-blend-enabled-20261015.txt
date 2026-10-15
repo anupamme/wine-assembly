@@ -2,8 +2,9 @@ DX7 explicitly enabled color-key blending — source checkpoint 2026-10-15
 
 Base: 27f60c4133305a4d7558afbb8c067691b868434e
 Branch: task/colorkey-blend-enabled
-Disposition: SOURCE ONLY; compilation, VM and browser execution pending the
-coordinator's serialized runtime grant. Not ready to merge or deploy.
+Disposition: canonical build and nine CPU/full-VM suites PASS on bef60e8f7.
+Browser/GPU and explicit keyed Worker execution remain pending. Not ready to
+merge or deploy. Earlier source-only labels below describe checkpoint history.
 
 Contract
 Original Microsoft DX7 D3DRENDERSTATETYPE reference:
@@ -85,3 +86,33 @@ No genuine-alpha regression baseline rerun is needed merely to repeat the
 already retained main901f negative control; the changed candidate needs its
 own new executions. Previous palette passes do not validate this checkpoint.
 No original-game readiness or complete palette conformance claim follows.
+
+CPU validation — 2026-10-15 00:41-00:42 UTC
+Exact source: bef60e8f7c4579486824bbd5894c12685c7a7717, clean public clone.
+Host: bx_tcen9fqv, Linux x64, Node v24.18.1, API boat exec only.
+Canonical bash tools/build.sh: PASS, handle17543 terminal0 00:41:30.638Z;
+all build gates and WATX compilation passed. Production module1802710bytes:
+619623c65da9c18932de06ff131a56e83f49e71df51412ebed3c7473721e7fc0.
+Serial CPU driver18604: terminal0 00:42:19.520Z, nine PASS, zero SKIP:
+test-d3dim-indexed-texture, test-gl-software-raster,
+test-d3dim-palette-alpha-page-watch, test-d3dim-device7-load,
+test-directdraw-palette-format, test-d3dim-texture-stage-alias, test-page-watch,
+test-d3d9-decl-types, test-d3d9-generic-vertex-semantics.
+New software565 black/depth write, rejection/nonwrite, blend, opaque diffuse
+stage-alpha and mixed-filter cases executed successfully. Native indexed
+sampler duplicate-RGB, zero-weight, addressing and mixed cases also passed.
+Browser helper additions (including actual indexed software draws embedded
+in that browser fixture) remain UNEXECUTED; these CPU passes do not cover them.
+
+The CPU harnesses compile their own source closures plus test exports; the
+production module hash above is the canonical build, not their loaded module.
+Individual test-module hashes were not emitted. Test/source hashes and exact
+commands are retained, with canonical module identity separately labelled.
+
+Evidence: scratch/runs/20261015-colorkey-cpu in coordinator checkout, nineteen
+remote artifacts downloaded with SHA256 verification plus three terminal
+status records. source-pins.json was independently matched to the local tree.
+Remote /home/user/colorkey-cpu-bef60e8 retains build log, per-suite logs,
+cpu-suites.js recovery driver, hashes, source/environment and postflight.
+No browser was started. CPU host released to coordinator after terminal suite
+and postflight at00:42:51.102Z. Browser slot remains owned by Silver.
