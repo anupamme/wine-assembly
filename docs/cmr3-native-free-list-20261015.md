@@ -92,3 +92,20 @@ and mapping observation before hypothesizing reclamation; reason 5/10 instead
 requires the actual header/overlap and allocation ownership history. A cycle
 or count limit needs a bounded chain census. Do not reset, discard or repair
 the chain to advance gameplay.
+
+## Executed native validation and separate replay hold
+
+On 2026-10-15, remote controller104186 completed0 at13:06:17.316Z.
+The native lifetime and software-backend suites passed. The in-memory
+reason-zero mutation failed at the exact recorded.reason assertion (0 !== 5,
+line214); the restored lifetime suite passed. Canonical937466 remained unchanged.
+Root independently read these receipts before merging729d3fc73.
+
+The subsequent original replay105999 was stopped after its worker turn was
+rejected by automatic review for possible cybersecurity risk; the exact
+operation was not identified. Root sent ordinary quit only. The child ended
+13:08:09.141Z, controller13:08:09.526Z, identities remained unchanged, and
+13:10:11 runtime inventory was empty. No retry or diagnostic delegation follows
+that rejection. Existing evidence remains on the saved box; no new driving or
+allocator cause is established. This is local Windows-emulator compatibility
+work; the review restriction is separate from the passing conformance tests.

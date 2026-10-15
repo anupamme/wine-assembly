@@ -1541,11 +1541,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Colin McRae Rally 3 demo
   id: NEW-GAME-CMR3-DEMO-20261010
-  status: active (stage loading reached; allocator blocker under investigation)
+  status: blocked (automatic-review replay hold; native diagnostic tested and merged)
   runtime-revalidated: 2026-10-15 native recovery56105 terminal0; serialized remote runtime available, no transport blocker.
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/ColinMcRay-Rally3-pcdemo-D3D.exe
-  Next: Original85638 reached UK Warwick Special Stage1 via ordinarymenus on78a06540f/module937466. First invalid native free list afterbatch2402; no driving. Root independently verified26artifacts2044242B and viewed loadingmap; report merged223604e2f. /root/cmr3_native_free_list owns source-only allocator diagnosis; actual damaged-node snapshot missing.
+  Next: Preserve rejected replay105999; do not retry/rephrase/delegate around automatic possible-cybersecurity-risk rejection (exact operation unspecified). Root stopped via ordinary ctl quit13:08:09, postflight identities unchanged and runtime inventory empty13:10:11. Diagnostic729d3fc73 merged after native lifetime/backend plus intended reason-zero negativecontrol/restored PASS104186. No new driving or corruption cause established. Fresh /root/new_game_refill_20261015 selects an independent unqualified title.
   Done: Original launch, player-controlled gameplay and reviewed screenshot with tested identity.
   Evidence: scratch/cmr3-demo-20261010/selection.json
 
