@@ -14,6 +14,24 @@ const delay = ms => new Promise(r => setTimeout(r, ms));
 const FLAGS = ['--no-sandbox', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required', '--disable-background-timer-throttling'];
 const ROUTE = '/index.html?debug&d3d-renderer=software&d3d9-renderer=software&d3d9-programmable';
 const safeName = n => typeof n === 'string' && /^[a-z0-9-]{1,60}$/.test(n);
+function secondsFor(c) { const n = c.seconds ?? 300; assert(Number.isInteger(n) && n >= 120 && n <= 600, 'Session limit must be120..600 seconds'); return n; }
+function budget(command, deadlineAt, now = Date.now()) {
+  assert(now < deadlineAt, 'Controller deadline passed; request not submitted/executed');
+  if (command.action === 'mark-world') assert(deadlineAt - now >= 60000, 'Need at least60 seconds remaining for reviewed world comparison');
+  if (command.purpose === 'ground') assert(deadlineAt - now >= 25000, 'Need at least25 seconds remaining for ground-input observation');
+}
+function submit(out, sequence, command, now = Date.now()) {
+  assert(Number.isInteger(sequence) && sequence >= 0);
+  const state = read(path.join(out, 'control-state.json'));
+  assert.equal(state.closing, false, 'Controller already closed');
+  assert.equal(proc(state.driver.pid)?.startTicks, state.driver.startTicks, 'Controller is no longer the recorded process');
+  budget(command, state.deadlineAt, now);
+  const target = path.join(out, `command-${sequence}.json`);
+  assert(!fs.existsSync(target), 'Command sequence already exists');
+  fs.writeFileSync(target + '.tmp', JSON.stringify(command) + '\n', { flag: 'wx' });
+  fs.renameSync(target + '.tmp', target);
+  return { submittedAt: new Date(now).toISOString(), sequence, deadlineAt: state.deadlineAt };
+}
 
 function fixtureMap(files) {
   const map = new Map();
@@ -77,7 +95,7 @@ function preflight(c) {
     assert(!path.isAbsolute(f.path) && !f.path.split(/[\\/]/).includes('..'));
     assert.equal(hashFile(path.join(c.root, f.path)), f.sha256, f.path);
   }
-  const identity = { harnessSha256: hashFile(__filename), wasmSha256: c.wasmSha256, source, inventory, zipSha256: ZIP_SHA, chromeSha256: hashFile(c.chrome), flags: FLAGS, route: ROUTE, viewport: { width: 1000, height: 800 }, seconds: 300 };
+  const identity = { harnessSha256: hashFile(__filename), wasmSha256: c.wasmSha256, source, inventory, zipSha256: ZIP_SHA, chromeSha256: hashFile(c.chrome), flags: FLAGS, route: ROUTE, viewport: { width: 1000, height: 800 }, seconds: secondsFor(c), worldReserveSeconds: 60 };
   return { at: new Date().toISOString(), fingerprint: sha(JSON.stringify(identity)), ...identity };
 }
 function eligibleIdle(dir, fingerprint) {
@@ -135,6 +153,9 @@ async function child(c, out, mode) {
   let browser, server, page, closing = false, timer, phase = 'menu', shots = 0, bytes = 0;
   const commands = [], errors = [], responses = [], pending = new Set();
   const pins = preflight(c); save(out, 'preflight.json', pins);
+  const deadlineAt = Date.now() + pins.seconds * 1000;
+  const controlState = () => save(out, 'control-state.json', { at: Date.now(), deadlineAt, closing, phase, mode, driver: proc(process.pid), worldReserveSeconds: 60 });
+  controlState();
   if (mode === 'input') {
     assert(c.idleRun, 'Completed idle run required');
     eligibleIdle(c.idleRun, pins.fingerprint);
@@ -159,7 +180,7 @@ async function child(c, out, mode) {
     save(out, name + '.json', s); return s;
   }
   async function close(reason) {
-    if (closing) return; closing = true; clearTimeout(timer);
+    if (closing) return; closing = true; controlState(); clearTimeout(timer);
     try { if (page && shots < 28) await shot('final'); } catch (e) { errors.push(String(e)); }
     try { await browser?.close(); } catch (e) { errors.push(String(e)); }
     await Promise.allSettled([...pending]);
@@ -178,7 +199,7 @@ async function child(c, out, mode) {
     }
   }
   try {
-    timer = setTimeout(() => void close('300-second deadline'), 300000);
+    timer = setTimeout(() => void close(`${pins.seconds}-second deadline`), Math.max(0, deadlineAt - Date.now()));
     server = serverFor(c, fixtureMap(pins.inventory)); await new Promise(r => server.listen(0, '127.0.0.1', r));
     const puppeteer = require(path.join(c.root, 'node_modules/puppeteer'));
     browser = await puppeteer.launch({ executablePath: c.chrome, headless: true, args: FLAGS, timeout: 30000 });
@@ -211,6 +232,7 @@ async function child(c, out, mode) {
       if (!fs.existsSync(commandPath)) { await delay(250); continue; }
       const command = read(commandPath); const number = sequence++;
       try {
+        budget(command, deadlineAt);
         validate(command, mode, phase, out);
         if (command.action === 'shot') await shot(command.name);
         else if (command.action === 'quit') await close('requested-quit');
@@ -235,6 +257,7 @@ async function child(c, out, mode) {
         }
         commands.push({ at: Date.now(), number, status: 'executed', command });
       } catch (e) { errors.push(String(e)); commands.push({ at: Date.now(), number, status: 'rejected-or-failed', command, error: String(e) }); }
+      controlState();
       save(out, 'commands.json', commands);
     }
   } catch (e) { errors.push(String(e.stack || e)); await close('error'); }
@@ -251,7 +274,8 @@ async function supervise(config, out, mode) {
   const census = () => { const rows = fs.readdirSync('/proc').filter(n => /^\d+$/.test(n)).map(proc).filter(Boolean); descendants(rows, owned, worker.pid); save(out, 'owned-pids.json', [...owned.values()]); };
   const signal = name => { census(); for (const old of [...owned.values()].reverse()) { const now = proc(old.pid); if (now?.startTicks === old.startTicks) try { process.kill(old.pid, name); } catch {} } };
   census(); const poll = setInterval(census, 500);
-  const deadline = setTimeout(() => signal('SIGTERM'), 320000), kill = setTimeout(() => signal('SIGKILL'), 325000);
+  const seconds = secondsFor(c);
+  const deadline = setTimeout(() => signal('SIGTERM'), (seconds + 20) * 1000), kill = setTimeout(() => signal('SIGKILL'), (seconds + 25) * 1000);
   process.on('SIGTERM', () => signal('SIGTERM')); process.on('SIGINT', () => signal('SIGTERM'));
   const result = await new Promise(resolve => { worker.on('error', e => resolve({ code: 1, error: String(e) })); worker.on('close', (code, signal) => resolve({ code, signal })); });
   clearTimeout(deadline); clearTimeout(kill); signal('SIGTERM'); await delay(1000); signal('SIGKILL'); await delay(500); clearInterval(poll);
@@ -260,11 +284,15 @@ async function supervise(config, out, mode) {
   save(out, 'cleanup-supervisor.json', { at: new Date().toISOString(), mode, ...result, owned: [...owned.values()], survivors, postflightPassed });
   process.exitCode = result.code === 0 && !survivors.length && postflightPassed ? 0 : 1;
 }
-module.exports = { fixtureMap, validate, eligibleIdle, descendants, serverFor, ZIP_SHA, EXE_SHA, ROUTE, FLAGS };
+module.exports = { fixtureMap, validate, budget, submit, secondsFor, eligibleIdle, descendants, serverFor, ZIP_SHA, EXE_SHA, ROUTE, FLAGS };
 if (require.main === module) {
   const [action, config, output, mode] = process.argv.slice(2);
+  if (action === '--submit') {
+    console.log(JSON.stringify(submit(path.resolve(config), Number(output), JSON.parse(mode))));
+  } else {
   assert(['--child', '--runtime-grant'].includes(action), 'Usage: node tools/silver-control-comparison.js --runtime-grant CONFIG NEW_OUTPUT idle|input; do not run before reservation');
   assert(config && output && ['idle', 'input'].includes(mode));
   const job = action === '--child' ? child(read(config), path.resolve(output), mode) : supervise(path.resolve(config), path.resolve(output), mode);
   job.catch(e => { console.error(e); process.exitCode = 1; });
+  }
 }

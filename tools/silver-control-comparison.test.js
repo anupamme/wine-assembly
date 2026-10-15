@@ -1,7 +1,28 @@
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), os = require('os'), path = require('path'), crypto = require('crypto');
-const { fixtureMap, validate, eligibleIdle, descendants, serverFor } = require('./silver-control-comparison');
+const { fixtureMap, validate, budget, submit, secondsFor, eligibleIdle, descendants, serverFor } = require('./silver-control-comparison');
+test('bounded600s configuration and submission reject late requests and preserve world observation reserve', () => {
+  assert.equal(secondsFor({}), 300); assert.equal(secondsFor({ seconds: 600 }), 600);
+  assert.throws(() => secondsFor({ seconds: 601 })); assert.throws(() => secondsFor({ seconds: 0 }));
+  assert.throws(() => budget({ action: 'mark-world' }, 60000, 1), /at least60/);
+  assert.doesNotThrow(() => budget({ action: 'mark-world' }, 60000, 0));
+  assert.throws(() => budget({ purpose: 'ground' }, 25000, 1), /at least25/);
+  assert.throws(() => budget({ action: 'shot' }, 5000, 5000), /deadline passed/);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'silver-deadline-'));
+  try {
+    const s = fs.readFileSync('/proc/' + process.pid + '/stat', 'utf8');
+    const startTicks = s.slice(s.lastIndexOf(')') + 2).split(' ')[19];
+    const state = { closing: false, deadlineAt: 1000, driver: { pid: process.pid, startTicks } };
+    fs.writeFileSync(path.join(dir, 'control-state.json'), JSON.stringify(state));
+    assert.throws(() => submit(dir, 0, { action: 'shot', name: 'late' }, 1001), /deadline passed/);
+    assert(!fs.existsSync(path.join(dir, 'command-0.json')), 'Late request must not appear queued');
+    assert.doesNotThrow(() => submit(dir, 0, { action: 'shot', name: 'early' }, 999));
+    assert.throws(() => submit(dir, 0, { action: 'shot', name: 'duplicate' }, 999), /already exists/);
+    fs.writeFileSync(path.join(dir, 'control-state.json'), JSON.stringify({ ...state, closing: true }));
+    assert.throws(() => submit(dir, 1, { action: 'shot' }, 999), /already closed/);
+  } finally { fs.rmSync(dir, { recursive: true }); }
+});
 test('failed idle integrity and reused parent PID cannot qualify a baseline or descendant', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'silver-idle-'));
   const save = (name, value) => fs.writeFileSync(path.join(dir, name), JSON.stringify(value));

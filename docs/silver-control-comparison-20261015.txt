@@ -1,4 +1,10 @@
-Silver matched idle/input harness — SOURCE PREPARATION, NOT RUNTIME ACCEPTANCE
+Silver matched idle/input harness — NEXT600s PREPARATION, NOT MOVEMENT ACCEPTANCE
+
+The original300s pair is complete and preserved separately: both reached the
+house naturally, but the attempted world requests arrived after shutdown.
+No ground hold executed. See docs/re-notes/silver-demo.md and
+scratch/runs/20261015-silver-idle-input. Do not relabel it an input failure.
+The changes below are source-only and have not been transferred or executed.
 
 Files: tools/silver-control-comparison.js and its adjacent .test.js.
 Preparation checks: node --check tools/silver-control-comparison.js;
@@ -34,14 +40,17 @@ are installed by the harness. Use absolute paths in config:
   "inventory": "/ABS/checkout/test/candidate-corpus/silver-demo-files.json",
   "sourceManifest": "/ABS/exact-source-manifest.json",
   "wasmSha256": "REPLACE_WITH_ACTUAL_64_HEX_SHA256",
-  "chrome": "/usr/bin/google-chrome"
+  "chrome": "/usr/bin/google-chrome",
+  "seconds": 600
 }
 
 The original source ZIP and EXE pins are mandatory. All3147 files, source
 manifest entries, built module, and original ZIP are hashed before and after
 each session. The browser-loaded module response is independently hashed.
 The pair fingerprint covers harness/module/source/fixture/ZIP/chrome hash,
-launch flags, URL, viewport and300s limit. Browser version must also match.
+launch flags, URL, viewport, configured limit and60s world reserve. Browser
+version must also match. The default remains300s; accepted limits are integer
+120..600s. Use600s for both new sessions, with fresh output directories.
 Chrome wrapper hash is not proof of the underlying executable bytes; actual
 version and the captured launch settings remain part of the record.
 
@@ -64,10 +73,14 @@ Execution after grant (each output path must not exist)
 
 node tools/silver-control-comparison.js --runtime-grant /ABS/config-idle.json /ABS/scratch/runs/UNIQUE-silver-idle idle
 
-Drive only through fresh command-N.json files in that output, starting at0
-and incrementing. Write to a temporary file and rename atomically so the
-controller never sees partial JSON. The polling interval is250ms. The
-controller saves commands, held-button observations, screenshots and hashes.
+Submit through the controller on the SAME runtime host, starting at index0:
+node tools/silver-control-comparison.js --submit /ABS/OUTPUT 0 '{"action":"shot","name":"menu-ready"}'
+The submit command checks the recorded live controller PID/start time,
+closing status and absolute deadline before an atomic command-N.json write.
+Late/closed requests fail without creating a queued request. Do not write
+request files manually: that bypasses the useful submission receipt. The
+controller also checks the deadline and world observation reserve before
+executing a command. Polling is250ms; commands and observations are retained.
 
 1. Request {"action":"shot","name":"menu-ready"}. Inspect that image.
 2. Send a reviewed Start relative move:
@@ -86,7 +99,7 @@ controller saves commands, held-button observations, screenshots and hashes.
       "scene":"world","description":"Describe fixed scenery and visible scene"}}
    Idle mode captures idle-0s/2s/5s/10s/20s and rejects all world actions.
    Continued natural animation or movement is the no-input control.
-5. Quit with {"action":"quit"}, or allow the300s deadline. Inspect clean
+5. Quit with {"action":"quit"}, or allow the configured deadline. Inspect clean
    cleanup-supervisor.json, postflight, errors, module hashes and images.
    Failure, missing world checkpoint, or changed source blocks the input run.
 
@@ -107,9 +120,10 @@ destination only when useful; no guest writes, saves, config bypass or keys.
 
 Capture and cleanup limits
 
-Each session has a300s controller deadline,8MiB retained console budget,
+Each session has a hard configured deadline (600s maximum),8MiB console budget,
 28-screenshot cap and20s observation windows. The outer supervisor bounds
-setup/hung cleanup at320s TERM/325s KILL, targeting only observed descendants
+setup/hung cleanup at limit+20s TERM/limit+25s KILL (620/625s for the next
+600s pair), targeting only observed descendants
 whose PID start time still matches. Normal exit closes browser/server and
 rechecks source/media. Actual browser termination/PID absence remains untested
 until runtime; inspect cleanup rather than assuming it worked. Do not run a
@@ -131,6 +145,33 @@ to fixed scenery that follows ordinary input and differs from the idle
 control. Compare actual reviewed captures and retain full source/input/backend
 identity. Runtime setup, scene readiness, matched-clock timing, cleanup,
 actual control interpretation and player control all remain unverified here.
+
+Actionable post-house window for the next pair
+
+The measured prior runs spent roughly70s reaching the menu and arrived at
+the house near270s from session start; review latency consumed the remaining
+window. A600s hard limit permits a substantially longer observation window
+without changing the guest, speeding clocks or skipping scenes. The mark-world
+request now requires at least60s before the absolute controller deadline;
+any purpose:ground request requires at least25s for its hold and20s capture
+series. If insufficient time remains, stop and record window exhaustion,
+not a game-input failure. Read control-state.json for deadlineAt/phase/closing.
+
+In idle, inspect the same forecourt/portrait-disappeared scene and collect
+the full0/2/5/10/20s no-input series. In input, mark the corresponding reviewed
+scene with readiness uncertainty explicit, move to visible clear ground,
+wait for the actual pointer to settle in a fresh image, review that image,
+then submit one ordinary1s hold with at least25s left. Compare the resulting
+0/2/5/10/20s hero position against fixed scenery and the idle baseline; a
+second distinct destination is useful only if time and the first result
+justify it. A textual checkpoint is not proof that dialogue/control is ready.
+
+Before using the next version remotely, transfer the reviewed new controller
+and regenerate/reverify the source manifest/controller hash. Both pair members
+must use the same new fingerprint. The staged9449e6c0d configurations and
+source-manifest below describe the previous300s harness; they cannot attest
+this revised controller. No new runtime or remote transfer occurred in this
+source-preparation step.
 
 Remote source/media staging, 2026-10-15 00:06 UTC
 
