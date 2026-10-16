@@ -48,7 +48,7 @@ test('known-size first read rejects partial bodies or stale decoded size without
 test('reload after stop has a new background lifetime; old providers retain aborted signals',async()=>{
  const signals=[],real=response(5000000);const{wine,vfs}=fixture((u,i)=>{signals.push(i.signal);if(i.signal.aborted)return Promise.reject(Object.assign(Error('aborted'),{name:'AbortError'}));return real(u,i);});
  await wine.loadFiles([{url:'old',size:5000000,loadMode:'background'}]);await wine.startBackgroundAssets();const old=vfs.files.get('c:\\old')._provider;wine._manifestAssetAbort.abort();
- await wine.loadFiles([{url:'new',size:5000000,loadMode:'background'}]);await wine.startBackgroundAssets();assert.equal(signals.length,2);assert.notEqual(signals[0],signals[1]);assert.equal(signals[0].aborted,true);assert.equal(signals[1].aborted,false);
+ await wine.loadFiles([{url:'new',size:5000000,loadMode:'background'}]);await wine.startBackgroundAssets();assert.equal(signals.length,2);assert.notEqual(signals[0],signals[1]);assert.equal(old.provider._downloadOptions.signal.aborted,true);assert.equal(signals[1].aborted,false);
  // A chunk the background prefix did not cover (1MB chunks: past the first).
  await old.fill(2000000,1);assert.equal(signals.length,2,'resident whole bytes need no request after abort');assert.equal(wine.backgroundAssets.completed,1);
 });

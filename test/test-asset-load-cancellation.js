@@ -56,8 +56,9 @@ test('whole discovery GET receives launch cancellation; abort does not trigger e
   });
   const loading = wine.loadFiles([{url:'archive.bin',httpRange:true}],{transfer:{signal:controller.signal},required:true});
   const signal = await entered.promise;
-  assert.equal(signal,controller.signal);
+  assert.equal(signal.aborted,false);
   controller.abort();
+  assert.equal(signal.aborted,true);
   await assert.rejects(loading,{name:'AbortError'});
   assert.equal(calls,1); assert(!vfs.files.has('c:\\archive.bin'));
 });
@@ -104,6 +105,6 @@ test('sized whole-file provider remains lazy and usable after launch signal ends
   const entry = vfs.files.get('c:\\archive.bin');
   assert(entry._provider);
   assert.deepEqual(Array.from(await entry._provider.readRange(0,4)),[1,2,3,4]);
-  assert.equal(calls.length,1); assert.equal(calls[0].signal,undefined);
+  assert.equal(calls.length,1); assert.equal(calls[0].signal.aborted,false);
   assert.equal(calls[0].headers?.Range,undefined);
 });

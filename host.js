@@ -4075,15 +4075,17 @@ class WineAssembly {
                 const rangeOptions = {
                   partSize: WineAssembly.ASSET_PART_SIZE,
                   partUrl: WineAssembly._assetPartUrl,
+                  signal: lifetimeSignal,
+                  openSignal: transferOpts.signal,
                   openFetch: (source, init = {}) => {
                     checkCancelled();
-                    return WineAssembly._fetchAssetResponse(source, { ...init, signal: transferOpts.signal });
+                    return WineAssembly._fetchAssetResponse(source, init);
                   },
                   // Only launch-time discovery belongs to this AbortSignal.
                   // The provider retains this adapter for later gameplay GETs;
                   // those must remain usable after the launch controller ends.
                   fetch: (source, init = {}) => {
-                    return WineAssembly._fetchAssetResponse(source, sizedRange ? { ...init, signal: lifetimeSignal } : init);
+                    return WineAssembly._fetchAssetResponse(source, init);
                   },
                 };
                 // A stat-verified manifest already knows the length. Mount it
