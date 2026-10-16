@@ -1,5 +1,22 @@
 # Quake III Arena demo 1.11
 
+## Worker joining and download deadlines (2026-10-16)
+
+The remaining c29ca48c1 discovery/join changes are integrated while keeping
+the newer shared Q2/Q3 account-name policy. A nonempty hosting directory is
+offered at launch; empty directories stay silent. Native discovery joins
+adopt the room on the existing guest and send `net_restart; connect`, including
+punctuation, rather than restarting Q3. Reviewed local isolated-Worker
+evidence: `scratch/runs/20261016-q3-worker-join`, using the deployed WASM
+with the candidate JS changes. Host `.1`, discovery client `.2`, and unchanged
+client guest identity are asserted; this is Chrome-to-Chrome coverage.
+
+Lazy HTTP file/part downloads now have a 90-second total deadline covering
+headers and the complete body. Timeout aborts the fetch and rejects even if
+an adapter ignores abort, so existing parked-read retries and Retry/Quit UI
+can run. Late responses cannot populate the cache. This deadline is for
+provider-backed game data; eager downloads and bundle requests are separate.
+
 ## Hosting banner follow-up, 2026-10-15
 
 The shell previously equated owning a browser LAN room with running a game
