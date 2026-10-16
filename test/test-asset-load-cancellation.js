@@ -17,6 +17,8 @@ function fixture(fetch) {
   vm.runInNewContext(source + '\n;globalThis.WineAssembly = WineAssembly;', context, {filename:'host.js'});
   // Define browser facilities after loading the class, avoiding unrelated UI startup.
   context.window = {byteProvider};
+  // Exercise individual asset cancellation independently of bundle prefetch.
+  context.WineAssembly._bundleUnsupported = true;
   const wine = Object.create(context.WineAssembly.prototype);
   wine._helpCtx = {vfs:new VirtualFS()};
   return {W:context.WineAssembly, wine, vfs:wine._helpCtx.vfs};
@@ -63,7 +65,7 @@ test('whole discovery GET receives launch cancellation; abort does not trigger e
   assert.equal(calls,1); assert(!vfs.files.has('c:\\archive.bin'));
 });
 
-test('late discovery GET cannot mount and loadFiles waits for all sibling continuations before rejection', async () => {
+test('abort releases a hung discovery GET and its late completion cannot mount', async () => {
   const controller = new AbortController(), late = deferred(), entered = deferred();
   const calls = [];
   const {wine,vfs} = fixture((url,init) => {
@@ -74,9 +76,9 @@ test('late discovery GET cannot mount and loadFiles waits for all sibling contin
   let settled = false;
   const loading = wine.loadFiles([{url:'archive.bin',httpRange:true},'eager.bin','never.bin'],{concurrency:2,transfer:{signal:controller.signal}});
   const rejection = assert.rejects(loading,{name:'AbortError'}).then(() => {settled=true;});
-  await entered.promise; controller.abort(); await turn();
-  assert.equal(settled,false,'must not release caller while discovery continuation remains');
-  late.resolve(body([1,2,3,4])); await rejection;
+  await entered.promise; await turn(); controller.abort(); await turn();
+  assert.equal(settled,true,'abort must not wait for an unresponsive network adapter');
+  late.resolve(body([1,2,3,4])); await rejection; await turn();
   assert(!vfs.files.has('c:\\archive.bin')); assert(!vfs.files.has('c:\\eager.bin'));
   assert.deepEqual(calls,['archive.bin','eager.bin']);
 });

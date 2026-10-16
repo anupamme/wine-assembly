@@ -5,7 +5,7 @@
 // viewpos, then a separate mobile browser joins over the normal room card.
 const assert = require('assert');
 const { quakeConfigWithDefaults } = require('../lib/browser-shell');
-const nameDefaults = { serverName: 'berrry' };
+const nameDefaults = require('../lib/apps').APPS.quake3_demo.quakeConfigDefaults;
 const customNames = 'seta name "My player"\nseta sv_hostname "My server"\n';
 assert.strictEqual(quakeConfigWithDefaults(customNames,nameDefaults,'account'),customNames);
 assert(quakeConfigWithDefaults('seta name "UnnamedPlayer"\nseta sv_hostname "noname"',nameDefaults,'account').includes('seta name "account"'));
