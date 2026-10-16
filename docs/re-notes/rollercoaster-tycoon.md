@@ -232,3 +232,11 @@ session keeps draining credits; poll `snapshot`'s `frozen.credits` until 0
 instead. And `--trace-api ... --trace-from/--trace-to` together with
 `--present-distinct` cut the run's presents from 36,866 to 80 — do not combine
 them when counting.
+
+### Whole-file HTTP validation (2026-10-15)
+
+`scratch/runs/20261015-whole-part-games/rct` reaches Forest Frontiers with
+the global whole-GET provider and zero HTTP Range requests, including the
+older lazy RCT manifest. Tested on stable deployed WASM in cooperative
+Chrome/SwiftShader. Downloaded source bytes stay resident until provider
+close, independently of VFS chunk eviction; this costs additional memory.

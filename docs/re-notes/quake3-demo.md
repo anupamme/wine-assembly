@@ -196,3 +196,10 @@ into `test/binaries/candidates/quake-3-arena-demo-installer/installed/`, and
   game switches to the gauntlet, "OUT OF AMMO").
 - WebGL (`--headless-gl --gl-renderer=webgl --gl-census`), 8600 batches:
   33 distinct GL entry points, 6.57M GL calls, 297k packed draws, 3160 presents.
+
+### Whole-part HTTP validation (2026-10-15)
+
+`scratch/runs/20261015-whole-part-games/quake3_demo` reaches q3dm1 with
+the whole-GET provider. All five simulated 10 MiB pak0.pk3 deployment parts
+are requested once each; no HTTP Range requests. Stable deployed WASM,
+cooperative Chrome/SwiftShader, not a timing or multiplayer benchmark.
