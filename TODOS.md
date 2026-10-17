@@ -1607,8 +1607,8 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Improve and validate original .kkrieger control responsiveness
   id: KKRIEGER-CONTROL-LATENCY-20261015
-  status: ready (one forward movement verified; response quality unresolved)
-  owner: unowned
+  status: active (source/evidence audit; one forward movement verified; response quality unresolved)
+  owner: /root/kkrieger_latency_audit_oct17
   Next: Run118738 records22.154s first accepted input lag and18.125s observed guest release lag; strict within-phase comparison lacks two completed times. Use retained source/time/input evidence to distinguish simulation work, presentation and input service before choosing a performance change. No logicalFPS, combat, audio, repeated-control or software/WebGL pair claim. Do not repeat long runs merely to chase displacement.
   Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
 
