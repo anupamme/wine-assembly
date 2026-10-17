@@ -4920,8 +4920,19 @@
           "into": "game/SILVER"
         }
       ],
+      "cli": {
+        "exeGuestPath": "C:/SILVER/silver.exe",
+        "cwd": "C:/SILVER",
+        "vfsTrees": ["game"],
+        "zipMounts": [
+          {
+            "file": "source/SilverDemo.zip",
+            "root": "D:/SILVER/"
+          }
+        ]
+      },
       "manual": "Automated acquisition retains original source/SilverDemo.zip and extracts all original media plus cabinet payload under game/SILVER. Original runtime needs C:/SILVER plus the untouched ZIP mounted at D:/SILVER with CD-ROM semantics. The generic corpus CLI does not yet describe this dual mount; use the documented original harness route. No browser/desktop registration or gameplay qualification from recovery. See docs/re-notes/silver-demo.md.",
-      "notes": "Recovery-only candidate: full original bytes, no installer or licence prompt executed. Do not treat generic single-directory launch as original CD configuration."
+      "notes": "Recovery-first candidate: full original bytes, no installer or licence prompt executed. The dual-mount CLI launch is the only valid corpus execution of this original CD-search demo; do not treat a bare single-directory launch as original CD configuration or a compatibility verdict."
     }
   ]
 }
