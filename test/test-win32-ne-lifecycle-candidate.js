@@ -43,7 +43,7 @@ async function main() {
   bytes.set(pe,raw.get_staging());assert.equal(raw.load_pe(pe.length),BASE+0x1000);
   raw.set_eip(BASE+0x1000);raw.set_esp(0x7408000);
   const snapshot=()=>({registers:Buffer.from(bytes.slice(R.BASE.REGFILE,R.BASE.REGFILE+32)),
-    eip:raw.get_eip(),fs:raw.get_fs_base(),ss:raw.get_sreg_ss(),ds:raw.get_sreg_ds(),cs:raw.get_sreg_cs(),depth:raw.get_sync_msg_depth()});
+    eip:raw.get_eip(),fs:raw.get_fs_base(),ss:raw.get_sreg_ss(),ds:raw.get_sreg_ds(),cs:raw.get_sreg_cs(),depth:raw.get_sync_msg_depth(),thunkSelector:raw.win16_thunk_sel()});
   const caller=snapshot();let invocations=0,whileRunning;
   const e={...raw,win16_bridge_invoke_begin(...args){invocations++;return raw.win16_bridge_invoke_begin(...args);},
     run(blocks){whileRunning?.();try{return raw.run(blocks);}catch(error){

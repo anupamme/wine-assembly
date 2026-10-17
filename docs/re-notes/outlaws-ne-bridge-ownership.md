@@ -137,3 +137,36 @@ Exact source `93410966d20a014a8a450a9ff2d581c6d533700b` ran in `/home/user/wa-ne
 The retained stack maps to `win16_set_sreg` (782), `win16_far_transfer` (792), `th_call_far_imm` (795), then `run` (11923), using this build's combined WAT. This identifies an unmapped code selector during a far CALL; the retained fixture suppressed host numeric logs, so it does not identify the exact guest instruction or prove an unsupported API. Source inspection found import relocation reads `WIN16_THUNK_SEL` before invocation installs the NE selector; the lifecycle staging scope retains the PE caller's zero value. A real import-relocation regression and correction remain separate work. Synthetic lifecycle images in this run contain no executable import relocations.
 
 Candidate module SHA-256 `497bc3c94c89e520091fd6c31b0f95780a1d5d6920f145169e7ba00f78eb04ee`; region map `23615dbc2b7ac3832186beb25da29f85b6e475480894dddf3fd1e7ccdb5d3820`. Independent postflight 18:24:44.336Z verified idle, all 5,069 physical source files, 52 dependencies, nine preserved donor paths and 18,549 external source/evidence records. Runtime explicitly released before further read-only recovery. Frozen remote evidence `/tmp/wa-ne-lifecycle-native-20261015` and archive `/tmp/wa-ne-lifecycle-native-20261015.tar.gz`; recovered archive `scratch/runs/20261015-outlaws-kernel32-native/ne-lifecycle.tar.gz`, 6,351,210 bytes, SHA-256 `20981e3e465734b25923a0ac0eb1128a5608995deaa1e397599cffe8fb0078a1`. Oversized initial transfer failed locally; bounded read-only chunks recovered the same archive and verified its hash without rerunning native code or recreating evidence.
+
+## Import-selector candidate audit, 2026-10-17
+
+Preserved commit `86386f92d8fa57e80a11726f2fa9fa1a0c7ea2c3` passes the
+process-owned thunk selector explicitly to relocation while retaining the
+existing pure-NE selector. PE DLL staging derives selector index 1, matching
+arena bootstrap and invocation setup, without mutating caller globals.
+The tiny extracted-WAT transaction test now stages a real KERNEL.4 far-CALL
+relocation with both zero and stale nonzero caller selectors. Both produce
+selector 15 and the actual LocalInit thunk record, then restore the complete
+saved caller snapshot after rollback. This test passed on October 17; its
+controlled guest runner does not execute the imported call.
+
+The prepared full-interpreter lifecycle test does execute that call:
+LibEntry pushes DS, zero and 16, calls the relocated KERNEL.LocalInit, and
+returns with RETF. It checks the data segment grew from 0x100 to 0x110 and
+checks caller registers, segment state, EIP, depth and thunk selector after
+each lifecycle arm. Selector restoration is now included in the common
+snapshot, including the original PMPRO62 arm and initialization failures.
+This full-interpreter candidate remains **unrun**; syntax checks passed only.
+
+The native controller's old production-source pin would reject the fix.
+It now pins the `src`/`lib` bytes from `86386f92d8fa57e80a11726f2fa9fa1a0c7ea2c3`.
+The next native candidate is the reviewed task-branch commit containing this
+audit and controller update, supplied as the exact `WA_NE_LIFECYCLE_COMMIT`.
+It requires a new build/module hash and fresh external admission, sufficient
+disk, preserved inventories, sole runtime ownership and independent postflight.
+Use a fresh external evidence directory; retain the October 15 evidence.
+No build, remote runtime or original PMPRO62 retry was performed in this audit.
+The previous original initializer trap remains the latest native outcome;
+the four previously skipped allocator/pure-NE arms and original init/lookup/
+unload remain required. QT_Thunk and original game execution remain separate
+work, and the lifecycle production implementation remains off main.

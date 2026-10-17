@@ -210,7 +210,8 @@ const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
 // The real loader relocates an imported far CALL before any invocation switches
 // stacks. A PE caller's thunk-selector global is still zero at this boundary.
 bytes.set(Buffer.from('KERNEL\0'),fixture.WIN16_NAME_KERNEL);
-first.set_WIN16_THUNK_SEL(0);
+for (const callerThunkSelector of [0, 0x77]) {
+first.set_WIN16_THUNK_SEL(callerThunkSelector);
 const importCaller=cpu(first),importFrame=first.win16_bridge_frame_begin();assert(importFrame);
 assert.equal(first.win16_bridge_scope_begin(importFrame),1);
 const importedId=claim(first,'IMPORT');assert(importedId>0);
@@ -224,9 +225,11 @@ assert(importedTarget,'owned initializer target');
 const importedCode=translate(first.win16_seg_base(importedTarget>>>19));
 assert.equal(view.getUint16(importedCode+8,true),15,'staged import uses process NE thunk selector');
 assert.equal(view.getUint32(fixture.WIN16_THUNK_TABLE+view.getUint16(importedCode+6,true),true),0x10004,'real KERNEL.LocalInit thunk');
-assert.equal(first.get_WIN16_THUNK_SEL(),0,'relocation does not mutate caller selector');
+assert.equal(first.get_WIN16_THUNK_SEL(),callerThunkSelector,'relocation does not mutate caller selector');
 assert.equal(first.win16_bridge_module_rollback(importedId),1);
 assert.equal(first.win16_bridge_frame_end(importFrame),1);assert.deepEqual(cpu(first),importCaller);
+}
+first.set_WIN16_THUNK_SEL(0);
 first.set_sync_msg_depth(0);let calls=0,whileRunning;
 const lifecycleExports={...first,run(){
  calls++;whileRunning?.();const p=translate(first.get_eip());
