@@ -1,4 +1,24 @@
-# OpenGL / Direct3D corpus status, reconciled 2026-10-15
+# OpenGL / Direct3D corpus status, reconciled 2026-10-17
+
+## October 17 retained Darkstone movement review
+
+Later October 15 captures supersede the camera-only result below. Both software
+and WebGL show ordinary ground-click movement with a following camera. The
+software run exited successfully; the WebGL run retained two movements but
+ended at its input-queue deadline (exit 1).
+
+At a closely matching gate/tree/feet pose, WebGL has a substantially larger
+black foreground triangle; software still has a smaller wedge. Neither is
+established as correct. This is movement evidence with an unresolved rendering
+defect, not full backend qualification. Audio, combat, FPS and touch remain
+unmeasured. No new runtime was performed on October 17.
+
+See the [reviewed comparison](darkstone-backend-checkpoint-20261015.md#retained-same-pose-comparison-reviewed-october-17)
+for exact source/module identities, PNG hashes, draw-completion counters and
+cleanup receipts. Runs: `20261015-darkstone-software-movement` and
+`20261015-darkstone-locomotion`. Identical-input foreground draw comparison
+remains the next diagnostic; the old D3D9 capture format alone cannot preserve
+legacy D3DIM live resources and framebuffer/depth history.
 
 ## October 15 paired Darkstone result (17:40 UTC)
 
