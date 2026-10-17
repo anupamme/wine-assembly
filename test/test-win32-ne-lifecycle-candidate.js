@@ -44,8 +44,9 @@ async function main() {
   raw.set_eip(BASE+0x1000);raw.set_esp(0x7408000);
   const snapshot=()=>({registers:Buffer.from(bytes.slice(R.BASE.REGFILE,R.BASE.REGFILE+32)),
     eip:raw.get_eip(),fs:raw.get_fs_base(),ss:raw.get_sreg_ss(),ds:raw.get_sreg_ds(),cs:raw.get_sreg_cs(),depth:raw.get_sync_msg_depth(),thunkSelector:raw.win16_thunk_sel()});
-  const caller=snapshot();let invocations=0,whileRunning;
+  const caller=snapshot(),publishResults=new Map();let invocations=0,whileRunning;
   const e={...raw,win16_bridge_invoke_begin(...args){invocations++;return raw.win16_bridge_invoke_begin(...args);},
+    win16_bridge_module_publish(id,result){publishResults.set(id,result);return raw.win16_bridge_module_publish(id,result);},
     run(blocks){whileRunning?.();try{return raw.run(blocks);}catch(error){
       console.error(JSON.stringify({guestTrap:{eip:raw.get_eip()>>>0,cs:raw.get_sreg_cs(),ds:raw.get_sreg_ds(),ss:raw.get_sreg_ss(),hostLogTail:[...hostLogTail]}}));throw error;
     }}};
@@ -57,6 +58,16 @@ async function main() {
     ['MISSING',neLifecycleImage({dependencies:['ABSENT']})],
     ['CYCLE',neLifecycleImage({dependencies:['CYCLE']})],
     ['IMPORT',neLifecycleImage({importLocalInit:true})],
+    ['ORDIMPORT',neLifecycleImage({importEntry:{module:'HELPER',symbol:2}})],
+    ['NAMEIMPORT',neLifecycleImage({importEntry:{module:'HELPER',symbol:'VALUE'}})],
+    ['MISSORD',neLifecycleImage({importEntry:{module:'HELPER',symbol:4}})],
+    ['MISSNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'ABSENT'}})],
+    ['GUESTLOAD',neLifecycleImage({importEntry:{module:'KERNEL',symbol:95},importInValue:true})],
+    ['GUESTFREE',neLifecycleImage({importEntry:{module:'KERNEL',symbol:96},importInValue:true})],
+    ['BADDEP',neLifecycleImage({trapWep:true})],
+    ['BADPARENT',neLifecycleImage({dependencies:['BADDEP']})],
+    ['BADZERO',neLifecycleImage({result:0,dependencies:['BADDEP']})],
+    ['BADTRAP',neLifecycleImage({trapInit:true,dependencies:['BADDEP']})],
   ]);
   let original;
   if(process.env.WA_NE_ORIGINAL) {
@@ -114,6 +125,61 @@ async function main() {
   assert.equal(e.win16_seg_limit(importedData>>>3),0x110,'actual imported LocalInit grew data segment');
   assert.equal(e.win16_bridge_frame_end(importFrame),1);
   lifecycle.release(imported);clean();assert.equal(raw.win16_thunk_sel(),0,'caller thunk selector restored');
+  const record=id=>wa+943*65536+0x8c00+(id-13)*32;
+  const records=()=>Buffer.from(bytes.slice(record(13),record(37)));
+  const onlyModule=(id,state)=>{for(let n=13;n<37;n++)assert.equal(view.getUint32(record(n),true),n===id?state:0);};
+  for(const name of ['ORDIMPORT','NAMEIMPORT']) {
+    const importedId=lifecycle.load(name);clean();
+    assert.equal(publishResults.get(importedId)&65535,0x1234,'LibEntry returned actual imported HELPER.VALUE result');
+    assert.equal(lifecycle.call(importedId,1)&65535,0x1234,'real imported far CALL and RETF through exported LibEntry');clean();
+    lifecycle.release(importedId);clean();onlyModule(0,0);
+    console.log(JSON.stringify({case:name,actualImportedCall:true}));
+  }
+  for(const name of ['MISSORD','MISSNAME']) {
+    const before=records(),calls=invocations;
+    assert.throws(()=>lifecycle.load(name),/Missing NE import HELPER/);
+    assert.equal(invocations,calls);assert.deepEqual(records(),before);clean();
+  }
+  // Ready-module source mismatch must unwind the parent and acquired ref.
+  const missingImage=neLifecycleImage();
+  missingImage.set([1,1,1,0,0,1,0,1,1,1,32,0,0],0x80+0x60);
+  missingImage[0x80+0x70+6]=0;
+  const mismatch=createNeLifecycle(e,memory,new Map([['HELPER',missingImage]]),{maxBlocks:10000,sliceBlocks:256});
+  const mismatchId=mismatch.load('HELPER');clean();
+  for(const name of ['ORDIMPORT','NAMEIMPORT']) {
+    const calls=invocations;
+    assert.throws(()=>lifecycle.load(name),/Missing loaded NE import HELPER/);
+    assert.equal(invocations,calls);clean();onlyModule(mismatchId,3);
+    assert.equal(view.getUint32(record(mismatchId)+8,true),1,'original owner reference retained');
+  }
+  mismatch.release(mismatchId);clean();onlyModule(0,0);
+  for(const [name,ordinal] of [['GUESTLOAD',95],['GUESTFREE',96]]) {
+    const guarded=lifecycle.load(name);assert.equal(lifecycle.load(name),guarded);clean();
+    const before=records();hostLogTail.length=0;
+    whileRunning=()=>{whileRunning=undefined;assert.equal(view.getUint32(record(guarded)+24,true),1,'guest guard runs with active module pin');};
+    assert.throws(()=>lifecycle.call(guarded,'VALUE'),WebAssembly.RuntimeError,'actual relocated KERNEL call traps');
+    assert.equal(hostLogTail.at(-1),ordinal,'trap came from explicit KERNEL lifecycle guard');
+    clean();assert.deepEqual(records(),before,'guest lifecycle preserves refs/segments/pins');
+    assert(lifecycle.lookup(guarded,'WEP'));lifecycle.release(guarded);lifecycle.release(guarded);clean();onlyModule(0,0);
+    console.log(JSON.stringify({case:name,actualGuardedGuestCall:true}));
+  }
+  for(const name of ['BADPARENT','BADZERO','BADTRAP']) {
+    let failure;
+    try {const parent=lifecycle.load(name);lifecycle.release(parent);} catch(error) {failure=error;}
+    assert(failure instanceof AggregateError);assert.equal(failure.pendingTerminations.length,1);
+    const [dependencyId]=failure.pendingTerminations,cause=failure.errors.find(error=>error.code==='NE_TERMINATION_PENDING');
+    assert(cause);assert.equal(cause.moduleId,dependencyId);assert(cause.cause instanceof WebAssembly.RuntimeError);
+    if(name==='BADZERO')assert.match(failure.errors[0].message,/AX zero/);
+    if(name==='BADTRAP')assert(failure.errors[0] instanceof WebAssembly.RuntimeError);
+    assert.deepEqual(snapshot(),caller);assert.equal(view.getUint32(shared+36,true),0);assert.equal(view.getUint32(shared+44,true),1);
+    onlyModule(dependencyId,4);
+    const frame=e.win16_bridge_frame_begin();assert(frame);
+    const wep=e.win16_bridge_module_termination(dependencyId,0),base=e.win16_seg_base(wep>>>19),address=base+(wep&65535);
+    bytes.set([0xb8,1,0,0xca,2,0],e.guest_to_wasm(address)>>>0); // Synthetic repair only.
+    e.invalidate_code_range(address,6);assert.equal(e.win16_bridge_frame_end(frame),1);
+    lifecycle.retryTermination(dependencyId);clean();onlyModule(0,0);
+    console.log(JSON.stringify({case:name,actualIndirectWepRetry:true}));
+  }
   let originalResult=null;
   if(original) {
     const inspected=inspectNeDll(original),moduleId=lifecycle.load('PMPRO62');clean();

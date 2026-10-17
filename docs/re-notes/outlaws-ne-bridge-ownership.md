@@ -234,3 +234,30 @@ superseding the integrated-source pin above; use the exact subsequent
 controller commit as the native candidate. No full build or native execution
 has validated these corrections. The prior PMPRO62 initializer failure remains
 the latest native outcome, and main integration remains withheld.
+
+### Prepared native review regressions (unrun)
+
+The full-interpreter lifecycle fixture now includes these additional cases:
+
+- Ordinal 2 and named VALUE imports from HELPER execute a relocated far CALL
+  and RETF. The fixture checks the imported result 0x1234 at initializer
+  publication and on a subsequent call through exported LibEntry.
+- Missing ordinal/named exports reject without guest invocation; an already
+  loaded HELPER with a different export table triggers actual acquired-module
+  validation, parent rollback and dependency ref restoration.
+- GUESTLOAD/GUESTFREE invoke relocated KERNEL.95/96 from a published module's
+  VALUE export with two references and an active call pin. The fixture requires
+  a native trap, the guard's ordinal log, unchanged module records and restored
+  caller state, then proves ordinary owned termination remains possible.
+- Failed dependency WEP after parent unload, AX-zero initialization and a
+  malformed initializer RETF exposes the retained id and original cause. A
+  synthetic-only WEP repair invalidates code before same-owner retry; checks
+  require final frame/lease cleanup and exact caller restoration.
+
+Only syntax, image inspection/byte assertions, the tiny transaction suite
+and image validator were run for this test-only extension. None of the new
+full-interpreter cases has executed. Production bytes are unchanged, so the
+controller's `d5b940c8b104b2e4d7b7e29506ad6e2fd6aea17c` production pin remains
+valid. The exact next native candidate is the task commit containing these
+test additions, supplied as `WA_NE_LIFECYCLE_COMMIT`; fresh admission and a
+normal build are still required.

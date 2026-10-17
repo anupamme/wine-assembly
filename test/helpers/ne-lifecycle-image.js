@@ -1,7 +1,7 @@
 'use strict';
 // Ordinary two-segment NE DLL: LibEntry at 0, VALUE ordinal 2 at 16, WEP
 // ordinal 3 at 32. WEP returns with one Pascal WORD removed from the stack.
-function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=false, importLocalInit=false, importEntry=null}={}) {
+function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=false, importLocalInit=false, importEntry=null, importInValue=false}={}) {
   if(importLocalInit)importEntry={module:'KERNEL',symbol:4};
   if(importEntry)dependencies=[importEntry.module];
   const b=Buffer.alloc(importEntry?0x500:0x400),n=0x80,w=(o,v)=>b.writeUInt16LE(v,o);
@@ -20,11 +20,13 @@ function neLifecycleImage({result=1, dependencies=[], trapInit=false, trapWep=fa
   b.set([0xb8,0x34,0x12,0xcb],0x210);
   b.set(trapWep?[0xcb]:[0xb8,1,0,0xca,2,0],0x220);
   if(importEntry) {
-    // Real ordinal relocation: LocalInit(DS, 0, 16), followed by RETF.
+    // Real imported far CALL followed by RETF. Only LocalInit takes args;
+    // ordinary dependency VALUE exports are zero-argument far functions.
     // Relocations follow the code segment, so move the data image past them.
     w(n+0x44,0x100);w(n+0x48,0x40);
-    b.set([0x1e,0x6a,0,0x6a,16,0x9a,0xff,0xff,0,0,0xcb],0x200);
-    w(0x300,1);b.set([3,1,6,0,1,0,4,0],0x302);
+    const prefix=importLocalInit?[0x1e,0x6a,0,0x6a,16]:[0x90,0x90,0x90,0x90,0x90];
+    b.set([...prefix,0x9a,0xff,0xff,0,0,0xcb],importInValue?0x210:0x200);
+    w(0x300,1);b.set([3,1,importInValue?22:6,0,1,0,4,0],0x302);
     if(typeof importEntry.symbol==='string') {
       b[0x303]=2;w(0x308,offset);b[n+0xb0+offset]=importEntry.symbol.length;
       b.write(importEntry.symbol,n+0xb1+offset,'ascii');
