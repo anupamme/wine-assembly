@@ -170,3 +170,25 @@ The previous original initializer trap remains the latest native outcome;
 the four previously skipped allocator/pure-NE arms and original init/lookup/
 unload remain required. QT_Thunk and original game execution remain separate
 work, and the lifecycle production implementation remains off main.
+
+### Integrated task candidate, October 17
+
+Task merge `5389533f0891667e590c7eb6ca8a3c0ff80010ff` incorporates main
+`baeb16c20e1ba7e0b09c8eb67aefbdc9748fd61f`. Main's host/browser asset and
+Quake changes are retained exactly. The six overlapping invocation/document
+files retain the reviewed task lifecycle extensions; the NE production bytes
+are unchanged from `46baa081e245cb298b2a1b2b5ed55ef26d3f2934`.
+The native controller now pins all `src`/`lib` bytes to this integrated merge,
+superseding the earlier `86386f92d` pin. Pass the exact subsequent controller
+commit as `WA_NE_LIFECYCLE_COMMIT`, not the production-pin commit.
+
+Small checks passed on the integrated source: `test-ne-image.js`,
+`test-ne-invoke-driver.js`, `test-win32-ne-context.js`,
+`test-win32-ne-module-transaction.js`, `test-http-range-accept-whole.js`,
+`test-game-data-timeout.js`, `test-asset-load-cancellation.js` (six cases),
+and `test-quake-account-names.js`. Controller syntax and diff checks passed.
+No full build, native execution, browser test or main integration was done.
+The complete twelve-arm native controller, fresh module hash, unchanged
+original PMPRO62 checks, disk floor and external preservation/admission
+requirements above still apply. Previous native evidence does not validate
+this integrated candidate.

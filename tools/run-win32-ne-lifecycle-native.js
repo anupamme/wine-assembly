@@ -13,7 +13,7 @@ const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const hash = file => sha(fs.readFileSync(file));
 const git = (...args) => cp.execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim();
 assert.equal(git('rev-parse', 'HEAD'), commit);
-assert.equal(git('diff', '--name-only', '86386f92d8fa57e80a11726f2fa9fa1a0c7ea2c3', commit, '--', 'src', 'lib'), '', 'reviewed import-selector lifecycle production bytes');
+assert.equal(git('diff', '--name-only', '5389533f0891667e590c7eb6ca8a3c0ff80010ff', commit, '--', 'src', 'lib'), '', 'reviewed integrated import-selector lifecycle production bytes');
 const preserved = [
   ['/home/user/wa-ne-invoke-native/build/wine-assembly.wasm', 'd6187fedf42d597311446e527d586b74a06db4f7f5eaaa6b51e483c5cc06603b'],
   ['/home/user/wa-darkstone-paired/build/wine-assembly.wasm', '9b57583c1ca8887f7195a268c94312ca6352eb646f4071c740c5a75aff1eb69e'],
