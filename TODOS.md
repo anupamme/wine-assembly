@@ -1607,9 +1607,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Improve and validate original .kkrieger control responsiveness
   id: KKRIEGER-CONTROL-LATENCY-20261015
-  status: active (source/evidence audit; one forward movement verified; response quality unresolved)
-  owner: /root/kkrieger_latency_audit_oct17
-  Next: Run118738 records22.154s first accepted input lag and18.125s observed guest release lag; strict within-phase comparison lacks two completed times. Use retained source/time/input evidence to distinguish simulation work, presentation and input service before choosing a performance change. No logicalFPS, combat, audio, repeated-control or software/WebGL pair claim. Do not repeat long runs merely to chase displacement.
+  status: ready (diagnostics merged; live measurement awaits saved-box resume)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Read-only CS wait/main EIP/cooperative-owner samples merged0b95d3233,10focused testsPASS. Retained run118738 suggests audio critical-section/main-loop delay but owner/duration attribution unproved. Reuse bounded W/release route only after saved bx_9ef2wdsw resume and serialized admission; no scheduler fix or FPS claim.
   Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
 
 - [~] New-game lane: Outlaws original Windows single-player demo
