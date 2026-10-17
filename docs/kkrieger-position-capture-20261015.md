@@ -1,5 +1,43 @@
 # Original Kkrieger: bounded ordinary forward movement observed
 
+## October 17 retained latency audit
+
+Run118738 supports a specific follow-up: main-loop delay involving the guest
+audio critical section, with expensive pre-physics work as another candidate.
+It does not yet identify their relative cost or justify a scheduler fix.
+This audit uses the tested source/module identities documented below; no new
+runtime or performance measurement was performed.
+
+The retained `imported/kkrieger-position-capture-run/browser.log` repeatedly
+reports main EIP `0x078c3500`, yield9 and ESI `0x0083f8a4`. At tested source
+`46691eb61`, host.js identifies yield9 as a critical-section wait and already
+schedules cooperative holders after it. Original main-loop code calls audio
+cursor helper `0x801c13` at `0x8053fb` before returning to message service.
+That helper acquires section `0x83f8a4`; audio-thread routine `0x801c77` holds
+the same section across generated-audio callbacks before release at `0x801dc9`.
+The original disassembly is retained in
+`scratch/runs/20261014-kkrieger-mesh-writer/unpacked-disassembly.txt`, SHA256
+`8b0026617d971d6c82606d4824cc512346515b84861f775f3b238829563dd0b6`.
+Live thunk identity and actual section owner were not recorded, so the audio
+lock attribution remains an inference, not a measured cause.
+
+All 70 retained phase samples have updateContext zero. Accepted input and
+currentTime advance before requestedSteps/completedTime advance in both held
+and release phases. This points to work outside the sampled active physics
+context, but short updates between samples remain possible. Pre-update scene
+work and renderer service have not been separated from lock waiting. The
+guest also caps requested simulation steps at10, so long wall-clock holds do
+not imply proportionate simulated movement. Host slice counts are not game FPS.
+
+For the next already bounded W/release capture, add read-only main EIP/yield,
+`get_cs_wait_addr()`, `get_cs_wait_owner()`, `get_cs_waits()` and owner-thread
+EIP/progress to the existing timestamped samples. Resolve live IAT `0x81f060`
+and the blocked stack before naming the section; correlate host enqueue/dequeue
+with accepted guest input on the same clock. These wait exports already exist
+in the tested source. Time the identified owner callback only if waits dominate;
+otherwise measure pre-update scene/render boundaries. Do not extend the hold
+merely to obtain more displacement or assume the scheduler omitted the owner.
+
 The fresh original-game run reaches the first-person level and records forward
 body displacement after ordinary W, with corresponding outward pillar movement
 in the before/after screenshots. Root independently reviewed all four control
