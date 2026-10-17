@@ -30,7 +30,17 @@ const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_e
 helpers.push('win16_apply_relocs','win16_module_name','win16_module_id','win16_system_module_id',
  'win16_pstr_eq','win16_dynamic_module_id','win16_import_constant','win16_thunk_for',
  'win16_thunk_count_get','win16_thunk_count_set');
+helpers.push('win16_kernel');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
+// Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
+// reached is a distinct host Error, never the RuntimeError expected from the
+// bridge's explicit unsupported-operation guard.
+for (const name of new Set([...form('win16_kernel').matchAll(/\(call \$([^\s)]+)/g)].map(m=>m[1]))) {
+ if (name === 'host_log_i32' || code.includes('(func $'+name+' ' ) || code.includes('(func $'+name+'\n')) continue;
+ const fn=form(name),params=[...fn.matchAll(/\(param [^)]*\)/g)].map(m=>m[0]).join(' ');
+ const result=fn.match(/\(result [^)]*\)/)?.[0]||'';
+ code+=`\n(func $${name} ${params} ${result} (call $unexpected_legacy) (unreachable))`;
+}
 
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
@@ -59,6 +69,7 @@ const source=`
 (import "host" "release" (func $virtual_map_release (param i32) (result i32)))
 (import "host" "g2w" (func $g2w (param i32) (result i32)))
 (import "host" "write" (func $gs32 (param i32 i32)))
+(import "host" "unexpectedLegacy" (func $unexpected_legacy))
 (func $host_log_i32 (param i32) (nop))
 (func (export "win16_app_dll_staging_size") (result i32) (global.get $WIN16_APP_DLL_STAGING_SIZE))
 (func $dbg_recompute (nop))
@@ -85,6 +96,7 @@ function instance(id) {
  const e=new WebAssembly.Instance(moduleUnderTest,{host:{memory,
  ensure(){ensureCalls++;if(failEnsure)return 0;if(!initialized){bytes.fill(0,BACKING,BACKING+944*65536);view.setUint32(4096,BASE,true);initialized=true;}if(releaseBetween){releaseBetween=false;assert.equal(second.win16_process_arena_release(),1);}return BASE;},
  release(){initialized=false;return 1;},g2w:translate,
+ unexpectedLegacy(){throw Error('Legacy KERNEL handler reached');},
  write(guest,value){view.setUint32(translate(guest),value,true);},
  }}).exports;
  e.set_current_thread_id(id);const delta=(id-1)*0x100;
@@ -92,6 +104,7 @@ function instance(id) {
  return e;
 }
 const first=instance(1),second=instance(2);
+for(const ordinal of [95,96])assert.throws(()=>first.win16_kernel(ordinal),/Legacy KERNEL handler reached/,'ordinary NE dispatch still reaches its handler');
 const cpu=(e)=>({globals:Object.fromEntries(saved.map(n=>[n,e['get_'+n]()])),files:Object.fromEntries(['reg','fpu','mmx','xmm'].map(n=>{const p=e['get_'+n+'_base']();return[n,Buffer.from(bytes.slice(p,p+(n==='reg'?32:128)))];}))});
 function seed(e,value){
  for(let i=0;i<saved.length;i++)e['set_'+saved[i]]((value+i*0x10203)|0);
@@ -256,6 +269,10 @@ assert(lifecycle.lookup(parentId,'VALUE'));assert.equal(lifecycle.lookup(parentI
 assert.equal(lifecycle.lookup(parentId,'MISSING'),0);assert.equal(lifecycle.lookup(parentId,4),0);
 whileRunning=()=>{
  const r=first.win16_bridge_module_record(parentId);assert.equal(view.getUint32(r+24,true),1,'active module pin');
+ const beforeGuestFree=bytes.slice(),beforeGlobals=saved.map(n=>first['get_'+n]());
+ for(const ordinal of [95,96])assert.throws(()=>first.win16_kernel(ordinal),WebAssembly.RuntimeError,'actual KERNEL dispatcher rejects bridge guest lifecycle');
+ assert.deepEqual(bytes,beforeGuestFree,'rejected guest lifecycle changes no segments/refs/pins');
+ assert.deepEqual(saved.map(n=>first['get_'+n]()),beforeGlobals);
  // Two refs: dropping the extra ref is legal; freeing the executing image is not.
  lifecycle.release(parentId);assert.throws(()=>lifecycle.release(parentId),/release rejected/);
 };

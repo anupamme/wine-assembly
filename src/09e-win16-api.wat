@@ -6519,9 +6519,17 @@
     (if (i32.eq (local.get $ordinal) (i32.const 50))
       (then (call $win16_GetProcAddress) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 95))
-      (then (call $win16_LoadLibrary) (return (i32.const 1))))
+      (then
+        ;; Guest-driven lifecycle is not implemented for the PE bridge. The
+        ;; legacy loader/refcounts do not own its module records or call pins.
+        (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+          (then (call $host_log_i32 (local.get $ordinal)) (unreachable)))
+        (call $win16_LoadLibrary) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 96))
-      (then (call $win16_FreeLibrary) (return (i32.const 1))))
+      (then
+        (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+          (then (call $host_log_i32 (local.get $ordinal)) (unreachable)))
+        (call $win16_FreeLibrary) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 97))
       (then (call $win16_GetTempFileName) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 3))
