@@ -258,10 +258,39 @@ const images=new Map([
  ['BADWEP',neLifecycleImage({trapWep:true,dependencies:['HELPER']})],
  ['MISSING',neLifecycleImage({dependencies:['ABSENT']})],
  ['CYCLE',neLifecycleImage({dependencies:['CYCLE']})],
+ ['MISSORD',neLifecycleImage({importEntry:{module:'HELPER',symbol:4}})],
+ ['MISSNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'ABSENT'}})],
+ ['HASORD',neLifecycleImage({importEntry:{module:'HELPER',symbol:2}})],
+ ['HASNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'VALUE'}})],
 ]);
 const lifecycle=createNeLifecycle(lifecycleExports,memory,images);
 assert.throws(()=>lifecycle.load('MISSING'),/Missing NE image/);
 assert.throws(()=>lifecycle.load('CYCLE'),/recursive NE dependency/);
+const beforeMissing=bytes.slice(),missingCaller=cpu(first);
+for(const name of ['MISSORD','MISSNAME'])assert.throws(()=>lifecycle.load(name),/Missing NE import HELPER/);
+assert.deepEqual(bytes,beforeMissing,'static missing imports perform no allocation or publication');
+assert.deepEqual(cpu(first),missingCaller);assert.equal(calls,0);
+// An already-ready dependency may differ from this coordinator's source map.
+// Its missing exports must roll back the parent and the newly acquired ref.
+const foreignImage=neLifecycleImage();
+foreignImage.set([1,1,1,0,0,1,0,1,1,1,32,0,0],0x80+0x60);
+foreignImage[0x80+0x70+6]=0; // Keep WEP, omit VALUE's name and ordinal 2.
+const foreignLifecycle=createNeLifecycle(lifecycleExports,memory,new Map([['HELPER',foreignImage]]));
+const foreignId=foreignLifecycle.load('HELPER');
+for(const name of ['HASORD','HASNAME']) {
+ const before=calls;
+ assert.throws(()=>lifecycle.load(name),/Missing loaded NE import HELPER/);
+ assert.equal(calls,before,'parent initializer never executes');assert.deepEqual(cpu(first),missingCaller);
+ const frame=first.win16_bridge_frame_begin();assert(frame);
+ for(let id=13;id<37;id++) {
+  const rec=first.win16_bridge_module_record(id);
+  assert.equal(view.getUint32(rec,true),id===foreignId?3:0,'parent fully rolled back');
+  if(id===foreignId)assert.equal(view.getUint32(rec+8,true),1,'acquired dependency reference rolled back');
+ }
+ assert.equal(first.win16_bridge_frame_end(frame),1);
+ for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0);
+}
+foreignLifecycle.release(foreignId);calls=0;
 const parentId=lifecycle.load('parent.dll'),afterInit=calls;
 assert.equal(afterInit,2,'dependency then parent initialized exactly once');
 assert.equal(lifecycle.load('PARENT'),parentId);assert.equal(calls,afterInit,'ready acquisition skips initializer');
