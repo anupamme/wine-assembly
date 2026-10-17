@@ -1616,7 +1616,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (selector fix prepared; native validation pending)
   owner: /root/outlaws_resume_oct17
-  Next: Laptop preserved86386 selector fix; worker46baa corrects stale native controller production pin and adds stale0x77/zero selector plus native caller restoration checks. Root tiny transaction/lifecycle tests PASS; branch pushed, lifecycle production remains unmerged. Fresh full build/imported-call/original PMPRO62 validation and four skipped arms required after disk/admission.
+  Next: Reviewed task candidate9ee92c0e5 contains selector/lifecycle fixes, KERNEL95/96 ownership guards, imported-export validation and structured indirect WEP recovery. Root tiny transaction tests PASS; independent source and real-guest fixture reviews complete. Full native suite including new cases remains UNRUN; exact controller production pin d5b940 unchanged. Await disk reserve and sole-box admission, then native/original PMPRO62 validation before main merge.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
