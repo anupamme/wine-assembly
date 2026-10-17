@@ -1160,11 +1160,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: GLD3D-CORPUS-27-20261006
   status: active (renderer fixes merged; scoped transport and gameplay coverage pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/darkstone_backend_capture (source preparation; serialized runtime grant required)
+  worker: /root/darkstone_compare_oct17 (retained screenshot/source review)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Darkstone paired software/WebGL Town and camera evidence merged6789c835e; locomotion report already integrated. Reviewed316037 two-click movement retains deadline1/final-idle absence and foreground clipping. Follow-up software338262 exited0; independent18:33:48 postflight passed active[], archive83e859adee SHA reverified at wrap-up. Review retained same-pose software images against WebGL before drawing a clipping conclusion. Combat/audio/FPS/children/full27 membership remain unresolved.
+  Next: Software338262 completed0; archive83e859 independently reverified. Compare retained same-pose software and WebGL first-click images; root observed differing black foreground wedge with matching landmarks. Worker preparing bounded evidence report without new runtime. Paired movement/camera evidence does not establish full rendering correctness, audio/FPS/touch or original27 membership.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (original NE initializer trap diagnosis)
-  owner: /root/outlaws_kernel_module
-  Next: Native332007 exact934109/module497bc: canonical build, driver, invocation, context, image, tiny lifecycle and full native synthetic lifecycle passed; original unchanged PMPRO62 initializer trapped unreachable. Four later arms unrun. Selector correction and regressions preserved/pushed86386f92d on task/outlaws-ne-invoke; tiny transaction/coordinator test passes, full native validation remains pending. Lifecycle source remains unmerged. Original gameplay/QT and guest-created resource ownership unproved.
+  status: active (selector fix prepared; native validation pending)
+  owner: /root/outlaws_resume_oct17
+  Next: Laptop preserved86386 selector fix; worker46baa corrects stale native controller production pin and adds stale0x77/zero selector plus native caller restoration checks. Root tiny transaction/lifecycle tests PASS; branch pushed, lifecycle production remains unmerged. Fresh full build/imported-call/original PMPRO62 validation and four skipped arms required after disk/admission.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1654,12 +1654,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (keyboard assigned; match readiness follow-up queued)
-  owner: /root/new_game_refill_after_lords
+  status: active (source/preflight verified; runtime held for disk floor)
+  owner: /root/fifa_resume_oct17
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Original ArrowLeft assigned keyboard England Config.1 in323637; root reviewed screenshots, raw assigned count0→1 and archiveabcaed. Enter delivered but stayed Controller Select. Mode2 source disproved the unrun S-key candidate; corrected mouse-readiness recipe51580 passes controller/state/preservation tests and is integrated. Capture remains unrun; actual match control/touch unproved. Boat wrap-up handoff: ops/handoffs/boat-wrap-20261015.md.
+  Next: Ready-click51580 already merged by laptop17cb; S candidate superseded without running. Fresh audit confirms clean source,231 original fixture hashes and activation archiveabcaed. Keyboard assigned; match readiness/gameplay unproved. Restore verified bx_9ef2wdsw snapshot and fresh preservation admission only after disk floor restored; then bounded mouse click on assigned keyboard.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
