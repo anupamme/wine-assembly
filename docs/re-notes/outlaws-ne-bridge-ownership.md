@@ -192,3 +192,45 @@ The complete twelve-arm native controller, fresh module hash, unchanged
 original PMPRO62 checks, disk floor and external preservation/admission
 requirements above still apply. Previous native evidence does not validate
 this integrated candidate.
+
+### Ownership and recovery review corrections
+
+Independent review found that the internal coordinator's API boundary did
+not prevent NE guest code from calling legacy KERNEL.95/96. Commit
+`83a15ca844596c6f04dd971a25c7fb219117020b` makes the actual KERNEL dispatcher
+log the ordinal and trap those unsupported guest LoadLibrary/FreeLibrary
+calls while a bridge frame exists. It cannot enter legacy reference counting
+or unload bridge-owned segments. Ordinary NE dispatch remains unchanged.
+The tiny test compiles the real dispatcher, checks both rejected ordinals
+during an active pinned module call, and proves memory/refs/pins and saved
+globals unchanged. Legacy-handler entry is a distinct host Error in this
+fixture, so an accidental legacy call cannot masquerade as the expected trap.
+
+Commit `73e5ce824c41e1c8862b08620867acf6dd1603b7` validates every non-KERNEL
+import against its dependency's named/ordinal exports before allocation. It
+also checks actual acquired module exports before staging the parent: a ready
+module may have been loaded by another coordinator with different source
+bytes. Missing source exports leave memory unchanged; missing actual exports
+roll back the parent and acquired dependency reference. Tiny tests cover
+both ordinal and named misses and retain the original dependency owner's ref.
+KERNEL imports continue to use real API dispatch and existing fail-fast
+unsupported behavior; no compatibility result follows from preflight alone.
+
+Commit `d5b940c8b104b2e4d7b7e29506ad6e2fd6aea17c` adds structured recovery:
+`NeTerminationError` has `code: 'NE_TERMINATION_PENDING'`, `moduleId`, the
+original `cause`, and `pendingTerminations: [moduleId]`. Aggregate lifecycle
+errors preserve a deduplicated top-level `pendingTerminations` array and
+their constituent errors. Thus a caller whose parent already unloaded or
+whose initialization rolled back can inspect retained dependency ids and,
+after diagnosis, explicitly call `retryTermination(id)` on the same owner.
+No automatic retry or release occurs. Tiny tests repair only synthetic WEP
+bytes and verify retry after parent release, AX-zero initialization and
+initializer traps, with no remaining frame/lease and exact caller restoration.
+
+All four small NE checks passed after these corrections: image validation,
+host driver, extracted invocation context and extracted transaction/lifecycle
+tests. The native controller now pins production to `d5b940c8b104b2e4d7b7e29506ad6e2fd6aea17c`,
+superseding the integrated-source pin above; use the exact subsequent
+controller commit as the native candidate. No full build or native execution
+has validated these corrections. The prior PMPRO62 initializer failure remains
+the latest native outcome, and main integration remains withheld.
