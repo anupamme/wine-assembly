@@ -619,13 +619,13 @@ class WineAssembly {
   static FROZEN_STALL_MS = 5000;
   static _nextProcessId = 1000;
 
-  // An HTTP-range provider for `url`, or for the deployer's parts of it
+  // A whole-GET provider for `url`, or for the deployer's parts of it
   // (url.part000, url.part001, ...) when the release host stores it split, as
   // fetchAssetBytes already handles for whole-file loads. A part shorter than
   // ASSET_PART_SIZE is the last one. Rejects with the original error when
   // neither form exists, so loadFiles keeps its whole-file fallback.
   static async _openRangeProvider(url, options, providers = window.byteProvider) {
-    const notFound = error => /HEAD .* → 404/.test(String(error && error.message));
+    const notFound = error => /GET .* → 404/.test(String(error && error.message));
     try {
       return await providers.HttpRangeProvider.open(url, options);
     } catch (error) {
@@ -4073,34 +4073,32 @@ class WineAssembly {
                 if (sizedRange && (!this._manifestAssetAbort || this._manifestAssetAbort.signal.aborted)) this._manifestAssetAbort = new AbortController();
                 const lifetimeSignal = sizedRange ? this._manifestAssetAbort.signal : null;
                 const rangeOptions = {
-                  validateRange: sizedRange,
+                  partSize: WineAssembly.ASSET_PART_SIZE,
+                  partUrl: WineAssembly._assetPartUrl,
+                  signal: lifetimeSignal,
+                  openSignal: transferOpts.signal,
+                  openFetch: (source, init = {}) => {
+                    checkCancelled();
+                    return WineAssembly._fetchAssetResponse(source, init);
+                  },
                   // Only launch-time discovery belongs to this AbortSignal.
                   // The provider retains this adapter for later gameplay GETs;
                   // those must remain usable after the launch controller ends.
                   fetch: (source, init = {}) => {
-                    if (init.method === 'HEAD') {
-                      checkCancelled();
-                      return WineAssembly._fetchAssetResponse(source, { ...init, signal: transferOpts.signal });
-                    }
-                    return WineAssembly._fetchAssetResponse(source, sizedRange ? { ...init, signal: lifetimeSignal } : init);
+                    return WineAssembly._fetchAssetResponse(source, init);
                   },
                 };
                 // A stat-verified manifest already knows the length. Mount it
                 // synchronously without a HEAD for every asset in the tree.
-                // An httpRange entry that carries its size (lib/app-files.js
-                // default for every streamed file) mounts the same way, no
-                // HEAD -- thousands of small files would otherwise cost a
-                // HEAD each -- as long as it is not over one release part
-                // (larger files may be published as name.partNNN, which only
-                // the HEAD path discovers). Without Range support its first
-                // read takes the whole body (acceptWhole), once.
+                // Sized entries stay lazy, including split assets. The provider
+                // fetches complete decoded files/parts and retains them across
+                // chunk-cache evictions; no HEAD or HTTP Range is needed.
                 const sizedHttpRange = !sizedRange && item && item.httpRange === true &&
-                  Number.isSafeInteger(item.size) && item.size >= 0 &&
-                  item.size <= WineAssembly.ASSET_PART_SIZE && !item.preloadRanges;
+                  Number.isSafeInteger(item.size) && item.size >= 0;
                 const provider = sizedRange
                   ? new window.byteProvider.HttpRangeProvider(url, item.size, rangeOptions)
                   : sizedHttpRange
-                    ? new window.byteProvider.HttpRangeProvider(url, item.size, { ...rangeOptions, acceptWhole: true })
+                    ? new window.byteProvider.HttpRangeProvider(url, item.size, rangeOptions)
                     : await WineAssembly._openRangeProvider(url, rangeOptions);
                 checkCancelled();
                 // One cache shape for every streamed file: 1MB chunks, and

@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two actionable original-demo lanes: FIFA98 verified231-file inventory merged91455a540, original startup preparation/transfer on sole bx_9ef2wdsw; Outlaws process-owned NE arena merged083699ed4 after native allocator/concurrency tests, private stacks/caller-context stage active. Lords GetWindow/GetNextWindow diagnostic follow-up is under automatic-review hold, not an active lane. Darkstone bounded character/Town route is queued as GL coverage. Army Men/Jedi licences remain unanswered.
+  Next: FIFA98 and Outlaws are active original-demo lanes. FIFA player assignment unresolved; exacte5c read-only MainMenu/ControllerSelect capture granted sole runtime after native302790 clean release. Outlaws runner native-tested/merged, lifecycle source work continues. Darkstone paired Town/camera coverage verified; ordinary locomotion source audit next. Review holds unchanged.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1160,11 +1160,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: GLD3D-CORPUS-27-20261006
   status: active (renderer fixes merged; scoped transport and gameplay coverage pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/darkstone_backend_capture (source preparation; serialized runtime grant required)
+  worker: /root/darkstone_compare_oct17 (retained screenshot/source review)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Palette/renderer/LINELIST and IW transport conformance merged; IW fullbuild04ede plus8native arms passed, original IW gameplay still unproved. Fresh Darkstone worker prepares bounded ordinary Town/backend capture from complete installed payload; main-Worker counters must be separated from page counters. Kkr responsiveness/dual-backend/FPS remain open. Original27 membership and software/WebGL pairs unresolved. CMR rejected diagnostic hold unchanged.
+  Next: Software338262 completed0; archive83e859 independently reverified. Compare retained same-pose software and WebGL first-click images; root observed differing black foreground wedge with matching landmarks. Worker preparing bounded evidence report without new runtime. Paired movement/camera evidence does not establish full rendering correctness, audio/FPS/touch or original27 membership.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1614,9 +1614,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (private NE stacks and caller-context implementation)
-  owner: /root/outlaws_kernel_module
-  Next: Process-owned NE arena merged083699ed4 with native ca90 fullbuild/realallocator/concurrentWorkers/reset/exhaustion/pureNE tests; receipt9a50486b1. Worker implements invocation-private stacks and exact caller restoration on task/outlaws-ne-context. KERNEL stage remains separate; NE initialization/QT exports and original gameplay unproved.
+  status: active (selector fix prepared; native validation pending)
+  owner: /root/outlaws_resume_oct17
+  Next: Laptop preserved86386 selector fix; worker46baa corrects stale native controller production pin and adds stale0x77/zero selector plus native caller restoration checks. Root tiny transaction/lifecycle tests PASS; branch pushed, lifecycle production remains unmerged. Fresh full build/imported-call/original PMPRO62 validation and four skipped arms required after disk/admission.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1654,10 +1654,17 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (FIFA 98 original-demo launch preparation)
-  owner: /root/new_game_refill_after_lords
+  status: active (source/preflight verified; runtime held for disk floor)
+  owner: /root/fifa_resume_oct17
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Original231 files/23411290 bytes independently verified and inventory merged91455a540. Reviewed controllerdc4b89b4d stages isolated SOURCE7405/module04ede, pins six donor modules and copies exact fixture; next bounded90s no-input startup with screenshot/log and independent cleanup. Then inspect ordinary match route and touch controls; no gameplay qualification yet.
+  Next: Ready-click51580 already merged by laptop17cb; S candidate superseded without running. Fresh audit confirms clean source,231 original fixture hashes and activation archiveabcaed. Keyboard assigned; match readiness/gameplay unproved. Restore verified bx_9ef2wdsw snapshot and fresh preservation admission only after disk floor restored; then bounded mouse click on assigned keyboard.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
+
+- [x] Implement documented explicitly enabled DX7 color-key blending
+  id: D3D-COLORKEY-BLEND-ENABLED-20261015
+  status: done (explicit TRUE implementation and combined validation merged)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Merged6b269258 is an ancestor of main. Exact combined canonical build,16CPU suites,42 observations each WebGL1/2 and22 each actual Worker sync mode passed, including state144 TRUE RGBA substitution and alpha/depth cases. Retained archive68e7b0f SHA independently reverified. This closes the stale test-box blocker only for explicit TRUE; default/FALSE filtering and alpha-key precedence remain open.
+  Evidence: docs/palette-combined-validation-20261015.txt; docs/legacy-colorkey-sdk-contract.md; scratch/runs/20261015-palette-combined
