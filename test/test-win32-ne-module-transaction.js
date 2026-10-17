@@ -262,6 +262,10 @@ const images=new Map([
  ['MISSNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'ABSENT'}})],
  ['HASORD',neLifecycleImage({importEntry:{module:'HELPER',symbol:2}})],
  ['HASNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'VALUE'}})],
+ ['BADDEP',neLifecycleImage({trapWep:true})],
+ ['BADPARENT',neLifecycleImage({dependencies:['BADDEP']})],
+ ['BADZERO',neLifecycleImage({result:0,dependencies:['BADDEP']})],
+ ['BADTRAP',neLifecycleImage({trapInit:true,dependencies:['BADDEP']})],
 ]);
 const lifecycle=createNeLifecycle(lifecycleExports,memory,images);
 assert.throws(()=>lifecycle.load('MISSING'),/Missing NE image/);
@@ -323,7 +327,7 @@ for(const name of ['ZERO','TRAP']) {
  assert.equal(first.win16_bridge_frame_end(inspect),1);
 }
 const failing=lifecycle.load('BADWEP');
-assert.throws(()=>lifecycle.release(failing),WebAssembly.RuntimeError);
+assert.throws(()=>lifecycle.release(failing),error=>error.code==='NE_TERMINATION_PENDING'&&error.moduleId===failing&&error.cause instanceof WebAssembly.RuntimeError);
 assert.equal(view.getUint32(shared+36,true),0,'caller context restored after failed WEP');
 assert.equal(view.getUint32(shared+44,true),1,'failed termination retains lease');
 assert.throws(()=>lifecycle.load('BADWEP'),/busy/);assert.equal(lifecycle.lookup(failing,2),0);
@@ -334,5 +338,24 @@ bytes.set([0xb8,1,0,0xca,2,0],translate(codeBase+(wep&65535)));
 assert.equal(first.win16_bridge_frame_end(repair),1);
 lifecycle.retryTermination(failing);
 for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0,'retry finishes retained owner and dependency');
+for(const name of ['BADPARENT','BADZERO','BADTRAP']) {
+ let error;
+ try {const id=lifecycle.load(name);lifecycle.release(id);} catch(failure) {error=failure;}
+ assert(error instanceof AggregateError);assert.equal(error.pendingTerminations.length,1,'indirect failure exposes recovery id');
+ const [dependencyId]=error.pendingTerminations;
+ const cause=error.errors.find(e=>e.code==='NE_TERMINATION_PENDING');
+ assert(cause);assert.equal(cause.moduleId,dependencyId);assert(cause.cause instanceof WebAssembly.RuntimeError);
+ if(name==='BADZERO')assert.match(error.errors[0].message,/AX zero/);
+ if(name==='BADTRAP')assert(error.errors[0] instanceof WebAssembly.RuntimeError);
+ assert.equal(view.getUint32(shared+36,true),0);assert.equal(view.getUint32(shared+44,true),1);
+ const frame=first.win16_bridge_frame_begin();assert(frame);
+ for(let id=13;id<37;id++)assert.equal(view.getUint32(first.win16_bridge_module_record(id),true),id===dependencyId?4:0,'only failed dependency remains');
+ const target=first.win16_bridge_module_termination(dependencyId,0),base=first.win16_seg_base(target>>>19);
+ bytes.set([0xb8,1,0,0xca,2,0],translate(base+(target&65535))); // Synthetic repair only.
+ assert.equal(first.win16_bridge_frame_end(frame),1);
+ lifecycle.retryTermination(dependencyId);
+ for(const off of [36,40,44])assert.equal(view.getUint32(shared+off,true),0,'indirect dependency retry releases final lease');
+ assert.deepEqual(cpu(first),missingCaller);
+}
 assert.equal(first.win16_process_arena_release(),1);
 console.log('PASS real NE lifecycle coordinator/loader: dependency refs, init/publication, named lookup, WEP, rollback and retained failed termination (guest run controlled)');
