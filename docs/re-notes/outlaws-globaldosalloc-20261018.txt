@@ -130,3 +130,5 @@ receipts remain in scratch/runs/20261018-outlaws-globaldosalloc.
 Independent source review cleared the low-cache fix and bounded allocator
 scope. No original Outlaws/PMPRO62F, browser, public deployment, menu or game
 success is claimed. Original validation remains the coordinator's next step.
+
+Original validation after merge0069cc2e2/push528fd8811: run20261018-outlaws-original-dosalloc-observation exactcanonical65b7a674 passes PMPRO62F DllMain (returns1), then QT detach/FreeLibrary16. Next WDIR62F LoadLibrary16 returns2 and reports Unable to link to WDIR62.DLL. WDIR62 original24216B is present; its NE dependencies GDI,KERNEL,TOOLHELP,USER,WIN87EM lead to source hypothesis that prepareNeSources only treats KERNEL as builtin and demands other images. First missing dependency is not observed. Child2169708 exits1 naturally270ms, controller2169697exit1; rootpostflight3112pins/originals unchanged/no survivors/free4,362,256,384B. No screenshot before termination/input/dialoganswer/gameplay claim.
