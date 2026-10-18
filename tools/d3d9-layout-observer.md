@@ -59,6 +59,14 @@ recorders' sequence numbers are local orders, not a global cross-thread order.
 
 ## Retention and interpretation
 
+Identity is defensively copied at construction; thread, correlation, arguments,
+and event fields are copied when recorded. Later caller mutations cannot rewrite
+retained or frozen evidence. Each copied value is limited to 256 nodes, depth 8,
+32 keys per object/32 array entries and 4096 total key/string characters. Only
+finite numbers, strings, booleans, null, plain objects and dense arrays are
+accepted. Accessors are rejected without invocation; cycles, oversized values
+and unsupported types are observation errors, not silently truncated identities.
+
 `observer.snapshot()` returns detached JSON-safe records. API entry/exit pairs
 use entry sequence IDs. Captures/Apply resolve the device from block+8; Reset
 resolves the program again on exit. Live VS/declaration/FVF and active recording
@@ -85,7 +93,11 @@ nesting stack is capped at 64 frames; deeper calls are omitted until unwound.
 Aborted/unbalanced API logging invalidates later entry/exit pairing; end that
 run and reinstall for a fresh run, rather than treating partial pairs as proof.
 Unmapped reads or adapter exceptions increment `observerErrors` and cannot
-replace original function results or exceptions. No source logs are emitted.
+replace original function results or exceptions. Any nonzero `observerErrors`
+sets `pairingDisqualified: true`: that packet must not be used as producer or
+entry/exit pairing evidence, even if some records appear intact. A false flag
+only means no observer error was recorded; it does not certify placement,
+correlation, thread identity or complete API logging. No source logs are emitted.
 
 Always call `observer.dispose()` in harness cleanup. It restores own property
 descriptors (or removes inherited-method shadows), unless another owner has

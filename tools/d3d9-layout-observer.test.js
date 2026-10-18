@@ -78,3 +78,35 @@ test('exact-read production hook uses captured locals, isolates callback errors'
   for(const options of [{},{onLayoutRead:()=>{throw Error('observer');}}])
     assert.throws(()=>run.call({options},()=>0,2000,300),/D3D9 FVF 0 is not implemented/);
 });
+test('metadata and arguments are detached before callers can mutate frozen evidence',()=>{
+  const memory=new ArrayBuffer(100000), view=new DataView(memory);
+  view.setUint32(300,1000,true);view.setUint32(304,2000,true);
+  const identity={source:'original', nested:{module:'hash'}}, thread={slot:1, detail:{id:7}}, correlation={request:[9]};
+  const o=create({getMemory:()=>memory,g2w:x=>x,resolveProgram:()=>2000,getThread:()=>thread,identity});
+  identity.source='changed-before-record';identity.nested.module='changed';
+  const token=o.apiEnter('IDirect3DDevice9_SetFVF',[1000,258]);
+  token.args[1]=999;
+  const host={call(){return -1;}};
+  o.installGPU(host,'call','host-entry',()=>correlation);
+  host.call(0x30001,300,0);
+  const before=o.snapshot();
+  assert.equal(before.identity.source,'original');assert.equal(before.identity.nested.module,'hash');
+  assert.equal(before.records[0].args[1],258);assert.equal(before.pairingDisqualified,false);
+  thread.detail.id=99;thread.slot=99;correlation.request[0]=99;identity.source='changed-after-freeze';
+  assert.deepEqual(o.snapshot(),before);
+  before.records[0].thread.slot=200;assert.equal(o.snapshot().records[0].thread.slot,1);
+});
+test('invalid or oversized metadata is bounded and explicitly disqualifies pairing',()=>{
+  for(const metadata of [{text:'x'.repeat(4097)}, {list:Array(33).fill(1)}, {number:NaN}, {big:1n}]) {
+    const o=create({getMemory:()=>new ArrayBuffer(256),g2w:x=>x,resolveProgram:()=>0,getThread:()=>null,identity:metadata});
+    assert.equal(o.snapshot().identity,null);assert.equal(o.snapshot().pairingDisqualified,true);
+  }
+  const cycle={};cycle.self=cycle;
+  const o=create({getMemory:()=>new ArrayBuffer(256),g2w:x=>x,resolveProgram:()=>0,getThread:()=>cycle});
+  o.apiEnter('IDirect3DDevice9_SetFVF',[1000,0]);
+  const snap=o.snapshot();assert.equal(snap.records[0].thread,null);assert.equal(snap.pairingDisqualified,true);
+  let invoked=false;
+  const metadata={get value(){invoked=true;return 5;}};
+  const bad=create({getMemory:()=>new ArrayBuffer(256),g2w:x=>x,resolveProgram:()=>0,getThread:()=>null,identity:metadata});
+  assert.equal(invoked,false);assert.equal(bad.snapshot().pairingDisqualified,true);
+});

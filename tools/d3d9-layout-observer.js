@@ -6,6 +6,37 @@
 })(typeof globalThis === 'object' ? globalThis : this, function() {
   'use strict';
   const selected = /^(IDirect3DDevice9_(CreateVertexDeclaration|SetVertexDeclaration|SetFVF|BeginStateBlock|EndStateBlock|CreateStateBlock|Reset|SetVertexShader|DrawPrimitive|DrawIndexedPrimitive|DrawPrimitiveUP|DrawIndexedPrimitiveUP)|IDirect3DStateBlock9_(Capture|Apply))$/;
+  // Reject unsupported/oversized metadata instead of silently truncating identity.
+  // Do not invoke toJSON or accessors supplied by callers.
+  function copyJSON(value) {
+    let nodes = 0, text = 0;
+    function copy(v, depth) {
+      if (++nodes > 256 || depth > 8) throw new RangeError('observer metadata size');
+      if (v === null || typeof v === 'boolean') return v;
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'string') {
+        text += v.length;
+        if (text > 4096) throw new RangeError('observer metadata text');
+        return v;
+      }
+      if (typeof v !== 'object' || v === null) throw new TypeError('observer metadata is not JSON');
+      const array = Array.isArray(v), proto = Object.getPrototypeOf(v);
+      if (!array && proto !== Object.prototype && proto !== null) throw new TypeError('observer metadata prototype');
+      if (array && v.length > 32) throw new RangeError('observer metadata array');
+      const result = array ? [] : Object.create(null);
+      let keys = 0;
+      for (const key in v) {
+        if (!Object.prototype.hasOwnProperty.call(v, key)) continue;
+        if (++keys > 32 || (text += key.length) > 4096) throw new RangeError('observer metadata keys');
+        const descriptor = Object.getOwnPropertyDescriptor(v, key);
+        if (!descriptor || !('value' in descriptor)) throw new TypeError('observer metadata accessor');
+        result[key] = copy(descriptor.value, depth+1);
+      }
+      if (array && result.length !== v.length) throw new TypeError('observer metadata sparse array');
+      return result;
+    }
+    return copy(value, 0);
+  }
   function create(options) {
     const { getMemory, g2w, resolveProgram, getThread } = options;
     const capacity = options.capacity ?? 128;
@@ -14,6 +45,7 @@
     const ring = new Array(capacity), restores = [];
     let sequence = 0, count = 0, frozen = false, errors = 0, disposed = false;
     const safe = fn => { try { return fn(); } catch (_) { errors++; return null; } };
+    const identity = safe(() => copyJSON(options.identity ?? null));
     const word = address => {
       if (!Number.isSafeInteger(address) || address < 256) throw new RangeError('unmapped observer address');
       return new DataView(getMemory()).getUint32(address, true);
@@ -33,8 +65,10 @@
     }
     function append(event) {
       if (frozen || disposed) return null;
+      const data = copyJSON(event);
       const seq = ++sequence;
-      const record = { sequence: seq, thread: safe(getThread), ...event };
+      const record = { sequence: seq, thread: safe(() => copyJSON(getThread())),
+        ...data };
       ring[(seq-1)%capacity] = record;
       count = Math.min(count+1, capacity);
       return seq;
@@ -139,8 +173,8 @@
       snapshot() {
         const records = [];
         for (let n = sequence-count+1; n <= sequence; n++) records.push(ring[(n-1)%capacity]);
-        return JSON.parse(JSON.stringify({ schema: 1, identity: options.identity ?? null,
-          capacity, frozen, observerErrors: errors, records }));
+        return JSON.parse(JSON.stringify({ schema: 1, identity,
+          capacity, frozen, observerErrors: errors, pairingDisqualified: errors > 0, records }));
       },
       dispose() { disposed = true; return restores.reverse().map(fn => fn()); }
     };
