@@ -261,3 +261,30 @@ controller's `d5b940c8b104b2e4d7b7e29506ad6e2fd6aea17c` production pin remains
 valid. The exact next native candidate is the task commit containing these
 test additions, supplied as `WA_NE_LIFECYCLE_COMMIT`; fresh admission and a
 normal build are still required.
+
+### Native named-import correction, 2026-10-18
+
+The first local full-module run at `55a38e16f9c88d0383643daf9728b5029293e355`
+passed six arms and the ordinal-import case, then trapped on `HELPER.VALUE`.
+The original module `e90da3db6b0740420e370a3d817cd59a9efab403df509de3e161524665badc81`
+is retained in `scratch/runs/20261018-outlaws-local-native/`.
+Named thunks stored only an import-name-table offset. Dispatch added that
+offset to the task-global NE header, which is zero for this PE caller, so the
+valid name at importer-relative offset 7 was looked up at linear address 7.
+
+Relocation now resolves names against an already loaded dependency using the
+actual importing image's NE header and creates the existing ordinal thunk.
+Unresolved and builtin names retain their legacy dispatch path. This does not
+add a generic DLL-name storage mechanism or qualify builtin named imports
+from PE-owned NE modules.
+
+Evidence in `scratch/runs/20261018-outlaws-named-import-fix/` includes the
+original-module failure, canonical build log, passing extracted transaction
+test, passing full-module synthetic lifecycle test, and pure-NE additive-far
+loader test. The native regression keeps two importers alive with name strings
+at the same offset 7: VALUE returns 0x1234 and ENTRY returns 1. Alternating
+calls prove that names do not alias through the task-global header or thunk
+cache. Existing missing-export, guest lifecycle guard and retained-WEP cases
+also pass. PMPRO62 and the complete twelve-arm controller were not rerun for
+this focused correction; the controller production pin remains unchanged
+pending review of this production-source commit.

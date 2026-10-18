@@ -565,18 +565,24 @@
                     (local.get $module) (local.get $c) (i32.const 0))))))
             (else
               ;; IMPORTNAME (2) names the entry point instead of numbering it,
-              ;; with `c` an offset into the imported-name table. The module is
-              ;; still named the same way, so record both and let the
-              ;; dispatcher report `CARDS.CDTINIT` rather than a bare number.
-              ;; OSFIXUP (3) is a floating-point emulator patch, which is not
-              ;; an import at all; it lands here with module 0 and says so.
+              ;; with `c` relative to THIS importing image. Resolve already
+              ;; loaded DLL exports now, while that image's name table is
+              ;; available. The resulting ordinal thunk also remains valid
+              ;; when another importer uses the same offset for another name.
+              ;; Legacy unresolved/builtin imports retain named dispatch.
+              (local.set $module (call $win16_module_id
+                (call $win16_module_name (local.get $ne_off) (local.get $a))))
+              (local.set $constant (i32.const 0))
+              (if (call $win16_dll_loaded (local.get $module))
+                (then
+                  (local.set $constant (call $win16_dll_ordinal (local.get $module)
+                    (i32.add (i32.add (local.get $ne_off)
+                      (i32.load16_u offset=0x2A (local.get $ne_off))) (local.get $c))))))
               (local.set $tgt_sel (local.get $thunk_sel))
               (local.set $tgt_off (call $win16_thunk_for
-                (if (result i32) (i32.eq (local.get $rel_type) (i32.const 2))
-                  (then (call $win16_module_id (call $win16_module_name (local.get $ne_off) (local.get $a))))
-                  (else (i32.const 0)))
-                (local.get $c)
-                (i32.eq (local.get $rel_type) (i32.const 2))))))))
+                (local.get $module)
+                (select (local.get $constant) (local.get $c) (local.get $constant))
+                (i32.eqz (local.get $constant))))))))
 
       ;; Walk the chain and write every site.
       (block $chain_done (loop $chain

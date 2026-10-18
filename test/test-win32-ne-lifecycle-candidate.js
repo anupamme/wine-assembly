@@ -50,8 +50,12 @@ async function main() {
     run(blocks){whileRunning?.();try{return raw.run(blocks);}catch(error){
       console.error(JSON.stringify({guestTrap:{eip:raw.get_eip()>>>0,cs:raw.get_sreg_cs(),ds:raw.get_sreg_ds(),ss:raw.get_sreg_ss(),hostLogTail:[...hostLogTail]}}));throw error;
     }}};
+  const helper=neLifecycleImage();
+  // An additional named export with a different result, for colliding import
+  // offsets in two simultaneously loaded importers.
+  helper.set([5,69,78,84,82,89,1,0,0],0x80+0x7e); // ENTRY -> LibEntry
   const images=new Map([
-    ['HELPER',neLifecycleImage()],['PARENT',neLifecycleImage({dependencies:['HELPER']})],
+    ['HELPER',helper],['PARENT',neLifecycleImage({dependencies:['HELPER']})],
     ['ZERO',neLifecycleImage({result:0,dependencies:['HELPER']})],
     ['TRAP',neLifecycleImage({trapInit:true,dependencies:['HELPER']})],
     ['BADWEP',neLifecycleImage({trapWep:true,dependencies:['HELPER']})],
@@ -60,6 +64,7 @@ async function main() {
     ['IMPORT',neLifecycleImage({importLocalInit:true})],
     ['ORDIMPORT',neLifecycleImage({importEntry:{module:'HELPER',symbol:2}})],
     ['NAMEIMPORT',neLifecycleImage({importEntry:{module:'HELPER',symbol:'VALUE'}})],
+    ['OTHERNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'ENTRY'}})],
     ['MISSORD',neLifecycleImage({importEntry:{module:'HELPER',symbol:4}})],
     ['MISSNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'ABSENT'}})],
     ['GUESTLOAD',neLifecycleImage({importEntry:{module:'KERNEL',symbol:95},importInValue:true})],
@@ -135,6 +140,16 @@ async function main() {
     lifecycle.release(importedId);clean();onlyModule(0,0);
     console.log(JSON.stringify({case:name,actualImportedCall:true}));
   }
+  // Both import-name strings start at offset 7 in their own image. Keep both
+  // importers alive and alternate calls: a current-importer global or a thunk
+  // cache keyed only by offset would send at least one call to the wrong export.
+  const named=lifecycle.load('NAMEIMPORT'),other=lifecycle.load('OTHERNAME');clean();
+  for(let n=0;n<2;n++) {
+    assert.equal(lifecycle.call(named,1)&65535,0x1234);clean();
+    assert.equal(lifecycle.call(other,1)&65535,1);clean();
+  }
+  lifecycle.release(named);lifecycle.release(other);clean();onlyModule(0,0);
+  console.log(JSON.stringify({case:'colliding-name-offsets',actualImportedCalls:true}));
   for(const name of ['MISSORD','MISSNAME']) {
     const before=records(),calls=invocations;
     assert.throws(()=>lifecycle.load(name),/Missing NE import HELPER/);
