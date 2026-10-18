@@ -18,7 +18,9 @@ function form(name) {
 const api = fs.readFileSync(path.join(dir,'09e-win16-api.wat'),'utf8');
 const block = api.slice(api.indexOf(';; BEGIN WIN32 NE INVOCATION CONTEXT'),api.indexOf(';; END WIN32 NE INVOCATION CONTEXT'));
 const loader = fs.readFileSync(path.join(dir,'08c-ne-loader.wat'),'utf8');
-const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'),loader.indexOf(';; END WIN32 NE MODULE TRANSACTIONS'));
+// Include the following guest aliases/retain-name helpers used by the real JS
+// coordinator as well as the transaction table itself.
+const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'));
 const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_entry','win16_entry_lookup','win16_dll_ordinal','win16_name_table_find','win16_pstr_eq_pstr','win16_dll_init_entry','win16_dll_data_sel','win16_dll_heap_size','win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
  'load_ne_dll_sized','win16_dll_staging','win16_dll_rec','win16_dll_loaded','win16_dll_unload','win16_dll_run_ptr','win16_dll_refs_ptr','win16_dll_image_size_ptr','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
   'win16_arena_take','win16_arena_give','win16_arena_free_head','win16_alloc_segment','win16_arena_slot_base',
@@ -26,13 +28,17 @@ const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_e
   'win16_sel_to_index','win16_index_to_sel','win16_seg_is_big','win16_set_sreg','esp_arch',
   'win16_call32_begin','win16_call32_arg','win16_call32_end','win16_call32_waited',
   'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release',
-  'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16'];
+  'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16',
+  'virtual_map_lease_page_owned','virtual_map_lease_record'];
 helpers.push('win16_apply_relocs','win16_module_name','win16_module_id','win16_system_module_id',
  'win16_pstr_eq','win16_dynamic_module_id','win16_import_constant','win16_thunk_for',
  'win16_thunk_count_get','win16_thunk_count_set');
 helpers.push('win16_kernel');
 helpers.push('win16_GetModuleUsage','win16_module_usage','win16_arg16','win16_api_key',
- 'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16');
+ 'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16','win16_h16_forget',
+ 'win16_bridge_fixed_load_api','win16_bridge_fixed_free_api','win16_bridge_fixed_api_stack',
+ 'win16_cstr_to_pstr','win16_far_to_guest','win16_name_scratch',
+ 'win16_dynamic_module_is_toolhelp','win16_module_is_ver','win16_module_is_lzexpand','win16_dynamic_module_is7');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
 // Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
 // reached is a distinct host Error, never the RuntimeError expected from the
@@ -45,10 +51,15 @@ for (const name of new Set([...form('win16_kernel').matchAll(/\(call \$([^\s)]+)
 }
 
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
- .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)')
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 8)','(i32.const 4104)')
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 104)','(i32.const 4200)')
+ .replaceAll('(region.addr $GUEST_STACK 0x200)','(i32.add (global.get $GUEST_STACK) (i32.const 512))')
+ .replaceAll('(region.end $GUEST_STACK)','(i32.add (global.get $GUEST_STACK) (global.get $GUEST_STACK_SIZE))');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
- DLL_LOAD_LOCK:0x1100,current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
+ DLL_LOAD_LOCK:0x1100,LOCK_VIRTUAL_MAP:0x1110,VIRTUAL_MAP_STATE:0x1120,VIRTUAL_MAP_TABLE:0x1200,
+ current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
  WIN16_NAME_KERNEL:0x70000};
 const globalNames=[...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s)]+)/g)].map(m=>m[1]))];
 const declared=new Set([...code.matchAll(/\(global \$([^\s)]+)/g)].map(m=>m[1]));
@@ -82,6 +93,8 @@ const source=`
 (func $cs_pop (nop))
 (func $gs16 (param $p i32) (param $v i32) (i32.store16 (call $g2w (local.get $p)) (local.get $v)))
 (func $gl16 (param $p i32) (result i32) (i32.load16_u (call $g2w (local.get $p))))
+(func $gl32 (param $p i32) (result i32) (i32.load (call $g2w (local.get $p))))
+(func $gl8 (param $p i32) (result i32) (i32.load8_u (call $g2w (local.get $p))))
 (func $win16_dispatch (param $off i32) (param $ret i32)
   (if (i32.ne (local.get $off) (global.get $WIN16_BRIDGE_RETURN)) (then (unreachable)))
   (call $win16_bridge_invoke_return (local.get $ret)))
@@ -339,7 +352,34 @@ assert.equal(first.win16_h16(0x00d10002),0x109,'skip selector-shaped free slot')
 assert.equal(first.win16_h16(0x12345678),0x107,'UI map capacity preserved');
 for(let i=3;i<37;i++)assert.notEqual(first.win16_h16(0x00d10000+i)&7,7);
 bytes.set(tableBefore,handleTable);first.win16_handle_next_set(oldNext);
+// Exhaust real alias allocation: it traps before changing the explicit count,
+// and never leaves the loader mutex held. Restore only fixture-owned bytes.
+const fullMap=bytes.slice(handleTable,handleTable+4097*4),fullNext=first.win16_handle_next_get();
+const aliasFrame=first.win16_bridge_frame_begin();assert(aliasFrame);
+assert.equal(first.win16_bridge_scope_begin(aliasFrame),1);
+try {
+ for(let i=1;i<=4096;i++)view.setUint32(handleTable+i*4,0x12345678,true);
+ first.win16_handle_next_set(4096);
+ const count=first.win16_bridge_fixed_usage(12);
+ assert.throws(()=>first.win16_bridge_fixed_acquire(12),WebAssembly.RuntimeError);
+ assert.equal(first.win16_bridge_fixed_usage(12),count,'failed alias leaves refs unchanged');
+ assert.equal(view.getUint32(fixture.DLL_LOAD_LOCK,true),0,'no mutex retained after alias trap');
+} finally {
+ bytes.set(fullMap,handleTable);first.win16_handle_next_set(fullNext);
+ assert.equal(first.win16_bridge_frame_end(aliasFrame),1);
+}
 for(const h of [0,0xffff,0xfffe,0x100,first.win16_h16(0x12345678)])assert.equal(first.win16_module_usage(h),0);
+// A standalone task still queries its legacy fixed-id image reference count.
+const legacyFixed=first.win16_dll_rec(3),legacyFixedRefs=first.win16_dll_refs_ptr(3);
+const savedFixed=bytes.slice(legacyFixed,legacyFixed+16),savedFixedRefs=view.getUint32(legacyFixedRefs,true);
+const legacyFixedHandle=first.win16_h16(0x00d10003),wasWin16=first.get_is_win16();
+try {
+ view.setUint32(legacyFixed+12,1,true);view.setUint32(legacyFixedRefs,7,true);first.set_is_win16(1);
+ assert.equal(first.win16_module_usage(legacyFixedHandle),7,'standalone fixed legacy count preserved');
+} finally {
+ first.set_is_win16(wasWin16);bytes.set(savedFixed,legacyFixed);view.setUint32(legacyFixedRefs,savedFixedRefs,true);
+ first.win16_h16_forget(0x00d10003);
+}
 // Execute the real argument reader, KERNEL dispatcher and far API return.
 // Only the outer controlled guest runner is synthetic in this tiny harness.
 function queryUsage(handle,expected) {
@@ -361,6 +401,41 @@ assert.equal(lifecycle.lookup(parentId,'MISSING'),0);assert.equal(lifecycle.look
 whileRunning=()=>{
  const r=first.win16_bridge_module_record(parentId);assert.equal(view.getUint32(r+24,true),1,'active module pin');
  queryUsage(parentInstance,2);queryUsage(parentHandle,2);queryUsage(0xfffe,0);
+ const apiBefore=cpu(first),reg=first.get_reg_base(),apiSp=view.getUint32(reg+16,true)-16;
+ const apiAt=translate(apiSp),apiBytes=bytes.slice(apiAt,apiAt+8),fixedState=bytes.slice(4104,4304);
+ try {
+  view.setUint32(reg+16,apiSp,true);
+  view.setUint16(apiAt,0,true);view.setUint16(apiAt+2,first.get_sreg_cs(),true);
+  view.setUint16(apiAt+4,0xffff,true);view.setUint16(apiAt+6,first.get_sreg_ds(),true);
+  assert.equal(first.win16_bridge_fixed_api_stack(8),1,'valid owned Pascal frame');
+  assert.equal(first.win16_bridge_fixed_load_api(),0,'name outside selector');
+  assert.equal(first.win16_bridge_fixed_free_api(),0,'unknown handle');
+  view.setUint16(apiAt+2,0,true);
+  assert.equal(first.win16_bridge_fixed_load_api(),0,'invalid far return selector');
+  assert.equal(first.win16_bridge_fixed_free_api(),0,'invalid far return selector');
+  view.setUint32(reg+16,first.get_seg_base_ss()+65534,true);
+  assert.equal(first.win16_bridge_fixed_load_api(),0,'truncated load stack');
+  assert.equal(first.win16_bridge_fixed_free_api(),0,'truncated free stack');
+  assert.deepEqual(bytes.slice(4104,4304),fixedState,'malformed calls leave all fixed refs unchanged');
+  const nameAt=translate(first.get_seg_base_ds()+0x80),savedName=bytes.slice(nameAt,nameAt+7);
+  const scratchAt=fixture.GUEST_STACK+0x200,scratchBefore=bytes.slice(scratchAt,scratchAt+64);
+  const count=first.win16_bridge_fixed_usage(1);
+  try {
+   bytes.set([75,69,82,78,69,76,0],nameAt);
+   view.setUint32(reg+16,apiSp,true);view.setUint16(apiAt+2,first.get_sreg_cs(),true);
+   view.setUint16(apiAt+4,0x80,true);view.setUint16(apiAt+6,first.get_sreg_ds(),true);
+   assert.equal(first.win16_kernel(95),1,'actual narrow fixed acquisition');
+   const handle=view.getUint16(reg,true);assert(handle>=32);
+   assert.equal(first.win16_bridge_fixed_usage(1),count+1);
+   assert.deepEqual(bytes.slice(scratchAt,scratchAt+64),scratchBefore,'PE fixed stack scratch untouched');
+   view.setUint32(reg+16,apiSp,true);view.setUint16(apiAt+4,handle,true);
+   assert.equal(first.win16_kernel(96),1);assert.equal(first.win16_bridge_fixed_usage(1),count);
+  } finally {bytes.set(savedName,nameAt);}
+ } finally {
+  bytes.set(apiBytes,apiAt);
+  for(const [n,v] of Object.entries(apiBefore.globals))first['set_'+n](v);
+  for(const [n,b] of Object.entries(apiBefore.files))bytes.set(b,first['get_'+n+'_base']());
+ }
  const beforeGuestFree=bytes.slice(),beforeGlobals=saved.map(n=>first['get_'+n]());
  for(const ordinal of [95,96])assert.throws(()=>first.win16_kernel(ordinal),WebAssembly.RuntimeError,'actual KERNEL dispatcher rejects bridge guest lifecycle');
  assert.deepEqual(bytes,beforeGuestFree,'rejected guest lifecycle changes no segments/refs/pins');

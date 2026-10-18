@@ -61,6 +61,7 @@
                      (i32.ne (local.get $wa) (global.get $NULL_SENTINEL)))
           (then
             (call $zero_memory (local.get $wa) (local.get $size))
+            (call $zero_memory (region.addr $WIN16_PROCESS_ARENA 8) (i32.const 200))
             (i32.atomic.store (region.addr $WIN16_PROCESS_ARENA 0) (local.get $base))
             (i32.store (region.addr $WIN16_PROCESS_ARENA 4) (i32.const 0)))
           (else
@@ -1933,6 +1934,99 @@
   (func (export "is_win16") (result i32) (global.get $is_win16))
 
   ;; BEGIN WIN32 NE MODULE TRANSACTIONS
+  ;; Fixed fileless identities: WIN16_PROCESS_ARENA +8..+208, after the two
+  ;; arena pointers. 24 importer masks, then 13 {imports,explicit} pairs.
+  ;; Arena creation zeroes this process-owned state; replacement releases it.
+  ;; CARDS (9) is file-backed and must never enter this lifecycle.
+  (func $win16_bridge_fixed_id (param $id i32) (result i32)
+    (i32.and (i32.and (i32.ge_u (local.get $id) (i32.const 1))
+      (i32.le_u (local.get $id) (i32.const 12))) (i32.ne (local.get $id) (i32.const 9))))
+  (func $win16_bridge_fixed_refs (param $id i32) (result i32)
+    (i32.add (region.addr $WIN16_PROCESS_ARENA 104) (i32.shl (local.get $id) (i32.const 3))))
+  (func $win16_bridge_fixed_mask (param $id i32) (result i32)
+    (i32.add (region.addr $WIN16_PROCESS_ARENA 8)
+      (i32.shl (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)) (i32.const 2))))
+  (func $win16_bridge_fixed_owner (result i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))) (then (return (i32.const 0))))
+    (i32.eq (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))
+  (func $win16_bridge_fixed_usage (export "win16_bridge_fixed_usage") (param $id i32) (result i32)
+    (local $ptr i32)
+    (if (i32.eqz (call $win16_bridge_fixed_id (local.get $id))) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.atomic.load (region.addr $WIN16_PROCESS_ARENA 0))) (then (return (i32.const 0))))
+    (local.set $ptr (call $win16_bridge_fixed_refs (local.get $id)))
+    (i32.add (i32.load (local.get $ptr)) (i32.load offset=4 (local.get $ptr))))
+  ;; Acquire one import reference directly into an unpublished parent's mask.
+  ;; Duplicate linking rejects without incrementing. Native teardown owns it.
+  (func (export "win16_bridge_fixed_link") (param $parent i32) (param $id i32) (result i32)
+    (local $rec i32) (local $mask i32) (local $bit i32) (local $ptr i32)
+    (if (i32.eqz (call $win16_bridge_fixed_owner)) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_fixed_id (local.get $id))) (then (return (i32.const 0))))
+    (local.set $rec (call $win16_bridge_module_record (local.get $parent)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (local.set $mask (call $win16_bridge_fixed_mask (local.get $parent)))
+    (local.set $bit (i32.shl (i32.const 1) (local.get $id)))
+    (local.set $ptr (call $win16_bridge_fixed_refs (local.get $id)))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 1)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.and (i32.load (local.get $mask)) (local.get $bit)))
+      (br_if $reject (i32.ge_u (call $win16_bridge_fixed_usage (local.get $id)) (i32.const 65535)))
+      (i32.store (local.get $ptr) (i32.add (i32.load (local.get $ptr)) (i32.const 1)))
+      (i32.store (local.get $mask) (i32.or (i32.load (local.get $mask)) (local.get $bit)))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+  ;; Caller holds DLL mutex; cannot trap or run a WEP. A fixed dispatcher has
+  ;; no guest segments. Keep aliases while any import/explicit reference lives.
+  (func $win16_bridge_fixed_unlink (param $parent i32)
+    (local $mask i32) (local $id i32) (local $ptr i32)
+    (local.set $mask (i32.load (call $win16_bridge_fixed_mask (local.get $parent))))
+    (local.set $id (i32.const 1))
+    (loop $scan
+      (if (i32.and (local.get $mask) (i32.shl (i32.const 1) (local.get $id)))
+        (then
+          (local.set $ptr (call $win16_bridge_fixed_refs (local.get $id)))
+          (i32.store (local.get $ptr) (i32.sub (i32.load (local.get $ptr)) (i32.const 1)))
+          (if (i32.eqz (call $win16_bridge_fixed_usage (local.get $id)))
+            (then (call $win16_h16_forget (i32.or (i32.const 0x00D10000) (local.get $id)))))))
+      (local.set $id (i32.add (local.get $id) (i32.const 1)))
+      (br_if $scan (i32.le_u (local.get $id) (i32.const 12))))
+    (i32.store (call $win16_bridge_fixed_mask (local.get $parent)) (i32.const 0)))
+  (func $win16_bridge_fixed_acquire (export "win16_bridge_fixed_acquire") (param $id i32) (result i32)
+    (local $ptr i32) (local $handle i32)
+    (if (i32.eqz (call $win16_bridge_fixed_owner)) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_fixed_id (local.get $id))) (then (return (i32.const 0))))
+    (if (i32.ge_u (call $win16_bridge_fixed_usage (local.get $id)) (i32.const 65535)) (then (return (i32.const 0))))
+    ;; The execution lease excludes competing guest mutation. h16 may trap on
+    ;; exhaustion: allocate before changing refs and without holding a mutex.
+    (local.set $handle (call $win16_h16 (i32.or (i32.const 0x00D10000) (local.get $id))))
+    (local.set $ptr (call $win16_bridge_fixed_refs (local.get $id)))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (i32.store offset=4 (local.get $ptr) (i32.add (i32.load offset=4 (local.get $ptr)) (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (local.get $handle))
+  (func $win16_bridge_fixed_resolve (param $handle i32) (result i32)
+    (local $slot i32) (local $mapped i32) (local $id i32)
+    (if (i32.le_u (local.get $handle) (global.get $WIN16_HANDLE_BASE)) (then (return (i32.const 0))))
+    (local.set $slot (i32.sub (local.get $handle) (global.get $WIN16_HANDLE_BASE)))
+    (if (i32.gt_u (local.get $slot) (call $win16_handle_next_get)) (then (return (i32.const 0))))
+    (local.set $mapped (i32.load (i32.add (call $win16_handle_table) (i32.shl (local.get $slot) (i32.const 2)))))
+    (if (i32.ne (i32.and (local.get $mapped) (i32.const 0xFFFF0000)) (i32.const 0x00D10000)) (then (return (i32.const 0))))
+    (local.set $id (i32.and (local.get $mapped) (i32.const 65535)))
+    (select (local.get $id) (i32.const 0) (i32.ne (call $win16_bridge_fixed_usage (local.get $id)) (i32.const 0))))
+  (func $win16_bridge_fixed_release (export "win16_bridge_fixed_release") (param $handle i32) (result i32)
+    (local $id i32) (local $ptr i32)
+    (if (i32.eqz (call $win16_bridge_fixed_owner)) (then (return (i32.const 0))))
+    (local.set $id (call $win16_bridge_fixed_resolve (local.get $handle)))
+    (if (i32.eqz (local.get $id)) (then (return (i32.const 0))))
+    (local.set $ptr (call $win16_bridge_fixed_refs (local.get $id)))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    ;; A FreeLibrary cannot consume an import edge owned by another module.
+    (if (i32.eqz (i32.load offset=4 (local.get $ptr)))
+      (then (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 0))))
+    (i32.store offset=4 (local.get $ptr) (i32.sub (i32.load offset=4 (local.get $ptr)) (i32.const 1)))
+    (if (i32.eqz (call $win16_bridge_fixed_usage (local.get $id)))
+      (then (call $win16_h16_forget (i32.or (i32.const 0x00D10000) (local.get $id)))))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 1))
   ;; 24 process-owned records in the unused hidden-page gap 0x8C00..0x8F00.
   ;; state(0 absent,1 loading,2 initializing,3 ready,4 terminating), owner, refs, dependencies,
   ;; provisional first/count, active calls, staging-lease flag. Never published
@@ -2119,6 +2213,7 @@
         (else (if (i32.load offset=20 (local.get $rec))
           (then (call $win16_arena_give (i32.load offset=16 (local.get $rec)) (i32.load offset=20 (local.get $rec)))))))
       (call $win16_bridge_module_stage_release (local.get $rec))
+      (call $win16_bridge_fixed_unlink (local.get $id))
       (call $win16_dynamic_module_release (local.get $id))
       (call $zero_memory (local.get $rec) (i32.const 32))
       (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
@@ -2200,6 +2295,7 @@
       (br_if $reject (i32.eqz (i32.load offset=28 (local.get $rec))))
       (call $win16_dll_unload (local.get $id))
       (call $win16_bridge_module_stage_release (local.get $rec))
+      (call $win16_bridge_fixed_unlink (local.get $id))
       (call $win16_dynamic_module_release (local.get $id))
       (call $zero_memory (local.get $rec) (i32.const 32))
       (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))

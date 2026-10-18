@@ -184,3 +184,121 @@ overflow, two instances sharing one process, independent processes and reset.
 Exercise a real WIN87EM far dispatcher call, full caller restoration and nested
 call32 preservation. This is more than a local guard relaxation; it should be
 reviewed and tested as its own lifecycle change before original replay.
+
+Counted fixed-builtin implementation checkpoint
+
+The follow-up implements that narrow stage, pending build/native admission.
+WIN16_PROCESS_ARENA grows from 8 to 208 declared bytes: offsets 0/4 remain
+publication/pending-cleanup; 8..103 hold 24 fixed-import masks; 104..207 hold
+13 pairs of import and explicit counters. The generated region mirror changes
+the size/hash; subsequent bases do not move in the canonical layout. Full-arena
+creation clears the extra state before publication. The formerly tempting
+hidden-page 8f00 gap is occupied by QT stack leases and is not used.
+
+Each lifecycle importer acquires its fixed edges in native code under its
+unpublished record. Native rollback/final release removes those edges, after
+WEP where applicable; failed WEP retains them. Explicit acquisitions increment
+a separate process-owned count after successful alias allocation. Alias
+exhaustion traps without holding the mutex or changing counts. Counts saturate
+by rejecting a sum of 65535 rather than wrapping. Aliases remain while either
+kind of reference lives and are forgotten on the final release. FreeLibrary
+cannot consume import edges; invalid/double nested release remains diagnostic.
+
+KERNEL.95 inside a live bridge recognizes fileless fixed names only, validates
+the complete Pascal stack/far return and bounded selector-relative string,
+acquires the identity synchronously and returns AX with the original high half.
+KERNEL.96 handles only a counted fixed acquisition and preserves EAX (void).
+Dynamic/image-backed names still reach the explicit unsupported guard; no
+singleton PE request, host yield, legacy loader or invented success is used.
+GetModuleUsage includes fixed import+explicit references. Fixed ordinal
+GetProcAddress returns the existing real dispatcher thunk, preserving unknown
+ordinal fail-fast on invocation. Existing named builtin routing is unchanged.
+GetModuleHandle inside the bridge does not fabricate an absent fixed identity.
+
+Prepared full-interpreter tests use authentic synthetic NE relocation tables:
+LibEntry calls KERNEL.95 twice; two importers/coordinators produce usage 4;
+actual KERNEL.48/96/50 and resolved WIN87EM.1 execute; duplicate release cannot
+steal import ownership; failed initialization removes imports and retains
+already-returned explicit acquisitions; dynamic/CARDS/unknown names trap;
+duplicate linking, overflow, wrong-owner acquisition, cancellation, execution
+budget exhaustion, final alias retirement/reuse and process replacement are
+asserted. Tiny actual-helper regression adds alias-exhaustion/no-mutex-leak.
+The existing source closure tests and structural/region/handler/tier gates pass.
+At this checkpoint these WAT/native assertions have NOT run and no original
+executable has run. Remaining ABI, fixture and integration failures must be
+resolved under a separately granted bounded runtime window before admission.
+
+First admitted validation and corrections
+
+Canonical source 130377b90 passed in 20.328s, PID 2209187 exit 0. Module
+9b20ff172240f4eabc7842f1c8cba6ce99c658525a81701f7ef932cc74ce1005;
+region-map SHA256 a6869fe091c02854ac8f6cc71dd8e37b4f1156be616dd2dbaa0cc012c37bf9fa.
+The full-interpreter fixture passed in 111ms (PID 2211381 exit 0), including
+the fixed lifecycle, malformed names/selectors, retained/retried WEP, process
+replacement and all existing dynamic builtin lifecycle cases. The preceding
+fixture incorrectly expected named KERNEL.GetVersion in the intentionally small
+builtin name table; the corrected known-name check uses GetModuleHandle.
+
+Source audit then corrected the new LoadLibrary adapter's name scratch to its
+owned invocation frame rather than the legacy fixed PE stack scratch. Thus
+that full-module result is NOT validation of the final corrected WAT. Source
+c16e9ade3 includes the correction and a tiny real-helper PE scratch canary.
+
+The tiny transaction/context extraction had fallen behind the admitted QT
+implementation: missing gl32, symbolic stack end, actual virtual-map lease
+helpers and guest alias/retain-name forms. Extraction now includes those real
+helpers, with distinct eight-byte fixture locks and bounded controls. No
+production helper is replaced with a success stub. A fixture lock overlap
+caused a hang and was explicitly killed in its owned group after 30 seconds;
+the first window also killed a retry at its original 90-second deadline.
+All failures/actual-close receipts are retained, not reported as passes.
+
+Final tiny transaction run in the second grant passed in 1.746s, PID 2216264:
+actual module/initializer/termination ownership helpers and coordinator (guest
+runner controlled), new actual KERNEL.95/96 plus PE scratch canary, malformed
+stack/return/name rejection, standalone fixed-ID legacy usage, and alias
+exhaustion without mutex or reference leakage. Tiny arena then stopped at its
+test-only watch assumption that every zero_memory call clears the whole arena.
+The new 200-byte lifetime reset is now explicitly checked for zero bytes before
+publication; that corrected arena test and context were not run in the window.
+All twelve accumulated child PIDs were absent on release. No original or
+browser ran. Final canonical rebuild and remaining regressions need a fresh
+root grant. Evidence: scratch/runs/20261018-outlaws-fixed-builtins/.
+
+Final admitted validation (2026-10-18 17:16 UTC)
+
+Review found the existing GetModuleHandle and named GetProcAddress paths still
+used the legacy name scratch. Source 169a6272b makes the shared helper validate
+the active bridge frame and use its owned context page + 1024 guest address;
+the standalone route retains its prior scratch address. Native canaries now
+cover both legacy physical/translated locations through load and named queries.
+Independent source review cleared this correction.
+
+Canonical build-2 at 169a6272b9936f579e3a1086959e226cb6901067 exited 0 in
+20.305s. Final module SHA256:
+a4a4bc6aef0f50a191d83acdd0857ff390537701adc381d81436845f20b969e3
+Region-map SHA256 remains:
+a6869fe091c02854ac8f6cc71dd8e37b4f1156be616dd2dbaa0cc012c37bf9fa
+
+Native-6 passed lifecycle and transaction, then exposed the same obsolete
+full-arena-only watch assertion in the concurrent Worker fixture. The sole
+post-build edit allows and asserts the 200-byte fixed-reference reset there.
+Test file SHA256 at final execution:
+804e16f6475d63d3c2a7ab0274aa0d1923b16c43d95e80dde0bd0f4b5f36d751
+Native-7 retried under the ORIGINAL 90-second deadline; all six exited 0:
+  test-win32-ne-lifecycle-candidate.js: 131ms
+  test-win32-ne-module-transaction.js: 1857ms
+  test-win32-ne-arena.js: 267ms, including concurrent Workers
+  test-win32-ne-context.js: 556ms
+  test-ne-guest-lifecycle-candidate.js: 150ms
+  test-ne-qt-ownership-candidate.js: 79ms
+The latter two used the rebuilt precompiled module. All 22 cumulative receipt
+PIDs were absent at release, with 3234791424 bytes free. No original/browser
+run was performed. Earlier failed fixtures and deadline kills remain retained
+beside the successful logs/receipts in the evidence directory above.
+
+This validates the counted fileless fixed-builtin stage, not general nested
+image loading or original Outlaws startup. Image-backed nested loading remains
+explicitly unsupported and guarded; the earlier staged protocol remains future
+work. Reproduce with the canonical build followed by the six tests above using
+WA_TEST_WASM pointing to that exact built module, within a granted runtime slot.

@@ -6937,15 +6937,19 @@
       (then (call $win16_GetProcAddress) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 95))
       (then
-        ;; Guest-driven lifecycle is not implemented for the PE bridge. The
-        ;; legacy loader/refcounts do not own its module records or call pins.
+        ;; Only owned fileless fixed acquisition can complete synchronously.
+        ;; Image-backed/dynamic nested loading still requires a request stack.
         (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
-          (then (call $host_log_i32 (local.get $ordinal)) (unreachable)))
+          (then
+            (if (call $win16_bridge_fixed_load_api) (then (return (i32.const 1))))
+            (call $host_log_i32 (local.get $ordinal)) (unreachable)))
         (call $win16_LoadLibrary) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 96))
       (then
         (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
-          (then (call $host_log_i32 (local.get $ordinal)) (unreachable)))
+          (then
+            (if (call $win16_bridge_fixed_free_api) (then (return (i32.const 1))))
+            (call $host_log_i32 (local.get $ordinal)) (unreachable)))
         (call $win16_FreeLibrary) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 97))
       (then (call $win16_GetTempFileName) (return (i32.const 1))))
@@ -6958,6 +6962,49 @@
     (i32.const 0))
 
   ;; ---- Loading a library by name ----
+  ;; Validate a complete API stack and its far return before acquiring or
+  ;; releasing a reference. The bridge stacks live in the affine owned arena.
+  (func $win16_bridge_fixed_api_stack (param $bytes i32) (result i32)
+    (local $sp i32) (local $limit i32) (local $sel i32)
+    (if (i32.eqz (call $win16_bridge_fixed_owner)) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_selector_valid (global.get $sreg_ss) (i32.const 1))) (then (return (i32.const 0))))
+    (local.set $sp (i32.sub (i32.load offset=16 (global.get $reg_base)) (global.get $seg_base_ss)))
+    (local.set $limit (call $win16_seg_limit (call $win16_sel_to_index (global.get $sreg_ss))))
+    (if (i32.or (i32.lt_u (local.get $limit) (local.get $bytes))
+      (i32.gt_u (local.get $sp) (i32.sub (local.get $limit) (local.get $bytes)))) (then (return (i32.const 0))))
+    (local.set $sel (call $gl16 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 2))))
+    (if (i32.eqz (call $win16_bridge_selector_valid (local.get $sel) (i32.const 0))) (then (return (i32.const 0))))
+    (i32.lt_u (call $gl16 (i32.load offset=16 (global.get $reg_base)))
+      (call $win16_seg_limit (call $win16_sel_to_index (local.get $sel)))))
+  (func $win16_bridge_fixed_load_api (result i32)
+    (local $sel i32) (local $off i32) (local $limit i32) (local $name i32) (local $n i32) (local $id i32) (local $handle i32) (local $scratch i32)
+    (if (i32.eqz (call $win16_bridge_fixed_api_stack (i32.const 8))) (then (return (i32.const 0))))
+    (local.set $sel (call $win16_arg16 (i32.const 1)))
+    (local.set $off (call $win16_arg16 (i32.const 0)))
+    ;; Readable code or data strings are allowed, but never selector wrapping.
+    (if (i32.eqz (i32.or (call $win16_bridge_selector_valid (local.get $sel) (i32.const 0))
+      (call $win16_bridge_selector_valid (local.get $sel) (i32.const 1)))) (then (return (i32.const 0))))
+    (local.set $limit (call $win16_seg_limit (call $win16_sel_to_index (local.get $sel))))
+    (local.set $name (call $win16_far_to_guest (local.get $sel) (local.get $off)))
+    (block $terminated (loop $string
+      (if (i32.or (i32.gt_u (local.get $n) (i32.const 260))
+        (i32.ge_u (i32.add (local.get $off) (local.get $n)) (local.get $limit))) (then (return (i32.const 0))))
+      (br_if $terminated (i32.eqz (call $gl8 (i32.add (local.get $name) (local.get $n)))))
+      (local.set $n (i32.add (local.get $n) (i32.const 1))) (br $string)))
+    ;; This API must not overwrite the suspended PE caller's fixed stack.
+    ;; Its invocation owns scratch after the first 1KiB context snapshot.
+    (local.set $scratch (call $win16_name_scratch))
+    (call $win16_cstr_to_pstr (local.get $name) (local.get $scratch) (i32.const 1))
+    (local.set $id (call $win16_system_module_id (call $g2w (local.get $scratch))))
+    (local.set $handle (call $win16_bridge_fixed_acquire (local.get $id)))
+    (if (i32.eqz (local.get $handle)) (then (return (i32.const 0))))
+    (i32.store16 (global.get $reg_base) (local.get $handle))
+    (call $win16_api_return (i32.const 4)) (i32.const 1))
+  (func $win16_bridge_fixed_free_api (result i32)
+    (if (i32.eqz (call $win16_bridge_fixed_api_stack (i32.const 6))) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_fixed_release (call $win16_arg16 (i32.const 0)))) (then (return (i32.const 0))))
+    ;; FreeLibrary is void: keep the caller's EAX intact.
+    (call $win16_api_return (i32.const 2)) (i32.const 1))
   ;;
   ;; The names in an NE's tables are upper case Pascal strings, and everything
   ;; an app passes to LoadLibrary or GetProcAddress is a C string in whatever
@@ -7102,6 +7149,13 @@
   ;; Scratch for the Pascal string above, at the unused bottom of the 32-bit
   ;; task's stack region, which a 16-bit task never touches.
   (func $win16_name_scratch (result i32)
+    ;; Name-based queries can run inside LibEntry/QT as well as LoadLibrary.
+    ;; Their temporary Pascal strings belong to the current invocation, never
+    ;; to the suspended PE caller's fixed stack. Keep standalone placement.
+    (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+      (then
+        (if (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))) (then (unreachable)))
+        (return (i32.add (i32.load offset=16 (i32.wrap_i64 (global.get $win16_bridge_frame))) (i32.const 1024)))))
     (region.addr $GUEST_STACK 0x200))
 
   ;; KERNEL.95 LoadLibrary(lpszLibFile) -> HINSTANCE, or an error code below 32.
@@ -7433,6 +7487,13 @@
           ;; Selectors may exceed HANDLE_BASE; an absent table slot is not
           ;; itself a reason to reject a live DGROUP selector.
           (else (local.set $mapped (i32.const 0))))))
+    (if (i32.eq (i32.and (local.get $mapped) (i32.const 0xFFFF0000)) (i32.const 0x00D10000))
+      (then
+        (local.set $id (i32.and (local.get $mapped) (i32.const 65535)))
+        (if (i32.and (i32.eqz (global.get $is_win16))
+          (i32.and (i32.ne (i32.atomic.load (region.addr $WIN16_PROCESS_ARENA 0)) (i32.const 0))
+            (i32.ne (call $win16_bridge_fixed_id (local.get $id)) (i32.const 0))))
+          (then (return (call $win16_bridge_fixed_usage (local.get $id)))))))
     (local.set $id (i32.const 1))
     (block $missing (loop $scan
       (br_if $missing (i32.ge_u (local.get $id)
@@ -7498,6 +7559,11 @@
     (local.set $id (call $win16_system_module_id (local.get $pstr)))
     (if (local.get $id)
       (then
+        (if (i32.and (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+          (i32.ne (call $win16_bridge_fixed_id (local.get $id)) (i32.const 0)))
+          (then
+            (if (i32.eqz (call $win16_bridge_fixed_usage (local.get $id)))
+              (then (call $win16_local_identity (i32.const 4) (i32.const 0)) (return)))))
         (call $win16_local_identity (i32.const 4)
           (call $win16_h16 (i32.or (i32.const 0x00D10000) (local.get $id))))
         (return)))
@@ -7563,6 +7629,20 @@
     (if (i32.eq (i32.and (local.get $id) (i32.const 0xFFFF0000)) (i32.const 0x00D10000))
       (then
         (local.set $id (i32.and (local.get $id) (i32.const 0xFFFF)))
+        ;; Counted fixed identities share the actual ordinal dispatcher. A
+        ;; missing ordinal remains a diagnostic when called, as static imports.
+        (if (i32.and (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+          (i32.ne (call $win16_bridge_fixed_id (local.get $id)) (i32.const 0)))
+          (then
+            (if (i32.eqz (call $win16_bridge_fixed_usage (local.get $id)))
+              (then
+                (i32.store16 (global.get $reg_base) (i32.const 0))
+                (i32.store16 offset=8 (global.get $reg_base) (i32.const 0))
+                (call $win16_api_return (i32.const 6)) (return)))
+            (if (i32.and (i32.eqz (local.get $sel)) (i32.ne (local.get $off) (i32.const 0)))
+              (then (local.set $target
+                (i32.or (i32.shl (global.get $WIN16_THUNK_SEL) (i32.const 16))
+                  (call $win16_thunk_for (local.get $id) (local.get $off) (i32.const 0))))))))
         ;; MMSYSTEM: the name is looked up in the table this side keeps and
         ;; answered with the import thunk for that ordinal, which is the same
         ;; address a static import would have been fixed up to — so calling

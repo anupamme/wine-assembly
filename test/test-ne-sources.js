@@ -6,6 +6,16 @@ const vm = require('node:vm');
 const { canonicalNeName, prepareNeSources } = require('../lib/ne-sources');
 const { NeLoadError } = require('../lib/ne-load-error');
 const { neLifecycleImage } = require('./helpers/ne-lifecycle-image');
+const { neFixedBuiltinId } = require('../lib/ne-image');
+
+// JS import ownership must use the dispatcher's actual fixed identities.
+const nativeIds=fs.readFileSync(path.join(__dirname,'../src/08c-ne-loader.wat'),'utf8');
+for(const [name,id] of Object.entries({KERNEL:1,USER:2,GDI:3,KEYBOARD:4,SOUND:5,
+  SHELL:6,MMSYSTEM:7,COMMDLG:8,DDEML:10,NDDEAPI:11,WIN87EM:12})) {
+  assert.equal(neFixedBuiltinId(name),id);
+  assert.match(nativeIds,new RegExp('WIN16_NAME_'+name+'\\)\\)\\s+\\(then \\(return \\(i32.const '+id+'\\)'));
+}
+for(const name of ['CARDS','TOOLHELP','CUSTOM',''])assert.equal(neFixedBuiltinId(name),0);
 
 for (const name of ['demo', 'DEMO.DLL', 'C:\\Outlaws\\Demo.dll', 'c:/outlaws/demo.DLL', 'C:DEMO.DLL'])
   assert.equal(canonicalNeName(name), 'DEMO');
