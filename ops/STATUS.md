@@ -1,4 +1,4 @@
-Current 2026-10-18: Peek/Get inconsistent selection reproduced4/4 mixedNC/key APIcases; candidate11cc9f158 canonicalbuild/focusedtests and independentreview active, originalOutlaws causality notyetclaimed. LMarbles coordinateconversion correct; source-backed deliberatehover/selection diagnostic preparing. No public deployment.
+Current 2026-10-18: Peek/Get priorityfix merged/pushed20b30c1f7 after independentreview, fullgatedbuild exactfd1613e2 and expandednative matrix/queues/multiHWND/SIZE tests. OriginalOutlaws sole controlreplay granted; no causalityclaim yet. LMarbles selectiondiagnostic ready queued. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

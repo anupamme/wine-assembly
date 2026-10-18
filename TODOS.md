@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (reproduced Peek/Get defect; fix build and review)
+  status: active (tested Peek/Get fix merged; original control replay)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Prebuiltcanonicala4a4bc6a minimalAPI test reproduces4/4 NC1/4 x keydown/up mismatch Peek85 vs Get100; controls/exactoncePASS. Proposedphaseorder11cc9f158 pushed sourcegatesPASS; worker sole120sbuild90sfocusedtest grant, independentreview_peek_get_ordering active. OriginalOutlaws causality unproved until testedintegration/replay.
+  Next: Fixe4f5b1c60+expandedtests20b30c1f7 merged/pushed; independentreviewclear, rootnormalbuild exactfd1613e2/nativeexpandedPASS. Soleoriginal180s210hard heldMainGameGOOD->level Up/turn500ms+idle granted freshpins/newmodule, no highrateAPIlogs. Originalcausality/playercontrol awaitactualevidence.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
