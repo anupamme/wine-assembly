@@ -244,7 +244,7 @@
   ;; holds tens of entries for these apps, not thousands, and a hash would be
   ;; more machinery than the problem has.
   (func $win16_h16 (param $h32 i32) (result i32)
-    (local $t i32) (local $i i32)
+    (local $t i32) (local $i i32) (local $module i32)
     (if (i32.eqz (local.get $h32)) (then (return (i32.const 0))))
     ;; No range check on the way in. A 16-bit handle mapped a second time is a
     ;; real bug — it allocates a fresh entry for an object that already has one
@@ -255,6 +255,11 @@
     ;; back when its object is destroyed.
     (if (i32.eq (local.get $h32) (i32.const -1)) (then (return (i32.const 0xFFFF))))
     (local.set $t (call $win16_handle_table))
+    ;; Module APIs also accept DGROUP selectors, whose low bits are always 7.
+    ;; Keep module aliases disjoint from that namespace. UI object mappings
+    ;; can still use those slots: their APIs do not accept instance selectors.
+    (local.set $module (i32.eq (i32.and (local.get $h32) (i32.const 0xFFFF0000))
+      (i32.const 0x00D10000)))
     (local.set $i (i32.const 1))
     (block $done (loop $scan
       (br_if $done (i32.gt_u (local.get $i) (call $win16_handle_next_get)))
@@ -270,14 +275,21 @@
     (local.set $i (i32.const 1))
     (block $reused (loop $free
       (br_if $reused (i32.gt_u (local.get $i) (call $win16_handle_next_get)))
-      (if (i32.eqz (i32.load (i32.add (local.get $t) (i32.shl (local.get $i) (i32.const 2)))))
+      (if (i32.and
+            (i32.eqz (i32.load (i32.add (local.get $t) (i32.shl (local.get $i) (i32.const 2)))))
+            (i32.eqz (i32.and (local.get $module)
+              (i32.eq (i32.and (i32.add (local.get $i) (global.get $WIN16_HANDLE_BASE)) (i32.const 7)) (i32.const 7)))))
         (then
           (i32.store (i32.add (local.get $t) (i32.shl (local.get $i) (i32.const 2)))
                      (local.get $h32))
           (return (i32.add (local.get $i) (global.get $WIN16_HANDLE_BASE)))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $free)))
-    (if (i32.ge_u (call $win16_handle_next_get) (global.get $WIN16_HANDLE_MAX))
+    (local.set $i (i32.add (call $win16_handle_next_get) (i32.const 1)))
+    (if (i32.and (local.get $module)
+          (i32.eq (i32.and (i32.add (local.get $i) (global.get $WIN16_HANDLE_BASE)) (i32.const 7)) (i32.const 7)))
+      (then (local.set $i (i32.add (local.get $i) (i32.const 1)))))
+    (if (i32.gt_u (local.get $i) (global.get $WIN16_HANDLE_MAX))
       (then
         (call $host_log_i32 (i32.const 0xCA16A9F4))
         (call $host_log_i32 (local.get $h32))
@@ -291,7 +303,7 @@
         (call $host_log_i32 (i32.load (i32.add (local.get $t)
           (i32.shl (i32.sub (call $win16_handle_next_get) (i32.const 3)) (i32.const 2)))))
         (unreachable)))
-    (call $win16_handle_next_set (i32.add (call $win16_handle_next_get) (i32.const 1)))
+    (call $win16_handle_next_set (local.get $i))
     (i32.store (i32.add (local.get $t)
                         (i32.shl (call $win16_handle_next_get) (i32.const 2)))
                (local.get $h32))
@@ -551,6 +563,9 @@
           (i32.add (i32.load offset=256 (local.get $frame)) (i32.const 1)))
           (then (return (i32.const 0))))))
     (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (if (i32.load offset=312 (local.get $frame))
+      (then (i32.store offset=24 (call $win16_bridge_call_record (i32.load offset=308 (local.get $frame)))
+        (i32.sub (i32.load offset=24 (call $win16_bridge_call_record (i32.load offset=308 (local.get $frame)))) (i32.const 1)))))
     ;; Keep the lock through restoration: another instance must not recycle
     ;; these two slots while this instance still reads its saved context.
     (call $win16_arena_give (i32.load offset=12 (local.get $frame)) (i32.const 2))
@@ -615,6 +630,12 @@
           (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
         (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
           (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0))))))
+    (if (i32.load offset=268 (local.get $frame))
+      (then
+        (i32.store (call $win16_task_shared (i32.const 44))
+          (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+        (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
+          (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0))))))
     (i32.store offset=20 (local.get $frame) (i32.const 0))
     (global.set $win16_bridge_frame (local.get $previous))
     (call $lock_release (global.get $DLL_LOAD_LOCK))
@@ -655,10 +676,78 @@
     (i32.and (i32.eqz (i32.and (local.get $flags) (global.get $WIN16_SEG_BIG)))
       (i32.eq (i32.and (local.get $flags) (i32.const 1)) (local.get $data))))
 
+  ;; A synchronous lifecycle operation may hold the execution lease across
+  ;; staging, initialization, publication and cleanup. It is tied to its frame,
+  ;; so ordinary frame teardown releases it even if parsing or guest code traps.
+  (func $win16_bridge_scope_begin (export "win16_bridge_scope_begin")
+    (param $token i64) (result i32)
+    (local $frame i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 0))
+      (i32.ne (i32.load offset=268 (local.get $frame)) (i32.const 0))) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (if (i32.load (call $win16_task_shared (i32.const 40)))
+        (then (br_if $reject (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))))
+      (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
+      (i32.store (call $win16_task_shared (i32.const 44))
+        (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+      (i32.store offset=268 (local.get $frame) (i32.const 1))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  ;; Bind a module call before entry. Pinning happens under DLL_LOAD_LOCK in
+  ;; invoke_begin, and frame_end releases the pin even after a guest trap.
+  (func $win16_bridge_invoke_module (export "win16_bridge_invoke_module")
+    (param $token i64) (param $id i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.load offset=24 (i32.wrap_i64 (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_dll_path_id_valid (local.get $id))) (then (return (i32.const 0))))
+    (i32.store offset=308 (i32.wrap_i64 (local.get $token)) (local.get $id))
+    (i32.const 1))
+
+  (func $win16_bridge_call_record (param $id i32) (result i32)
+    (i32.add (call $win16_handle_table) (i32.add (i32.const 0x8C00)
+      (i32.shl (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)) (i32.const 5)))))
+
+  ;; Called only under the process DLL mutex; zero module means a raw internal
+  ;; conformance invocation, not a guest module call.
+  (func $win16_bridge_call_pin (param $frame i32) (result i32)
+    (local $id i32) (local $rec i32) (local $state i32)
+    (local.set $id (i32.load offset=308 (local.get $frame)))
+    (if (i32.eqz (local.get $id)) (then (return (i32.const 1))))
+    (local.set $rec (call $win16_bridge_call_record (local.get $id)))
+    (local.set $state (i32.load (local.get $rec)))
+    (if (i32.or (i32.lt_u (local.get $state) (i32.const 2))
+      (i32.gt_u (local.get $state) (i32.const 4))) (then (return (i32.const 0))))
+    (if (i32.ne (local.get $state) (i32.const 3))
+      (then (if (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+        (then (return (i32.const 0))))))
+    (if (i32.eq (i32.load offset=24 (local.get $rec)) (i32.const -1)) (then (return (i32.const 0))))
+    (i32.store offset=24 (local.get $rec) (i32.add (i32.load offset=24 (local.get $rec)) (i32.const 1)))
+    (i32.store offset=312 (local.get $frame) (i32.const 1))
+    (i32.const 1))
+
+  ;; Stack words are listed nearest-return first. The bounded argument vector
+  ;; belongs to this prepared frame, never to the suspended caller's stack.
+  (func $win16_bridge_invoke_word (export "win16_bridge_invoke_word")
+    (param $token i64) (param $word i32) (result i32)
+    (local $frame i32) (local $count i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 0))
+      (i32.gt_u (local.get $word) (i32.const 0xFFFF))) (then (return (i32.const 0))))
+    (local.set $count (i32.load offset=264 (local.get $frame)))
+    (if (i32.ge_u (local.get $count) (i32.const 16)) (then (return (i32.const 0))))
+    (i32.store16 offset=272 (i32.add (local.get $frame) (i32.shl (local.get $count) (i32.const 1))) (local.get $word))
+    (i32.store offset=264 (local.get $frame) (i32.add (local.get $count) (i32.const 1)))
+    (i32.const 1))
+
   (func $win16_bridge_invoke_begin (export "win16_bridge_invoke_begin")
     (param $token i64) (param $target i32) (param $ds i32)
     (param $instance i32) (param $heap i32) (result i32)
-    (local $frame i32) (local $owner i32)
+    (local $frame i32) (local $owner i32) (local $argc i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
     (local.set $frame (i32.wrap_i64 (local.get $token)))
     (if (i32.or (i32.load offset=24 (local.get $frame))
@@ -677,6 +766,7 @@
         (i32.eqz (call $win16_bridge_selector_valid (local.get $ds) (i32.const 1))))))
       (local.set $owner (i32.load (call $win16_task_shared (i32.const 40))))
       (if (local.get $owner) (then (br_if $reject (i32.ne (local.get $owner) (call $lock_owner_id)))))
+      (br_if $reject (i32.eqz (call $win16_bridge_call_pin (local.get $frame))))
       (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
       (i32.store (call $win16_task_shared (i32.const 44))
         (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
@@ -686,6 +776,13 @@
       (i32.store offset=24 (local.get $frame) (i32.const 1))
       (drop (call $win16_bridge_stack_enter (local.get $token)))
       (i32.store offset=260 (local.get $frame) (i32.load offset=16 (global.get $reg_base)))
+      (local.set $argc (i32.load offset=264 (local.get $frame)))
+      (block $args_done (loop $args
+        (br_if $args_done (i32.eqz (local.get $argc)))
+        (local.set $argc (i32.sub (local.get $argc) (i32.const 1)))
+        (call $win16_push16 (i32.load16_u offset=272
+          (i32.add (local.get $frame) (i32.shl (local.get $argc) (i32.const 1)))))
+        (br $args)))
       (call $win16_push16 (global.get $WIN16_THUNK_SEL))
       (call $win16_push16 (global.get $WIN16_BRIDGE_RETURN))
       (call $win16_set_sreg (i32.const 3) (local.get $ds))
@@ -6431,12 +6528,22 @@
     ;; nothing has loaded, and zero is the answer Windows gives for those.
     (if (i32.eq (local.get $ordinal) (i32.const 47))
       (then (call $win16_GetModuleHandle) (return (i32.const 1))))
+    (if (i32.eq (local.get $ordinal) (i32.const 48))
+      (then (call $win16_GetModuleUsage) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 50))
       (then (call $win16_GetProcAddress) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 95))
-      (then (call $win16_LoadLibrary) (return (i32.const 1))))
+      (then
+        ;; Guest-driven lifecycle is not implemented for the PE bridge. The
+        ;; legacy loader/refcounts do not own its module records or call pins.
+        (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+          (then (call $host_log_i32 (local.get $ordinal)) (unreachable)))
+        (call $win16_LoadLibrary) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 96))
-      (then (call $win16_FreeLibrary) (return (i32.const 1))))
+      (then
+        (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+          (then (call $host_log_i32 (local.get $ordinal)) (unreachable)))
+        (call $win16_FreeLibrary) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 97))
       (then (call $win16_GetTempFileName) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 3))
@@ -6898,6 +7005,67 @@
                 (call $win16_dll_unload (local.get $id))
                 (call $win16_dynamic_module_release (local.get $id))))))))
     (i32.store offset=0 (global.get $reg_base) (i32.const 1))
+    (call $win16_api_return (i32.const 2)))
+
+  ;; KERNEL.48 accepts either a module handle or its DGROUP instance. Unlike
+  ;; resource lookup, an invalid handle must never fall back to current CS/DS.
+  (func $win16_module_usage (param $handle i32) (result i32)
+    (local $id i32) (local $mapped i32) (local $rec i32) (local $refs i32)
+    (local.set $handle (i32.and (local.get $handle) (i32.const 0xFFFF)))
+    (if (i32.or (i32.eqz (local.get $handle))
+                (i32.eq (local.get $handle) (i32.const 0xFFFF)))
+      (then (return (i32.const 0))))
+    ;; h32 intentionally traps on unknown handles; queries instead validate
+    ;; the table index before reading it, and reject non-module objects.
+    (if (i32.ge_u (local.get $handle) (global.get $WIN16_HANDLE_BASE))
+      (then
+        (local.set $mapped (i32.sub (local.get $handle) (global.get $WIN16_HANDLE_BASE)))
+        (if (i32.and (i32.ne (local.get $mapped) (i32.const 0))
+              (i32.le_u (local.get $mapped) (call $win16_handle_next_get)))
+          (then
+            (local.set $mapped (i32.load (i32.add (call $win16_handle_table)
+              (i32.shl (local.get $mapped) (i32.const 2)))))
+            (if (i32.ne (i32.and (local.get $mapped) (i32.const 0xFFFF0000)) (i32.const 0x00D10000))
+              (then (local.set $mapped (i32.const 0)))))
+          ;; Selectors may exceed HANDLE_BASE; an absent table slot is not
+          ;; itself a reason to reject a live DGROUP selector.
+          (else (local.set $mapped (i32.const 0))))))
+    (local.set $id (i32.const 1))
+    (block $missing (loop $scan
+      (br_if $missing (i32.ge_u (local.get $id)
+        (i32.add (global.get $WIN16_DYNAMIC_BASE) (global.get $WIN16_DYNAMIC_MODULES))))
+      (if (i32.ne (call $win16_dll_loaded (local.get $id)) (i32.const 0))
+        (then
+          (if (i32.or
+                (i32.eq (local.get $mapped) (i32.or (i32.const 0x00D10000) (local.get $id)))
+                (i32.and (i32.eqz (local.get $mapped))
+                  (i32.eq (local.get $handle) (call $win16_dll_data_sel (local.get $id)))))
+            (then
+              ;; Bridge records are process-owned, including when a different
+              ;; invocation queries them. State 4 retains the final ref for WEP.
+              (if (i32.ge_u (local.get $id) (global.get $WIN16_DYNAMIC_BASE))
+                (then
+                  (local.set $rec (i32.add (call $win16_handle_table)
+                    (i32.add (i32.const 0x8C00) (i32.shl
+                      (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)) (i32.const 5)))))
+                  (if (i32.load (local.get $rec))
+                    (then (return (i32.load offset=8 (local.get $rec)))))))
+              ;; Legacy import loads have an implicit initial reference; its
+              ;; LoadLibrary promotes that to an explicit count on acquisition.
+              (local.set $refs (i32.load (call $win16_dll_refs_ptr (local.get $id))))
+              (return (select (local.get $refs) (i32.const 1) (local.get $refs)))))))
+      (local.set $id (i32.add (local.get $id) (i32.const 1)))
+      (br $scan)))
+    ;; The pure-NE main image is not in the DLL table and owns one task ref.
+    (if (i32.and (i32.ne (global.get $win16_ne_off) (i32.const 0))
+          (i32.and (i32.eqz (global.get $win16_task_module))
+            (i32.eq (local.get $handle) (call $win16_index_to_sel (global.get $win16_auto_data)))))
+      (then (return (i32.const 1))))
+    (i32.const 0))
+
+  (func $win16_GetModuleUsage
+    (i32.store (global.get $reg_base)
+      (call $win16_module_usage (call $win16_arg16 (i32.const 0))))
     (call $win16_api_return (i32.const 2)))
 
   ;; KERNEL.47 queries already-loaded modules. A named miss must be zero:

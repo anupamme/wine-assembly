@@ -490,7 +490,7 @@
   ;; arena index base+N. It is zero for the task's own image, whose segment N
   ;; is index N, and non-zero for a DLL placed after it.
   (func $win16_apply_relocs (param $seg_wa i32) (param $seg_len i32) (param $rec_wa i32)
-        (param $ne_off i32) (param $seg_index_base i32)
+        (param $ne_off i32) (param $seg_index_base i32) (param $thunk_sel i32)
     (local $p i32) (local $count i32) (local $i i32)
     (local $addr_type i32) (local $rel_type i32) (local $additive i32)
     (local $site i32) (local $a i32) (local $c i32)
@@ -560,23 +560,29 @@
                   (local.set $tgt_sel (i32.const 0))
                   (local.set $tgt_off (local.get $constant)))
                 (else
-                  (local.set $tgt_sel (global.get $WIN16_THUNK_SEL))
+                  (local.set $tgt_sel (local.get $thunk_sel))
                   (local.set $tgt_off (call $win16_thunk_for
                     (local.get $module) (local.get $c) (i32.const 0))))))
             (else
               ;; IMPORTNAME (2) names the entry point instead of numbering it,
-              ;; with `c` an offset into the imported-name table. The module is
-              ;; still named the same way, so record both and let the
-              ;; dispatcher report `CARDS.CDTINIT` rather than a bare number.
-              ;; OSFIXUP (3) is a floating-point emulator patch, which is not
-              ;; an import at all; it lands here with module 0 and says so.
-              (local.set $tgt_sel (global.get $WIN16_THUNK_SEL))
+              ;; with `c` relative to THIS importing image. Resolve already
+              ;; loaded DLL exports now, while that image's name table is
+              ;; available. The resulting ordinal thunk also remains valid
+              ;; when another importer uses the same offset for another name.
+              ;; Legacy unresolved/builtin imports retain named dispatch.
+              (local.set $module (call $win16_module_id
+                (call $win16_module_name (local.get $ne_off) (local.get $a))))
+              (local.set $constant (i32.const 0))
+              (if (call $win16_dll_loaded (local.get $module))
+                (then
+                  (local.set $constant (call $win16_dll_ordinal (local.get $module)
+                    (i32.add (i32.add (local.get $ne_off)
+                      (i32.load16_u offset=0x2A (local.get $ne_off))) (local.get $c))))))
+              (local.set $tgt_sel (local.get $thunk_sel))
               (local.set $tgt_off (call $win16_thunk_for
-                (if (result i32) (i32.eq (local.get $rel_type) (i32.const 2))
-                  (then (call $win16_module_id (call $win16_module_name (local.get $ne_off) (local.get $a))))
-                  (else (i32.const 0)))
-                (local.get $c)
-                (i32.eq (local.get $rel_type) (i32.const 2))))))))
+                (local.get $module)
+                (select (local.get $constant) (local.get $c) (local.get $constant))
+                (i32.eqz (local.get $constant))))))))
 
       ;; Walk the chain and write every site.
       (block $chain_done (loop $chain
@@ -726,7 +732,7 @@
             (call $g2w (call $win16_seg_base (i32.add (local.get $i) (i32.const 1))))
             (local.get $len)
             (i32.add (i32.add (global.get $PE_STAGING) (local.get $file_pos)) (local.get $len))
-            (local.get $ne_off) (i32.const 0))))
+            (local.get $ne_off) (i32.const 0) (global.get $WIN16_THUNK_SEL))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $fix)))
 
@@ -1518,6 +1524,8 @@
     (local $meta_pages i32) (local $meta_i i32) (local $ne_delta i32)
     (local $nonres_off i32) (local $nonres_len i32)
 
+    (if (i32.eqz (call $win16_bridge_module_load_allowed (local.get $module_id)))
+      (then (return (i32.const 0))))
     (local.set $base (call $win16_dll_staging (local.get $module_id)))
     (local.set $stage (local.get $base))
     (if (i32.ne (i32.load16_u (local.get $base)) (i32.const 0x5A4D))
@@ -1552,6 +1560,8 @@
         (call $host_log_i32 (i32.const 0xCA165E5A))  ;; selector arena exhausted
         (call $host_log_i32 (i32.add (local.get $seg_count) (local.get $meta_pages)))
         (return (i32.const 0))))
+    (call $win16_bridge_module_provisional (local.get $module_id) (local.get $index)
+      (i32.add (local.get $seg_count) (local.get $meta_pages)))
     ;; Segment 1 lands at the run's first index, so the base is one less.
     (local.set $seg_index_base (i32.sub (local.get $index) (i32.const 1)))
 
@@ -1606,7 +1616,15 @@
               (i32.add (local.get $seg_index_base) (i32.add (local.get $i) (i32.const 1)))))
             (local.get $len)
             (i32.add (i32.add (local.get $base) (local.get $file_pos)) (local.get $len))
-            (local.get $ne_off) (local.get $seg_index_base))))
+            (local.get $ne_off) (local.get $seg_index_base)
+            ;; PE staging precedes stack entry: its caller's saved thunk
+            ;; global can be zero or belong to a suspended context. The owned
+            ;; bridge arena reserves selector index 1 at bootstrap. Derive
+            ;; that process identity without changing the caller's registers
+            ;; or globals. The loader's ownership guard already pins the arena.
+            (if (result i32) (global.get $is_win16)
+              (then (global.get $WIN16_THUNK_SEL))
+              (else (call $win16_index_to_sel (i32.const 1)))))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $fix)))
 
@@ -1913,3 +1931,313 @@
   (func (export "win16_thunk_count") (result i32) (call $win16_thunk_count_get))
   (func (export "win16_thunk_sel") (result i32) (global.get $WIN16_THUNK_SEL))
   (func (export "is_win16") (result i32) (global.get $is_win16))
+
+  ;; BEGIN WIN32 NE MODULE TRANSACTIONS
+  ;; 24 process-owned records in the unused hidden-page gap 0x8C00..0x8F00.
+  ;; state(0 absent,1 loading,2 initializing,3 ready,4 terminating), owner, refs, dependencies,
+  ;; provisional first/count, active calls, staging-lease flag. Never published
+  ;; to a guest API until real initialization and lifetime semantics are ready.
+  (func $win16_bridge_module_record (param $id i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_dll_path_id_valid (local.get $id))) (then (return (i32.const 0))))
+    (i32.add (call $win16_handle_table) (i32.add (i32.const 0x8C00)
+      (i32.shl (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)) (i32.const 5)))))
+
+  (func $win16_bridge_name_matches (param $slot i32) (param $lo i64) (param $hi i64) (result i32)
+    (local $i i32) (local $n i32) (local $v i64)
+    (local.set $n (i32.and (i32.wrap_i64 (local.get $lo)) (i32.const 255)))
+    (loop $scan
+      (local.set $v (select (local.get $lo) (local.get $hi) (i32.lt_u (local.get $i) (i32.const 8))))
+      (if (i32.ne (i32.load8_u (i32.add (local.get $slot) (local.get $i)))
+        (i32.and (i32.wrap_i64 (i64.shr_u (local.get $v)
+          (i64.extend_i32_u (i32.shl (i32.and (local.get $i) (i32.const 7)) (i32.const 3))))) (i32.const 255)))
+        (then (return (i32.const 0))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br_if $scan (i32.le_u (local.get $i) (local.get $n))))
+    (i32.const 1))
+
+  ;; Positive id is a new owned transaction; negative id is a ready reference.
+  ;; Zero means invalid input, full table, recursive load or another owner busy.
+  (func $win16_bridge_module_claim (export "win16_bridge_module_claim")
+    (param $lo i64) (param $hi i64) (result i32)
+    (local $i i32) (local $slot i32) (local $free i32) (local $id i32) (local $rec i32) (local $n i32)
+    (if (global.get $is_win16) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.atomic.load (region.addr $WIN16_PROCESS_ARENA 0))) (then (return (i32.const 0))))
+    (local.set $n (i32.and (i32.wrap_i64 (local.get $lo)) (i32.const 255)))
+    (if (i32.or (i32.eqz (local.get $n)) (i32.gt_u (local.get $n) (i32.const 15))) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (if (i32.load (call $win16_task_shared (i32.const 40)))
+        (then (br_if $reject (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))))
+      (block $found (loop $scan
+        (br_if $found (i32.ge_u (local.get $i) (global.get $WIN16_DYNAMIC_MODULES)))
+        (local.set $slot (call $win16_dynamic_module_slot (local.get $i)))
+        (if (i32.eqz (i32.load8_u (local.get $slot)))
+          (then (if (i32.eqz (local.get $free)) (then (local.set $free (i32.add (local.get $i) (global.get $WIN16_DYNAMIC_BASE))))))
+          (else (if (call $win16_bridge_name_matches (local.get $slot) (local.get $lo) (local.get $hi))
+            (then (local.set $id (i32.add (local.get $i) (global.get $WIN16_DYNAMIC_BASE))) (br $found)))))
+        (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $scan)))
+      (if (i32.eqz (local.get $id)) (then (local.set $id (local.get $free))))
+      (br_if $reject (i32.eqz (local.get $id)))
+      (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+      (if (i32.eq (i32.load (local.get $rec)) (i32.const 3))
+        (then
+          (br_if $reject (i32.eq (i32.load offset=8 (local.get $rec)) (i32.const -1)))
+          (i32.store offset=8 (local.get $rec) (i32.add (i32.load offset=8 (local.get $rec)) (i32.const 1)))
+          (call $lock_release (global.get $DLL_LOAD_LOCK))
+          (return (i32.sub (i32.const 0) (local.get $id)))))
+      (br_if $reject (i32.load (local.get $rec)))
+      (br_if $reject (call $win16_dll_loaded (local.get $id)))
+      (local.set $slot (call $win16_dynamic_module_slot (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE))))
+      (i64.store (local.get $slot) (local.get $lo)) (i64.store offset=8 (local.get $slot) (local.get $hi))
+      (i32.store (local.get $rec) (i32.const 1))
+      (i32.store offset=4 (local.get $rec) (call $lock_owner_id))
+      (i32.store offset=8 (local.get $rec) (i32.const 1))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (local.get $id)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  ;; No lock may remain held across the trap-capable existing NE parser. The
+  ;; staging lease excludes other bridge allocations/execution until finish or
+  ;; rollback; the host must call one of them in finally, even after a trap.
+  (func $win16_bridge_module_stage_begin (export "win16_bridge_module_stage_begin") (param $id i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 1)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.load offset=28 (local.get $rec)))
+      (if (i32.load (call $win16_task_shared (i32.const 40)))
+        (then (br_if $reject (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))))
+      (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
+      (i32.store (call $win16_task_shared (i32.const 44))
+        (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+      (i32.store offset=28 (local.get $rec) (i32.const 1))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  (func $win16_bridge_module_load_allowed (param $id i32) (result i32)
+    (local $rec i32)
+    (if (global.get $is_win16) (then (return (i32.const 1))))
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (i32.and (i32.eq (i32.load (local.get $rec)) (i32.const 1))
+      (i32.and (i32.eq (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+        (i32.ne (i32.load offset=28 (local.get $rec)) (i32.const 0)))))
+
+  (func $win16_bridge_module_provisional (param $id i32) (param $first i32) (param $count i32)
+    (local $rec i32)
+    (if (global.get $is_win16) (then (return)))
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return)))
+    (if (i32.eq (i32.load (local.get $rec)) (i32.const 1))
+      (then
+        (if (i32.or (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+          (i32.eqz (i32.load offset=28 (local.get $rec)))) (then (unreachable)))
+        (i32.store offset=16 (local.get $rec) (local.get $first))
+        (i32.store offset=20 (local.get $rec) (local.get $count)))))
+
+  (func $win16_bridge_module_stage_release (param $rec i32)
+    (if (i32.load offset=28 (local.get $rec))
+      (then
+        (i32.store offset=28 (local.get $rec) (i32.const 0))
+        (i32.store (call $win16_task_shared (i32.const 44))
+          (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+        (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
+          (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0)))))))
+
+  (func $win16_bridge_module_stage_end (export "win16_bridge_module_stage_end") (param $id i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 1)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.eqz (i32.load offset=28 (local.get $rec))))
+      (br_if $reject (i32.eqz (call $win16_dll_loaded (local.get $id))))
+      (call $win16_bridge_module_stage_release (local.get $rec))
+      (i32.store (local.get $rec) (i32.const 2))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  (func $win16_bridge_module_publish (export "win16_bridge_module_publish") (param $id i32) (param $result i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.and (local.get $result) (i32.const 0xFFFF))) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 2)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (i32.store (local.get $rec) (i32.const 3)) (i32.store offset=4 (local.get $rec) (i32.const 0))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  (func $win16_bridge_module_rollback (export "win16_bridge_module_rollback") (param $id i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.load offset=24 (local.get $rec)))
+      (br_if $reject (i32.eqz (i32.load (local.get $rec))))
+      (br_if $reject (i32.gt_u (i32.load (local.get $rec)) (i32.const 2)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (if (call $win16_dll_loaded (local.get $id))
+        (then (call $win16_dll_unload (local.get $id)))
+        (else (if (i32.load offset=20 (local.get $rec))
+          (then (call $win16_arena_give (i32.load offset=16 (local.get $rec)) (i32.load offset=20 (local.get $rec)))))))
+      (call $win16_bridge_module_stage_release (local.get $rec))
+      (call $win16_dynamic_module_release (local.get $id))
+      (call $zero_memory (local.get $rec) (i32.const 32))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+  ;; Transfer one already-acquired dependency reference to an unpublished
+  ;; parent. The caller retains it on rejection; duplicate links never consume
+  ;; another reference. Cycles are rejected by claim's unpublished-state rule.
+  (func $win16_bridge_module_link (export "win16_bridge_module_link")
+    (param $id i32) (param $dependency i32) (result i32)
+    (local $rec i32) (local $dep i32) (local $bit i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (local.set $dep (call $win16_bridge_module_record (local.get $dependency)))
+    (if (i32.or (i32.eqz (local.get $rec)) (i32.eqz (local.get $dep))) (then (return (i32.const 0))))
+    (if (i32.eq (local.get $id) (local.get $dependency)) (then (return (i32.const 0))))
+    (local.set $bit (i32.shl (i32.const 1) (i32.sub (local.get $dependency) (global.get $WIN16_DYNAMIC_BASE))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.eqz (i32.load (local.get $rec))))
+      (br_if $reject (i32.gt_u (i32.load (local.get $rec)) (i32.const 2)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.ne (i32.load (local.get $dep)) (i32.const 3)))
+      (br_if $reject (i32.and (i32.load offset=12 (local.get $rec)) (local.get $bit)))
+      (i32.store offset=12 (local.get $rec) (i32.or (i32.load offset=12 (local.get $rec)) (local.get $bit)))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
+  ;; Owned dependency snapshot for rollback/final unload. The host must retain
+  ;; this mask before destroying the parent and release each transferred ref.
+  (func $win16_bridge_module_dependencies (export "win16_bridge_module_dependencies")
+    (param $id i32) (result i32)
+    (local $rec i32) (local $mask i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const -1))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (local.set $mask (i32.const -1))
+    (if (i32.eq (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+      (then (local.set $mask (i32.load offset=12 (local.get $rec)))))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (local.get $mask))
+
+  ;; -1 rejected, 0 reference dropped, 1 final owner must terminate then finish.
+  ;; The lease spans guest termination but no mutex does. It prevents another
+  ;; instance executing or allocating while the last reference is retired.
+  (func $win16_bridge_module_release_begin (export "win16_bridge_module_release_begin")
+    (param $id i32) (result i32)
+    (local $rec i32) (local $refs i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const -1))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 3)))
+      (if (i32.load (call $win16_task_shared (i32.const 40)))
+        (then (br_if $reject (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id)))))
+      (local.set $refs (i32.load offset=8 (local.get $rec)))
+      (br_if $reject (i32.eqz (local.get $refs)))
+      (if (i32.gt_u (local.get $refs) (i32.const 1))
+        (then
+          (i32.store offset=8 (local.get $rec) (i32.sub (local.get $refs) (i32.const 1)))
+          (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 0))))
+      (br_if $reject (i32.load offset=24 (local.get $rec)))
+      (i32.store (call $win16_task_shared (i32.const 40)) (call $lock_owner_id))
+      (i32.store (call $win16_task_shared (i32.const 44))
+        (i32.add (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
+      (i32.store offset=28 (local.get $rec) (i32.const 1))
+      (i32.store offset=4 (local.get $rec) (call $lock_owner_id))
+      (i32.store (local.get $rec) (i32.const 4))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const -1))
+
+  (func $win16_bridge_module_release_finish (export "win16_bridge_module_release_finish")
+    (param $id i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.load offset=24 (local.get $rec)))
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 4)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.eqz (i32.load offset=28 (local.get $rec))))
+      (call $win16_dll_unload (local.get $id))
+      (call $win16_bridge_module_stage_release (local.get $rec))
+      (call $win16_dynamic_module_release (local.get $id))
+      (call $zero_memory (local.get $rec) (i32.const 32))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+  ;; The caller owns a frame and the process execution lease. Parsing export
+  ;; tables can trap, so it must never run under DLL_LOAD_LOCK; the lease keeps
+  ;; the image alive while the host's finally block remains able to unwind.
+  (func $win16_bridge_module_readable (param $id i32) (param $state i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (if (i32.ne (i32.load (call $win16_task_shared (i32.const 40))) (call $lock_owner_id))
+      (then (return (i32.const 0))))
+    (if (i32.ne (i32.load (local.get $rec)) (local.get $state)) (then (return (i32.const 0))))
+    (if (i32.ne (local.get $state) (i32.const 3))
+      (then (if (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id))
+        (then (return (i32.const 0))))))
+    (call $win16_dll_loaded (local.get $id)))
+
+  (func $win16_bridge_module_entry (export "win16_bridge_module_entry")
+    (param $id i32) (param $ordinal i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (if (i32.or (i32.eqz (local.get $ordinal)) (i32.gt_u (local.get $ordinal) (i32.const 0xFFFF)))
+      (then (return (i32.const 0))))
+    (call $win16_dll_entry (local.get $id) (local.get $ordinal)))
+
+  (func $win16_bridge_module_ordinal (export "win16_bridge_module_ordinal")
+    (param $id i32) (param $name i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (call $win16_dll_ordinal (local.get $id) (local.get $name)))
+
+  ;; Only the unpublished initializer's owner can inspect its header ABI.
+  ;; field 0 CS:IP, 1 DS/instance selector, 2 initial local heap size.
+  (func $win16_bridge_module_init (export "win16_bridge_module_init")
+    (param $id i32) (param $field i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 2)))
+      (then (return (i32.const 0))))
+    (if (i32.eqz (local.get $field)) (then (return (call $win16_dll_init_entry (local.get $id)))))
+    (if (i32.eq (local.get $field) (i32.const 1)) (then (return (call $win16_dll_data_sel (local.get $id)))))
+    (if (i32.eq (local.get $field) (i32.const 2)) (then (return (call $win16_dll_heap_size (local.get $id)))))
+    (i32.const 0))
+  (func $win16_bridge_module_data (export "win16_bridge_module_data") (param $id i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (call $win16_dll_data_sel (local.get $id)))
+
+  ;; WEP is resolved by its export name, not by a presumed ordinal. The four
+  ;; byte Pascal name lives in the owning frame, clear of arguments and CPU files.
+  (func $win16_bridge_module_termination (export "win16_bridge_module_termination")
+    (param $id i32) (param $field i32) (result i32)
+    (local $name i32) (local $ordinal i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 4)))
+      (then (return (i32.const 0))))
+    (if (i32.eq (local.get $field) (i32.const 1)) (then (return (call $win16_dll_data_sel (local.get $id)))))
+    (if (local.get $field) (then (return (i32.const 0))))
+    (local.set $name (i32.add (i32.wrap_i64 (global.get $win16_bridge_frame)) (i32.const 304)))
+    (i32.store (local.get $name) (i32.const 0x50455703))
+    (local.set $ordinal (call $win16_dll_ordinal (local.get $id) (local.get $name)))
+    (if (i32.eqz (local.get $ordinal)) (then (return (i32.const 0))))
+    (call $win16_dll_entry (local.get $id) (local.get $ordinal)))
+
+  ;; Explicit owner retry after a failed WEP. A normal FreeLibrary cannot
+  ;; consume a second reference from a module already awaiting termination.
+  (func $win16_bridge_module_release_retry (export "win16_bridge_module_release_retry")
+    (param $id i32) (result i32)
+    (call $win16_bridge_module_readable (local.get $id) (i32.const 4)))
+  ;; END WIN32 NE MODULE TRANSACTIONS

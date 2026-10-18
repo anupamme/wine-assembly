@@ -48,7 +48,14 @@ async function main() {
   const bootstrap=e.win16_bridge_frame_begin();assert(bootstrap);assert.equal(e.win16_bridge_frame_end(bootstrap),1);
   const arena=view.getUint32(R.BASE.WIN16_PROCESS_ARENA,true),wa=e.guest_to_wasm(arena)>>>0,shared=wa+943*65536+0xf000;
   const load=(id,code)=>{
+    const owner=e.win16_bridge_frame_begin();assert(owner);assert.equal(e.win16_bridge_scope_begin(owner),1);
+    const name=Buffer.alloc(16),value='RUNNER'+id;name[0]=value.length;name.write(value,1,'ascii');
+    assert.equal(e.win16_bridge_module_claim(name.readBigUInt64LE(),name.readBigUInt64LE(8)),id);
+    assert.equal(e.win16_bridge_module_stage_begin(id),1);
     const b=neFixture(code);bytes.set(b,e.win16_dll_staging(id));assert.equal(e.load_ne_dll_sized(id,b.length),1);
+    assert.equal(e.win16_bridge_module_stage_end(id),1);
+    assert.equal(e.win16_bridge_frame_end(owner),1); // Remains unpublished: this fixture tests raw entry execution.
+
     const record=wa+943*65536+0x8000+id*16,index=view.getUint32(record+4,true);
     return {target:(((index+1)<<3|7)<<16)>>>0,ds:(index+2)<<3|7,instance:id,heap:16};
   };
@@ -75,6 +82,9 @@ async function main() {
   await assert.rejects(invokeNeEntry(callbackExports,spin,{signal:abort.signal,maxBlocks:1000,sliceBlocks:4}),/native synchronous cancellation/);clean();
   await assert.rejects(invokeNeEntry(e,good,{signal:abort.signal}),/native synchronous cancellation/);clean();
   assert.equal(await invokeNeEntry(e,good),0xef01abcd,'usable after all failed calls');clean();
+  const cleanup=e.win16_bridge_frame_begin();assert(cleanup);assert.equal(e.win16_bridge_scope_begin(cleanup),1);
+  for(let id=13;id<=17;id++)assert.equal(e.win16_bridge_module_rollback(id),1);
+  assert.equal(e.win16_bridge_frame_end(cleanup),1);
   assert.equal(e.is_win16(),0);assert.equal(e.get_image_base(),BASE);assert.equal(e.win16_process_arena_release(),1);
   console.log(JSON.stringify({passed:true,guestExecution:true,registerCalledEntry:true,moduleLifecycle:false,qtThunk:false}));
 }

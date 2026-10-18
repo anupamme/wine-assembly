@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { invokeNeEntry } = require('../lib/ne-invoke');
+const { invokeNeEntry, invokeNeEntrySync } = require('../lib/ne-invoke');
 // Host orchestration checks; selector/RETF/depth semantics are independently
 // exercised by test-win32-ne-context's actual compiled helpers.
 async function main() {
@@ -15,6 +15,15 @@ async function main() {
     return {e,state:()=>({live,ends,runs})};
   }
   let f=fixture(r=>r.finish());assert.equal(await invokeNeEntry(f.e,entry),0xef01abcd);assert.deepEqual(f.state(),{live:false,ends:1,runs:1});
+  f=fixture(r=>r.finish());const words=[];
+  f.e.win16_bridge_invoke_word=(token,word)=>{assert.equal(token,9n);words.push(word);return 1;};
+  assert.equal(invokeNeEntrySync(f.e,entry,{stackWords:[0,0xffff]}),0xef01abcd);
+  assert.deepEqual(words,[0,0xffff]);assert.equal(f.state().live,false);
+  for(const stackWords of [[-1],[65536],[0.5],Array(17).fill(1),'bad']) {
+    f=fixture();assert.throws(()=>invokeNeEntrySync(f.e,entry,{stackWords}),/stack words/);assert.equal(f.state().ends,0);
+  }
+  f=fixture();f.e.win16_bridge_invoke_word=()=>0;
+  assert.throws(()=>invokeNeEntrySync(f.e,entry,{stackWords:[1]}),/argument rejected/);assert.equal(f.state().ends,1);
   const trap=Error('guest trap');f=fixture(()=>{throw trap;});await assert.rejects(invokeNeEntry(f.e,entry),e=>e===trap);assert.equal(f.state().ends,1);
   f=fixture();await assert.rejects(invokeNeEntry(f.e,entry,{maxBlocks:6,sliceBlocks:2}),/budget exhausted/);assert.deepEqual(f.state(),{live:false,ends:1,runs:3});
   f=fixture(r=>r.yield(5));await assert.rejects(invokeNeEntry(f.e,entry),/Unsupported.*5/);assert.equal(f.state().ends,1);
