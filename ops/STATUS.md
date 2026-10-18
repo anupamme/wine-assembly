@@ -1,3 +1,5 @@
+Current 2026-10-18: Circus CRTDLL _iob normal build and four compiled regressions passed; root integration validation. Real setbuf source work remains before game retry. Mad Bomber original Windows140-file closure verified; passive launch preparation fills second lane. One runtime, >2GiB floor, no public deploy.
+
 Current 2026-10-18: Barrage original registered aiming/fire/released-idle qualified with reviewed screenshots (20261018-barrage-reviewed-gameplay), no audio/FPS/fullgame claim. Circus _iob source review clear; sole compiled validation active. Fresh /root/refill_after_barrage source-screens replacement. One runtime, >2GiB floor, no public deploy.
 
 Current 2026-10-18: Barrage previousrun stoppedby5s humanreviewgate beforeinput; rootpostflightpassed. Revisedaffordanceage withfresh executionstate puretested, sole gameplayretry grant. Circus_iob dataimport fix sourceindependentreview active setbufstillfailfast. CleanpushedinactiveNEWT sparse reduction restored253MB free2.524GB preservingignoreddata. No public deployment.

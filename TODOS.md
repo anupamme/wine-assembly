@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus compiled validation; replacement source screening)
+  status: active (Circus stdio prerequisite; Mad Bomber original launch preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Circus _iob independently reviewed; sole build/native validation granted. Barrage core gameplay qualified. Fresh /root/refill_after_barrage selects next original nonpublic title source-only. One runtime, strict disk floor, no public deploy.
+  Next: Circus _iob build and four compiled tests pass; root integration validation. Real setbuf NULL-mode source work underway, unsupported buffers remain fail-fast. Mad Bomber original140-file closure verified; guarded passive launch preparation. One runtime, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,7 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (CRTDLL _iob compiled conformance validation)
+  status: active (real setbuf NULL-mode source implementation)
   owner: /root/new_game_refill_after_outlaws
-  Next: Independent source review clear e7e443da8 static CRTDLL data imports. Sole normal gated build/native conformance granted; existing sequential memory reuse limitation explicit. setbuf stays fail-fast; no original game retry yet.
+  Next: Static CRTDLL _iob independently reviewed; normal build and iob/stdio/acmdln/setvbuf tests pass including distinct-process isolation/native export precedence. Root integration validating. Next real NULL-mode setbuf for owned FILEs, fail-fast unsupported states; original retry not yet authorized.
+  Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
+
+- [~] New-game lane: Mad Bomber 0.2.5 original Windows release
+  id: NEW-GAME-MADBOMBER-20261018
+  status: active (guarded passive original launch preparation)
+  owner: /root/refill_after_barrage
+  Next: Publisher ZIP f21ab591 verified;140 originals byte-match archive,8 PE modules, original bundled DLLs retained. Source-only guarded passive60/65/85s preparation; dynamic imports/MSVCRT_iob unverified. No runtime until fresh grant.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
