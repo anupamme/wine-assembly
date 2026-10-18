@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws heldpress reached input route and cleared menu but polling trace hit8MiB guard before settled screen; failure retained and root postflight passed. Route-only next attempt preparing. LBreakout2 localregistrationa31e8f184 tested/pushed, exact fixture verified, sole gameplay validation granted. No public deployment.
+Current 2026-10-18: Registered LBreakout2 firstlevel reviewed and clean exits/pins verified, playercontrol still unproved because help/menu consumed inputwindow. Proven short route and arrow/Space controls ready for next run. Outlaws owns route-only heldpress observation without polling traces. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

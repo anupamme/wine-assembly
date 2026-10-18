@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (route-only heldpress preparation after trace cap)
+  status: active (route-only heldpress observation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Heldpress routed/acknowledged then menu cleared black; pollingAPItrace hit8MiB cap447ms afterenable, guestkilled/controller1. Root independentpins/originals/groupemptyPASS; no settledscreen/gameplay/highbitclaim. Failure docs886e1f279 main. Sourceprep next250ms ordinaryheldpress without APIlogging, sameguards; runtime waits LBreakout2.
+  Next: Granted sole ordinaryheldpress180/210 after LBreakout2 rootpostflightPASS. Independent250msup and3ssettle, no pollingAPIlogging, exacta4a4bc6a/freshpins. Capture actual settledscreen before further ordinaryinput; no gameplayclaim yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1700,7 +1700,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LBreakout2 2.5.1 original Windows release
   id: NEW-GAME-LBREAKOUT2-20261018
-  status: active (ordinary gameplay validation)
+  status: active (first level reviewed; paddle control preparation)
   owner: /root/new_game_refill_after_supertux
-  Next: Localregistrationa31e8f184 main; root registry+220originalclient/219mapping/CRT verifierPASS integrationfixtureprepared. Sole180guest210hard gameplay grant on exacta4a4bc6a freshpins; prefer registeredroute if resolver proves same originalmapping, inspectbindings then paddle/ball separately. No gameplayclaim before evidence.
+  Next: Registered run20261018-lbreakout2-registered-gameplay firstlevel LateAtNight1/25 reviewed byroot;3413pins/230originals/groupemptyPASS, both exit0. Help/menu consumed inputwindow so no paddleinput claim. Docs071e1b17c main; worker prepares proven shortmenu route then verifiedLeftRight/Space control evidence. Runtime waits Outlaws.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
