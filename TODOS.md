@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (registered route verified; source clock audit)
+  status: active (sole real-time registered turn validation granted)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Registeredturn run20261018-outlaws-registered-turn-observation reached originaltown, but immediateLeft-before alreadydead despite earlieralive capture; live turning still unverified. Root3149pins31original/groupemptyPASS bothexit0. Source audit default200ms-per-batch versus realticks before another replay; no runtime/build/browser grant. Prior forwardcontrol remains reviewed.
+  Next: Clockaudit a80580c82: prior500ms hold spans34.4s batchclock; death causality unproved. Existing realticks/time-scale1 preservingcalendarUTC now sole180/185/210s validation grant freshpinsfd1613e2. Alive Left-first/no forward, deathcontamination review, strictdisk/logguards no retry/build/browser.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (corrected positive-control diagnostic granted)
+  status: done (registered selection and movement independently reviewed)
   owner: /root/new_game_refill_after_lbreakout
-  Next: Sourceaudit84014864f explains4035c9 interiorCALL cannot count as blockentry. Sole correctedrun grant:415230 SDLpoll +4035ce gameplayreturn positives, validmotion/buttonUP/selectioncounts, read-onlystate, reviewed emptytile-to-marble/mode1/selection beforearrow. Freshpins samefd1613e2 realticks180/185/210s2GiBmargins8MiBlog; no build/browser/retry.
+  Next: Run20261018-lmarbles-corrected-selection: root reviewed selectionring and blue tile2,1->4,1 Moves18->17 ordinaryRight with balancedrelease; independent3279pins86original/groupemptyPASS bothexit0. Core qualified; clippedhostedges/audioFPS/browser/fullgame remain unverified. Fresh /root/new_game_refill_after_lmarbles selecting replacement source-only.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
