@@ -5778,17 +5778,28 @@
     (i32.const 0))
 
   (func $win16_dos_free (param $sel i32) (result i32)
-    (local $index i32) (local $count i32)
+    (local $index i32) (local $count i32) (local $base i32) (local $size i32)
     (local.set $index (call $win16_sel_to_index (local.get $sel)))
     (if (i32.ge_u (local.get $index) (global.get $WIN16_SEG_MAX))
       (then (return (local.get $sel))))
     (if (i32.or (i32.ne (local.get $sel) (call $win16_index_to_sel (local.get $index)))
           (i32.ne (call $win16_gseg_field (local.get $index) (i32.const 8)) (global.get $WIN16_SEG_DOS)))
       (then (return (local.get $sel))))
-    (local.set $count (call $win16_gseg_count (call $win16_gseg_field (local.get $index) (i32.const 12))))
-    (if (i32.eqz (call $virtual_map_release (call $win16_seg_base (local.get $index))))
-      (then (return (local.get $sel))))
+    (local.set $size (call $win16_gseg_field (local.get $index) (i32.const 12)))
+    (local.set $count (call $win16_gseg_count (local.get $size)))
+    (local.set $base (call $win16_seg_base (local.get $index)))
+    (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
+    (if (i32.eqz (call $virtual_map_release_locked (local.get $base)))
+      (then
+        (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
+        (return (local.get $sel))))
+    ;; Mapping retirement clears translations, not decoded code. Retire the
+    ;; actual low pages before another allocation can reuse them; arena_give
+    ;; separately retires the high slots to which the descriptors revert.
+    (call $process_code_cache_invalidate (local.get $base)
+      (i32.and (i32.add (local.get $size) (i32.const 4095)) (i32.const -4096)))
     (call $win16_arena_give (local.get $index) (local.get $count))
+    (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
     (i32.const 0))
 
   (func $win16_GlobalDOSAlloc

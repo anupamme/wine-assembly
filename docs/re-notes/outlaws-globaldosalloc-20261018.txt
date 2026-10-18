@@ -64,3 +64,29 @@ Record new build hash and compare the next API/return point with KERNEL.184
 0x089316ea. Passing this API only establishes progress beyond that boundary;
 inspect screenshot/logs and independently verify owned process exits and
 unchanged originals. Do not infer menu, licensing, media or gameplay success.
+
+First granted validation epoch (candidate 9e2e69a95):
+Canonical build passed in 19.04s (PID2159651 exit0), minimum free disk
+4,367,847,424 bytes. Module SHA256:
+e31da202eb77b31220f8067f233cf4f685f64857367576a69b4395eebcbb6dc9
+Compatibility module:
+865e1e3ded0457c3f8a1eeed6ac0851a9eb56345df4bdc900dd4f0805bce870d
+Region mirror unchanged:
+8a27d3ea0da7fbfcb6f96c91ef590a2a20a568a68aa068594322026b3b203478
+Native fixture PID2160636 exited1 after 2.83s in win16_set_sreg during the
+first zero-size return: fixture chose PE imagebase400000 but used historical
+NE arena100000 without mapping it. Its frame hit the null sentinel. Corrected
+fixture uses imagebase100000. This failure does not establish API behavior.
+Both PIDs are absent; original receipts/logs retained under
+scratch/runs/20261018-outlaws-globaldosalloc. Runtime explicitly released.
+
+Independent review then identified low-address decoded-code retirement:
+virtual_map_release retires translations, while arena_give invalidates high
+arena slots. DOSFree now holds the map lock through successful release,
+invalidation of the real low pages, and arena restoration, preventing reuse
+between release and invalidation. Failed release preserves ownership/bytes.
+Fixture now decodes a RET on the real low page and probes its cache after
+free, and covers map-table failure after selector acquisition/reservation
+rollback, reservation-table exhaustion, direct-window collision, lease-blocked
+DOSFree/GlobalFree, ordinary arena reuse, and explicit unsupported DOS realloc.
+These changes await the next separately granted canonical/native epoch.
