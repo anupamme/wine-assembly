@@ -166,7 +166,8 @@ async function concurrentPublication() {
       translate(ga) { return d.backing + ga - d.base; },
       watch(wa, size) {
         assert.equal(Atomics.load(state, 64), 0, 'no publication before initialization');
-        assert.equal(wa, d.backing); assert.equal(size, d.size);
+        if (wa === 1024) assert.equal(size, 200, 'fixed ownership reset');
+        else { assert.equal(wa, d.backing); assert.equal(size, d.size); }
         const bytes = new Uint8Array(d.memory.buffer);
         assert.equal(bytes[wa], 0); assert.equal(bytes[wa + size - 1], 0);
       },

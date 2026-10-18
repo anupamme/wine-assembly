@@ -264,3 +264,41 @@ publication; that corrected arena test and context were not run in the window.
 All twelve accumulated child PIDs were absent on release. No original or
 browser ran. Final canonical rebuild and remaining regressions need a fresh
 root grant. Evidence: scratch/runs/20261018-outlaws-fixed-builtins/.
+
+Final admitted validation (2026-10-18 17:16 UTC)
+
+Review found the existing GetModuleHandle and named GetProcAddress paths still
+used the legacy name scratch. Source 169a6272b makes the shared helper validate
+the active bridge frame and use its owned context page + 1024 guest address;
+the standalone route retains its prior scratch address. Native canaries now
+cover both legacy physical/translated locations through load and named queries.
+Independent source review cleared this correction.
+
+Canonical build-2 at 169a6272b9936f579e3a1086959e226cb6901067 exited 0 in
+20.305s. Final module SHA256:
+a4a4bc6aef0f50a191d83acdd0857ff390537701adc381d81436845f20b969e3
+Region-map SHA256 remains:
+a6869fe091c02854ac8f6cc71dd8e37b4f1156be616dd2dbaa0cc012c37bf9fa
+
+Native-6 passed lifecycle and transaction, then exposed the same obsolete
+full-arena-only watch assertion in the concurrent Worker fixture. The sole
+post-build edit allows and asserts the 200-byte fixed-reference reset there.
+Test file SHA256 at final execution:
+804e16f6475d63d3c2a7ab0274aa0d1923b16c43d95e80dde0bd0f4b5f36d751
+Native-7 retried under the ORIGINAL 90-second deadline; all six exited 0:
+  test-win32-ne-lifecycle-candidate.js: 131ms
+  test-win32-ne-module-transaction.js: 1857ms
+  test-win32-ne-arena.js: 267ms, including concurrent Workers
+  test-win32-ne-context.js: 556ms
+  test-ne-guest-lifecycle-candidate.js: 150ms
+  test-ne-qt-ownership-candidate.js: 79ms
+The latter two used the rebuilt precompiled module. All 22 cumulative receipt
+PIDs were absent at release, with 3234791424 bytes free. No original/browser
+run was performed. Earlier failed fixtures and deadline kills remain retained
+beside the successful logs/receipts in the evidence directory above.
+
+This validates the counted fileless fixed-builtin stage, not general nested
+image loading or original Outlaws startup. Image-backed nested loading remains
+explicitly unsupported and guarded; the earlier staged protocol remains future
+work. Reproduce with the canonical build followed by the six tests above using
+WA_TEST_WASM pointing to that exact built module, within a granted runtime slot.
