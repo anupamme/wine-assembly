@@ -19,6 +19,9 @@ node tools/check-wat-manifest.js
 # 10d-gdi-region-path.wat survived. Since the (module ...) wrapper moved into
 # tools/concat-wat.js there are no exceptions: any nonzero net is a bug.
 node tools/check-wat-fragments.js
+# Inventory known context producers before nonlocal jumps are implemented.
+# This is a temporary prerequisite review lock, not runtime ownership proof.
+node tools/callback-ownership-census.js
 # Fixed WAT tables share one flat linear-memory address space. A collision is
 # valid WAT and compiles cleanly, then silently cross-corrupts unrelated state
 # at runtime, so the sized-region/data-segment map is a shipping gate.
