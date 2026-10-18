@@ -240,3 +240,13 @@ module unchanged; available disk recovered to 2,773,151,744 immediately after
 termination. No 600MB retained artifact was found in this worktree. Non-tail
 validation remains incomplete; the failed receipt is retained separately from
 the passing tail-call receipt. No unchanged retry was attempted.
+
+After root recovered 661,921,792 bytes from finished, clean, remotely backed
+tracked worktrees, one explicitly authorized non-tail retry passed all the
+same assertions. Readmission was 3,433,078,784 bytes; runtime minimum was
+3,433,037,824 bytes, with no guard event, absent process group and unchanged
+canonical module. The original non-tail disk-stop receipt remains retained as
+`test-beep-continuation-nontail-diskstop.json`; the passing non-tail receipt is
+`test-beep-continuation.json`. Both dispatch modes are now validated. The cause
+of the first transient disk drop was not established; no memory size, assertions
+or guard threshold changed for the retry.
