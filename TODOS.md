@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (route-only heldpress observation)
+  status: active (town level reviewed; keyboard control investigation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Granted sole ordinaryheldpress180/210 after LBreakout2 rootpostflightPASS. Independent250msup and3ssettle, no pollingAPIlogging, exacta4a4bc6a/freshpins. Capture actual settledscreen before further ordinaryinput; no gameplayclaim yet.
+  Next: Ordinary heldpress MainGame->GOOD reaches renderedtown/revolver/HUD/chickens in20261018-outlaws-held-route-observation; root reviewed screenshot/postflight3118pins/originals/groupemptyPASS, both exit0. Left250ms hostdelivery acknowledged but viewpointchange unproved. Worker documents partialresult and source-audits keyboard sampling/focus before further run; no gameplayqualification yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1700,7 +1700,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LBreakout2 2.5.1 original Windows release
   id: NEW-GAME-LBREAKOUT2-20261018
-  status: active (first level reviewed; paddle control preparation)
+  status: active (short-route paddle and ball validation)
   owner: /root/new_game_refill_after_supertux
-  Next: Registered run20261018-lbreakout2-registered-gameplay firstlevel LateAtNight1/25 reviewed byroot;3413pins/230originals/groupemptyPASS, both exit0. Help/menu consumed inputwindow so no paddleinput claim. Docs071e1b17c main; worker prepares proven shortmenu route then verifiedLeftRight/Space control evidence. Runtime waits Outlaws.
+  Next: Sole180guest210hard registeredgameplay granted after Outlaws cleanrelease. Proven shortmenu directly to reviewedlevel, verifiedarrows+Space with independentrelease and idle; no repeathelp. Freshpins/modulea4a4bc6a,2GiBmargins8MiBlog; await actualcontrolevdence/exits.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
