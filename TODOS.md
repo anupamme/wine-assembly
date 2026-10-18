@@ -1090,7 +1090,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws built-in loader repair; FIFA evidence review)
+  status: active (Outlaws built-in loader repair; FIFA touch layout)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: review (ordinary actions captured; control scope assessed)
-  owner: /root/fifa_liveplay_plan_oct18
+  status: active (keyboard gameplay accepted; touch layout implementation)
+  owner: /root/fifa_touch_layout
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: 20261018-fifa98-ordinary-action captures Srestart+sixarrowtrials+idle. Rootreviewed20 England5 moves relativepenaltyarea underUp;13Down differentplayer. All4exitreceipts0/all3PIDsabsent/portclosed/pins231fixturesunchanged; minfree3452895232B. PhotoTelegram1452 delivered. /root/review_fifa_action_evidence independently assesses ordinarycontrol acceptance, no invented stricttrio requirement; audioFPSdevice remain separate. Newbrowserheld4GiBadmission current4.205GB.
+  Next: Independent review accepts ordinary keyboard response: control20 sameEngland5 moves relativepenaltyarea underUp;13Down corroborates/14idle supporting. No mandatory sameplayertrio needed for limited scope; exact exclusivecausality/comprehensivecontrols/audioFPSdevice remainunqualified. Registration exists; lib/apps.js lacks touchControls. Fresh /root/fifa_touch_layout adds only observed arrows/Srestart/EscMenu with sourcechecks; no browser below4GiBadmission. Photo1452 delivered.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
