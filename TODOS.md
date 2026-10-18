@@ -1680,9 +1680,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Black & White 2 draw-layout provenance follow-up
   id: BW2-DRAW-LAYOUT-PROVENANCE-20261018
-  status: active (live provenance harness pending)
-  owner: /root/bw2_layout_observer
-  Next: Bounded observerdcc67fee reviewed and seven pure tests PASS; merged in integration. Metadata detached, observation errors disqualify pairing. Live harness/module/thread/broker correlation and current original draw evidence remain unverified; old Oct9 raw trace missing.
+  status: blocked (live Worker placement/correlation and stopped runtime box)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Observer and capture adapters integrated through e6fd3b86f; independent review corrections201758750 and root12JS tests PASS. Live Worker logging/transport placement, matching region-map receipt and request correlation remain unverified. Savedbx_9ef2wdsw stopped; prior scopedresume403 unresolved. No producer attribution or current original draw evidence.
   Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
 
 - [ ] Qualify FIFA98 touch usability, audio and logical gameplay FPS
@@ -1728,9 +1728,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (retained bsearch independent review)
-  owner: /root/crt_jump_ownership
-  Next: Qsort9589eaec independently reviewed, normal build and dual-mode actual x86 tests/regressions PASS. Bsearch source78dcb1076 and authored guest tests now under independent review; jump APIs remain disabled pending remaining callback coverage.
+  status: active (retained CRT init/exit callback implementation)
+  owner: /root/circus_init_exit_ownership
+  Next: Bsearche263d0ae3 source reviewed, both guest dispatch modes and qsort/token/lifecycle regressions PASS. Fresh worker takes init/exit callback ownership; jump APIs remain disabled pending remaining callback coverage and full semantics.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
