@@ -38874,5 +38874,26 @@
     "nargs": 1,
     "convention": "stdcall",
     "hash": 3897809666
+  },
+  {
+    "id": 4570,
+    "name": "LoadLibrary16",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 2064058475
+  },
+  {
+    "id": 4571,
+    "name": "FreeLibrary16",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 1403565793
+  },
+  {
+    "id": 4572,
+    "name": "GetProcAddress16",
+    "nargs": 2,
+    "convention": "stdcall",
+    "hash": 31387774
   }
 ]

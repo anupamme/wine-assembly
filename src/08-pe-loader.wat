@@ -18,6 +18,12 @@
       (then (return (call $load_ne (local.get $size)))))
     (if (i32.ne (i32.load (local.get $pe_off)) (i32.const 0x00004550)) (then (return (i32.const -2))))
     (if (i32.eqz (call $win16_process_arena_release)) (then (return (i32.const -4))))
+    (call $win16_guest_request_cancel)
+    ;; A new process must not inherit the retired NE host request park.
+    (if (i32.eq (global.get $yield_reason) (i32.const 18))
+      (then
+        (global.set $yield_reason (i32.const 0))
+        (global.set $yield_flag (i32.const 0))))
 
     (local.set $num_sections (i32.load16_u (i32.add (local.get $pe_off) (i32.const 6))))
     (local.set $opt_hdr_size (i32.load16_u (i32.add (local.get $pe_off) (i32.const 20))))
@@ -3926,6 +3932,25 @@
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 8))) (i32.const 1835619444))
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 12))) (i32.const 101))
   (local.set $cursor (call $kernel32_emit_export (local.get $base) (i32.const 456) (i32.const 547) (i32.const 826) (i32.const 456) (i32.const 16) (local.get $cursor)))
+  ;; LoadLibrary16
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 0))) (i32.const 1867251712))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 4))) (i32.const 1766614113))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 8))) (i32.const 1918988898))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 12))) (i32.const 3551609))
+  (local.set $cursor (call $kernel32_emit_export (local.get $base) (i32.const 457) (i32.const 35) (i32.const 4570) (i32.const -1) (i32.const 16) (local.get $cursor)))
+  ;; FreeLibrary16
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 0))) (i32.const 1917190144))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 4))) (i32.const 1766614373))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 8))) (i32.const 1918988898))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 12))) (i32.const 3551609))
+  (local.set $cursor (call $kernel32_emit_export (local.get $base) (i32.const 458) (i32.const 36) (i32.const 4571) (i32.const -1) (i32.const 16) (local.get $cursor)))
+  ;; GetProcAddress16
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 0))) (i32.const 1699151872))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 4))) (i32.const 1869762676))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 8))) (i32.const 1684291939))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 12))) (i32.const 1936942450))
+  (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 16))) (i32.const 13873))
+  (local.set $cursor (call $kernel32_emit_export (local.get $base) (i32.const 459) (i32.const 37) (i32.const 4572) (i32.const -1) (i32.const 20) (local.get $cursor)))
   ;; KERNEL32_Ordinal99
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 0))) (i32.const 1162543104))
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 4))) (i32.const 1279610450))
@@ -3933,7 +3958,7 @@
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 12))) (i32.const 1852400754))
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 16))) (i32.const 960064609))
   (call $gs32 (i32.add (local.get $base) (i32.add (local.get $cursor) (i32.const 20))) (i32.const 0))
-  (local.set $cursor (call $kernel32_emit_export (local.get $base) (i32.const 457) (i32.const 99) (i32.const 2600) (i32.const -1) (i32.const 24) (local.get $cursor)))
+  (local.set $cursor (call $kernel32_emit_export (local.get $base) (i32.const 460) (i32.const 99) (i32.const 2600) (i32.const -1) (i32.const 24) (local.get $cursor)))
   (call $gs32 (i32.add (local.get $base) (i32.const 16408)) (i32.const 457))
 )
 ;; END GENERATED KERNEL32 EXPORTS

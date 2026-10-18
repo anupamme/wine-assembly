@@ -137,7 +137,7 @@ Object.assign(mock, {
     assert.equal(string(fixture.image_base + dv.getUint32(target, true) + 2), item.api,
       'dispatcher name is hint-relative guest RVA: ' + item.api);
   }
-  for (const ordinal of [0, 35, 36, 37, 1025, 65535])
+  for (const ordinal of [0, 38, 1025, 65535])
     assert.equal(call('handle_GetProcAddress', h, ordinal), 0);
   for (const name of ['QT_Thunk', 'MessageBoxA', '_acmdln', 'FixtureExeCallback'])
     assert.equal(call('handle_GetProcAddress', h, put(0x27000, name)), 0, name);

@@ -3,6 +3,9 @@
   "sourceSha256": "7cefbcd40b4caa130960a85f8553575b3c97249e74257fac1d632f27934d6de0",
   "note": "Named ordinal assignments are emulator ABI, not Windows version-specific ordinals. 1..127 reserved for documented legacy ordinal ABI. Named surface intersects Wine ownership with existing native handlers, excluding direct fail-fast handlers.",
   "exports": [
+    { "api": "LoadLibrary16", "ordinal": 35 },
+    { "api": "FreeLibrary16", "ordinal": 36 },
+    { "api": "GetProcAddress16", "ordinal": 37 },
     {
       "name": "_hread",
       "api": "_hread",

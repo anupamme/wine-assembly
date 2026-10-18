@@ -1719,6 +1719,18 @@
     (i32.or (call $dll_name_match (local.get $name) "msi.dll")
             (call $dll_name_match (local.get $name) "a3d.dll")))
 
+  ;; KERNEL32 legacy ordinals 35/36/37. Their stdcall frames are consumed once
+  ;; by the validated host settlement, never by the yielding handler.
+  (func $handle_ne_guest_request (param $op i32) (param $arg0 i32) (param $arg1 i32)
+    (if (i64.eqz (call $win16_guest_request_begin (local.get $op) (local.get $arg0) (local.get $arg1)))
+      (then (unreachable))))
+  (func $handle_LoadLibrary16 (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $handle_ne_guest_request (i32.const 1) (local.get $arg0) (i32.const 0)))
+  (func $handle_FreeLibrary16 (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $handle_ne_guest_request (i32.const 2) (local.get $arg0) (i32.const 0)))
+  (func $handle_GetProcAddress16 (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $handle_ne_guest_request (i32.const 3) (local.get $arg0) (local.get $arg1)))
+
   (func $handle_LoadLibraryA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $tmp i32) (local $src i32) (local $dst i32) (local $ch i32) (local $name_wa i32)
     ;; Cached loads participate in callback serialization too. Park at the

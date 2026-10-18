@@ -4440,6 +4440,7 @@ class WineAssembly {
       log: console.log,
       advanceGuestTime: ms => this._advanceGuestTickMs(ms,
         this.hostCtx && this.hostCtx.sharedAudio),
+      findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
       findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, {
         vfsPaths: [fullName.toLowerCase(), 'c:\\' + fileName, 'c:\\plugins\\' + fileName],
       }),
@@ -4652,6 +4653,7 @@ class WineAssembly {
       advanceGuestTime: ms => this._advanceGuestTickMs(ms,
         this.hostCtx && this.hostCtx.sharedAudio),
       findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, { exeDir: true }),
+      findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
     });
   }
 
@@ -4677,6 +4679,7 @@ class WineAssembly {
         advanceGuestTime: ms => this._advanceGuestTickMs(ms,
           this.hostCtx && this.hostCtx.sharedAudio),
         findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, { exeDir: true }),
+        findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
       });
       manager.publishWorkerGlobals(exports);
     }
@@ -4696,6 +4699,7 @@ class WineAssembly {
         log: console.log,
         advanceGuestTime: ms => this._advanceGuestTickMs(ms,
           this.hostCtx && this.hostCtx.sharedAudio),
+        findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
         findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, {
           vfsPaths: [fullName.toLowerCase(), 'c:\\' + fileName, 'c:\\plugins\\' + fileName],
         }),
@@ -5690,6 +5694,8 @@ class WineAssembly {
             ? r.timerDue : WineAssembly.MAX_PARK_SLEEP_MS, perfSliceDoneAt);
         } else if (r.yield === 3) {
           await self._handleComDllLoadThreaded();
+        } else if (r.yield === 18) {
+          throw new Error('Worker NE guest lifecycle is not implemented');
         } else if (r.yield === 5) {
           await self._handleLoadLibraryThreaded();
         } else if (r.yield === 9) {
@@ -6939,6 +6945,14 @@ class WineAssembly {
           // would starve the delivery this call is waiting for.
           self.instance.exports.clear_yield();
           if (self.instance.exports.vlan_pump) self.instance.exports.vlan_pump();
+          if (self.running) { self._scheduleStep(step); }
+          return;
+        }
+        if (yieldReason === 18) {
+          ProcessBoot.serviceLoadLibraryYieldSync({
+            exports: self.instance.exports, memoryBuffer: self.memory.buffer,
+            resourceHost: self, findDllSync: (file, full) => self._findDllBytesSync(file, full),
+          });
           if (self.running) { self._scheduleStep(step); }
           return;
         }
