@@ -169,3 +169,7 @@ at `/home/user/kkrieger-position-final.tar.gz` has SHA256
 `result.json` was published last, with the narrow movement criterion passed and
 every broader limitation explicit. The global evidence checker still reports
 the unrelated historical Zuma external artifact.
+
+## Local test preparation after TG90 (2026-10-18)
+
+The user explicitly authorized runtime tests on the persistent box. The original executable, readme and scene.org text plus parent manifest are present and pass existing controller pins. System Chrome exists. Puppeteer25.7.0 is now installed under /tmp/wa-local-runtime-deps with downloads disabled; integration node_modules links there. No kkrieger browser test has yet run. AVP2 owns the serialized runtime lane. After its release, use the existing gameplay-capture controller with WA_INPUT_PROGRESS=1 and WA_POSITION_CAPTURE=1, pin current clean source and canonical module, and personally review menu/level gates. Existing bounded W/release limits remain unchanged.

@@ -1513,11 +1513,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Aliens versus Predator 2 single-player demo
   id: NEW-GAME-AVP2-DEMO-20261010
-  status: ready (TG90 local runtime authorized; original launcher and child menu verified)
+  status: ready (local textured Marine mission and W input captured; idle comparison pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: none
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
-  Next: Supersede stale HUD-font blocker: original Marine forward-input and textured scene reviewed in run20261011T0836Z-avp2-bltfast-gameplay; BltFast fix merged6613fe863. Manifest/re-note retain exact limits: historical retained-source capture, not current-main revalidation; no registered dashboard launch. Original18-file payload hashes reverified; local avp2_demo launcher registration prepared without synthesized command file. Regenerate or recover authentic launcher handoff after saved-box resume, then validate current main. Historical67-file VFS count does not establish missing original media. Do not redo fixed HUD/DXT diagnosis. FPS/audio remain unqualified.
+  Next: Supersede stale HUD-font blocker: original Marine forward-input and textured scene reviewed in run20261011T0836Z-avp2-bltfast-gameplay; BltFast fix merged6613fe863. Manifest/re-note retain exact limits: historical retained-source capture, not current-main revalidation; no registered dashboard launch. Original18-file payload hashes reverified; local avp2_demo launcher registration prepared without synthesized command file. TG90 local test generated authentic68-file handoff and reviewed Single Player menu at d21c95446; run20261018-avp2-local-launch. Next ordinary menu input and paired movement on this tested source. Historical67-file VFS count does not establish missing original media. Do not redo fixed HUD/DXT diagnosis. FPS/audio remain unqualified.
   Done: Original demo launch, ordinary player input visibly changes gameplay, reviewed screenshot with exact source/build/run evidence.
 
 - [x] Validate original .kkrieger startup on separate test box
@@ -1609,7 +1609,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: KKRIEGER-CONTROL-LATENCY-20261015
   status: ready (TG90 local runtime authorized; serialized live measurement pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Read-only CS wait/main EIP/cooperative-owner samples merged0b95d3233,10focused testsPASS. Retained run118738 suggests audio critical-section/main-loop delay but owner/duration attribution unproved. Reuse bounded W/release route only after saved bx_9ef2wdsw resume and serialized admission; no scheduler fix or FPS claim.
+  Next: Read-only CS wait/main EIP/cooperative-owner samples merged0b95d3233,10focused testsPASS. Retained run118738 suggests audio critical-section/main-loop delay but owner/duration attribution unproved. TG90 authorizes persistent-box testing. Prepare local browser/controller prerequisites, then reuse bounded W/release route under serialized admission; no scheduler fix or FPS claim.
   Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
 
 - [~] New-game lane: Outlaws original Windows single-player demo
