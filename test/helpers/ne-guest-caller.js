@@ -31,6 +31,6 @@ function neGuestCaller(base=0x400000,{dll=false,ordinalImports=false,path='C:\\O
   emit(0xb8,1,0,0,0,...(dll?[0xc2,12,0]:[0xc3]));
   if(code.length>0x600)throw new Error('NE caller code overflow');
   bytes.set(code,raw(0x2000));
-  return {bytes,entry,result,slots};
+  return {bytes,entry,result,slots,codeSize:code.length};
 }
 module.exports={neGuestCaller};

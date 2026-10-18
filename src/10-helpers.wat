@@ -946,6 +946,76 @@
   ;; In both cases the count or size a reader can observe only ever names memory
   ;; that is already there. A reader that misses a just-published entry simply
   ;; behaves as it did a microsecond earlier.
+  ;; Bridge stack leases: 16 records of {frame token:i64, guest base, backing}
+  ;; at hidden-page [0x8F00,0x9000). The preceding 24 module-call records
+  ;; occupy [0x8C00,0x8F00); HRSRC descriptors begin at 0x9000. Leases cover
+  ;; one aligned 64KiB window. Every access holds LOCK_VIRTUAL_MAP. The table
+  ;; exists only while the Win32-owned NE arena is published.
+  (func $virtual_map_lease_record (param $i i32) (result i32)
+    (i32.add (call $win16_handle_table)
+      (i32.add (i32.const 0x8F00) (i32.shl (local.get $i) (i32.const 4)))))
+
+  (func $virtual_map_lease_busy (param $base i32) (param $size i32) (result i32)
+    (local $i i32) (local $rec i32) (local $leased i32) (local $arena i32)
+    (local.set $arena (i32.atomic.load (region.addr $WIN16_PROCESS_ARENA 0)))
+    (if (i32.or (i32.eqz (local.get $arena)) (i32.eqz (local.get $size)))
+      (then (return (i32.const 0))))
+    (if (i32.lt_u (i32.add (local.get $base) (local.get $size)) (local.get $base))
+      (then (return (i32.const 1))))
+    (block $done (loop $scan
+      (br_if $done (i32.eq (local.get $i) (i32.const 16)))
+      (local.set $rec (call $virtual_map_lease_record (local.get $i)))
+      (if (i64.ne (i64.load (local.get $rec)) (i64.const 0))
+        (then
+          (local.set $leased (i32.load offset=8 (local.get $rec)))
+          (if (i32.or
+            (i32.and (i32.lt_u (local.get $base) (i32.add (local.get $leased) (i32.const 0x10000)))
+              (i32.lt_u (local.get $leased) (i32.add (local.get $base) (local.get $size))))
+            ;; The lease ledger itself must survive until the last release.
+            (i32.and (i32.lt_u (local.get $base)
+                (i32.add (local.get $arena) (i32.shl (i32.add (global.get $WIN16_SEG_MAX) (i32.const 1)) (i32.const 16))))
+              (i32.lt_u (local.get $arena) (i32.add (local.get $base) (local.get $size)))))
+            (then (return (i32.const 1))))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $scan)))
+    (i32.const 0))
+
+  ;; Conservative record preflight also covers a leaked record replaced by a
+  ;; partial commit. Inspect every island before any release/publication.
+  (func $virtual_map_lease_mutation_busy (param $base i32) (param $size i32) (result i32)
+    (local $i i32) (local $rec i32) (local $start i32) (local $length i32)
+    ;; No record walk on the ordinary (no active bridge lease) path.
+    (if (i32.eqz (call $virtual_map_lease_busy (i32.const 0) (i32.const -1)))
+      (then (return (i32.const 0))))
+    (if (call $virtual_map_lease_busy (local.get $base) (local.get $size))
+      (then (return (i32.const 1))))
+    (block $done (loop $scan
+      (br_if $done (i32.ge_u (local.get $i) (i32.load (global.get $VIRTUAL_MAP_STATE))))
+      (local.set $rec (i32.add (global.get $VIRTUAL_MAP_TABLE) (i32.shl (local.get $i) (i32.const 4))))
+      (local.set $start (i32.load (local.get $rec)))
+      (local.set $length (i32.load offset=4 (local.get $rec)))
+      (if (i32.and (i32.lt_u (local.get $base) (i32.add (local.get $start) (local.get $length)))
+        (i32.lt_u (local.get $start) (i32.add (local.get $base) (local.get $size))))
+        (then (if (call $virtual_map_lease_busy (local.get $start) (local.get $length))
+          (then (return (i32.const 1))))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $scan)))
+    (i32.const 0))
+
+  ;; A sparse lease must belong to an actual virtual-map record, not the DIB
+  ;; translator or an emulator-private address accidentally accepted by g2w.
+  (func $virtual_map_lease_page_owned (param $guest i32) (param $backing i32) (result i32)
+    (local $i i32) (local $rec i32) (local $base i32)
+    (block $done (loop $scan
+      (br_if $done (i32.ge_u (local.get $i) (i32.load (global.get $VIRTUAL_MAP_STATE))))
+      (local.set $rec (i32.add (global.get $VIRTUAL_MAP_TABLE) (i32.shl (local.get $i) (i32.const 4))))
+      (local.set $base (i32.load (local.get $rec)))
+      (if (i32.and (i32.ge_u (local.get $guest) (local.get $base))
+        (i32.le_u (i32.add (local.get $guest) (i32.const 4096)) (i32.add (local.get $base) (i32.load offset=4 (local.get $rec)))))
+        (then (if (i32.eq (local.get $backing)
+          (i32.add (i32.load offset=8 (local.get $rec)) (i32.sub (local.get $guest) (local.get $base))))
+          (then (return (i32.const 1))))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $scan)))
+    (i32.const 0))
+
   (func $virtual_map_commit (param $guest i32) (param $size i32) (result i32)
     (call $virtual_map_commit_protect
       (local.get $guest) (local.get $size) (i32.const 0x40)))
@@ -1107,6 +1177,8 @@
     (local $extended i32) (local $high_water i32)
     (local $candidate i32) (local $gap_end i32) (local $best i32)
     (local $best_size i32) (local $j i32) (local $covered i32) (local $ext i32)
+    (if (call $virtual_map_lease_mutation_busy (local.get $guest) (local.get $size))
+      (then (return (i32.const 0))))
     (if (i32.gt_u (local.get $size) (call $virtual_backing_max_extent))
       (then (return (i32.const 0))))
     (local.set $guest_end (i32.add (local.get $guest) (local.get $size)))
@@ -1532,10 +1604,25 @@
   ;; the next commit is the same observable behaviour -- reading a decommitted
   ;; page is an access violation on Windows, so nothing may see the difference
   ;; -- and it costs nothing on the commit path.
-  (func $virtual_map_decommit_zero (param $guest i32) (param $size i32)
+  (func $virtual_map_decommit_zero (param $guest i32) (param $size i32) (result i32)
     (local $end i32) (local $count i32) (local $i i32) (local $rec i32)
     (local $base i32) (local $rec_end i32) (local $lo i32) (local $hi i32)
     (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
+    ;; Round the full request before the first zero/PTE mutation. Zero length
+    ;; retains the existing exact-record meaning, rather than all later maps.
+    (local.set $hi (local.get $size))
+    (if (i32.eqz (local.get $hi))
+      (then
+        (local.set $rec (call $virtual_map_find_record (local.get $guest)))
+        (if (local.get $rec) (then (local.set $hi (i32.load offset=4 (local.get $rec)))))))
+    (local.set $lo (i32.and (local.get $guest) (i32.const -4096)))
+    (local.set $end (i32.add (local.get $guest) (local.get $hi)))
+    (if (i32.or (i32.lt_u (local.get $end) (local.get $guest))
+      (i32.gt_u (local.get $end) (i32.const 0xFFFFF000)))
+      (then (call $lock_release (global.get $LOCK_VIRTUAL_MAP)) (return (i32.const 0))))
+    (local.set $end (i32.and (i32.add (local.get $end) (i32.const 4095)) (i32.const -4096)))
+    (if (call $virtual_map_lease_mutation_busy (local.get $lo) (i32.sub (local.get $end) (local.get $lo)))
+      (then (call $lock_release (global.get $LOCK_VIRTUAL_MAP)) (return (i32.const 0))))
     (local.set $count (i32.load (global.get $VIRTUAL_MAP_STATE)))
     (local.set $i (i32.const 0))
     (block $done (loop $scan
@@ -1585,7 +1672,8 @@
             (i32.sub (local.get $hi) (local.get $lo)))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $scan)))
-    (call $lock_release (global.get $LOCK_VIRTUAL_MAP)))
+    (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
+    (i32.const 1))
 
   ;; Commit [lo, hi) of an existing record again: publish the pages a decommit
   ;; unpublished, at the record's own backing. Pages still present are left
@@ -2091,6 +2179,31 @@
   ;; first would leak the rest of the allocation on every level reload.
   (func $virtual_map_release_locked (param $guest i32) (result i32)
     (local $rec i32) (local $size i32) (local $i i32) (local $end i32) (local $base i32)
+    ;; Preflight the complete reservation or continuation chain before even
+    ;; diagnostic marking or reserve ownership changes. release_one is also
+    ;; guarded for its other callers, but cannot make a multi-island release
+    ;; atomic after an earlier island was already removed.
+    (if (call $virtual_map_lease_busy (i32.const 0) (i32.const -1)) (then
+    (block $span_found (loop $span_reserves
+      (br_if $span_found (i32.ge_u (local.get $i) (i32.load offset=16 (global.get $VIRTUAL_MAP_STATE))))
+      (local.set $rec (i32.add (global.get $VIRTUAL_RESERVE_TABLE) (i32.shl (local.get $i) (i32.const 3))))
+      (if (i32.eq (i32.and (i32.load (local.get $rec)) (i32.const -4096)) (local.get $guest))
+        (then (local.set $end (i32.add (local.get $guest) (i32.load offset=4 (local.get $rec)))) (br $span_found)))
+      (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $span_reserves)))
+    (if (i32.eqz (local.get $end))
+      (then
+        (local.set $end (local.get $guest))
+        (local.set $rec (call $virtual_map_find_record (local.get $end)))
+        (block $span_done (loop $span_chain
+          (br_if $span_done (i32.eqz (local.get $rec)))
+          (local.set $end (i32.add (local.get $end) (i32.load offset=4 (local.get $rec))))
+          (local.set $rec (call $virtual_map_find_record (local.get $end)))
+          (br_if $span_done (i32.eqz (local.get $rec)))
+          (br_if $span_done (i32.eqz (i32.and (i32.load offset=12 (local.get $rec)) (i32.const 0x80000000))))
+          (br $span_chain)))))
+    (if (call $virtual_map_lease_mutation_busy (local.get $guest) (i32.sub (local.get $end) (local.get $guest)))
+      (then (return (i32.const 0))))
+    (local.set $i (i32.const 0)) (local.set $end (i32.const 0))))
     ;; DIAGNOSTIC ONLY, off by default. When a guest reads through a pointer
     ;; into a region it has already released, the read returns 0 here and its
     ;; own luck on real Windows -- where the freed page may still hold the old
@@ -2190,6 +2303,8 @@
         (then
           (local.set $size (i32.load (i32.add (local.get $rec) (i32.const 4))))
           (local.set $backing (i32.load (i32.add (local.get $rec) (i32.const 8))))
+          (if (call $virtual_map_lease_busy (local.get $guest) (local.get $size))
+            (then (return (i32.const 0))))
           ;; Retire translations before the record disappears or its
           ;; backing becomes reusable. Page-table readers then see either the
           ;; old valid PTE or an unmapped page, never a recycled alias.

@@ -5643,6 +5643,16 @@
   ;; though every corresponding Windows allocation was freed successfully.
   ;; Decommit and low/direct mappings need no backing operation here.
   (func $handle_VirtualFree (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $result i32)
+    (local.set $result (i32.const 1))
+    ;; The main stack has fixed backing, but a release/decommit request must
+    ;; not claim to have freed its currently leased alias window either.
+    (if (i32.lt_u (local.get $arg0) (call $virtual_alloc_min))
+      (then
+        (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
+        (local.set $result (i32.eqz (call $virtual_map_lease_busy (local.get $arg0)
+          (select (local.get $arg1) (i32.const 1) (local.get $arg1)))))
+        (call $lock_release (global.get $LOCK_VIRTUAL_MAP))))
     ;; A MapViewOfFile view is not VirtualAlloc'd memory: Windows fails the
     ;; call with ERROR_INVALID_ADDRESS and leaves the view alone, whether the
     ;; guest asked to decommit or to release. See $mapped_view_contains.
@@ -5661,7 +5671,7 @@
     (if (i32.and
           (i32.ge_u (local.get $arg0) (call $virtual_alloc_min))
           (i32.ne (i32.and (local.get $arg2) (i32.const 0x4000)) (i32.const 0)))
-      (then (call $virtual_map_decommit_zero (local.get $arg0) (local.get $arg1))))
+      (then (local.set $result (call $virtual_map_decommit_zero (local.get $arg0) (local.get $arg1)))))
     (if (i32.and
           (i32.and
             (i32.ge_u (local.get $arg0) (call $virtual_alloc_min))
@@ -5677,9 +5687,10 @@
             (i32.ne (global.get $virtual_leak_release_caller) (i32.const 0))
             (i32.eq (i32.load (call $g2w (i32.load offset=16 (global.get $reg_base))))
               (global.get $virtual_leak_release_caller))))
-        (drop (call $virtual_map_release (local.get $arg0)))
+        (local.set $result (call $virtual_map_release (local.get $arg0)))
         (global.set $virtual_leak_this_call (i32.const 0))))
-    (i32.store offset=0 (global.get $reg_base) (i32.const 1))
+    (if (i32.eqz (local.get $result)) (then (global.set $last_error (i32.const 487))))
+    (i32.store offset=0 (global.get $reg_base) (local.get $result))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
   )
 
