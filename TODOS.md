@@ -1471,11 +1471,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: American McGee's Alice demo
   id: NEW-GAME-ALICE-DEMO-20261009
-  status: active
+  status: blocked (original media/evidence recovery and post-merge gameplay revalidation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: root direct; gameplay proven on held candidate, lifecycle correctness review before main
+  worker: none (evidence recovery pending)
   candidate: test/binaries/win98-games-a-d/american McGees-alice_demo-OpenGL.exe
-  Next: Held runtime d5a47f240 pushed codex/alice-dll-lifetime-20261009, NOT main. Full build and seven loader suites pass, including unrooted cycles, cross-cycle detach callbacks, actual Worker unload, and automatic dependency references in native/Worker routes; module862681ea, run20261009T2330Z-dll-cycle-worker-review. Concurrent two-Worker control still fails: shared PE_STAGING content and DLL table slot are overwritten; serialize staging/publication and graph mutation before integration. Then rerun original Alice and browser. Earlier native movement2151 remains separate build evidence; local candidate media missing.
+  Next: Serialization and generation-aware unload already merged (cfe411bdc/83947f6a6 and followups); do not redo staging/lifetime fix. Original archive/extracted media and scratch/alice-preflight-20261009 absent locally. Recover hash-pinned archive and2151 captures; then current-main ordinary New Game/Easy/W and browser input. Historical native gameplay usesa2dae641/main23614c85e+candidate.patch, not later held candidates. See docs/re-notes/alice-return-fire-reconciliation-20261018.md.
   Done: Original demo launches with ordinary input, player-controlled gameplay independently reviewed, exact build/media and screenshots retained; menus do not qualify.
   Evidence: scratch/alice-preflight-20261009/preflight.json; scratch/alice-preflight-20261009/import-audit.json; scratch/alice-preflight-20261009/transfer.json; docs/re-notes/alice-demo.md
 
@@ -1497,11 +1497,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] User priority: Return Fire demo
   id: NEW-GAME-RETURN-FIRE-DEMO-20261009
-  status: active
+  status: review (historical gameplay recorded; original capture recovery pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: return-fire-demo
   priority: user-first
-  Next: Correct windowed depth/palette and ordinary H/W gameplay verified in native run20261009T2046Z-return-fire-realized-native and browser run20261009T2050Z-return-fire-realized-browser. Build/focused display suites pass run20261009T2045Z-return-fire-realized-build. Audio output presence now observed in run20261009T2052Z-return-fire-browser-audio (99/100 non-silent windows, running44100Hz clock); recording retained, sound quality/sync and logical FPS still unverified. Registered local-only, no public deploy.
+  Next: Registration/palette-depth/media recovery already main. 58originalpayload hashes+archive verified locally; original2046native/2050browser captures and2052audio absent. Recover original build/input/screenshots to review recorded ordinary H/W gameplay; audioquality/logicalFPS separate from this Done criterion. See docs/re-notes/alice-return-fire-reconciliation-20261018.md; no new runtime/publicdeploy.
   Done: Registered launch, ordinary input visibly changes gameplay, reviewed screenshot with original source/build evidence; FPS/audio separate.
 
 - [ ] Serialize shared DLL mapping and lifetime mutation
