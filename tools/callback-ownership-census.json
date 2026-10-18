@@ -5014,7 +5014,7 @@
           ]
         ]
       ],
-      "sha256": "e942724072218435868cdf0a5672f61b16cac39c88d26a56cde1783534371678",
+      "sha256": "d3657804cda258417dfdc686a074424f84127003a13461e5508fc60171a9d9dd",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
@@ -8590,6 +8590,79 @@
       "sha256": "39fcd4795a4926f870c59d5e92afba235bdb378f4c387bd95d90c29603675e01",
       "kind": "host-entry",
       "reason": "External execution/context entry or wrapper; callback lifetime cannot be inferred from run depth.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a0b-handlers-base-late.wat",
+      "name": "$beep_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_enter",
+        "$invocation_leave"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "5831bb3a12570c46e056708c7515484f19d9ca2b00d46ad5d18a2423c7305d34",
+      "kind": "continuation",
+      "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a0b-handlers-base-late.wat",
+      "name": "$beep_cleanup",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_leave"
+      ],
+      "exports": [
+        "beep_cleanup"
+      ],
+      "targets": [],
+      "sha256": "eb114fe38e90c670101368d535eec08b30d321a20dabc791576ebb99729b0e2b",
+      "kind": "continuation",
+      "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a0b-handlers-base-late.wat",
+      "name": "$beep_continue",
+      "writes": 1,
+      "boundaryCalls": [
+        "$invocation_current"
+      ],
+      "exports": [],
+      "targets": [
+        [
+          "global.get",
+          "$beep_cont_thunk"
+        ]
+      ],
+      "sha256": "fedb5ff8632e6b8236a723992fe92e9c23b57c0b5111752417604a48af7b76c8",
+      "kind": "continuation",
+      "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a0b-handlers-base-late.wat",
+      "name": "$beep_finish",
+      "writes": 1,
+      "boundaryCalls": [
+        "$invocation_leave"
+      ],
+      "exports": [],
+      "targets": [
+        [
+          "i32.load",
+          "offset=8",
+          [
+            "local.get",
+            "$wa"
+          ]
+        ]
+      ],
+      "sha256": "80ad1d774e76fdde4a0ac5a30b4738682680be88dd5ce0db6dc5ebe0a4e9c504",
+      "kind": "continuation",
+      "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
       "ownership": "pending"
     }
   ]
