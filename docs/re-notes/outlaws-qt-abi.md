@@ -54,6 +54,11 @@ EBP-relative scratch access, pointers into the original stack, reverse thunks,
 and asynchronous callbacks need an explicit supported design or diagnostic
 boundary. Worker remains unsupported.
 
+The coordinator permits preserving incoming unspecified register high halves
+as an explicit emulator convention. That is not a Windows guarantee and need
+not block implementing proven low-word fields. The full PE caller snapshot and
+independent successful output merging remain separate requirements.
+
 The existing LibEntry/WEP runner must retain strict stackWords cleanup. A new
 mode needs an owned stack alias, argument-start SP and actual final
 SP, independent EAX/EDX/ECX, plus an atomic executable-selector-to-live-module
@@ -99,6 +104,16 @@ the lock does not protect virtual-map lifetime and would deadlock callbacks.
 Thread retirement/process reset must revoke the alias before freeing backing.
 An actual gateway must save/restore the original DWORD at S, which its far
 continuation overwrites. Scratch modifications by the NE callee remain visible.
+
+The candidate lease location is the unused hidden-page gap 0x8f00..0x9000:
+16 records of token/base/backing, between module call records and resource
+handles. Audit all users before allocating it. Guard more than VirtualFree:
+`virtual_map_release_one` is also called by commit replacement/republication and
+exported mapping paths. Release of a reservation or split allocation must
+preflight its entire range before mutating any island. Decommit needs the same
+guard before zeroing or dropping PTEs. ThreadManager's retired-slot cleanup
+currently ignores the result from `guest_map_free`; a lease rejection must not
+silently discard stack ownership. These changes are not implemented here.
 
 The source candidate adds `win16_bridge_invoke_target`: under the frame's owned
 scope and DLL mutex it resolves a live executable selector to a ready module
