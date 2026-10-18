@@ -1737,9 +1737,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (remaining callback ownership prerequisites)
-  owner: /root/circus_remaining_callbacks
-  Next: Syncwindow cb4fdc918 independently reviewed; dualguest and window/token/lifecycle regressions PASS. Root normalbuild exact2abd71d3 PASS. Fresh worker selects next retained callback family; jump APIs remain disabled, no gameplay claim.
+  status: queued (property-page ownership merged; remaining jump prerequisites)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Propertypage1c917280a dualguest arguments/ownership and seven regressions PASS; root buildda72a16f PASS. Jump APIs remain disabled pending remaining callback/JS/concurrency/SEH work. Runtime slot rotates to user-authorized original installer acceptance; no active Circus worker or gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
@@ -1799,4 +1799,3 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Previous checkpoint (licence-decision hold superseded): Publisher Nov1999 CD index matches Archive gsscda1999/1999-11/GS1199.iso; remote-only download pins SHA1f985ca1349af958f886957aa662e87956a7db22d. Native1959files verified; originalSetup unpacked authenticengine, welcome->actual German licence screen reviewed in2221Z. No acceptance or installation; allPIDs absent22:23:28.352. Await user decision; Silver sourcepreflight replaces active lane.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/input/build identity; refill on exact blocker.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
-

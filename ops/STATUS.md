@@ -1,3 +1,5 @@
+Current 2026-10-18: Propertypage1c917280a reviewed/tests PASS and root buildda72a16f PASS. Circus queued remaining jump prerequisites; next new-game runtime is Dungeon Siege original licence acceptance (37 local files verified by worker). Mad Bomber source correction underway; DiabloII readiness worker active following Telegram97. All seven licence decisions authorized, guest acceptance still pending.
+
 Current 2026-10-18 USER AUTHORIZATION: Accept/Yes authorized for all seven current licence holds, including Conan: Dungeon Siege, AoE3, Conan, Aranna, Shadow Man, Jedi Knight, Army Men. Queued under one-runtime scheduling; /root/authorized_installer_queue prepares originals. Permission recorded separately; no guest acceptance/install/gameplay yet. Recovery, disk, runtime and compatibility blockers remain.
 
 Current 2026-10-18: Original Mad Bomber now resolves Beep, next IsDBCSLeadByteEx NULL; no screenshot/gameplay. Fresh /root/madbomber_dbcs_export source active. Circus propertypage sole native validation granted; cube API fixture source active. Root original postflight3221pins/processabsence PASS.
