@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (positive-control menu diagnostic preparation)
+  status: active (short positive-counter/queue runtime)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Retainedlogs confirm correctscan-bearing key events dequeued/focus10001; consumingthread unknown. Auditc1cefbd72 confirms absoluteEIP/sharedcounter semantics; sourceprep60s85hard menu-only knownrunning438980/4389d8 + keycounters/read-onlyqueue snapshots, positivepump mustadvance before inference. No runtime until LMarbles release; no productionfix.
+  Next: Solemenu-only60guest85hard granted after LMarbles rootpostflight. Knownpositivepump438980/4389d8 +keycounters/read-onlyqueues, reviewedUp500ms; requirepumpadvance beforekeyzero inference. No APIpolling/build/browser/forcedstate; same2GiBguards8MiBlog.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (original passive startup validation)
+  status: active (reviewed main menu; gameplay and registration preparation)
   owner: /root/new_game_refill_after_lbreakout
-  Next: OfficialZIP5520b52e17373c75325fbcd058a128c0a8264f5178aa9d721a6d0c824307376f 1753947B,86originals+11DLL closure verified/CRTavailable. Docs902024657 main; sole60s85hard passive launch granted freshpins/a4a4bc6a, wholeoriginalcwd emptyargs+authenticCRT. No input/build/browser/gameplayclaim.
+  Next: Originalpassive run2304184/controller2304174 exits0, rootfinalmenu/3192pins86originals/groupemptyPASS. Docse368a5007 main. Worker prepares ordinary NewGame/Start marblemouse+arrow movement; fresh lmarbles_local_registration source-only owns localcorpus/verifier. No runtime until Outlaws release, no gameplayclaim.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
