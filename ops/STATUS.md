@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws original identifies missing KERNEL.184 GlobalDOSAlloc after mergedCLI fix3bd051ca9; natural299ms error exit/root postflight clean. Fresh API implementation worker source-only; FIFA owns sole300s atomic-published live-play retry. No new gameplay qualification/public deployment; original evidence preserved.
+Current 2026-10-18: Outlaws allocation candidate builds; native fixture correction and reviewed low-memory decoded-cache retirement needed before merge. FIFA atomic capture reached match, movement unqualified; revised restart/input plan ready. Browser/controller0 but outer143 remains unexplained; all owned PIDs absent. No public deploy.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

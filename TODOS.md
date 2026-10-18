@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws GlobalDOSAlloc implementation; FIFA live-play retry)
+  status: active (Outlaws allocation corrections; FIFA revised input plan)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Original Outlaws diagnostic identifies KERNEL.184 GLOBALDOSALLOC through QT; naturalexit1 in299ms and rootpostflightPASS. Fresh /root/outlaws_globaldosalloc owns real API semantics/tests source-only. FIFA /root/fifa_liveplay_plan_oct18 sole300s browser granted with tested atomicpublisher and unchanged runtime pins/guards.
+  Next: Outlaws9e2e69a95 canonicalbuildPASS; nativefixture first failed due mismatched imagebase, corrected fixture plus reviewer low-DOS decodedcache retirement required before validation/merge. Worker source corrections active. FIFA atomicrun reached match but no arrows; revised plan allows ordinary restart response and prompt livepitch input, no qualification.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1617,7 +1617,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (GlobalDOSAlloc implementation and conformance)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_globaldosalloc
-  Next: Original20261018-outlaws-original-qt-diagnostic-observation identifies KERNEL.184 GLOBALDOSALLOC ret0x089316ea in PMPRO62F QT. Naturalexit1~299ms; root independent3111pins/original unchanged/survivors[]. CLI fix3bd051ca9 works. Fresh worker implements real allocation/selector semantics and tests source-only whileFIFA runtime; no stub/generalDOS claim.
+  Next: Candidate9e2e69a95 pushed, canonical e31da202 buildPASS19s. Initial nativefixture failed using unmapped historical NE arena; fixture correction pending. Independent review P2 requires decoded-code invalidation of freed low DOS range (arena_give invalidates highrange only), worker fixing with lifecycle/rollback tests. No candidate merge/originalrerun until corrected nativePASS.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (atomic-published live-play control retry)
+  status: ready (revised ordinary restart and movement validation plan)
   owner: /root/fifa_liveplay_plan_oct18
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Fresh20261018-fifa98-liveplay-atomic31tests/pinsPASS, rootatomicconcurrenttestPASS. Sole300s grant after Outlaws cleanrelease; allcommands atomicpublisher only, unchangedce2cb0af/4GiBadmission3GiBearlystop. PriorPlay89s harnessrace preserved, no game failure claim. Require comparable live-play idle/up/down beforequalification.
+  Next: 20261018-fifa98-liveplay-atomic reached match; atomicpublication stable, noarrowtrials before cutscene/setpiece. Root reviewed control18-before normalpitch. Browser/controller0 but outer143/supervisorreceiptmissing (causeunknown); rootall3PIDsabsent/portclosed/pins231fixturesunchanged. Minfree3895861248B. NEXT-SOURCE-ONLY.txt distinguishes allowed restart/aiming from locomotion qualification; no retry yet.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
