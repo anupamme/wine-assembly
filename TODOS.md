@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws keyboard audit; LMarbles acquisition)
+  status: active (Outlaws menu diagnostic preparation; LMarbles startup)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: SuperTux/LBreakout2 corequalified. Outlaws source-only counter/messagepath audit after inconclusive cleanrun. LMarbles1.0.8 officialinstaller-free ZIP selected distinctfrom publicMicrosoftmarbles; sourceacquisition/closure authorized<=50MB strict2GiBfloor, workernew_game_refill_after_lbreakout. No active runtime grant.
+  Next: Two lanes: Outlaws source-only positivepump/counter/queue diagnostic preparation; LMarbles sole boundedoriginal passive startup. SuperTux/LBreakout2 corequalified; strict2GiBfloor and one runtime, no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (keyboard counter/address and message-path audit)
+  status: active (positive-control menu diagnostic preparation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Up/Left500ms controlledrun2293523/controller2293504 exited0 root3118pins/originals/groupemptyPASS. No clearworld displacement, fourselectedcounters0 withoutpositivecontrol; does not prove lostinput. Worker source-audits address/count semantics and hostqueue/PeekMessage/thread path, no runtimegrant until discriminatingplan. Latestreview20261018-outlaws-keyboard-count-observation retained.
+  Next: Retainedlogs confirm correctscan-bearing key events dequeued/focus10001; consumingthread unknown. Auditc1cefbd72 confirms absoluteEIP/sharedcounter semantics; sourceprep60s85hard menu-only knownrunning438980/4389d8 + keycounters/read-onlyqueue snapshots, positivepump mustadvance before inference. No runtime until LMarbles release; no productionfix.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (official original acquisition and closure)
+  status: active (original passive startup validation)
   owner: /root/new_game_refill_after_lbreakout
-  Next: Acquire official SourceForge lmarbles-1.0.8-win32.zip (~1.8MB), hash/list/license/PE/data closure within50MB retained and2GiBfloor. No local original yet; executable/DLL paths unknown until inspected. Distinct from public MicrosoftPlus98 marbles solitaire. No runtime grant.
+  Next: OfficialZIP5520b52e17373c75325fbcd058a128c0a8264f5178aa9d721a6d0c824307376f 1753947B,86originals+11DLL closure verified/CRTavailable. Docs902024657 main; sole60s85hard passive launch granted freshpins/a4a4bc6a, wholeoriginalcwd emptyargs+authenticCRT. No input/build/browser/gameplayclaim.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.

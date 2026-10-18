@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws ordinary Up/Left run cleanly exited but no clear camera movement; fourzero counters lack positivecontrol, so inputloss not established. Source counter/address/messagepath audit active. LMarbles original official package acquisition replaces qualifiedLBreakout2. No active runtime grant or public deployment.
+Current 2026-10-18: Outlaws correct keyboard events leave hostqueue, consumingthread/owner remains unresolved; positivepump/queue diagnostic preparing source-only. LMarbles original86files/11DLLs verified, sole60s85hard passive startup granted with authenticCRT. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
