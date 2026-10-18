@@ -184,3 +184,46 @@ overflow, two instances sharing one process, independent processes and reset.
 Exercise a real WIN87EM far dispatcher call, full caller restoration and nested
 call32 preservation. This is more than a local guard relaxation; it should be
 reviewed and tested as its own lifecycle change before original replay.
+
+Counted fixed-builtin implementation checkpoint
+
+The follow-up implements that narrow stage, pending build/native admission.
+WIN16_PROCESS_ARENA grows from 8 to 208 declared bytes: offsets 0/4 remain
+publication/pending-cleanup; 8..103 hold 24 fixed-import masks; 104..207 hold
+13 pairs of import and explicit counters. The generated region mirror changes
+the size/hash; subsequent bases do not move in the canonical layout. Full-arena
+creation clears the extra state before publication. The formerly tempting
+hidden-page 8f00 gap is occupied by QT stack leases and is not used.
+
+Each lifecycle importer acquires its fixed edges in native code under its
+unpublished record. Native rollback/final release removes those edges, after
+WEP where applicable; failed WEP retains them. Explicit acquisitions increment
+a separate process-owned count after successful alias allocation. Alias
+exhaustion traps without holding the mutex or changing counts. Counts saturate
+by rejecting a sum of 65535 rather than wrapping. Aliases remain while either
+kind of reference lives and are forgotten on the final release. FreeLibrary
+cannot consume import edges; invalid/double nested release remains diagnostic.
+
+KERNEL.95 inside a live bridge recognizes fileless fixed names only, validates
+the complete Pascal stack/far return and bounded selector-relative string,
+acquires the identity synchronously and returns AX with the original high half.
+KERNEL.96 handles only a counted fixed acquisition and preserves EAX (void).
+Dynamic/image-backed names still reach the explicit unsupported guard; no
+singleton PE request, host yield, legacy loader or invented success is used.
+GetModuleUsage includes fixed import+explicit references. Fixed ordinal
+GetProcAddress returns the existing real dispatcher thunk, preserving unknown
+ordinal fail-fast on invocation. Existing named builtin routing is unchanged.
+GetModuleHandle inside the bridge does not fabricate an absent fixed identity.
+
+Prepared full-interpreter tests use authentic synthetic NE relocation tables:
+LibEntry calls KERNEL.95 twice; two importers/coordinators produce usage 4;
+actual KERNEL.48/96/50 and resolved WIN87EM.1 execute; duplicate release cannot
+steal import ownership; failed initialization removes imports and retains
+already-returned explicit acquisitions; dynamic/CARDS/unknown names trap;
+duplicate linking, overflow, wrong-owner acquisition, cancellation, execution
+budget exhaustion, final alias retirement/reuse and process replacement are
+asserted. Tiny actual-helper regression adds alias-exhaustion/no-mutex-leak.
+The existing source closure tests and structural/region/handler/tier gates pass.
+At this checkpoint these WAT/native assertions have NOT run and no original
+executable has run. Remaining ABI, fixture and integration failures must be
+resolved under a separately granted bounded runtime window before admission.

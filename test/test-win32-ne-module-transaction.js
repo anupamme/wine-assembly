@@ -32,7 +32,9 @@ helpers.push('win16_apply_relocs','win16_module_name','win16_module_id','win16_s
  'win16_thunk_count_get','win16_thunk_count_set');
 helpers.push('win16_kernel');
 helpers.push('win16_GetModuleUsage','win16_module_usage','win16_arg16','win16_api_key',
- 'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16');
+ 'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16','win16_h16_forget',
+ 'win16_bridge_fixed_load_api','win16_bridge_fixed_free_api','win16_bridge_fixed_api_stack',
+ 'win16_cstr_to_pstr','win16_name_scratch','win16_far_to_guest');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
 // Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
 // reached is a distinct host Error, never the RuntimeError expected from the
@@ -45,7 +47,9 @@ for (const name of new Set([...form('win16_kernel').matchAll(/\(call \$([^\s)]+)
 }
 
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
- .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)');
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)')
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 8)','(i32.const 4104)')
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 104)','(i32.const 4200)');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
  DLL_LOAD_LOCK:0x1100,current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
@@ -82,6 +86,7 @@ const source=`
 (func $cs_pop (nop))
 (func $gs16 (param $p i32) (param $v i32) (i32.store16 (call $g2w (local.get $p)) (local.get $v)))
 (func $gl16 (param $p i32) (result i32) (i32.load16_u (call $g2w (local.get $p))))
+(func $gl8 (param $p i32) (result i32) (i32.load8_u (call $g2w (local.get $p))))
 (func $win16_dispatch (param $off i32) (param $ret i32)
   (if (i32.ne (local.get $off) (global.get $WIN16_BRIDGE_RETURN)) (then (unreachable)))
   (call $win16_bridge_invoke_return (local.get $ret)))
@@ -339,6 +344,22 @@ assert.equal(first.win16_h16(0x00d10002),0x109,'skip selector-shaped free slot')
 assert.equal(first.win16_h16(0x12345678),0x107,'UI map capacity preserved');
 for(let i=3;i<37;i++)assert.notEqual(first.win16_h16(0x00d10000+i)&7,7);
 bytes.set(tableBefore,handleTable);first.win16_handle_next_set(oldNext);
+// Exhaust real alias allocation: it traps before changing the explicit count,
+// and never leaves the loader mutex held. Restore only fixture-owned bytes.
+const fullMap=bytes.slice(handleTable,handleTable+4097*4),fullNext=first.win16_handle_next_get();
+const aliasFrame=first.win16_bridge_frame_begin();assert(aliasFrame);
+assert.equal(first.win16_bridge_scope_begin(aliasFrame),1);
+try {
+ for(let i=1;i<=4096;i++)view.setUint32(handleTable+i*4,0x12345678,true);
+ first.win16_handle_next_set(4096);
+ const count=first.win16_bridge_fixed_usage(12);
+ assert.throws(()=>first.win16_bridge_fixed_acquire(12),WebAssembly.RuntimeError);
+ assert.equal(first.win16_bridge_fixed_usage(12),count,'failed alias leaves refs unchanged');
+ assert.equal(view.getUint32(fixture.DLL_LOAD_LOCK,true),0,'no mutex retained after alias trap');
+} finally {
+ bytes.set(fullMap,handleTable);first.win16_handle_next_set(fullNext);
+ assert.equal(first.win16_bridge_frame_end(aliasFrame),1);
+}
 for(const h of [0,0xffff,0xfffe,0x100,first.win16_h16(0x12345678)])assert.equal(first.win16_module_usage(h),0);
 // Execute the real argument reader, KERNEL dispatcher and far API return.
 // Only the outer controlled guest runner is synthetic in this tiny harness.

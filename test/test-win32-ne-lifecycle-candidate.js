@@ -7,6 +7,7 @@ const R = require('../lib/region-map.generated');
 const { createNeLifecycle } = require('../lib/ne-lifecycle');
 const { inspectNeDll } = require('../lib/ne-image');
 const { neLifecycleImage } = require('./helpers/ne-lifecycle-image');
+const { neFixedLifecycleImage } = require('./helpers/ne-fixed-lifecycle-image');
 const SIZE = 944 * 65536, BASE = 0x400000;
 const hostLogTail=[];
 function fixture() {
@@ -205,6 +206,81 @@ async function main() {
     console.log(JSON.stringify({case:name,actualIndirectWepRetry:true}));
   }
   // Fileless imports execute the same real dispatcher as standalone Win16.
+  // Fixed import edges and explicit acquisitions share an identity, but a
+  // guest FreeLibrary must never consume an importer's owned edge.
+  const fixedImages=new Map([
+    ['FIXEDA',neFixedLifecycleImage()],
+    ['FIXEDB',neLifecycleImage({dependencies:['WIN87EM']})],
+    ['FIXEDZERO',neFixedLifecycleImage({loads:0,result:0})],
+    ['FIXEDKEEP',neFixedLifecycleImage({loads:1,result:0})],
+    ['FIXEDDYNAMIC',neFixedLifecycleImage({loads:1,name:'TOOLHELP'})],
+    ['FIXEDCARDS',neFixedLifecycleImage({loads:1,name:'CARDS'})],
+    ['FIXEDUNKNOWN',neFixedLifecycleImage({loads:1,name:'ABSENT'})],
+  ]);
+  const fixedLoop=neFixedLifecycleImage({loads:0});fixedLoop.set([0xeb,0xfe],0x240);
+  fixedImages.set('FIXEDLOOP',fixedLoop);
+  for(const image of fixedImages.values())inspectNeDll(image);
+  const fixed=createNeLifecycle(e,memory,fixedImages,{maxBlocks:10000,sliceBlocks:256});
+  const fixedOther=createNeLifecycle(foreign,memory,fixedImages,{maxBlocks:10000,sliceBlocks:256});
+  const inScope=fn=>{const t=e.win16_bridge_frame_begin();assert(t);try {
+    assert.equal(e.win16_bridge_scope_begin(t),1);return fn();
+  }finally{assert.equal(e.win16_bridge_frame_end(t),1);}};
+  assert.equal(e.win16_bridge_fixed_acquire(12),0,'no unowned acquisition');
+  assert.equal(e.win16_bridge_fixed_usage(12),0);
+  const fixedA=fixed.load('FIXEDA');assert.equal(e.win16_bridge_fixed_usage(12),3);
+  const fixedB=fixedOther.load('FIXEDB');assert.equal(e.win16_bridge_fixed_usage(12),4);
+  assert.equal(fixed.call(fixedA,'VALUE'),4,'real GetModuleUsage includes both importers and both loads');
+  const far=fixed.call(fixedA,5);assert(far,'real ordinal lookup');
+  assert.equal(fixed.call(fixedA,6),0,'resolved WIN87EM.1 executes');
+  assert.equal(fixed.call(fixedA,4)&65535,0x5a5a,'void FreeLibrary preserves AX');
+  assert.equal(fixed.call(fixedA,'VALUE'),3);
+  assert.equal(fixed.call(fixedA,4)&65535,0x5a5a);
+  assert.equal(fixed.call(fixedA,'VALUE'),2);
+  assert.throws(()=>fixed.call(fixedA,4),WebAssembly.RuntimeError,'extra free cannot steal import ref');clean();
+  assert.throws(()=>fixed.load('FIXEDZERO'),/AX zero/);
+  assert.equal(e.win16_bridge_fixed_usage(12),2,'failed initializer unwinds fixed imports');
+  for(const name of ['FIXEDDYNAMIC','FIXEDCARDS','FIXEDUNKNOWN']) {
+    assert.throws(()=>fixed.load(name),WebAssembly.RuntimeError);clean();
+    assert.equal(e.win16_bridge_fixed_usage(12),2,'unsupported nested name does not leak refs');
+  }
+  assert.throws(()=>fixed.load('FIXEDKEEP'),/AX zero/);
+  assert.equal(e.win16_bridge_fixed_usage(12),3,'completed explicit acquisition survives caller rejection');
+  const fixedHandle=inScope(()=>{
+    const h=e.win16_bridge_fixed_acquire(12);assert(h>=32);
+    assert.equal(e.win16_bridge_fixed_release(h),1);return h;
+  });
+  inScope(()=>assert.equal(e.win16_bridge_fixed_release(fixedHandle),1));
+  fixed.release(fixedA);assert.equal(e.win16_bridge_fixed_usage(12),1);
+  fixedOther.release(fixedB);assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
+  inScope(()=>{
+    assert.equal(e.win16_bridge_fixed_release(fixedHandle),0,'retired alias');
+    for(const id of [0,9,13,37,65535])assert.equal(e.win16_bridge_fixed_acquire(id),0);
+    const h=e.win16_bridge_fixed_acquire(12);assert(h>=32);
+    assert.equal(e.win16_bridge_fixed_release(h),1);
+  });clean();
+  const fixedRegion=R.BASE.WIN16_PROCESS_ARENA;
+  inScope(()=>{
+    const packed=Buffer.alloc(16);packed[0]=8;packed.write('FIXEDRAW',1,'ascii');
+    const parent=e.win16_bridge_module_claim(packed.readBigUInt64LE(0),packed.readBigUInt64LE(8));assert(parent>0);
+    assert.equal(e.win16_bridge_fixed_link(parent,12),1);
+    assert.equal(e.win16_bridge_fixed_link(parent,12),0,'duplicate link');
+    assert.equal(e.win16_bridge_fixed_link(parent,9),0,'CARDS is not fileless');
+    assert.equal(e.win16_bridge_fixed_usage(12),1);
+    assert.equal(foreign.win16_bridge_fixed_acquire(12),0,'foreign owner cannot borrow lease');
+    assert.equal(e.win16_bridge_module_rollback(parent),1);
+    assert.equal(e.win16_bridge_fixed_usage(12),0);
+    const count=fixedRegion+104+12*8+4;
+    view.setUint32(count,65535,true);
+    try {assert.equal(e.win16_bridge_fixed_acquire(12),0,'WORD count overflow rejected');}
+    finally {view.setUint32(count,0,true);}
+  });clean();
+  const cancelled=new AbortController();cancelled.abort(new Error('fixed cancelled'));
+  assert.throws(()=>createNeLifecycle(e,memory,fixedImages,{signal:cancelled.signal}).load('FIXEDA'),/fixed cancelled/);
+  assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
+  assert.throws(()=>createNeLifecycle(e,memory,fixedImages,{maxBlocks:32,sliceBlocks:16}).load('FIXEDLOOP'),/budget exhausted/);
+  assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
+  console.log(JSON.stringify({case:'counted-fixed-builtin',imports:2,explicit:2,actualNestedWin16Apis:true}));
+
   // Dynamic builtins retain native records, so two coordinators/importers can
   // share the identity without an orphan slot or a synthetic guest module.
   const builtinImage=(module,symbol,pushWord=false)=>{
@@ -292,6 +368,12 @@ async function main() {
     assert.equal(lifecycle.load('PMPRO62'),moduleId);lifecycle.release(moduleId);lifecycle.release(moduleId);clean();
     originalResult={sha256:crypto.createHash('sha256').update(original).digest('hex'),lookedUp,loadInitLookupUnload:true};
   }
+  // Run replacement last: no stale arena-address assertions after release.
+  const resetHandle=inScope(()=>e.win16_bridge_fixed_acquire(12));assert(resetHandle);
+  assert.equal(e.win16_bridge_fixed_usage(12),1);
+  assert.equal(e.win16_process_arena_release(),1);
+  assert.equal(e.win16_bridge_fixed_usage(12),0,'unpublished arena has no identities');
+  inScope(()=>assert.equal(e.win16_bridge_fixed_usage(12),0,'new arena clears lifetime state'));
   assert.equal(e.is_win16(),0);assert.equal(e.get_image_base(),BASE);assert.equal(e.win16_process_arena_release(),1);
   console.log(JSON.stringify({passed:true,actualGuestExecution:true,moduleLifecycle:true,qtThunk:false,original:originalResult}));
 }
