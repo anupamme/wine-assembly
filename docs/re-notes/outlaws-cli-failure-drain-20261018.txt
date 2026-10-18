@@ -1,0 +1,34 @@
+Outlaws CLI exceptional-exit diagnostics (2026-10-18)
+
+Evidence: scratch/runs/20261018-outlaws-original-qt-observation/review.json
+and output.log in the shared repository. The original f7c9f5c module reached
+PMPRO62F DllMain -> QT -> win16_dispatch fail-fast. The CLI awaited the loader
+outside its batch trap handler, so the rejection bypassed the local buffered
+log drain and normal control-stdin close. The owned 85-second watchdog killed
+the still-resident process. This did not identify the missing Win16 import.
+
+test/run.js now registers initialized cleanup callbacks with
+lib/cli-failure-cleanup.js. On rejection it closes the control channel, flushes
+pending trace deduplication, drains existing decoded diagnostics, and rethrows
+the same error. Cleanup errors are reported individually without skipping
+remaining cleanup or replacing the original error. Normal end-of-loop control
+closure remains in place and is not repeated after a later exception. The
+top-level rejection handler sets a nonzero exit code before existing worker
+and renderer retirement. No Win16 behavior or import identity is synthesized;
+post-QT frame restoration makes win16_last_module/ordinal unsuitable here.
+
+Pure JS verification: node test/test-failure-cleanup.js exercises async
+rejection identity, cleanup failure isolation, reverse cleanup order, success
+ownership, and a real child process with open parent-held stdin, readline,
+buffered diagnostics, and exit status 1. This tests the cleanup primitive;
+it does not yet prove the full CLI Win16 decoder/loader integration.
+
+Required runtime follow-up, only under the root's serialized runtime grant:
+run an actual unknown NE import through ordinary QT/DllMain with --control-stdin
+and an open parent write end. Assert the decoded module/ordinal/return address
+appears exactly once, the original RuntimeError survives, the CLI exits nonzero
+without watchdog intervention, and owned processes retire. Also run a normal
+CLI control-stdin regression. Reuse the pinned module; this JS-only change
+does not require rebuilding WAT. Then a separately granted bounded original
+Outlaws launch can identify its actual missing import. No original rerun or
+compatibility improvement is claimed by this change.
