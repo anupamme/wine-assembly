@@ -212,3 +212,56 @@ compiler layout hash `a44784ce3c83726a`. Final free disk was 2,417,893,376 bytes
 above the strict 2GiB floor. PID postflight found no surviving owned build/test
 processes. Build outputs stay in the isolated checkout; this note and the
 runner/command receipts provide recovery if ignored artifacts are lost.
+
+## QT gateway source candidate (2026-10-18)
+
+Task branch `task/outlaws-qt-gateway-oct18`, WAT checkpoint
+`4da5ed1de3065cd3d9cb17bf4552075f587747db`, test follow-up
+`77d4a0a31c5bb18233e40bcfadb8cf915673b3a6`, implements the gateway candidate.
+It remains off main pending canonical build, native execution and review.
+No QT execution or original-payload compatibility is claimed here.
+
+The native frame acquires its scope, executable target pin and mapping lease
+before replacing its first owned selector with the original aligned stack
+window. Incoming EBP becomes its offset in that window; arguments stay at S+4.
+The far continuation replaces the DWORD at S, which frame teardown restores
+before releasing backing. BP-relative scratch modifications are already visible
+in the original stack; there is no copied-stack fallback or copyback overwrite.
+Entry DS/ES/FS/GS are zero, DI/SI hold the old SS/FS low words and DX holds the
+new SS. Unspecified high halves follow the documented preservation convention.
+
+The QT return path accepts only the owned continuation and even final SP in
+the range S+4 through B-0x3c. It preserves independent EAX/EDX/ECX and actual
+RETF cleanup. The old strict LibEntry/WEP stack-word cleanup is unchanged.
+Native settlement owns the completed frame, verifies the original request
+serial, restores the CPU/segment/FP frame and return slot, then merges only
+the successful outputs. Failure restores the suspended caller and leaves its
+request parked. Worker and asynchronous invocation yields remain explicit errors.
+
+The source candidate includes ordinary QT_Thunk GetProcAddress dispatch, but
+must not be merged merely because pure tests pass. Pure driver cancellation,
+planner, fixture/image, existing guest-service and touched source gates passed.
+`test/test-ne-qt-gateway-candidate.js` is prepared, **not executed**: real PE
+lookup/call, original BP scratch writes, callee-entry segment/DX checks, SI/DI
+scratch observations, distinct full results, RETF 0/4/odd/overflow, trap/loop/
+corrupt-return/cancellation, foreign-owner rejection, and complete saved-context
+comparison on failure. Run both direct and sparse modes after a runtime grant:
+
+```sh
+bash tools/build.sh
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-gateway-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-gateway-candidate.js --sparse
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-guest-lifecycle-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-stack-lease-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-ownership-candidate.js
+```
+
+Prepared bounded runner: shared
+`scratch/runs/20261018-outlaws-qt-gateway/run-bounded.js`. Proposed budgets are
+180s for canonical build, 90s for sequential native tests, 64MiB incremental
+disk use, admission at 2GiB+80MiB free, stop at 2GiB+16MiB, and 8MiB logs.
+Build prerequisites omitted by the sparse checkout must be materialized
+narrowly: `fonts/Terminal.fon` and the two tracked `docs/dos-corpus/live/toyvm*`
+bundles. Cooperative scheduler execution, concurrent/nested native scenarios
+and original PMPRO62F remain further validation work; prepared tests are not
+evidence for those paths.
