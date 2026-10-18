@@ -39,6 +39,7 @@ async function main() {
   const wasm = compileSrcWasm((file, text) => file !== '13-exports.wat' ? text : text + `
     (export "test_qsort_continue_owned" (func $qsort_continue))
     (export "test_qsort_begin_owned" (func $handle_qsort))
+    (export "test_reload_code" (func $clear_cache))
     (export "test_qsort_token" (func $invocation_current))
     (func (export "test_qsort_depth") (result i32) (global.get $qsort_depth))
     (func (export "test_invocation_depth") (result i32) (global.get $invocation_depth))`,
@@ -57,6 +58,9 @@ async function main() {
     const b = image(options);
     new Uint8Array(memory.buffer, x.get_staging(), b.length).set(b);
     assert.strictEqual(x.load_pe(b.length), address(0x2000));
+    // The fixture rewrites code at the same addresses in a retained instance.
+    // load_pe establishes ownership, but is not a decoded-code cache reset.
+    x.test_reload_code();
     initialSP = x.guest_alloc(0x10000) + 0xfff0;
     dv.setUint32(translate(initialSP), 0, true);
     x.set_esp(initialSP); x.set_eip(address(0x2000)); x.clear_yield();

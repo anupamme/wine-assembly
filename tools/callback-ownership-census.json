@@ -27,7 +27,7 @@
       "targets": [],
       "sha256": "f9a4a6e1b5a539159c40fba8ed9430c3a2c1059843f9b4fbfa8be6d0b992b698",
       "kind": "lifecycle",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -125,7 +125,7 @@
       "targets": [],
       "sha256": "a33425c6754ad432b4aa33ceb4c69bed776e4ff0993ab7130702ee52b893858c",
       "kind": "lifecycle",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3493,7 +3493,7 @@
       ],
       "sha256": "9d8471f35ee83f4bb908bd8937039bd39e0f83966ffdd1011c3b7605f2bce000",
       "kind": "callback",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3507,7 +3507,7 @@
       "targets": [],
       "sha256": "ea9af68000cc2f864945cd27a64020995ad1b8e7b8e9a70dd5de900558a6683a",
       "kind": "continuation",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3532,7 +3532,7 @@
       ],
       "sha256": "b7076322aa46751fb34a5855fb42cc610abdf02a7bf06598f21f486541301d83",
       "kind": "continuation",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3546,7 +3546,7 @@
       "targets": [],
       "sha256": "078cfb997e83060a185b1ac5cf7906f5439fcdc2f4cf6e6a873cb35d09ad606a",
       "kind": "continuation",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3558,7 +3558,7 @@
       "targets": [],
       "sha256": "af1eeb1be8defa580aa0e980e04c9766d2e9347c5a1ca4783c2d95bb08465582",
       "kind": "continuation",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3583,7 +3583,7 @@
       ],
       "sha256": "2923c69f7a11bbd94afe10597b5661bc4c02db7dd7ff9f3ebcb69db300c9f9b7",
       "kind": "callback",
-      "reason": "Retained qsort comparator ownership source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
