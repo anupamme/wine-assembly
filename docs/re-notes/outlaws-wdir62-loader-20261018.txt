@@ -1,0 +1,69 @@
+Original WDIR62 load failure: source-only diagnosis, 2026-10-18
+
+Source base: 706212c1fa0f4657835d925f718e731710193906.
+Prior runtime evidence: scratch/runs/20261018-outlaws-original-dosalloc-observation
+(original 65b7a674 module; no runtime was launched in this investigation).
+
+The observed LoadLibrary16 result 2 is a legacy error code, not an NE module
+handle. The root WDIR62 image passes inspectNeDll. Its first dependency GDI
+is wrongly treated as a DLL file by prepareNeSources, which skips only KERNEL.
+An original-byte source replay requests wdir62.dll, then gdi.dll, and throws
+NeLoadError(2, 'Missing NE image GDI'). serviceNeGuestYieldSync translates
+that typed error into guest return value 2. The subsequent GetProcAddress16
+calls on 2 cannot resolve an owned module. This explains the link dialog.
+The earlier Win32 LoadLibraryExA rejection of wdir62.dll is a separate,
+expected PE-vs-NE format boundary and does not establish a corrupt image.
+
+Verified original:
+  wdir62.dll: 24216 bytes
+  SHA256 722d1ecab96d80ae0f1ab9f71522b55841a43cf07277d233ccdfad6166e96ce9
+  dependencies: GDI, KERNEL, TOOLHELP, USER, WIN87EM
+  TOOLHELP import: ordinal 80
+  GDI imports: ordinals 80, 87, 121 and 122
+Original bytes retained at shared scratch/runs/
+20261018-outlaws-original-recovery/original/payload/wdir62.dll.
+
+Reproduce without a build or guest execution:
+  node tools/inspect-outlaws-wdir62-closure.js /home/user/wine-assembly/scratch/runs/20261018-outlaws-original-recovery/original/payload
+The script pins the original hash and uses a case-insensitive directory
+resolver. It is not a runtime VFS capture. The original launch mounts the
+payload; the CLI additionally searches test/binaries/dlls and payload
+dlls/plugins. No GDI image was present in those checked fallback locations.
+The precise first failure is established by source replay; the original
+runtime trace itself records return code 2, not the dependency name.
+
+Repair must address both layers:
+  lib/ne-sources.js skips only KERNEL for closure and import validation.
+  lib/ne-lifecycle.js independently skips only KERNEL in preflight,
+  acquisition/linking and loaded-import validation.
+Fixing the source closure alone cannot make the lifecycle accept GDI.
+
+Fixed builtins are classified by src/08c-ne-loader.wat:
+win16_system_module_id; USER/GDI/WIN87EM already have real dispatcher paths.
+CARDS has a fixed id but still requires a real image (dll-loader.js). Thus
+"every fixed id is fileless" would be an incorrect classification.
+
+TOOLHELP requires additional ownership work. lib/dll-loader.js already calls
+it emulated for standalone Win16 loads, but its identity uses a dynamic name
+slot, not a fixed system id. win16_dynamic_module_id can allocate that slot
+during relocation; blindly skipping TOOLHELP in bridge preflight would leave
+the slot outside the bridge dependency/reference/rollback protocol. The
+Win32 bridge needs an owned emulated dependency identity that remains valid
+across two importers, unload/rollback, concurrent coordinators and slot reuse.
+Do not manufacture a guest DLL or success-returning export to obtain it.
+
+The current win16_toolhelp switch implements 54, 62, 67, 68, 72, 75, 76, 77,
+but not 80. If WDIR62 calls 80 after correct admission it must still fail
+loudly until real behavior is implemented. Static import presence does not
+establish that the ordinal is called during initialization. No next runtime
+blocker or successful initialization is claimed.
+
+Required validation for a repair: source-only closure tests for fixed
+fileless builtins versus real CARDS/custom/missing modules; real far-call
+fixtures for USER/GDI/WIN87EM; TOOLHELP identity reuse with two importers,
+rollback and final release; unknown builtin ordinals retain fail-fast;
+unsupported dynamic dependencies remain diagnostic. Native tests/build and
+another original run require a fresh root runtime grant.
+
+This checkpoint changes no production behavior. No game bytes, OS version,
+license answers, silent stubs or application DLL substitutions were changed.
