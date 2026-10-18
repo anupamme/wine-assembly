@@ -7480,7 +7480,9 @@
     (if (i32.eq (i32.and (local.get $mapped) (i32.const 0xFFFF0000)) (i32.const 0x00D10000))
       (then
         (local.set $id (i32.and (local.get $mapped) (i32.const 65535)))
-        (if (call $win16_bridge_fixed_id (local.get $id))
+        (if (i32.and (i32.eqz (global.get $is_win16))
+          (i32.and (i32.ne (i32.atomic.load (region.addr $WIN16_PROCESS_ARENA 0)) (i32.const 0))
+            (i32.ne (call $win16_bridge_fixed_id (local.get $id)) (i32.const 0))))
           (then (return (call $win16_bridge_fixed_usage (local.get $id)))))))
     (local.set $id (i32.const 1))
     (block $missing (loop $scan

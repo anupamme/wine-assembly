@@ -361,6 +361,17 @@ try {
  assert.equal(first.win16_bridge_frame_end(aliasFrame),1);
 }
 for(const h of [0,0xffff,0xfffe,0x100,first.win16_h16(0x12345678)])assert.equal(first.win16_module_usage(h),0);
+// A standalone task still queries its legacy fixed-id image reference count.
+const legacyFixed=first.win16_dll_rec(3),legacyFixedRefs=first.win16_dll_refs_ptr(3);
+const savedFixed=bytes.slice(legacyFixed,legacyFixed+16),savedFixedRefs=view.getUint32(legacyFixedRefs,true);
+const legacyFixedHandle=first.win16_h16(0x00d10003),wasWin16=first.get_is_win16();
+try {
+ view.setUint32(legacyFixed+12,1,true);view.setUint32(legacyFixedRefs,7,true);first.set_is_win16(1);
+ assert.equal(first.win16_module_usage(legacyFixedHandle),7,'standalone fixed legacy count preserved');
+} finally {
+ first.set_is_win16(wasWin16);bytes.set(savedFixed,legacyFixed);view.setUint32(legacyFixedRefs,savedFixedRefs,true);
+ first.win16_h16_forget(0x00d10003);
+}
 // Execute the real argument reader, KERNEL dispatcher and far API return.
 // Only the outer controlled guest runner is synthetic in this tiny harness.
 function queryUsage(handle,expected) {
@@ -382,6 +393,27 @@ assert.equal(lifecycle.lookup(parentId,'MISSING'),0);assert.equal(lifecycle.look
 whileRunning=()=>{
  const r=first.win16_bridge_module_record(parentId);assert.equal(view.getUint32(r+24,true),1,'active module pin');
  queryUsage(parentInstance,2);queryUsage(parentHandle,2);queryUsage(0xfffe,0);
+ const apiBefore=cpu(first),reg=first.get_reg_base(),apiSp=view.getUint32(reg+16,true)-16;
+ const apiAt=translate(apiSp),apiBytes=bytes.slice(apiAt,apiAt+8),fixedState=bytes.slice(4104,4304);
+ try {
+  view.setUint32(reg+16,apiSp,true);
+  view.setUint16(apiAt,0,true);view.setUint16(apiAt+2,first.get_sreg_cs(),true);
+  view.setUint16(apiAt+4,0xffff,true);view.setUint16(apiAt+6,first.get_sreg_ds(),true);
+  assert.equal(first.win16_bridge_fixed_api_stack(8),1,'valid owned Pascal frame');
+  assert.equal(first.win16_bridge_fixed_load_api(),0,'name outside selector');
+  assert.equal(first.win16_bridge_fixed_free_api(),0,'unknown handle');
+  view.setUint16(apiAt+2,0,true);
+  assert.equal(first.win16_bridge_fixed_load_api(),0,'invalid far return selector');
+  assert.equal(first.win16_bridge_fixed_free_api(),0,'invalid far return selector');
+  view.setUint32(reg+16,first.get_seg_base_ss()+65534,true);
+  assert.equal(first.win16_bridge_fixed_load_api(),0,'truncated load stack');
+  assert.equal(first.win16_bridge_fixed_free_api(),0,'truncated free stack');
+  assert.deepEqual(bytes.slice(4104,4304),fixedState,'malformed calls leave all fixed refs unchanged');
+ } finally {
+  bytes.set(apiBytes,apiAt);
+  for(const [n,v] of Object.entries(apiBefore.globals))first['set_'+n](v);
+  for(const [n,b] of Object.entries(apiBefore.files))bytes.set(b,first['get_'+n+'_base']());
+ }
  const beforeGuestFree=bytes.slice(),beforeGlobals=saved.map(n=>first['get_'+n]());
  for(const ordinal of [95,96])assert.throws(()=>first.win16_kernel(ordinal),WebAssembly.RuntimeError,'actual KERNEL dispatcher rejects bridge guest lifecycle');
  assert.deepEqual(bytes,beforeGuestFree,'rejected guest lifecycle changes no segments/refs/pins');

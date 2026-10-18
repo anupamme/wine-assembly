@@ -216,7 +216,15 @@ async function main() {
     ['FIXEDDYNAMIC',neFixedLifecycleImage({loads:1,name:'TOOLHELP'})],
     ['FIXEDCARDS',neFixedLifecycleImage({loads:1,name:'CARDS'})],
     ['FIXEDUNKNOWN',neFixedLifecycleImage({loads:1,name:'ABSENT'})],
+    ['FIXEDWEP',neLifecycleImage({dependencies:['WIN87EM'],trapWep:true})],
+    ['FIXEDKERNEL',neFixedLifecycleImage({loads:1,name:'KERNEL'})],
   ]);
+  const fixedQuery=neFixedLifecycleImage({loads:0});fixedQuery.writeUInt16LE(1,0x80+0x1e);
+  fixedImages.set('FIXEDQUERY',fixedQuery);
+  const badName=neFixedLifecycleImage({loads:1});badName.fill(65,0x520,0x600);
+  fixedImages.set('FIXEDBADNAME',badName);
+  const badSelector=neFixedLifecycleImage({loads:1});badSelector[0x246]=0x06; // push ES (NULL), not DS
+  fixedImages.set('FIXEDBADSEL',badSelector);
   const fixedLoop=neFixedLifecycleImage({loads:0});fixedLoop.set([0xeb,0xfe],0x240);
   fixedImages.set('FIXEDLOOP',fixedLoop);
   for(const image of fixedImages.values())inspectNeDll(image);
@@ -227,11 +235,14 @@ async function main() {
   }finally{assert.equal(e.win16_bridge_frame_end(t),1);}};
   assert.equal(e.win16_bridge_fixed_acquire(12),0,'no unowned acquisition');
   assert.equal(e.win16_bridge_fixed_usage(12),0);
+  const queryId=fixed.load('FIXEDQUERY');assert.equal(fixed.call(queryId,7),0,'absent fixed GetModuleHandle');
   const fixedA=fixed.load('FIXEDA');assert.equal(e.win16_bridge_fixed_usage(12),3);
   const fixedData=inScope(()=>e.win16_bridge_module_data(fixedA));
   const fixedDataAt=e.guest_to_wasm(e.win16_seg_base(fixedData>>>3))>>>0;
   assert.equal(view.getUint32(fixedDataAt+12,true)>>>16,0xaabb,'LoadLibrary preserves high EAX');
   assert.equal(view.getUint16(fixedDataAt,true),view.getUint16(fixedDataAt+2,true),'duplicate loads return one identity');
+  assert.equal(fixed.call(queryId,7),view.getUint16(fixedDataAt,true),'imported identity GetModuleHandle');
+  assert.equal(fixed.call(fixedA,8),0,'unknown named WIN87EM export stays absent');
   const fixedB=fixedOther.load('FIXEDB');assert.equal(e.win16_bridge_fixed_usage(12),4);
   assert.equal(fixed.call(fixedA,'VALUE'),4,'real GetModuleUsage includes both importers and both loads');
   const far=fixed.call(fixedA,5);assert(far,'real ordinal lookup');
@@ -243,7 +254,7 @@ async function main() {
   assert.throws(()=>fixed.call(fixedA,4),WebAssembly.RuntimeError,'extra free cannot steal import ref');clean();
   assert.throws(()=>fixed.load('FIXEDZERO'),/AX zero/);
   assert.equal(e.win16_bridge_fixed_usage(12),2,'failed initializer unwinds fixed imports');
-  for(const name of ['FIXEDDYNAMIC','FIXEDCARDS','FIXEDUNKNOWN']) {
+  for(const name of ['FIXEDDYNAMIC','FIXEDCARDS','FIXEDUNKNOWN','FIXEDBADNAME','FIXEDBADSEL']) {
     assert.throws(()=>fixed.load(name),WebAssembly.RuntimeError);clean();
     assert.equal(e.win16_bridge_fixed_usage(12),2,'unsupported nested name does not leak refs');
   }
@@ -256,6 +267,19 @@ async function main() {
   inScope(()=>assert.equal(e.win16_bridge_fixed_release(fixedHandle),1));
   fixed.release(fixedA);assert.equal(e.win16_bridge_fixed_usage(12),1);
   fixedOther.release(fixedB);assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
+  assert.equal(fixed.call(queryId,7),0,'final alias retired');fixed.release(queryId);
+  const kernelId=fixed.load('FIXEDKERNEL');assert(fixed.call(kernelId,8),'known named KERNEL.GetVersion resolves');
+  fixed.call(kernelId,4);fixed.release(kernelId);clean();
+  const fixedWep=fixed.load('FIXEDWEP');
+  assert.throws(()=>fixed.release(fixedWep),/termination retained/);
+  assert.equal(e.win16_bridge_fixed_usage(12),1,'failed WEP retains imports');
+  inScope(()=>{
+    const wep=e.win16_bridge_module_termination(fixedWep,0);
+    const address=e.win16_seg_base(wep>>>19)+(wep&65535);
+    bytes.set([0xb8,1,0,0xca,2,0],e.guest_to_wasm(address)>>>0);
+    e.invalidate_code_range(address,6);
+  });
+  fixed.retryTermination(fixedWep);assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
   inScope(()=>{
     assert.equal(e.win16_bridge_fixed_release(fixedHandle),0,'retired alias');
     for(const id of [0,9,13,37,65535])assert.equal(e.win16_bridge_fixed_acquire(id),0);
