@@ -7,6 +7,7 @@
     { "api": "FreeLibrary16", "ordinal": 36 },
     { "api": "GetProcAddress16", "ordinal": 37 },
     { "name": "QT_Thunk", "api": "QT_Thunk", "ordinal": 585 },
+    { "name": "Beep", "api": "Beep", "ordinal": 586 },
     {
       "name": "_hread",
       "api": "_hread",

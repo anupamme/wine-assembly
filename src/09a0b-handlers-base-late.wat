@@ -474,7 +474,7 @@
 
   ;; 482: Beep — STUB: unimplemented
   (func $handle_Beep (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr))
+    (call $beep_begin (local.get $arg0) (local.get $arg1))
   )
 
   ;; 483: GetDiskFreeSpace{A,W}(lpRoot, lpSectorsPerCluster, lpBytesPerSector,

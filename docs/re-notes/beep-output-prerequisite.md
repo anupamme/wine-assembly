@@ -250,3 +250,27 @@ canonical module. The original non-tail disk-stop receipt remains retained as
 `test-beep-continuation.json`. Both dispatch modes are now validated. The cause
 of the first transient disk drop was not established; no memory size, assertions
 or guard threshold changed for the retry.
+
+### Source-only public handler/export enable candidate
+
+The candidate now delegates `$handle_Beep` to the validated alertable entry
+helper. KERNEL32 gains exactly one named export, Beep, using new emulator ABI
+ordinal586; no previous ordinal changes. The generator updates only its marked
+image-export section. The ESP checker recognizes only this named front door's
+delegation to `$beep_begin`, whose continuation owns the 12-byte stdcall cleanup.
+No API catalog additions or global name-resolution fallback were introduced.
+
+The continuation fixture now invokes the unchanged production handler, with
+no handler substitution, and executes the real dynamic KERNEL32 image JMP
+inside a nested guest APC. A new `test-beep-production.js` fixture loads an
+actual deterministic PE containing a Beep import, checks the patched IAT and
+the independently resolved KERNEL32 EAT pointer, then executes both guest
+routes. It asserts pending alertable completion, BOOL/ESP/last-error behavior,
+invalid frequency/zero duration, unsupported long duration and suspended
+output. Both fixtures accept `--no-tail-calls`. Audio remains controlled; the
+new source candidate and positive routes have not been built or run yet.
+
+The original MadBomber hModule attribution and any game retry remain separate
+from this candidate. The earlier observed generated-export absence is fixed
+explicitly here, without claiming that the original failing call has been
+reproduced or repaired.
