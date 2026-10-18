@@ -1,3 +1,5 @@
+Current 2026-10-18: Binary fdopen73e0802a7 source checkpoint under independent review, compiled tests pending. Callbacktoken2fdafb676 independently reviewed under explicit quiescence limits; sole compiled validation granted subject to strict disk reserve. No original game retry or public deploy.
+
 Current 2026-10-18: Descriptor prerequisite passed worker normalbuild/compiledIO/broker/dup/stdio/lazy tests; root normalbuild/compiledIO PASS exact2f73127d. Worker proceeds real binary fdopen adoption source-only; callback token implementation continues independently. No game retry/public deploy; existing ownership coverage limits remain.
 
 Current 2026-10-18: Descriptor1e8515342 independently reviewed, sole compiled validation granted under disk guards. Callbackcensus c32fce97e source/mutation tests passed; offmain until actual token instrumentation, worker continuing source-only. Disk reserve recovered via sparse narrowing; no gameplay qualification or public deploy.

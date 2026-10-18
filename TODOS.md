@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (fdopen adoption; callback token implementation)
+  status: active (fdopen source review; callback compiled validation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Descriptor prerequisite passed worker normalbuild/compiledIO/broker/dup/stdio/lazy tests; root normalbuild/compiledIO PASS exact2f73127d. Worker continues real binary fdopen adoption source-only. Callback token primitives/hooks source implementation active, still no jump handlers. One runtime, no public deploy.
+  Next: Real binaryfdopen73e0802a7 source/pure tests ready independentreview. Callbacktoken2fdafb676 source review clear, sole guardedbuild/actualWAT+NE/arena tests granted subject to disk admission. Neither game qualified; one runtime no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (private invocation token implementation)
+  status: active (invocation token compiled validation)
   owner: /root/crt_jump_ownership
-  Next: Sourcecensus c32fce97e pushed; rootcensus/mutationPASS, no ownership tokens yet. Continue actual per-thread/process invocation primitives+lifetime reset+sync hooks/tests source-only. Census stays offmain until useful instrumentation, dynamicJS/deferred coverage explicit, jump APIs disabled.
+  Next: Actual shared allocator/epochs/thread roots/sync hooks9fa190753+4ba2a432b synced main via2fdafb676; independentreviewclear under hostquiescence assumption. Sole build/native grant strict sparse/disk guards; test actual loader/init_thread where feasible. Deferred/JS ownership and jump handlers remain incomplete.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (binary fdopen adoption source implementation)
+  status: active (binary fdopen independent review)
   owner: /root/crt_fdopen_prerequisite
-  Next: Prerequisite1e8515342+baa7ecacd reviewed and workercompiledtestsPASS; root normalbuild/compiledIO PASS exact2f73127d. Next real binary fdopen adoption with access/mode checks, samefd/cursor ownership and atomic/revalidated publication; actual close/dup/failure tests. Unsupported text explicit; no OSWorker/concurrentadoption claim.
+  Next: Real binaryfdopen73e0802a7 pushed: atomiclive/access/mode/uniqueowner reservation then FILE publication without reopening/truncation/seek. PureVFS/static testsPASS, actualWAT lifecycle/dynamic/OOM tests authored notrun. Independentreview active; text/default unsupported failfast, no game run.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
