@@ -1674,7 +1674,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: AVP2-BROWSER-AUDIO-FPS-20261018
   status: review (real gameplay audio non-silent; quality/logical FPS/device unverified)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Run20261018-avp2-audio-capture records10.113s actualgame WebM, decoded stereo non-silent peak0.2445/RMS0.0530. Root reviewedscene62. Browser and independently observed controller exit0; prior143 cause remains unknown. Audible quality needs listening; logicalFPS/device remain unqualified.
+  Next: Original gameplay/audio capture already reviewed. Offline source-hash-verified review20261018-avp2-audio-signal-review:10.02s decodedPCM,0invalid/0clipped samples, longest exactzero20ms, no exact repeated full100ms windows. These do not prove audioquality or absenceoflooping; listening/reference remains missing. LogicalFPS/device require new permitted runtime and safe diskheadroom; no duplicate capture while held.
   Evidence: scratch/runs/20261018-avp2-browser-launch; scratch/runs/20261018-avp2-paired-plan
 
 
