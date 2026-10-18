@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws original replay queued; SuperTux registered validation)
+  status: active (Outlaws gameplay; replacement selection after SuperTux completion)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws tested fix83bbb77fd merged, original source-only preparation active. SuperTux sole registered startup grant with freshpins; one runtime, no publicdeploy.
+  Next: SuperTux core registered gameplay qualified with reviewed movement/jump. Outlaws sole ordinary gameplay observation; fresh new_game_refill_after_supertux source-only screens existing unqualified nonpublic candidates for second lane, no download/build/runtime. Disk2.88GB, strict2GiB floor.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (main menu verified; gameplay and local registration preparation)
+  status: active (ordinary Main Game gameplay observation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Original20261018-outlaws-original-fixed-lifecycle-observation reached reviewed mainmenu; child2232312/controller2232304 exit0, root independentpostflight3118pins/originals/groupemptyPASS. Source-only Main Game/control prep active; fresh outlaws_local_registration owns missing local corpus mapping. No gameplay/audio claim; runtime waits SuperTux.
+  Next: Sole180s/210hard direct original interaction granted after SuperTux clean release. Source/menu docs566c9b300 main. Localregistrationa5f356dd7 root pureJS registry/original30mount29mapping testsPASS; merge queued until runtimepins released. No gameplay claim before reviewed level/input evidence.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (registered real-time gameplay validation)
+  status: done (registered first-level movement and jump reviewed)
   owner: /root/supertux_registration
-  Next: Sole180s guest210shard gameplay grant after Outlaws release; documented --real-ticks, independently balanced holds, inspect Options binding before jump. Source/module/original pins refreshed; softquit corrected185s. No build/browser/audioFPS claim.
+  Next: Registered realticks run20261018-supertux-registered-gameplay verifies same-life left/right and Options-confirmed Space jump/landing; root reviewed right and jump sequence,3119pins/originals/groupemptyPASS, both exits0. Docs aea0ceb44 main. Audio/FPS/browser/device/fullgame remain unqualified. Refill worker new_game_refill_after_supertux selects next actionable nonpublic title.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.

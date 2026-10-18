@@ -1,4 +1,4 @@
-Current 2026-10-18: Original Outlaws main menu reviewed; child/controller exit0 and root independent source/original/group postflight PASS. SuperTux owns registered real-time gameplay validation. Outlaws ordinary Main Game preparation and missing local corpus registration run source-only in parallel. One runtime; no public deployment.
+Current 2026-10-18: SuperTux registered first-level movement and verified Space jump/landing reviewed; clean exits and original/source preservation verified. Core game lane complete, audio/FPS/device separate. Outlaws owns ordinary Main Game observation; local registration tested and queued for merge after runtime release. Fresh worker selects replacement nonpublic title. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
