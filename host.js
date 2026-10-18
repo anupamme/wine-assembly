@@ -4440,6 +4440,7 @@ class WineAssembly {
       log: console.log,
       advanceGuestTime: ms => this._advanceGuestTickMs(ms,
         this.hostCtx && this.hostCtx.sharedAudio),
+      findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
       findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, {
         vfsPaths: [fullName.toLowerCase(), 'c:\\' + fileName, 'c:\\plugins\\' + fileName],
       }),
@@ -4698,6 +4699,7 @@ class WineAssembly {
         log: console.log,
         advanceGuestTime: ms => this._advanceGuestTickMs(ms,
           this.hostCtx && this.hostCtx.sharedAudio),
+        findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
         findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, {
           vfsPaths: [fullName.toLowerCase(), 'c:\\' + fileName, 'c:\\plugins\\' + fileName],
         }),

@@ -45,3 +45,49 @@ assert.deepEqual(f.settled,[]);assert.deepEqual(f.trace,[]);retained.neRecovery.
 assert.throws(()=>retained.neRecovery.retry(14),/Unowned/);
 f=serviceFixture(1);assert.throws(()=>f.run({neBackend:'worker'}),/Worker/);assert.deepEqual(f.settled,[]);
 console.log('PASS NE host request service: sparse strings, exactly-once settlement, stale completion, typed errors, explicit WEP retry and Worker rejection');
+
+// Execute the production browser entry methods with a captured ProcessBoot
+// boundary. No browser, WASM or guest execution: this checks the options that
+// nested DLL initialization actually inherits, including both COM routes.
+async function browserLoaderOptions(omitSyncIn) {
+  const source=fs.readFileSync(require.resolve('../host.js'),'utf8');
+  const method=(name,next)=>{
+    const start=source.indexOf('  async '+name+'() {');
+    const end=source.indexOf(next,start);
+    assert(start>=0&&end>start,'production method boundaries');
+    const body=source.slice(start,end);
+    return name===omitSyncIn ? body.replace(/^.*findDllSync:.*\n(?![\s\S]*findDllSync:)/m,'') : body;
+  };
+  const calls=[],syncBytes=new Uint8Array([77,90]),asyncBytes=new Uint8Array([80,69]);
+  const capture=kind=>async opts=>{
+    assert.equal(typeof opts.findDllSync,'function',kind+' nested NE resolver');
+    assert.equal(opts.findDllSync('demo.dll','C:\\Outlaws\\DEMO.DLL'),syncBytes);
+    assert.equal(await opts.findDll('demo.dll','C:\\Outlaws\\DEMO.DLL'),asyncBytes);
+    calls.push({kind,exports:opts.exports});
+  };
+  const context=vm.createContext({console,ProcessBoot:{
+    handleComDllYield:capture('COM'),handleLoadLibraryYield:capture('PE')}});
+  const Host=vm.runInContext('(class {'+
+    method('handleComDllLoad','  _registerDllBitmapResources(')+
+    method('handleLoadLibrary','  // A cooperative CreateThread')+
+    method('handleCooperativeThreadLoadLibraries','  // Finish (or cancel)')+'})',context);
+  const host=new Host(),main={},pe={},com={};
+  Object.assign(host,{instance:{exports:main},memory:{buffer:new ArrayBuffer(8)},
+    _findDllBytes:async()=>asyncBytes,
+    _findDllBytesSync:(file,full)=>{assert.equal(file,'demo.dll');assert.equal(full,'C:\\Outlaws\\DEMO.DLL');return syncBytes;},
+    threadManager:{backend:'cooperative',
+      threadsAwaitingLoadLibrary:()=>[{instance:{exports:pe}}],
+      threadsAwaitingComDll:()=>[{instance:{exports:com}}],
+      cooperativeCallbackExports:t=>t.instance.exports,
+      adoptMainGlobals:()=>{},publishWorkerGlobals:()=>{}}});
+  await host.handleComDllLoad();await host.handleLoadLibrary();
+  assert.equal(await host.handleCooperativeThreadLoadLibraries(),2);
+  assert.deepEqual(calls,[{kind:'COM',exports:main},{kind:'PE',exports:main},
+    {kind:'PE',exports:pe},{kind:'COM',exports:com}]);
+  if(!omitSyncIn)console.log('PASS production browser main/cooperative PE and COM options preserve synchronous nested NE lookup');
+}
+(async()=>{
+  await browserLoaderOptions();
+  await assert.rejects(browserLoaderOptions('handleComDllLoad'),/COM nested NE resolver/);
+  await assert.rejects(browserLoaderOptions('handleCooperativeThreadLoadLibraries'),/COM nested NE resolver/);
+})().catch(error=>{console.error(error);process.exitCode=1;});
