@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws input investigation; LBreakout2 acquisition)
+  status: active (Outlaws input diagnostic preparation; LBreakout2 startup)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: SuperTux core complete. Outlaws ordinary menu input boundary under source audit. LBreakout2 2.5.1 original official3.3MB ZIP acquisition/closure authorized <=50MB retained; freshworker new_game_refill_after_supertux owns second lane, no runtime yet. Disk strict2GiB floor, one runtime.
+  Next: Two lanes: Outlaws heldmouse discriminator sourceprep, LBreakout2 sole original passive60s85hard startup. SuperTux corequalified. All runtime serialized; no publicdeploy/browser under4GiB.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (menu input-delivery investigation)
+  status: active (held-mouse input discriminator preparation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: MainGame observation exits0/root3118pins/originals/groupemptyPASS; click movescursor but Enter/Down do not activate; exact guestdelivery unproved because late traces suppressed. Worker source-audits input path before next run. Localregistration5334e4d3d and boundarydocs56f0e99ed pushed; integration30files29mappings verified. Dashboard direct-route evidence publication assigned registration worker.
+  Next: Original mousepoll uses GetAsyncKeyState highbit; CLI click down/up samebatch is a plausible missedpress cause, keyboarddelivery unproved. Audit848fbb3d0 main; worker source-prepares250ms independentrelease with bounded route/dispatch/APItraces, no productionfix. Dashboard results now distinguish directmenu startupPASS and activationFAILED; localregistration prepared. Runtime waits LBreakout2.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1700,7 +1700,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LBreakout2 2.5.1 original Windows release
   id: NEW-GAME-LBREAKOUT2-20261018
-  status: active (official original acquisition and dependency closure)
+  status: active (original passive startup validation)
   owner: /root/new_game_refill_after_supertux
-  Next: Acquire official LGames SourceForge lbreakout2-2.5.1-win32.zip (~3.3MB), hash/list/license/PE dependency audit within50MB retained. No local payload or recorded prior public/qualified alias found; exact executable/data paths unknown until extraction. No runtime granted.
+  Next: OfficialZIP a152c0867abf9bc39563db932ebcd0797ed3e35d20f21c2dca2a81e321313675 3322804B;230originals verified,220clientfiles with5bundledDLLs+authenticCRT. Source docs4c7c4f911 main; worker granted sole60sguest85hard passive run freshpins/currenta4a4bc6a,2GiBguards8MiBlog. No gameplay claim.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.

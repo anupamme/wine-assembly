@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws original Main Game input attempt remained at menu; clean exits and pins verified, source input-delivery audit active. Local corpus registration5334e4d3d pushed and exact files/mappings verified; direct-route dashboard evidence publication underway. Second lane LBreakout2 original acquisition/closure; SuperTux core gameplay complete. No public deployment.
+Current 2026-10-18: LBreakout2 verified original package and complete client DLL closure now in sole bounded passive startup. Outlaws source audit identifies possible same-batch mouse-release mismatch; heldpress with targeted input traces preparing, no production fix or gameplay claim. Both direct Outlaws dashboard evidence records published with honest menu/failed-activation scope. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
