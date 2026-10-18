@@ -54,7 +54,7 @@ async function main() {
   try {
     const [code, signal] = await new Promise((resolve, reject) => {
       child.once('error', reject);
-      child.once('exit', (code, signal) => resolve([code, signal]));
+      child.once('close', (code, signal) => resolve([code, signal]));
     });
     assert.strictEqual(timedOut, false, 'open stdin kept rejected run alive');
     assert.strictEqual(signal, null);

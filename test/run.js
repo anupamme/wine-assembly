@@ -1761,7 +1761,10 @@ async function main() {
     for (let i = 0; i < logs.length; i++) console.log(logs[i]);
     logs.length = 0;
   };
-  onFailure(flushLogs);
+  onFailure(() => {
+    traceGateBatch = -1; // failure diagnostics are never hidden by a trace window
+    flushLogs();
+  });
   let stopped = false;
   let hostExitRequested = false;
   // Batches actually executed. Not the same as MAX_BATCHES once --max-seconds
