@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws health diagnostic; fresh replacement screening)
+  status: active (Outlaws tint audit; Barrage original acquisition)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: LTris corequalified narrowordinarylateralcontrol independently reviewed; freshworker /root/new_game_refill_after_ltris screening next nonpublicoriginal title. Outlaws sole next boundedread-onlyhealth/tint discriminator after pureprep. One runtime strict2GiBfloor, no publicdeploy.
+  Next: LTris corequalified; freshworker /root/new_game_refill_after_ltris acquires officialBarrage1.0.5Win32ZIP under32MiB for hash/license/PEclosure/passiveplan. Outlaws numerichealth corrects visualdeath inference; tint sourceaudit active. Runtime idle pendingreadyplan, strict2GiBfloor no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (read-only health/HUD discriminator preparation and grant)
+  status: active (tint caller source audit; prior visual death inference corrected)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Sourceworker mapped inventoryhealth+20 initializer10, damage/gain counters, HUDheart predicate and independentpalette tint. Retainedruns lack numericstate. ONE passive4sample health/counters/tint discriminator granted after purepointerchecks/freshpins, strictguards no guestwrites/keyboard/build/browser/retry.
+  Next: Health-tint run fourvalidatedsamples health10/lost0/gained0, finaltint255/color4e8ca8; root reviewed fullhearts tintedtown. Sepia alone is NOT death; earlier visualinference unsupported. Root3149pins31original/groupemptyPASS exits0. Sourceaudit tintcaller429a4c/429a5e clearingconditions; no runtimegrant. Turning remains unverified.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1717,4 +1717,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: done (registered lateral player control independently reviewed)
   owner: /root/new_game_refill_after_lmarbles
   Next: Root reviewed samegreenI20px left atsamey with PiecesPlaced0 then releaseidle retainsx whilegravitymovesy. Registeredrun20261018-ltris-registered-gameplay root3234pins40originalarchive/module/groupemptyPASS exits0. Rotation testednextsquare ambiguous, right/audioFPS/browser/fullgame unqualified. Fresh /root/new_game_refill_after_ltris selectingreplacement.
+  Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
+
+- [~] New-game lane: LGames Barrage 1.0.5 original Windows release
+  id: NEW-GAME-BARRAGE-20261018
+  status: active (original acquisition and import closure)
+  owner: /root/new_game_refill_after_ltris
+  Next: Official installer-free Win32ZIP advertised1.5MB; no local/public/qualified match. Acquire under32MiB retained with strict2GiB+64MiBstop, hash/license/PE32 DLL-data closure/passiveplan. No runtime/build/browser grant.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
