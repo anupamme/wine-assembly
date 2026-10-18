@@ -80,8 +80,15 @@ async function child() {
     assert.equal(await c.call(direct, [], 0), marker, 'actual x86 JMP executes native handler');
     assert(c.logged.includes('GetLastError'), 'dispatcher decodes complete native export name');
     assert.equal(await c.api('GetProcAddress', [h, d.names.callback]), 0);
-    assert.notEqual(await c.api('GetProcAddress', [h, d.names.qt]), 0);
-    for (const ordinal of [35, 36, 37]) assert.equal(await c.api('GetProcAddress', [h, ordinal]), 0);
+    for(const [ordinal,name] of [[35,'LoadLibrary16'],[36,'FreeLibrary16'],[37,'GetProcAddress16'],
+      [manifest.exports.find(e=>e.name==='QT_Thunk').ordinal,'QT_Thunk']]) {
+      assert(manifest.exports.some(e=>e.ordinal===ordinal&&e.api===name));
+      const entryRva=c.read(h+c.read(exp+28)+(ordinal-1)*4);assert(entryRva,name+' EAT entry');
+      const pointer=await c.api('GetProcAddress',[h,name==='QT_Thunk'?d.names.qt:ordinal]);
+      assert.equal(pointer,h+entryRva,name+' resolves the actual EAT entry');
+      assert.equal(c.read(pointer)&255,0xe9,name+' has executable JMP thunk');
+    }
+    for(const ordinal of [0,38,1025,65535])assert.equal(await c.api('GetProcAddress',[h,ordinal]),0);
     const callback = await c.api('GetProcAddress', [BASE, d.names.callback]);
     assert.equal(await c.call(callback, [], 0), 0x12345678);
     parentPort.postMessage({ phase: 'loaded', h, direct }); waitGate(gate, 2);

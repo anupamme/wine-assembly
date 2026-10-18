@@ -6,6 +6,7 @@ const {serviceNeGuestYieldSync}=require('../lib/ne-guest-bridge');
 const {neQtFixture}=require('./helpers/ne-qt-fixture');
 const {createNeLifecycle}=require('../lib/ne-lifecycle');
 const {ThreadManager}=require('../lib/thread-manager');
+const {observeNeQtRun}=require('./helpers/ne-qt-run-observer');
 async function main(){
   assert(process.env.WA_TEST_WASM,'explicit prebuilt module required');
   const module=await WebAssembly.compile(fs.readFileSync(process.env.WA_TEST_WASM));
@@ -83,7 +84,7 @@ async function main(){
   e.set_current_thread_id(owner);assert(e.win16_bridge_frame_end(frame));
   }
   // Abort raised during a synchronous guest slice is observed before merging.
-  let aborted=false;const facade={...e,run(n){e.run(n);aborted=true;}};
+  let aborted=false;const facade=observeNeQtRun(e,()=>{aborted=true;});
   assert.throws(()=>serviceNeGuestYieldSync({exports:facade,memoryBuffer:memory.buffer,
     neInvokeOptions:{maxBlocks:4096,sliceBlocks:64,signal:{get aborted(){return aborted;}}}}),/cancelled/);
   assert.equal(read(s),ret);assert.equal(e.get_esp()>>>0,s);assert(e.win16_guest_request_valid(request));
