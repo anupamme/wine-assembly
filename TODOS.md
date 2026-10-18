@@ -1735,7 +1735,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (public Beep production routing validation queued)
-  owner: /root/crt_fdopen_prerequisite
-  Next: Publichandler and explicit KERNEL32 export6bca68ada independently source-clear. Actual PE IAT/dynamic EAT positive/failure fixtures authored; serialized dualdispatch validation next. Original MSVCR70 hModule provenance and hardware audio remain separate, no original retry yet.
+  status: active (validated Beep integrated; original retry next)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: PublicBeep1247a3d2c reviewed production static/dynamic calls and continuation bothdispatch plus Worker retirement PASS. Root normalbuild203163dd PASS. Original log identifies KERNEL32 handle; next fresh pinned original retry to establish actual progress. No gameplay or audible hardware proof.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
+
+- [~] Legacy texture cube API conformance
+  id: D3D-LEGACY-TEXTURE-CAPS-AUDIT-20261013
+  status: active (cube surface contract fixture preparation)
+  owner: /root/legacy_cube_api_fixture
+  Next: Audit46ccf573 identifies dwCaps2 discarded at creation/retrieval. Actual guest COM fixture next; independent face storage/lifetime before renderer qualification. Prior palette fixes remain merged.
+  Done: Correct advertised API and software/GPU behavior with versioned contract and tests.
