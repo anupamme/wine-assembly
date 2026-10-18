@@ -218,12 +218,19 @@ async function main() {
     ['TOOLA',builtinImage('TOOLHELP',76,true)],['TOOLB',builtinImage('TOOLHELP',76,true)],
     ['TOOLBAD',builtinImage('TOOLHELP',80)],
     ['USERBAD',builtinImage('USER',65535)],
+    ['SHELLNAME',builtinImage('SHELL','ShellAbout')],
+    ['TOOLNAME',builtinImage('TOOLHELP','UNKNOWN_EXPORT')],
     ['TOOLZERO',neLifecycleImage({dependencies:['TOOLHELP'],result:0})],
     ['TOOLTRAP',neLifecycleImage({dependencies:['TOOLHELP'],trapInit:true})],
     ['ALLBUILTIN',neLifecycleImage({dependencies:['TOOLHELP','VER','AVIFILE','MSVIDEO','DISPLAY','LZEXPAND']})],
   ]);
   const builtins=createNeLifecycle(e,memory,builtinImages,{maxBlocks:10000,sliceBlocks:256});
   const foreignBuiltins=createNeLifecycle(foreign,memory,builtinImages,{maxBlocks:10000,sliceBlocks:256});
+  for(const name of ['SHELLNAME','TOOLNAME']) {
+    const before=records(),calls=invocations;
+    assert.throws(()=>builtins.load(name),/importer-owned name resolution/);
+    assert.equal(invocations,calls);assert.deepEqual(records(),before);clean();
+  }
   const claimName=name=>{const b=Buffer.alloc(16);b[0]=name.length;b.write(name,1,'ascii');return e.win16_bridge_module_claim(b.readBigUInt64LE(0),b.readBigUInt64LE(8));};
   const publishFrame=e.win16_bridge_frame_begin();assert(publishFrame);
   assert.equal(e.win16_bridge_scope_begin(publishFrame),1);
@@ -264,8 +271,8 @@ async function main() {
   for(const name of ['TOOLBAD','USERBAD']) {
     const id=builtins.load(name);hostLogTail.length=0;
     assert.throws(()=>builtins.call(id,'VALUE'),WebAssembly.RuntimeError);
-    assert.equal(e.win16_last_module(),name==='TOOLBAD'?namedSlot('TOOLHELP'):2);
-    assert.equal(e.win16_last_ordinal(),name==='TOOLBAD'?80:65535,'trap reaches the original unsupported dispatcher entry');
+    assert(hostLogTail.includes(name==='TOOLBAD'?(namedSlot('TOOLHELP')<<16)|80:(2<<16)|65535),
+      'trap reaches the original unsupported dispatcher entry');
     clean();builtins.release(id);clean();onlyModule(0,0);
   }
   for(let iteration=0;iteration<30;iteration++) {

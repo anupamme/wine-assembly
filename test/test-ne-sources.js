@@ -46,12 +46,13 @@ for (const module of ['KERNEL','USER','GDI','KEYBOARD','SOUND','SHELL','MMSYSTEM
   'COMMDLG','DDEML','NDDEAPI','WIN87EM','TOOLHELP','VER','AVIFILE','MSVIDEO','DISPLAY','LZEXPAND']) {
   for (const symbol of [65535, 'UNKNOWN_EXPORT']) {
     const requests=[];
-    const result=prepareNeSources('demo', name=>{
+    const prepare=()=>prepareNeSources('demo', name=>{
       requests.push(name);
       assert.equal(name,'demo.dll','builtin must not consult or load a supplied image');
       return neLifecycleImage({importEntry:{module,symbol}});
     });
-    assert.deepEqual([...result.sources.keys()],['DEMO']);
+    if(typeof symbol==='string')assert.throws(prepare,/importer-owned name resolution/);
+    else assert.deepEqual([...prepare().sources.keys()],['DEMO']);
     assert.deepEqual(requests,['demo.dll']);
   }
 }

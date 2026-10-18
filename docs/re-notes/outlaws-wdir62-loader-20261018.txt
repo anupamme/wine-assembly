@@ -65,7 +65,7 @@ rollback and final release; unknown builtin ordinals retain fail-fast;
 unsupported dynamic dependencies remain diagnostic. Native tests/build and
 another original run require a fresh root runtime grant.
 
-This checkpoint changes no production behavior. No game bytes, OS version,
+The initial diagnosis checkpoint changes no production behavior. No game bytes, OS version,
 license answers, silent stubs or application DLL substitutions were changed.
 
 Source repair checkpoint (after diagnosis commit 4bf423608):
@@ -79,11 +79,39 @@ The existing reference/dependency release path removes them after the last
 importer or failed initializer. Direct LoadLibrary16/GetProcAddress16 access
 to these fileless dynamic modules is not added by this dependency-only fix.
 
-Source closure regression passes all fixed/dynamic names with ordinal and
-named imports, including unknown exports; missing CARDS/custom images retain
+Source closure regression admits all fixed/dynamic names with ordinal
+imports, including unknown ordinals; missing CARDS/custom images retain
 typed errors. Original WDIR62 source replay now requests only the authentic
-WDIR62 image and completes its closure. Native fixtures are prepared for
+WDIR62 image and completes its closure. Native fixtures cover
 real USER/GDI/WIN87EM and TOOLHELP calls, two importer/coordinator identity
 sharing, failed init rollback, final release/reload over 30 cycles, and exact
-TOOLHELP.80/USER.65535 fail-fast. Build and native execution are pending grant;
-source-only tests do not establish successful guest initialization.
+TOOLHELP.80/USER.65535 fail-fast.
+
+Independent review correction: builtin IMPORTNAME thunks currently read the
+global NE name table rather than an importer-owned table. Both preflight
+layers now reject builtin imports by name with an explicit unsupported
+diagnostic before guest writes. Native SHELL.ShellAbout and unknown TOOLHELP
+name cases verify zero guest invocations and unchanged module records.
+App-local named exports keep their existing owned-image resolution. CARDS
+remains file-backed, but its existing fixed-id/dynamic bridge routing mismatch
+is not repaired here; no successful CARDS execution is claimed.
+
+Validation, root-granted sole 120s build + 90s native window:
+  source WAT 80fea404a, unchanged through 86959ddb2 and final JS/test correction
+  canonical build-3 PASS 19.096s, child 2184400 exit 0
+  wasm SHA256 9bf6051774ad0ebe29744e7ade39d902b4f4716661cf9d8e36c2a24b06ae2a29
+  native-2 PASS 97ms, child 2185917 exit 0
+  actual TOOLHELP.80 diagnostic key 0x000e0050; USER.65535 key 0x0002ffff
+  original guest was not run; no original initialization success claim
+  all five build/native child PIDs absent at postflight; no signals/guard kill
+  final free disk 3823194112 bytes, above 2 GiB floor
+Evidence: shared scratch/runs/20261018-outlaws-wdir62-load/ with bounded
+run-bounded.js, build-{1,2,3}/native-{1,2} logs and actual-close receipts.
+Initial build attempts stopped at missing sparse fonts/docs (restored tracked
+files); initial native failed only a diagnostic assertion reading trace-only
+globals while tracing was disabled. Final assertion uses actual fail-fast
+host diagnostic keys. All failures retained. The final run includes existing
+image lifecycle regressions plus the new real dispatcher/lifetime cases.
+Rebuild with bash tools/build.sh; run native fixture with explicit
+WA_TEST_WASM=build/wine-assembly.wasm node test/test-win32-ne-lifecycle-candidate.js.
+Always obtain a fresh root slot before repeating build/native/original runs.
