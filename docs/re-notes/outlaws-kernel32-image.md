@@ -72,3 +72,32 @@ controller is deliberately not restored: it pins obsolete external modules
 and unrelated historical paths. A current admitted run must seal its actual
 inputs and retain process cleanup evidence. Browser behavior, original game
 launch, gameplay, audio and FPS remain unvalidated.
+
+## October 18 granted runtime result
+
+Source `22422c7940b278633e0bcd9aa27439d276e9dd18` passed the canonical build,
+both tiny direct/sparse tests, both full-module concurrent direct/sparse tests,
+the process-memory hook suite, and all four real-PE lifecycle cases
+(`no-threads-final`, `no-threads-outstanding`, `threads-final`,
+`threads-outstanding`). No production fix or test relaxation was needed.
+The first build attempt stopped because the sparse checkout omitted tracked
+fonts; adding `fonts` to that checkout made the second build pass.
+
+Tested module SHA-256:
+`05a194de503daa160a5ee69053c8614ddee4a1ae09e11a2bb950e44843de72ca`.
+Matching map SHA-256:
+`8a27d3ea0da7fbfcb6f96c91ef590a2a20a568a68aa068594322026b3b203478`.
+Evidence is retained in `scratch/runs/20261018-outlaws-kernel32-restored/` in
+the shared repository: `receipt.json`, both build logs, all test logs/statuses,
+four lifecycle case logs/results, exact fixture, candidate module/map, physical
+source hashes and before/after process inventories. Rebuild from the source
+commit with its tracked fonts and `/tmp/wa-outlaws-local-deps/node_modules`
+dependencies; the deterministic fixture recipe above reproduces its bytes.
+
+Postflight verified every prior source/preserved integration-module/original
+payload pin unchanged, all lifecycle child PIDs absent, only the six exact
+pre-existing infrastructure Node processes present, and 2,672,689,152 bytes
+free (above the 2 GiB floor). The dependency symlink was removed and the
+worktree was clean before recording this receipt. No original game, browser,
+main merge or deployment ran. This validates the readable-image stage only;
+guest LoadLibrary16/GetProcAddress16/FreeLibrary16 and QT remain separate work.
