@@ -2260,7 +2260,128 @@
   ;; suspended frame will resume in, PROVIDED the caller's $ip is that frame's:
   ;; a caller that runs several nested runs in a row (11-seh's filter walk)
   ;; must put the frame's own $ip back before each enter.
+  ;; BEGIN CALLBACK INVOCATION OWNERSHIP
+  ;; Private invocation identities. NOT YET A COMPLETE NONLOCAL-JUMP GUARD:
+  ;; only synchronous depth-enter/leave boundaries are instrumented so far.
+  ;; Deferred callbacks, JS entry and asynchronous injection remain pending.
+  ;;
+  ;; Shared header: [next serial:i64, process epoch:i64]. Never zero this
+  ;; region on process reset: IDs cannot repeat while memory is reused.
+  ;; Sixteen slots (main + fifteen workers), 528 bytes each:
+  ;; [root owner:i64, reserved:8, stack:64*i64]. Instance globals own the
+  ;; cursor; the shared root catches a retired instance after slot reuse.
+  (global $CALLBACK_OWNERSHIP i32 (region.addr $CALLBACK_OWNERSHIP 0))
+  (global $CALLBACK_OWNERSHIP_SIZE i32 (region.size $CALLBACK_OWNERSHIP))
+  (global $invocation_epoch (mut i64) (i64.const 0))
+  (global $invocation_root (mut i64) (i64.const 0))
+  (global $invocation_slot (mut i32) (i32.const 0))
+  (global $invocation_tid (mut i32) (i32.const 0))
+  (global $invocation_depth (mut i32) (i32.const 0))
+
+  (func $invocation_new_id (result i64)
+    (local $old i64) (local $next i64)
+    (loop $retry
+      (local.set $old (i64.atomic.load (region.addr $CALLBACK_OWNERSHIP 0)))
+      ;; The all-ones serial is the last identity. Exhaustion never wraps.
+      (if (i64.eq (local.get $old) (i64.const -1)) (then (unreachable)))
+      (local.set $next (i64.add (local.get $old) (i64.const 1)))
+      (br_if $retry (i64.ne (local.get $old)
+        (i64.atomic.rmw.cmpxchg (region.addr $CALLBACK_OWNERSHIP 0)
+          (local.get $old) (local.get $next)))))
+    (local.get $next))
+
+  ;; Caller has allocated root and validated tid/epoch before publishing.
+  (func $invocation_install (param $tid i32) (param $epoch i64) (param $root i64)
+    (global.set $invocation_slot (i32.add (region.addr $CALLBACK_OWNERSHIP 16)
+      (i32.mul (local.get $tid) (i32.const 528))))
+    (global.set $invocation_tid (i32.add (local.get $tid) (i32.const 1)))
+    (global.set $invocation_epoch (local.get $epoch))
+    (global.set $invocation_root (local.get $root))
+    (global.set $invocation_depth (i32.const 0))
+    (i64.store offset=16 (global.get $invocation_slot) (local.get $root))
+    (i64.atomic.store (global.get $invocation_slot) (local.get $root)))
+
+  (func $invocation_process_begin
+    (local $epoch i64) (local $root i64)
+    ;; Process loads belong to the main instance. Reject before allocation.
+    (if (i32.ne (global.get $current_thread_id) (i32.const 1)) (then (unreachable)))
+    (local.set $epoch (call $invocation_new_id))
+    (local.set $root (call $invocation_new_id))
+    (i64.atomic.store (region.addr $CALLBACK_OWNERSHIP 8) (local.get $epoch))
+    (call $invocation_install (i32.const 0) (local.get $epoch) (local.get $root)))
+
+  (func $invocation_thread_begin (param $tid i32)
+    (local $epoch i64) (local $root i64) (local $candidate i64)
+    (if (i32.ge_u (local.get $tid) (i32.const 16)) (then (unreachable)))
+    (if (i32.ne (global.get $current_thread_id) (i32.add (local.get $tid) (i32.const 1)))
+      (then (unreachable)))
+    (local.set $epoch (i64.atomic.load (region.addr $CALLBACK_OWNERSHIP 8)))
+    ;; Standalone instances/tests can initialize before a process loader. Only
+    ;; the first wins; a racing initial thread joins that same bootstrap epoch.
+    (if (i64.eqz (local.get $epoch))
+      (then
+        (local.set $candidate (call $invocation_new_id))
+        (local.set $epoch (i64.atomic.rmw.cmpxchg (region.addr $CALLBACK_OWNERSHIP 8)
+          (i64.const 0) (local.get $candidate)))
+        (if (i64.eqz (local.get $epoch)) (then (local.set $epoch (local.get $candidate))))))
+    (local.set $root (call $invocation_new_id))
+    (call $invocation_install (local.get $tid) (local.get $epoch) (local.get $root)))
+
+  (func $invocation_validate
+    (if (i64.eqz (global.get $invocation_root)) (then (unreachable)))
+    (if (i32.ne (global.get $current_thread_id) (global.get $invocation_tid))
+      (then (unreachable)))
+    (if (i64.ne (global.get $invocation_epoch)
+          (i64.atomic.load (region.addr $CALLBACK_OWNERSHIP 8))) (then (unreachable)))
+    (if (i64.ne (global.get $invocation_root)
+          (i64.atomic.load (global.get $invocation_slot))) (then (unreachable))))
+
+  (func $invocation_current (result i64)
+    (call $invocation_validate)
+    (i64.load (i32.add (global.get $invocation_slot)
+      (i32.add (i32.const 16) (i32.shl (global.get $invocation_depth) (i32.const 3))))))
+
+  (func $invocation_enter (result i64)
+    (local $id i64)
+    (call $invocation_validate)
+    ;; Root occupies stack[0], leaving 63 child levels. Fail before mutation.
+    (if (i32.ge_u (global.get $invocation_depth) (i32.const 63)) (then (unreachable)))
+    (local.set $id (call $invocation_new_id))
+    (global.set $invocation_depth (i32.add (global.get $invocation_depth) (i32.const 1)))
+    (i64.store (i32.add (global.get $invocation_slot)
+      (i32.add (i32.const 16) (i32.shl (global.get $invocation_depth) (i32.const 3))))
+      (local.get $id))
+    (local.get $id))
+
+  (func $invocation_leave (param $expected i64)
+    (call $invocation_validate)
+    (if (i32.eqz (global.get $invocation_depth)) (then (unreachable)))
+    (if (i64.ne (local.get $expected) (call $invocation_current)) (then (unreachable)))
+    (global.set $invocation_depth (i32.sub (global.get $invocation_depth) (i32.const 1))))
+
+  ;; Source-level helper tests sometimes enter before loading a PE/NE. Give a
+  ;; fresh instance a root lazily, but NEVER reattach a retired nonzero root.
+  ;; Production loaders/init_thread establish their lifetimes explicitly.
+  (func $invocation_sync_enter
+    (if (i64.eqz (global.get $invocation_root))
+      (then
+        ;; Lazy bootstrap cannot steal a live or retired slot. Slot reuse is
+        ;; explicit through init_thread/process_begin after host quiescence.
+        (if (i32.ge_u (i32.sub (global.get $current_thread_id) (i32.const 1))
+              (i32.const 16)) (then (unreachable)))
+        (if (i64.ne (i64.atomic.load (i32.add (region.addr $CALLBACK_OWNERSHIP 16)
+              (i32.mul (i32.sub (global.get $current_thread_id) (i32.const 1))
+                (i32.const 528)))) (i64.const 0)) (then (unreachable)))
+        (call $invocation_thread_begin
+          (i32.sub (global.get $current_thread_id) (i32.const 1)))))
+    (drop (call $invocation_enter)))
+
+  (func $invocation_sync_leave
+    (call $invocation_leave (call $invocation_current)))
+  ;; END CALLBACK INVOCATION OWNERSHIP
+
   (func $sync_depth_enter
+    (call $invocation_sync_enter)
     (if (i32.and (i32.ne (global.get $spill_active) (i32.const 0))
           (i32.and (i32.ge_u (global.get $ip) (global.get $spill_base))
                    (i32.lt_u (global.get $ip) (global.get $spill_end))))
@@ -2272,6 +2393,7 @@
     (global.set $sync_msg_depth (i32.add (global.get $sync_msg_depth) (i32.const 1))))
 
   (func $sync_depth_leave
+    (call $invocation_sync_leave)
     (global.set $sync_msg_depth (i32.sub (global.get $sync_msg_depth) (i32.const 1)))
     (if (i32.lt_u (global.get $sync_msg_depth) (i32.const 31))
       (then

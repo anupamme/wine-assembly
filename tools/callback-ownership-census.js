@@ -26,21 +26,25 @@ function scanWat(src, file) {
     const writes = [];
     const calls = [];
     const exports = [];
+    const ownershipWrites = [];
     walk(form, node => {
       if (head(node) === 'global.set' && node[2] === '$eip') writes.push(node);
+      if (head(node) === 'global.set' && String(node[2]).startsWith('$invocation_')) ownershipWrites.push(node[2]);
       if (head(node) === 'call') calls.push(node[2]);
       if (head(node) === 'export') exports.push(JSON.parse(node[2]));
     });
     const boundaryCalls = calls.filter(name =>
-      ['$run', '$sync_depth_enter', '$sync_depth_leave'].includes(name));
-    if (!writes.length && !boundaryCalls.length &&
-        !['$sync_depth_enter', '$sync_depth_leave'].includes(form[2])) continue;
+      ['$run', '$sync_depth_enter', '$sync_depth_leave'].includes(name) || name.startsWith('$invocation_'));
+    if (!writes.length && !boundaryCalls.length && !ownershipWrites.length &&
+        !['$sync_depth_enter', '$sync_depth_leave'].includes(form[2]) &&
+        !(head(form) === 'func' && String(form[2]).startsWith('$invocation_'))) continue;
     // Includes macro bodies and top-level forms: moving a write out of a func
     // does not remove it from this inventory.
     const name = typeof form[2] === 'string' && form[2].startsWith('$')
       ? form[2] : exports.length ? `export:${exports[0]}` : `form:${entries.length}`;
     entries.push({ file, name, writes: writes.length, boundaryCalls, exports,
       targets: writes.map(node => canonical(node[3])),
+      ...(ownershipWrites.length ? { ownershipWrites } : {}),
       sha256: hash(JSON.stringify(canonical(form))) });
   }
   return entries;
@@ -130,7 +134,7 @@ function check(entries, census) {
     const id = key(entry), known = expected.get(id);
     if (!known) errors.push(`unknown producer ${id}`);
     else {
-      for (const field of ['sha256', 'writes', 'boundaryCalls', 'exports', 'targets']) {
+      for (const field of ['sha256', 'writes', 'boundaryCalls', 'exports', 'targets', 'ownershipWrites']) {
         if (JSON.stringify(entry[field]) !== JSON.stringify(known[field])) {
           errors.push(`changed producer ${id} (${field}); review its lifetime`);
         }

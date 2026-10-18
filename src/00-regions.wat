@@ -903,6 +903,11 @@
   ;; that chose to create more than the 8192-page minimum.
 
   ;; ============================================================
+  ;; Private callback identity allocator and sixteen thread invocation stacks.
+  ;; The allocator/epoch must survive process resets on the same memory.
+  (region.declare $CALLBACK_OWNERSHIP (size 0x00002110) (align 0x00000010)
+    (owner "04-cache.wat:$invocation_new_id"))
+
   ;; SPANS — address-range LIMITS, not storage.
   ;;
   ;; A span names a boundary somebody's arithmetic tests against. It owns no

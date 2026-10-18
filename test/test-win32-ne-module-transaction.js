@@ -39,7 +39,10 @@ helpers.push('win16_GetModuleUsage','win16_module_usage','win16_arg16','win16_ap
  'win16_bridge_fixed_load_api','win16_bridge_fixed_free_api','win16_bridge_fixed_api_stack',
  'win16_cstr_to_pstr','win16_far_to_guest','win16_name_scratch',
  'win16_dynamic_module_is_toolhelp','win16_module_is_ver','win16_module_is_lzexpand','win16_dynamic_module_is7');
-let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
+const cache = fs.readFileSync(path.join(dir,'04-cache.wat'),'utf8');
+const ownership = cache.slice(cache.indexOf(';; BEGIN CALLBACK INVOCATION OWNERSHIP'),
+ cache.indexOf(';; END CALLBACK INVOCATION OWNERSHIP'));
+let code=block+'\n'+transactions+'\n'+ownership+'\n'+helpers.map(form).join('\n');
 // Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
 // reached is a distinct host Error, never the RuntimeError expected from the
 // bridge's explicit unsupported-operation guard.
@@ -78,6 +81,8 @@ const probes=mutable.map(n=>`(func (export "set_${n}") (param $v i32) (global.se
 const exportedHelpers=helpers.filter(n=>!form(n).includes('(export ')).map(n=>`(export "${n}" (func $${n}))`).join('\n');
 const source=`
 (import "host" "memory" (memory 1024 1024 shared))
+;; Fixture-only placement, outside the synthetic selector/register areas.
+(region.declare-fixed $CALLBACK_OWNERSHIP (base 0xf0000) (size 0x2110) (align 16))
 (import "host" "ensure" (func $win16_process_arena_ensure (result i32)))
 (import "host" "release" (func $virtual_map_release (param i32) (result i32)))
 (import "host" "g2w" (func $g2w (param i32) (result i32)))

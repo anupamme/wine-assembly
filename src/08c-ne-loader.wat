@@ -653,6 +653,7 @@
     (local.set $seg_count (i32.load16_u (i32.add (local.get $ne_off) (i32.const 0x1C))))
     (if (i32.ge_u (i32.add (local.get $seg_count) (i32.const 2)) (global.get $WIN16_SEG_MAX))
       (then (return (i32.const -3))))
+    (call $invocation_process_begin)
     (local.set $shift (i32.load16_u (i32.add (local.get $ne_off) (i32.const 0x32))))
     (if (i32.eqz (local.get $shift)) (then (local.set $shift (i32.const 9))))
     (local.set $seg_tab (i32.add (local.get $ne_off)

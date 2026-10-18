@@ -14,6 +14,8 @@ assert(check(scanSources([{ file: 'src/fixture.wat', src: source.replace('$callb
   .some(e => e.includes('changed producer')), 'target replacement with unchanged count fails');
 assert(check(scanSources([...sources, { file: 'src/new.wat', src: '(func $new (global.set $eip (i32.const 1)))' }]), baseline)
   .some(e => e.includes('unknown producer')));
+assert(check(scanSources([...sources, { file: 'src/new.wat', src: '(func $reset (global.set $invocation_root (i64.const 0)))' }]), baseline)
+  .some(e => e.includes('unknown producer')), 'bare private identity reset is inventoried');
 assert(check([], baseline).some(e => e.includes('stale producer')));
 assert(check(entries, { version: 1, entries: [baseline.entries[0], baseline.entries[0]] })
   .some(e => e.includes('duplicate inventory')));

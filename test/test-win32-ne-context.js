@@ -25,7 +25,10 @@ const helpers = ['win16_dll_rec','win16_dll_path_id_valid','win16_handle_table',
   'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release',
   'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16',
   'virtual_map_lease_page_owned','virtual_map_lease_record'];
-let code=block+'\n'+helpers.map(form).join('\n');
+const cache = fs.readFileSync(path.join(dir,'04-cache.wat'),'utf8');
+const ownership = cache.slice(cache.indexOf(';; BEGIN CALLBACK INVOCATION OWNERSHIP'),
+ cache.indexOf(';; END CALLBACK INVOCATION OWNERSHIP'));
+let code=block+'\n'+ownership+'\n'+helpers.map(form).join('\n');
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)')
  .replaceAll('(region.end $GUEST_STACK)','(i32.add (global.get $GUEST_STACK) (global.get $GUEST_STACK_SIZE))');
@@ -49,6 +52,8 @@ const probes=mutable.map(n=>`(func (export "set_${n}") (param $v i32) (global.se
 const exportedHelpers=helpers.filter(n=>!form(n).includes('(export ')).map(n=>`(export "${n}" (func $${n}))`).join('\n');
 const source=`
 (import "host" "memory" (memory 1024 1024 shared))
+;; Fixture-only placement, outside the synthetic selector/register areas.
+(region.declare-fixed $CALLBACK_OWNERSHIP (base 0xf0000) (size 0x2110) (align 16))
 (import "host" "ensure" (func $win16_process_arena_ensure (result i32)))
 (import "host" "release" (func $virtual_map_release (param i32) (result i32)))
 (import "host" "g2w" (func $g2w (param i32) (result i32)))

@@ -1,10 +1,11 @@
 # Callback ownership prerequisite: source inventory
 
-2026-10-18. First implementation checkpoint for the CRTDLL nonlocal-jump
-prerequisite in `crt-setjmp.md`. This checkpoint adds an enforceable source
-inventory and mutation tests. **It does not implement invocation tokens,
-callback instrumentation, `_setjmp`, or `longjmp`.** The original Circus Linux
-failure is unchanged. No build, guest execution or browser was run.
+2026-10-18. Implementation checkpoints for the CRTDLL nonlocal-jump
+prerequisite in `crt-setjmp.md`. The first adds an enforceable source inventory
+and mutation tests. The second authors private token state and synchronous
+hooks, described below. **Neither implements `_setjmp` or `longjmp`.** The
+original Circus Linux failure is unchanged. No build, guest execution or
+browser was run on this task branch.
 
 `node tools/callback-ownership-census.js` checks the maintained inventory in
 `tools/callback-ownership-census.json`. `tools/build.sh` runs the check after
@@ -66,8 +67,8 @@ These tests validate the checker, not emulator execution or invocation safety.
 
 ## Remaining implementation acceptance
 
-The shared allocator, process/thread generations and private invocation stack
-must still be implemented. Instrument and test synchronous nested execution,
+The token implementation below still requires compiled validation. Instrument
+and test all remaining context producers beyond synchronous nested execution:
 retained CACA contexts and chained callbacks, JS COM, cross-thread SendMessage,
 timer/wave/APC entry and completion, and abort/exception/destruction paths.
 Ordinary guest calls and run-budget slices must preserve identity. Returned
@@ -83,3 +84,57 @@ direct thunk dispatch, covering nonvolatile registers, exact ESP/EIP, zero to
 one and negative return values, multiple buffers, threads, SEH, forged/changed
 buffers and no partial mutation on rejection. The broader design remains in
 `crt-setjmp.md`; this inventory does not supersede or complete it.
+
+## Private token state and synchronous hooks (authored, not runtime validated)
+
+The delimited `CALLBACK INVOCATION OWNERSHIP` block in `04-cache.wat` now owns
+an 8,464-byte allocated private region. A shared unsigned 64-bit CAS allocator
+issues nonzero identities without wrap; its all-ones value is terminal. Neither
+process reset nor thread-slot reuse clears that allocator. The shared process
+epoch and fresh thread root make a retired instance fail validation before its
+next token operation. Each of sixteen slots (main plus fifteen workers, matching
+the current scheduler) holds a root owner and a 64-entry invocation stack.
+
+PE and standalone NE process loaders establish a new epoch/root; `init_thread`
+establishes a fresh root in the existing epoch. A pristine standalone instance
+can bootstrap a vacant slot for helper tests; it cannot steal an occupied slot.
+The instance captures its epoch, root, and thread ID separately from
+`sync_msg_depth`. A synchronous enter allocates a fresh child; leave checks the
+expected top identity and restores the parent by popping. The production sync
+helper supplies its current child to this pop; retained callback contexts still
+need their own explicit expected-token storage in later milestones. A trap does
+not silently unwind or clear tokens. Explicit process/thread replacement retires
+them. Ordinary run-budget slices never change these identities.
+
+The existing `sync_depth_enter/leave` pair calls these hooks before changing its
+depth/spill bookkeeping. This covers that helper family, including its
+cross-thread send bracket, but does not certify the producer's earlier argument
+pushes or any uninstrumented continuation. Token stack capacity is 63 nested
+children; overflow/underflow, wrong-thread access, stale process/slot owners and
+token mismatches trap. Process loads and slot reuse retain the existing host
+requirement that old execution is quiescent: this patch does not make a loader
+or thread reinitialization transaction safe against a concurrently executing
+old instance. The allocator itself uses atomic CAS for worker concurrency.
+
+`test-callback-invocation-tokens.js` compiles the actual token block and actual
+sync helpers in a tiny shared-memory module. Authored assertions cover nested
+and sibling identities, expected-token mismatch, independent depth, multiple
+instances, thread-ID mismatch, occupied-slot bootstrap rejection, slot and
+same-memory process reuse, aborted child retirement, stack limits, allocator
+exhaustion, and copied before/after state on rejection. **This compiled test has
+not been run.** Existing NE helper fixtures now include the real token block;
+the arena fixture uses a real paired enter instead of fabricating depth for its
+final leave. Those compiled regressions also await the build/native grant.
+
+The census now has 374 records. Its reviewed delta is only the ten private
+primitive functions, two sync helpers, PE/NE loader hooks, and `init_thread`.
+It also detects bare writes to private invocation globals, so a new reset site
+cannot disappear from the inventory. The temporary nonlocal API review lock
+remains. Deferred CACA, JS COM, timer/wave/APC and all failure paths still need
+their explicit ownership implementation and actual guest conformance.
+
+Source-only validation: fragment balance, manifest, region declarations and
+owners, regenerated region-map mirror, JS syntax, census mutation tests and
+current-source gate, and diff checks. A separate token fragment was avoided
+because 127 existing fragments plus `main.watx` already consume the compiler's
+128 source-location slots; the token block stays in the existing cache fragment.

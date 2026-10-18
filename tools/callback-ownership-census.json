@@ -3,12 +3,185 @@
   "entries": [
     {
       "file": "src/04-cache.wat",
-      "name": "$sync_depth_enter",
+      "name": "$invocation_current",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "d2a0a91623be865925d12f89443d9f592dc9c256c182045be041258ebc7deb54",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_enter",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate",
+        "$invocation_new_id"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$invocation_depth"
+      ],
+      "sha256": "027ee0baff59f5434034ce0b7f0626b8c10c7120f2c190ab6029a6feab3b87d2",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_install",
       "writes": 0,
       "boundaryCalls": [],
       "exports": [],
       "targets": [],
-      "sha256": "0bd28781636bca47cd1dfdef4cc444086c0812f92df9ad27015b0c1ff7337c42",
+      "ownershipWrites": [
+        "$invocation_slot",
+        "$invocation_tid",
+        "$invocation_epoch",
+        "$invocation_root",
+        "$invocation_depth"
+      ],
+      "sha256": "27f329e6c9a1dbdf881b666bf18b036bded428f7a219bfbda5dda19f3f2ffd97",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_leave",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate",
+        "$invocation_current"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$invocation_depth"
+      ],
+      "sha256": "58c1609f984e6ec065fc06c5b08f1a893aa3446b62552abcda222f82047cc863",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_new_id",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "ddae069127cb28e677356aba9e2c7497f0bc881ba5ffb30a51738fa4114dca7b",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_process_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_new_id",
+        "$invocation_new_id",
+        "$invocation_install"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "650d0d3eefdc6321cf2365b370ece4508a46beee135771752cd95e0c9b02c4dc",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_sync_enter",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_thread_begin",
+        "$invocation_enter"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "3919e59b267ce1b371de3a8906847025d6d67be218f19a16d4bfa08d39b73586",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_sync_leave",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_leave",
+        "$invocation_current"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "61cf8132a635d62829372e089f8d0193c5d6c24de8d251b059b7f988adc4437e",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_thread_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_new_id",
+        "$invocation_new_id",
+        "$invocation_install"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "9d3a796b84f7ae6be4c562bed8980f986384922ac3e421c711e43b572ae4d007",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_validate",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "ab6b36abe34c59581993eb19a6dace9644b240cc995c5bedc20435569a3dd4cd",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/13-exports.wat",
+      "name": "export:init_thread",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_thread_begin"
+      ],
+      "exports": [
+        "init_thread"
+      ],
+      "targets": [],
+      "sha256": "020669d9f521d367848da241c1e8edf488b09bdac1deab9148fd2306c3094240",
+      "kind": "lifecycle",
+      "reason": "Starts a fresh private thread root after selecting its thread ID; existing process epoch retained.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$sync_depth_enter",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_sync_enter"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "1639aee6c93155615ffa7f07ce61a5bb7ce448f094f7b587ebe5f3fde44e7395",
       "kind": "callback",
       "reason": "Synchronous nesting helper; depth alone is not identity. Ownership instrumentation remains pending.",
       "ownership": "pending"
@@ -17,10 +190,12 @@
       "file": "src/04-cache.wat",
       "name": "$sync_depth_leave",
       "writes": 0,
-      "boundaryCalls": [],
+      "boundaryCalls": [
+        "$invocation_sync_leave"
+      ],
       "exports": [],
       "targets": [],
-      "sha256": "b1487dee6b623b525e6a3534f6fa5ae7006eace50d0074c678164446eab9e048",
+      "sha256": "da25096900cd1ea46099854989793f3ddb545f4c7f60f66f580a66c7bad9a96a",
       "kind": "callback",
       "reason": "Synchronous nesting helper; depth alone is not identity. Ownership instrumentation remains pending.",
       "ownership": "pending"
@@ -2108,7 +2283,9 @@
       "file": "src/08-pe-loader.wat",
       "name": "$load_pe",
       "writes": 1,
-      "boundaryCalls": [],
+      "boundaryCalls": [
+        "$invocation_process_begin"
+      ],
       "exports": [
         "load_pe"
       ],
@@ -2118,7 +2295,7 @@
           "$entry_point"
         ]
       ],
-      "sha256": "a473345d698f5e62272bc22f04535a2e7ce7d92164ae88fcd5e8973e1937c9f9",
+      "sha256": "3f6fc26b91aeb5803084d2869e9392cf66adf17395a7efffacd318ecdf94460f",
       "kind": "lifecycle",
       "reason": "Process or task entry; must establish a fresh lifetime before nonlocal contexts can be registered.",
       "ownership": "pending"
@@ -2144,35 +2321,13 @@
       "name": "$load_ne",
       "writes": 0,
       "boundaryCalls": [
-        "$win16_process_arena_release",
-        "$win16_thunk_count_set",
-        "$zero_memory",
-        "$win16_sub_next_set",
-        "$win16_pool_base_set",
-        "$win16_pool_used_set",
-        "$zero_memory",
-        "$win16_arena_base",
-        "$win16_seg_set",
-        "$g2w",
-        "$zero_memory",
-        "$memcpy",
-        "$win16_index_to_sel",
-        "$win16_seg_set",
-        "$win16_arena_base",
-        "$win16_next_seg_set",
-        "$win16_dynamic_modules_reset",
-        "$win16_apply_relocs",
-        "$g2w",
-        "$win16_seg_base",
-        "$win16_patch_dll_prologues",
-        "$win16_index_to_sel",
-        "$win16_start_task"
+        "$invocation_process_begin"
       ],
       "exports": [
         "load_ne"
       ],
       "targets": [],
-      "sha256": "baf6d8108db62879a86a3eaf6394de4b2aae4c6041728ca6f95262cfb05277e8",
+      "sha256": "3eb0d953df91e79a1ff36ad4dc256360e48756b99f60ab2d254681a479271d6a",
       "kind": "lifecycle",
       "reason": "Process or task entry; must establish a fresh lifetime before nonlocal contexts can be registered.",
       "ownership": "pending"
