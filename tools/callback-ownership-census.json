@@ -3385,23 +3385,92 @@
     },
     {
       "file": "src/09a6-handlers-crt.wat",
-      "name": "$bsearch_probe",
-      "writes": 2,
-      "boundaryCalls": [],
+      "name": "$bsearch_continue",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_leave"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "b133c66cfb6f9127f378b2733f39ad88d4c76a88657fe3d0b40896dc805495fd",
+      "kind": "continuation",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$bsearch_finish",
+      "writes": 1,
+      "boundaryCalls": [
+        "$invocation_current"
+      ],
       "exports": [],
       "targets": [
         [
-          "global.get",
-          "$bsearch_ret"
-        ],
-        [
-          "global.get",
-          "$bsearch_compar"
+          "i32.load",
+          [
+            "local.get",
+            "$frame"
+          ]
         ]
       ],
-      "sha256": "e0a609cebbb047ff16db6e0dc48f2cb7a8206ac5283ada84c892ddaa4f445fe1",
-      "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
+      "ownershipWrites": [
+        "$bsearch_depth"
+      ],
+      "sha256": "db362d44da8874d009012729ba54a80d8dbe352224900c72b278a984fd0069f7",
+      "kind": "continuation",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$bsearch_frame",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "394e44fbc1ed1c875c775a231820a28390cdfd8ee48c60b417ef4614f1956de6",
+      "kind": "continuation",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$bsearch_frame_at",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "8637e30971f2179e641ca94e80dfce77ac3216947dc559344d0f8d8c323f1c1a",
+      "kind": "continuation",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$bsearch_probe",
+      "writes": 1,
+      "boundaryCalls": [
+        "$invocation_current",
+        "$invocation_enter",
+        "$invocation_current"
+      ],
+      "exports": [],
+      "targets": [
+        [
+          "i32.load",
+          "offset=16",
+          [
+            "local.get",
+            "$frame"
+          ]
+        ]
+      ],
+      "sha256": "06a5c9043e53adb2636c2e136175b0f5fa863560b92574c95a0d629ea2dbb756",
+      "kind": "callback",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3474,6 +3543,26 @@
       "sha256": "7863908b1fc61b6b64a7e14950129dca5af93a780b36dbb8e94a30e70af63839",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$handle_bsearch",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_ensure",
+        "$invocation_current",
+        "$invocation_enter"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$bsearch_owner",
+        "$bsearch_depth"
+      ],
+      "sha256": "420fa25448b3388b0b27ac833dd326393035fbf68e2815222fa2b64bb2b8d646",
+      "kind": "callback",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -4636,7 +4725,7 @@
     {
       "file": "src/09b-dispatch.wat",
       "name": "$win32_dispatch_inner",
-      "writes": 64,
+      "writes": 63,
       "boundaryCalls": [],
       "exports": [],
       "targets": [
@@ -4982,10 +5071,6 @@
           "$initterm_ret"
         ],
         [
-          "global.get",
-          "$bsearch_ret"
-        ],
-        [
           "call",
           "$gl32",
           [
@@ -5105,7 +5190,7 @@
           ]
         ]
       ],
-      "sha256": "e942724072218435868cdf0a5672f61b16cac39c88d26a56cde1783534371678",
+      "sha256": "bf5695cc598bc8e2efb66f399de5f842dac6d59d93c4c25ba848da85e6ce02ce",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"

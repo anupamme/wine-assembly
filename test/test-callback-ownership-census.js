@@ -17,6 +17,8 @@ assert(check(scanSources([...sources, { file: 'src/new.wat', src: '(func $new (g
 assert(check(scanSources([...sources, { file: 'src/new.wat', src: '(func $reset (global.set $invocation_root (i64.const 0)))' }]), baseline)
   .some(e => e.includes('unknown producer')), 'bare private identity reset is inventoried');
 assert(check([], baseline).some(e => e.includes('stale producer')));
+assert(check(scanSources([...sources, { file: 'src/new.wat', src: '(func $reset (global.set $bsearch_depth (i32.const 0)))' }]), baseline)
+  .some(e => e.includes('unknown producer')), 'bare retained bsearch frame reset is inventoried');
 assert(check(scanSources([...sources, { file: 'src/new.wat', src: '(func $reset (global.set $qsort_depth (i32.const 0)))' }]), baseline)
   .some(e => e.includes('unknown producer')), 'bare retained qsort frame reset is inventoried');
 assert(check(entries, { version: 1, entries: [baseline.entries[0], baseline.entries[0]] })

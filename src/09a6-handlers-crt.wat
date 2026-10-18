@@ -3403,54 +3403,133 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
   )
 
+  ;; Retained bsearch frames: sixteen thread partitions, 64 x 64-byte frames.
+  ;; ret/key/base/size/compar/low/high/mid at 0..28, parent/child/root at
+  ;; 32/40/48, expected cdecl return ESP at 56. Lifetime matches qsort's:
+  ;; explicit host-quiescent root reset retires abandoned frames lazily.
+  (global $BSEARCH_CONTEXTS i32 (region.addr $BSEARCH_CONTEXTS 0))
+  (global $BSEARCH_CONTEXTS_SIZE i32 (region.size $BSEARCH_CONTEXTS))
+  (global $bsearch_owner (mut i64) (i64.const 0))
+  (global $bsearch_depth (mut i32) (i32.const 0))
+
+  (func $bsearch_frame_at (param $index i32) (result i32)
+    (i32.add (region.addr $BSEARCH_CONTEXTS 0)
+      (i32.add
+        (i32.shl (i32.sub (global.get $invocation_tid) (i32.const 1)) (i32.const 12))
+        (i32.shl (local.get $index) (i32.const 6)))))
+
+  (func $bsearch_frame (result i32)
+    (local $frame i32)
+    (call $invocation_validate)
+    (if (i64.ne (global.get $bsearch_owner) (global.get $invocation_root)) (then (unreachable)))
+    (if (i32.eqz (global.get $bsearch_depth)) (then (unreachable)))
+    (if (i32.gt_u (global.get $bsearch_depth) (i32.const 64)) (then (unreachable)))
+    (local.set $frame (call $bsearch_frame_at (i32.sub (global.get $bsearch_depth) (i32.const 1))))
+    (if (i64.ne (i64.load offset=48 (local.get $frame)) (global.get $invocation_root))
+      (then (unreachable)))
+    (local.get $frame))
+
+  (func $bsearch_finish (param $result i32)
+    (local $frame i32)
+    (local.set $frame (call $bsearch_frame))
+    (if (i64.ne (i64.load offset=40 (local.get $frame)) (i64.const 0)) (then (unreachable)))
+    (if (i64.ne (i64.load offset=32 (local.get $frame)) (call $invocation_current))
+      (then (unreachable)))
+    (i32.store (global.get $reg_base) (local.get $result))
+    (global.set $eip (i32.load (local.get $frame)))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+    (global.set $bsearch_depth (i32.sub (global.get $bsearch_depth) (i32.const 1))))
+
   ;; bsearch(key, base, nmemb, size, compar) — cdecl, guest-callback comparator.
   ;; Drives the binary search step-by-step: each probe pushes (key, elem) on the
   ;; stack plus the CACA000C return thunk, then jumps to compar. The continuation
   ;; handler in 09b-dispatch.wat narrows [low, high) based on the returned eax and
   ;; re-enters this helper until the range collapses or a match is found.
   (func $bsearch_probe
-    (local $mid i32) (local $elem i32)
+    (local $mid i32) (local $elem i32) (local $frame i32)
+    (local.set $frame (call $bsearch_frame))
     ;; range empty → return NULL to caller
-    (if (i32.ge_u (global.get $bsearch_low) (global.get $bsearch_high))
+    (if (i32.ge_u (i32.load offset=20 (local.get $frame)) (i32.load offset=24 (local.get $frame)))
+      (then (call $bsearch_finish (i32.const 0)) (return)))
+    (if (i64.eqz (i64.load offset=40 (local.get $frame)))
       (then
-        (i32.store offset=0 (global.get $reg_base) (i32.const 0))
-        (global.set $eip (global.get $bsearch_ret))
-        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (return)))
-    (local.set $mid (i32.div_u
-      (i32.add (global.get $bsearch_low) (global.get $bsearch_high))
-      (i32.const 2)))
-    (global.set $bsearch_mid (local.get $mid))
-    (local.set $elem (i32.add (global.get $bsearch_base)
-      (i32.mul (local.get $mid) (global.get $bsearch_size))))
+        (if (i64.ne (i64.load offset=32 (local.get $frame)) (call $invocation_current))
+          (then (unreachable)))
+        (i64.store offset=40 (local.get $frame) (call $invocation_enter)))
+      (else
+        (if (i64.ne (i64.load offset=40 (local.get $frame)) (call $invocation_current))
+          (then (unreachable)))))
+    ;; low + (high-low)/2 avoids an overflowing unsigned bound sum.
+    (local.set $mid (i32.add (i32.load offset=20 (local.get $frame))
+      (i32.shr_u (i32.sub (i32.load offset=24 (local.get $frame))
+        (i32.load offset=20 (local.get $frame))) (i32.const 1))))
+    (i32.store offset=28 (local.get $frame) (local.get $mid))
+    (i32.store offset=56 (local.get $frame)
+      (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+    (local.set $elem (i32.add (i32.load offset=8 (local.get $frame))
+      (i32.mul (local.get $mid) (i32.load offset=12 (local.get $frame)))))
     ;; Push compar args (cdecl: right-to-left) then return thunk.
-    ;; [esp-4]=thunk, [esp-8]=key, [esp-12]=elem
+    ;; At comparator entry: [esp]=thunk, [esp+4]=key, [esp+8]=elem.
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $elem))
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $bsearch_key))
+    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.load offset=4 (local.get $frame)))
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $bsearch_thunk))
-    (global.set $eip (global.get $bsearch_compar))
+    (global.set $eip (i32.load offset=16 (local.get $frame)))
     (global.set $steps (i32.const 0))
   )
 
+  (func $bsearch_continue
+    (local $frame i32)
+    (local.set $frame (call $bsearch_frame))
+    ;; Reject stale roots/children or a malformed cdecl return before mutation.
+    (if (i32.ne (i32.load offset=16 (global.get $reg_base))
+          (i32.load offset=56 (local.get $frame))) (then (unreachable)))
+    (call $invocation_leave (i64.load offset=40 (local.get $frame)))
+    (i64.store offset=40 (local.get $frame) (i64.const 0))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+    (if (i32.eqz (i32.load (global.get $reg_base)))
+      (then
+        (call $bsearch_finish (i32.add (i32.load offset=8 (local.get $frame))
+          (i32.mul (i32.load offset=28 (local.get $frame)) (i32.load offset=12 (local.get $frame)))))
+        (return)))
+    (if (i32.lt_s (i32.load (global.get $reg_base)) (i32.const 0))
+      (then (i32.store offset=24 (local.get $frame) (i32.load offset=28 (local.get $frame))))
+      (else (i32.store offset=20 (local.get $frame)
+        (i32.add (i32.load offset=28 (local.get $frame)) (i32.const 1)))))
+    (call $bsearch_probe))
+
   (func $handle_bsearch (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $depth i32) (local $frame i32) (local $ret i32) (local $parent i64) (local $child i64)
     ;; arg0=key, arg1=base, arg2=nmemb, arg3=size, arg4=compar. cdecl → caller
     ;; pops the 5 args; we only save the return address and leave args in place.
-    (global.set $bsearch_ret    (call $gl32 (i32.load offset=16 (global.get $reg_base))))
-    (global.set $bsearch_key    (local.get $arg0))
-    (global.set $bsearch_base   (local.get $arg1))
-    (global.set $bsearch_size   (local.get $arg3))
-    (global.set $bsearch_compar (local.get $arg4))
-    (global.set $bsearch_low    (i32.const 0))
-    (global.set $bsearch_high   (local.get $arg2))
     ;; Empty array or NULL comparator → return NULL immediately.
     (if (i32.or (i32.eqz (local.get $arg2)) (i32.eqz (local.get $arg4)))
       (then
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (return)))
+    (call $invocation_ensure)
+    (local.set $depth (select (global.get $bsearch_depth) (i32.const 0)
+      (i64.eq (global.get $bsearch_owner) (global.get $invocation_root))))
+    (if (i32.ge_u (local.get $depth) (i32.const 64)) (then (unreachable)))
+    (local.set $ret (call $gl32 (i32.load offset=16 (global.get $reg_base))))
+    (local.set $parent (call $invocation_current))
+    (local.set $child (call $invocation_enter))
+    (local.set $frame (call $bsearch_frame_at (local.get $depth)))
+    (global.set $bsearch_owner (global.get $invocation_root))
+    (global.set $bsearch_depth (i32.add (local.get $depth) (i32.const 1)))
+    (i32.store (local.get $frame) (local.get $ret))
+    (i32.store offset=4 (local.get $frame) (local.get $arg0))
+    (i32.store offset=8 (local.get $frame) (local.get $arg1))
+    (i32.store offset=12 (local.get $frame) (local.get $arg3))
+    (i32.store offset=16 (local.get $frame) (local.get $arg4))
+    (i32.store offset=20 (local.get $frame) (i32.const 0))
+    (i32.store offset=24 (local.get $frame) (local.get $arg2))
+    (i64.store offset=32 (local.get $frame) (local.get $parent))
+    (i64.store offset=40 (local.get $frame) (local.get $child))
+    (i64.store offset=48 (local.get $frame) (global.get $invocation_root))
     (call $bsearch_probe)
   )
 
