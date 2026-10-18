@@ -17,6 +17,21 @@
     },
     {
       "file": "src/04-cache.wat",
+      "name": "$invocation_ensure",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_thread_begin",
+        "$invocation_validate"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "f9a4a6e1b5a539159c40fba8ed9430c3a2c1059843f9b4fbfa8be6d0b992b698",
+      "kind": "lifecycle",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
       "name": "$invocation_enter",
       "writes": 0,
       "boundaryCalls": [
@@ -103,14 +118,14 @@
       "name": "$invocation_sync_enter",
       "writes": 0,
       "boundaryCalls": [
-        "$invocation_thread_begin",
+        "$invocation_ensure",
         "$invocation_enter"
       ],
       "exports": [],
       "targets": [],
-      "sha256": "3919e59b267ce1b371de3a8906847025d6d67be218f19a16d4bfa08d39b73586",
+      "sha256": "a33425c6754ad432b4aa33ceb4c69bed776e4ff0993ab7130702ee52b893858c",
       "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3463,36 +3478,112 @@
     },
     {
       "file": "src/09a6-handlers-crt.wat",
+      "name": "$handle_qsort",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_ensure",
+        "$invocation_current",
+        "$invocation_enter"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$qsort_owner",
+        "$qsort_depth"
+      ],
+      "sha256": "9d8471f35ee83f4bb908bd8937039bd39e0f83966ffdd1011c3b7605f2bce000",
+      "kind": "callback",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$qsort_continue",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_leave"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "ea9af68000cc2f864945cd27a64020995ad1b8e7b8e9a70dd5de900558a6683a",
+      "kind": "continuation",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
       "name": "$qsort_finish",
       "writes": 1,
-      "boundaryCalls": [],
+      "boundaryCalls": [
+        "$invocation_current"
+      ],
       "exports": [],
       "targets": [
         [
-          "global.get",
-          "$qsort_ret"
+          "i32.load",
+          [
+            "local.get",
+            "$frame"
+          ]
         ]
       ],
-      "sha256": "2497d07a08ae6fe16856bf0ec59178bb3c659e6c02d2ed1b6245019747f4e0e5",
-      "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
+      "ownershipWrites": [
+        "$qsort_depth"
+      ],
+      "sha256": "b7076322aa46751fb34a5855fb42cc610abdf02a7bf06598f21f486541301d83",
+      "kind": "continuation",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$qsort_frame",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "078cfb997e83060a185b1ac5cf7906f5439fcdc2f4cf6e6a873cb35d09ad606a",
+      "kind": "continuation",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$qsort_frame_at",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "af1eeb1be8defa580aa0e980e04c9766d2e9347c5a1ca4783c2d95bb08465582",
+      "kind": "continuation",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
       "file": "src/09a6-handlers-crt.wat",
       "name": "$qsort_probe",
       "writes": 1,
-      "boundaryCalls": [],
+      "boundaryCalls": [
+        "$invocation_current",
+        "$invocation_enter",
+        "$invocation_current"
+      ],
       "exports": [],
       "targets": [
         [
-          "global.get",
-          "$qsort_compar"
+          "i32.load",
+          "offset=16",
+          [
+            "local.get",
+            "$frame"
+          ]
         ]
       ],
-      "sha256": "ec96ffb9e35d48e2f3b7f3b269771f8bec47eb83a7cf2a918561b4de5ba0f636",
-      "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
+      "sha256": "2923c69f7a11bbd94afe10597b5661bc4c02db7dd7ff9f3ebcb69db300c9f9b7",
+      "kind": "callback",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {

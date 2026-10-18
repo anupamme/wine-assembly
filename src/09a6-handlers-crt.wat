@@ -3454,38 +3454,83 @@
     (call $bsearch_probe)
   )
 
+  ;; Private retained qsort contexts: sixteen thread partitions, 64 frames of
+  ;; 64 bytes each. Frames keep return/base/count/size/compar/pass/index/ESP at
+  ;; 0..28, parent invocation at 32, expected child at 40, and root at 48.
+  ;; They outlive run slices. A nested comparator's qsort owns a separate frame.
+  (global $QSORT_CONTEXTS i32 (region.addr $QSORT_CONTEXTS 0))
+  (global $QSORT_CONTEXTS_SIZE i32 (region.size $QSORT_CONTEXTS))
+  (global $qsort_owner (mut i64) (i64.const 0))
+  (global $qsort_depth (mut i32) (i32.const 0))
+
+  (func $qsort_frame_at (param $index i32) (result i32)
+    (i32.add (region.addr $QSORT_CONTEXTS 0)
+      (i32.add
+        (i32.shl (i32.sub (global.get $invocation_tid) (i32.const 1)) (i32.const 12))
+        (i32.shl (local.get $index) (i32.const 6)))))
+
+  (func $qsort_frame (result i32)
+    (local $frame i32)
+    (call $invocation_validate)
+    (if (i64.ne (global.get $qsort_owner) (global.get $invocation_root)) (then (unreachable)))
+    (if (i32.eqz (global.get $qsort_depth)) (then (unreachable)))
+    (if (i32.gt_u (global.get $qsort_depth) (i32.const 64)) (then (unreachable)))
+    (local.set $frame (call $qsort_frame_at (i32.sub (global.get $qsort_depth) (i32.const 1))))
+    (if (i64.ne (i64.load offset=48 (local.get $frame)) (global.get $invocation_root))
+      (then (unreachable)))
+    (local.get $frame))
+
   ;; qsort(base, nmemb, size, compar) — cdecl. A callback-driven adjacent sort
   ;; is intentionally simple but complete; the guest comparator defines the
   ;; ordering, and byte swaps remain correct when an element crosses sparse
   ;; guest-page backing boundaries.
   (func $qsort_finish
+    (local $frame i32)
+    (local.set $frame (call $qsort_frame))
+    (if (i64.ne (i64.load offset=40 (local.get $frame)) (i64.const 0)) (then (unreachable)))
+    (if (i64.ne (i64.load offset=32 (local.get $frame)) (call $invocation_current))
+      (then (unreachable)))
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
-    (global.set $eip (global.get $qsort_ret))
+    (global.set $eip (i32.load (local.get $frame)))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+    (global.set $qsort_depth (i32.sub (global.get $qsort_depth) (i32.const 1)))
   )
 
   (func $qsort_probe
-    (local $limit i32) (local $left i32) (local $right i32)
+    (local $limit i32) (local $left i32) (local $right i32) (local $frame i32)
+    (local.set $frame (call $qsort_frame))
     (if (i32.or
-          (i32.or (i32.lt_u (global.get $qsort_count) (i32.const 2))
-                  (i32.eqz (global.get $qsort_size)))
-          (i32.eqz (global.get $qsort_compar)))
+          (i32.or (i32.lt_u (i32.load offset=8 (local.get $frame)) (i32.const 2))
+                  (i32.eqz (i32.load offset=12 (local.get $frame))))
+          (i32.eqz (i32.load offset=16 (local.get $frame))))
       (then (call $qsort_finish) (return)))
-    (if (i32.ge_u (global.get $qsort_pass)
-                   (i32.sub (global.get $qsort_count) (i32.const 1)))
+    (if (i32.ge_u (i32.load offset=20 (local.get $frame))
+                   (i32.sub (i32.load offset=8 (local.get $frame)) (i32.const 1)))
       (then (call $qsort_finish) (return)))
     (local.set $limit
-      (i32.sub (global.get $qsort_count) (global.get $qsort_pass)))
-    (if (i32.ge_u (i32.add (global.get $qsort_index) (i32.const 1))
+      (i32.sub (i32.load offset=8 (local.get $frame)) (i32.load offset=20 (local.get $frame))))
+    (if (i32.ge_u (i32.add (i32.load offset=24 (local.get $frame)) (i32.const 1))
                    (local.get $limit))
       (then
-        (global.set $qsort_pass (i32.add (global.get $qsort_pass) (i32.const 1)))
-        (global.set $qsort_index (i32.const 0))
+        (i32.store offset=20 (local.get $frame) (i32.add (i32.load offset=20 (local.get $frame)) (i32.const 1)))
+        (i32.store offset=24 (local.get $frame) (i32.const 0))
         (call $qsort_probe)
         (return)))
-    (local.set $left (i32.add (global.get $qsort_base)
-      (i32.mul (global.get $qsort_index) (global.get $qsort_size))))
-    (local.set $right (i32.add (local.get $left) (global.get $qsort_size)))
+    ;; First probe already owns the child allocated transactionally at API
+    ;; entry. Each subsequent comparator receives a distinct fresh identity.
+    (if (i64.eqz (i64.load offset=40 (local.get $frame)))
+      (then
+        (if (i64.ne (i64.load offset=32 (local.get $frame)) (call $invocation_current))
+          (then (unreachable)))
+        (i64.store offset=40 (local.get $frame) (call $invocation_enter)))
+      (else
+        (if (i64.ne (i64.load offset=40 (local.get $frame)) (call $invocation_current))
+          (then (unreachable)))))
+    (i32.store offset=28 (local.get $frame)
+      (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+    (local.set $left (i32.add (i32.load offset=4 (local.get $frame))
+      (i32.mul (i32.load offset=24 (local.get $frame)) (i32.load offset=12 (local.get $frame)))))
+    (local.set $right (i32.add (local.get $left) (i32.load offset=12 (local.get $frame))))
     ;; compar(left, right), cdecl: push right-to-left and leave its two args
     ;; for CACA002D to discard after the callback's plain RET.
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
@@ -3494,32 +3539,41 @@
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $left))
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $qsort_thunk))
-    (global.set $eip (global.get $qsort_compar))
+    (global.set $eip (i32.load offset=16 (local.get $frame)))
     (global.set $steps (i32.const 0))
   )
 
   (func $qsort_continue
-    (local $left i32) (local $right i32) (local $i i32) (local $byte i32)
+    (local $left i32) (local $right i32) (local $i i32) (local $byte i32) (local $frame i32)
+    (local.set $frame (call $qsort_frame))
+    ;; Validate the retained child and exact cdecl return stack BEFORE either
+    ;; popping ownership or touching guest arguments/data. A fabricated/stale
+    ;; CACA002D continuation cannot silently complete the current invocation.
+    (if (i32.ne (i32.load offset=16 (global.get $reg_base))
+          (i32.load offset=28 (local.get $frame))) (then (unreachable)))
+    (call $invocation_leave (i64.load offset=40 (local.get $frame)))
+    (i64.store offset=40 (local.get $frame) (i64.const 0))
     ;; The comparator's RET consumed the thunk; discard its cdecl arguments.
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
     (if (i32.gt_s (i32.load offset=0 (global.get $reg_base)) (i32.const 0))
       (then
-        (local.set $left (i32.add (global.get $qsort_base)
-          (i32.mul (global.get $qsort_index) (global.get $qsort_size))))
-        (local.set $right (i32.add (local.get $left) (global.get $qsort_size)))
+        (local.set $left (i32.add (i32.load offset=4 (local.get $frame))
+          (i32.mul (i32.load offset=24 (local.get $frame)) (i32.load offset=12 (local.get $frame)))))
+        (local.set $right (i32.add (local.get $left) (i32.load offset=12 (local.get $frame))))
         (block $done (loop $swap
-          (br_if $done (i32.ge_u (local.get $i) (global.get $qsort_size)))
+          (br_if $done (i32.ge_u (local.get $i) (i32.load offset=12 (local.get $frame))))
           (local.set $byte (call $gl8 (i32.add (local.get $left) (local.get $i))))
           (call $gs8 (i32.add (local.get $left) (local.get $i))
             (call $gl8 (i32.add (local.get $right) (local.get $i))))
           (call $gs8 (i32.add (local.get $right) (local.get $i)) (local.get $byte))
           (local.set $i (i32.add (local.get $i) (i32.const 1)))
           (br $swap)))))
-    (global.set $qsort_index (i32.add (global.get $qsort_index) (i32.const 1)))
+    (i32.store offset=24 (local.get $frame) (i32.add (i32.load offset=24 (local.get $frame)) (i32.const 1)))
     (call $qsort_probe)
   )
 
   (func $handle_qsort (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $depth i32) (local $frame i32) (local $ret i32) (local $parent i64) (local $child i64)
     (if (i32.or
           (i32.or (i32.lt_u (local.get $arg1) (i32.const 2))
                   (i32.eqz (local.get $arg2)))
@@ -3528,13 +3582,27 @@
         (i32.store offset=0 (global.get $reg_base) (i32.const 0))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (return)))
-    (global.set $qsort_ret (call $gl32 (i32.load offset=16 (global.get $reg_base))))
-    (global.set $qsort_base (local.get $arg0))
-    (global.set $qsort_count (local.get $arg1))
-    (global.set $qsort_size (local.get $arg2))
-    (global.set $qsort_compar (local.get $arg3))
-    (global.set $qsort_pass (i32.const 0))
-    (global.set $qsort_index (i32.const 0))
+    (call $invocation_ensure)
+    (local.set $depth (select (global.get $qsort_depth) (i32.const 0)
+      (i64.eq (global.get $qsort_owner) (global.get $invocation_root))))
+    (if (i32.ge_u (local.get $depth) (i32.const 64)) (then (unreachable)))
+    (local.set $ret (call $gl32 (i32.load offset=16 (global.get $reg_base))))
+    (local.set $parent (call $invocation_current))
+    ;; Capacity/identity exhaustion fails before publishing a retained frame.
+    (local.set $child (call $invocation_enter))
+    (local.set $frame (call $qsort_frame_at (local.get $depth)))
+    (global.set $qsort_owner (global.get $invocation_root))
+    (global.set $qsort_depth (i32.add (local.get $depth) (i32.const 1)))
+    (i32.store (local.get $frame) (local.get $ret))
+    (i32.store offset=4 (local.get $frame) (local.get $arg0))
+    (i32.store offset=8 (local.get $frame) (local.get $arg1))
+    (i32.store offset=12 (local.get $frame) (local.get $arg2))
+    (i32.store offset=16 (local.get $frame) (local.get $arg3))
+    (i32.store offset=20 (local.get $frame) (i32.const 0))
+    (i32.store offset=24 (local.get $frame) (i32.const 0))
+    (i64.store offset=32 (local.get $frame) (local.get $parent))
+    (i64.store offset=40 (local.get $frame) (local.get $child))
+    (i64.store offset=48 (local.get $frame) (global.get $invocation_root))
     (call $qsort_probe)
   )
 

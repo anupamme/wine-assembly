@@ -2362,7 +2362,7 @@
   ;; Source-level helper tests sometimes enter before loading a PE/NE. Give a
   ;; fresh instance a root lazily, but NEVER reattach a retired nonzero root.
   ;; Production loaders/init_thread establish their lifetimes explicitly.
-  (func $invocation_sync_enter
+  (func $invocation_ensure
     (if (i64.eqz (global.get $invocation_root))
       (then
         ;; Lazy bootstrap cannot steal a live or retired slot. Slot reuse is
@@ -2374,6 +2374,10 @@
                 (i32.const 528)))) (i64.const 0)) (then (unreachable)))
         (call $invocation_thread_begin
           (i32.sub (global.get $current_thread_id) (i32.const 1)))))
+    (call $invocation_validate))
+
+  (func $invocation_sync_enter
+    (call $invocation_ensure)
     (drop (call $invocation_enter)))
 
   (func $invocation_sync_leave
