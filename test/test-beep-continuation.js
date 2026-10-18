@@ -107,7 +107,7 @@ const extraWat=`
  nested.init_thread(1);nested.beep_test_init();
  const oldRoot=[nested.beep_test_root_lo(),nested.beep_test_root_hi()];
  const oldEpoch=[nested.beep_test_epoch_lo(),nested.beep_test_epoch_hi()];
- const nestedThunk=nested.beep_test_thunk();
+ const nestedThunk=nested.beep_test_thunk(9);
  const nestedBody=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(nestedThunk),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
  nestedBody.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
  nested.beep_test_queue(CALLBACK);nested.beep_test_begin(750,100);nested.run(1000);
