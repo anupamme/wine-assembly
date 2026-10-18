@@ -1728,9 +1728,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (retained CRT init/exit callback implementation)
-  owner: /root/circus_init_exit_ownership
-  Next: Bsearche263d0ae3 source reviewed, both guest dispatch modes and qsort/token/lifecycle regressions PASS. Fresh worker takes init/exit callback ownership; jump APIs remain disabled pending remaining callback coverage and full semantics.
+  status: active (synchronous callback retention audit)
+  owner: /root/circus_sync_callback_retention
+  Next: CRTinit/exit ec55f099e reviewed and dualguest/build/qsort/bsearch/token/lifecycle/CRT regressions PASS; root integration buildPASS exact859e7e86. Fresh worker inventories remaining synchronous window callback retention and meaningful guest tests. Jump APIs remain disabled; other families/registry lifetime/concurrency/SEH/jump semantics still pending.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
