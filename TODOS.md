@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: blocked (runtime disk floor; source corrections continue)
+  status: blocked (runtime headroom; bounded source work completed)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Fresh free disk fell below2GiB with no game runtime; do not grant build/browser. Outlaws9a55aa04d explicitexport fix awaits native, cooperative cancellation fixture source correction active. FIFA4GiB admission blocked. B&W2 source audit complete, currentproducer requires retainedraw evidence or bounded runtime; no secondnewtitle established in boundedinventory.
+  Next: Outlawscee09f851 source corrections complete offmain awaiting safe native rebuild; FIFA browser4GiB admission unmet. B&W2 source provenance and bounded newtitle inventory complete, no eligible secondtitle established by that pass. No workers falsely labelledactive. Resume after resource capacity or new actionable evidence changes; preserve all holds.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: blocked (rebuild needs disk floor restored; source test fix active)
+  status: blocked (safe rebuild headroom required; source fixes complete)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_qt_gateway
-  Next: Failure diagnosed: nativeKERNEL32 export manifest omitted QT_Thunk; fixed4d27fdc73, candidate9a55aa04d pushed but not rebuilt. Priorbudgets expired/processes absent. Fresh grant withheld because free disk fell below2GiB (observed1.715GB). Reviewer found cooperative cancellation fixture spread loses Proxy exports; worker fixing source-only. No nativegateway/originalsuccess or merge.
+  worker: none
+  Next: Latestcee09f851 pushed/refverified includes explicitQT export and both reviewer test corrections, puretestsPASS. No worker running. Needs fresh boundedbuild/native direct+sparse/cooperative on safeheadroom after volatile diskdrop; old module/nativefailures predate fix. Candidate remains offmain, no originalgame success.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1672,9 +1672,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] AVP2 browser gameplay, audio and FPS follow-up
   id: AVP2-BROWSER-AUDIO-FPS-20261018
-  status: review (real gameplay audio non-silent; quality/logical FPS/device unverified)
+  status: blocked (listening/reference and runtime/device validation unavailable)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Original gameplay/audio capture already reviewed. Offline source-hash-verified review20261018-avp2-audio-signal-review:10.02s decodedPCM,0invalid/0clipped samples, longest exactzero20ms, no exact repeated full100ms windows. These do not prove audioquality or absenceoflooping; listening/reference remains missing. LogicalFPS/device require new permitted runtime and safe diskheadroom; no duplicate capture while held.
+  Next: Existing gameplay/audio and offline signal review are complete at54325b3f1; do not repeat them. Remaining audiblequality needs listening plus a reference; no listening-capable tool is available in this session. LogicalFPS/device need a new measurement-capable run, held on safe diskheadroom (current2.297GB, recent dropbelow2GiB). Retain exact evidence20261018-avp2-audio-capture and20261018-avp2-audio-signal-review; no fresh success claim.
   Evidence: scratch/runs/20261018-avp2-browser-launch; scratch/runs/20261018-avp2-paired-plan
 
 
