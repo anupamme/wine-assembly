@@ -40,6 +40,31 @@ assert.throws(() => prepareNeSources('demo', () => neLifecycleImage({dependencie
 const unsupported = neLifecycleImage(); unsupported.writeUInt16LE(0x400, 0x80 + 0x3e);
 assert.throws(() => prepareNeSources('demo', () => unsupported), e => !(e instanceof NeLoadError) && /not implemented/.test(e.message));
 
+// Builtins have dispatcher identities, not files. An unknown ordinal must
+// remain admissible to the existing fail-fast dispatcher; CARDS is an image.
+for (const module of ['KERNEL','USER','GDI','KEYBOARD','SOUND','SHELL','MMSYSTEM',
+  'COMMDLG','DDEML','NDDEAPI','WIN87EM','TOOLHELP','VER','AVIFILE','MSVIDEO','DISPLAY','LZEXPAND']) {
+  for (const symbol of [65535, 'UNKNOWN_EXPORT']) {
+    const requests=[];
+    const prepare=()=>prepareNeSources('demo', name=>{
+      requests.push(name);
+      assert.equal(name,'demo.dll','builtin must not consult or load a supplied image');
+      return neLifecycleImage({importEntry:{module,symbol}});
+    });
+    if(typeof symbol==='string')assert.throws(prepare,/importer-owned name resolution/);
+    else assert.deepEqual([...prepare().sources.keys()],['DEMO']);
+    assert.deepEqual(requests,['demo.dll']);
+  }
+}
+for (const module of ['CARDS','CUSTOM']) {
+  const requests=[];
+  assert.throws(()=>prepareNeSources('demo',name=>{
+    requests.push(name);
+    return name==='demo.dll'?neLifecycleImage({dependencies:[module]}):null;
+  }),e=>e instanceof NeLoadError && e.guestCode===2);
+  assert.deepEqual(requests,['demo.dll',module.toLowerCase()+'.dll']);
+}
+
 // Classic-script consumers share a lexical global scope: loading each file
 // separately also catches accidental duplicate top-level declarations.
 const browser = vm.createContext({Uint8Array, DataView, Map, Set});
