@@ -44,6 +44,7 @@ async function main() {
     (export "t_clear" (func $clear_cache))
     (func (export "t_depth") (result i32) (global.get $crt_callback_depth))
     (func (export "t_inv_depth") (result i32) (global.get $invocation_depth))
+    (func (export "t_registry") (result i32) (global.get $atexit_table))
     (func (export "t_clear_registry") (global.set $atexit_count (i32.const 0))
       (global.set $atexit_table (i32.const 0)) (global.set $atexit_capacity (i32.const 0)))`,
   { tailCalls: !process.argv.includes('--no-tail-calls') });
@@ -91,7 +92,9 @@ async function main() {
     begin({ mode }); for (let i = 0; i < 50 && !x.t_inv_depth(); i++) x.run(1); assert.equal(x.t_depth(), 1);
   };
   const snapshot = () => ({ token: x.t_token(), depth: x.t_depth(), esp: x.get_esp(), eip: x.get_eip(),
-    count: x.test_crt_atexit_count(), ownership: Buffer.from(new Uint8Array(memory.buffer, REGION.CALLBACK_OWNERSHIP, SIZE.CALLBACK_OWNERSHIP)),
+    count: x.test_crt_atexit_count(), registry: Buffer.from(new Uint8Array(memory.buffer,
+      x.guest_to_wasm(x.t_registry()), x.test_crt_atexit_count() * 4)),
+    ownership: Buffer.from(new Uint8Array(memory.buffer, REGION.CALLBACK_OWNERSHIP, SIZE.CALLBACK_OWNERSHIP)),
     frames: Buffer.from(new Uint8Array(memory.buffer, REGION.CRT_CALLBACK_CONTEXTS, SIZE.CRT_CALLBACK_CONTEXTS)) });
   const reject = fn => { const before = snapshot(); assert.throws(fn, WebAssembly.RuntimeError); assert.deepEqual(snapshot(), before); };
   for (const mode of [0, 1, 2]) {
@@ -116,6 +119,21 @@ async function main() {
   // Controlled entry probes: capacity and ID exhaustion must not consume a registry slot or overwrite frames.
   begin(); const direct = () => x.t_begin(0, addr(0x1410), addr(0x1414), 0);
   for (let i = 0; i < 63; i++) direct(); reject(direct);
+  for (const mode of [1, 2]) {
+    begin();
+    assert.equal(x.test_crt_atexit_register(addr(0x2400)), 0);
+    assert.equal(x.test_crt_atexit_register(addr(0x2500)), 0);
+    for (let i = 0; i < 63; i++) direct();
+    reject(() => x.t_begin(mode, 0, 0, 73));
+    begin();
+    assert.equal(x.test_crt_atexit_register(addr(0x2400)), 0);
+    assert.equal(x.test_crt_atexit_register(addr(0x2500)), 0);
+    const counter = dv.getBigUint64(REGION.CALLBACK_OWNERSHIP, true);
+    dv.setBigUint64(REGION.CALLBACK_OWNERSHIP, (1n << 64n) - 1n, true);
+    reject(() => x.t_begin(mode, 0, 0, 73));
+    // No identity was allocated by the failed entry; remove only the injected limit.
+    dv.setBigUint64(REGION.CALLBACK_OWNERSHIP, counter, true);
+  }
   begin(); dv.setBigUint64(REGION.CALLBACK_OWNERSHIP, (1n << 64n) - 2n, true); direct(); reject(direct);
   console.log('CRT init/exit ownership PASS: actual guest nesting/registry/yield/partition and controlled stale/mode/ESP/capacity rejection');
 }
