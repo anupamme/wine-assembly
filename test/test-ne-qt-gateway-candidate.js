@@ -5,12 +5,19 @@ const {createHostImports}=require('../lib/host-imports');
 const {serviceNeGuestYieldSync}=require('../lib/ne-guest-bridge');
 const {neQtFixture}=require('./helpers/ne-qt-fixture');
 const {createNeLifecycle}=require('../lib/ne-lifecycle');
+const {ThreadManager}=require('../lib/thread-manager');
 async function main(){
   assert(process.env.WA_TEST_WASM,'explicit prebuilt module required');
   const module=await WebAssembly.compile(fs.readFileSync(process.env.WA_TEST_WASM));
   const memory=new WebAssembly.Memory({initial:8192,maximum:8192,shared:true});
   const imports=createHostImports({getMemory:()=>memory.buffer,renderer:null,resourceJson:{}});imports.host.memory=memory;
-  const e=(await WebAssembly.instantiate(module,imports)).exports;
+  const raw=(await WebAssembly.instantiate(module,imports)).exports;
+  let e=raw,secondary,manager,thread;
+  if(process.argv.includes('--cooperative')) {
+    secondary=await WebAssembly.instantiate(module,imports);
+    manager=new ThreadManager(module,memory,{exports:raw},()=>imports,{});
+    thread={instance:secondary,state:'active',tid:1};manager.threads=new Map([[123,thread]]);manager._runningThreadHandle=0;
+  }
   const bytes=new Uint8Array(memory.buffer),view=new DataView(memory.buffer);
   const wa=p=>e.guest_to_wasm(p)>>>0,read=p=>view.getUint32(wa(p),true),write=(p,v)=>view.setUint32(wa(p),v,true);
   let f,stack,seenQt=0;
@@ -20,9 +27,14 @@ async function main(){
     assert(e.win16_bridge_frame_end(token));return result;
   }
   function boot(options={}) {
+    e.win16_guest_request_cancel();e=raw;
     f=neQtFixture(options);bytes.set(f.pe,e.get_staging());assert.equal(e.load_pe(f.pe.length)>>>0,f.entry);
     e.invalidate_code_range(f.entry,0x1000);stack=0x7408000;
-    if(process.argv.includes('--sparse')){const base=e.guest_stack_alloc(65536)>>>0;assert(base);stack=base+65520;}
+    if(process.argv.includes('--sparse')||secondary){const base=e.guest_stack_alloc(65536)>>>0;assert(base);stack=base+65520;}
+    if(secondary) {
+      secondary.exports.init_thread(1,e.get_image_base(),e.get_code_start(),e.get_code_end(),e.get_thunk_base(),e.get_thunk_end(),e.get_num_thunks(),0);
+      e=manager.cooperativeCallbackExports(thread);
+    }
     e.set_esp(stack);e.set_eip(f.entry);write(stack,0);
   }
   function service(){return serviceNeGuestYieldSync({exports:e,memoryBuffer:memory.buffer,
@@ -54,6 +66,7 @@ async function main(){
     assert.equal(e.win16_guest_request_settle(request,0),0,'duplicate settlement rejected');
     for(let i=0;i<100&&e.get_eip();i++){e.run(1000);if(e.get_yield_reason()===18)assert(service());else assert.equal(e.get_yield_reason(),0);}
     assert.equal(e.get_eip(),0);assert.equal(e.get_esp()>>>0,stack+4);
+    if(manager)assert.equal(manager._runningThreadHandle,0,'cooperative facade restores scheduler ownership');
     assert.equal(read(f.result+28),0x13579bdf);assert.equal(read(f.result+32),0x2468ace0);assert.equal(read(f.result+36),0x3579bdf1);
     assert.deepEqual(Array.from({length:16},(_,i)=>read(f.result+48+i*4)),f.scratch);
   }
@@ -61,12 +74,14 @@ async function main(){
     boot(options);untilQt();const s=e.get_esp()>>>0;assert(service());assert.equal(e.get_esp()>>>0,s+4+options.cleanup,'actual under-cleanup retained');
   }
   boot();let request=untilQt(),s=e.get_esp()>>>0,ret=read(s);
+  if(!manager) {
   const frame=e.win16_bridge_frame_begin();assert(frame);
   const target=e.win16_guest_request_field(request,1)>>>0,owner=e.get_current_thread_id();
   e.set_current_thread_id(owner+9);
   assert.equal(e.win16_bridge_qt_begin(frame,target),0);assert.equal(read(s),ret,'foreign owner cannot overwrite return');
   assert.equal(e.win16_guest_qt_settle(request,frame),0);assert.equal(e.win16_bridge_frame_end(frame),0);
   e.set_current_thread_id(owner);assert(e.win16_bridge_frame_end(frame));
+  }
   // Abort raised during a synchronous guest slice is observed before merging.
   let aborted=false;const facade={...e,run(n){e.run(n);aborted=true;}};
   assert.throws(()=>serviceNeGuestYieldSync({exports:facade,memoryBuffer:memory.buffer,
