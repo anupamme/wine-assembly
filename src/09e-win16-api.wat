@@ -5811,10 +5811,10 @@
   (func $win16_global_free (param $h i32)
     (local $index i32)
     (local.set $index (call $win16_sel_to_index (local.get $h)))
-    (if (i32.eq (call $win16_gseg_field (local.get $index) (i32.const 8)) (global.get $WIN16_SEG_DOS))
-      (then (drop (call $win16_dos_free (local.get $h))) (return)))
     (if (i32.ne (call $win16_seg_base (local.get $index)) (i32.const 0))
       (then
+        (if (i32.eq (call $win16_gseg_field (local.get $index) (i32.const 8)) (global.get $WIN16_SEG_DOS))
+          (then (drop (call $win16_dos_free (local.get $h))) (return)))
         (if (i32.and (call $win16_gseg_field (local.get $index) (i32.const 8))
                      (global.get $WIN16_SEG_GLOBAL))
           (then (call $win16_gseg_store (local.get $index) (i32.const 8)
