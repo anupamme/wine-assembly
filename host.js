@@ -4652,6 +4652,7 @@ class WineAssembly {
       advanceGuestTime: ms => this._advanceGuestTickMs(ms,
         this.hostCtx && this.hostCtx.sharedAudio),
       findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, { exeDir: true }),
+      findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
     });
   }
 
@@ -4677,6 +4678,7 @@ class WineAssembly {
         advanceGuestTime: ms => this._advanceGuestTickMs(ms,
           this.hostCtx && this.hostCtx.sharedAudio),
         findDll: (fileName, fullName) => this._findDllBytes(fileName, fullName, { exeDir: true }),
+        findDllSync: (fileName, fullName) => this._findDllBytesSync(fileName, fullName),
       });
       manager.publishWorkerGlobals(exports);
     }

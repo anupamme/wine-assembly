@@ -56,5 +56,12 @@ invalid/stale aliases, explicit failed-WEP recovery using synthetic-only
 repair, and cancelled/stale/changed-frame completion checks. Its execution
 passed with direct and sparse stacks on 2026-10-18 using the canonical
 build (module SHA-256 `ce2cb0af121e6f904f4af2b6d77f171350df3663498dd790de82d277eb31a164`).
-This validates the explicitly wired callback and facade; production dynamic
-PE resolver routing and scheduler dispatch still require separate coverage.
+The expanded candidate also passes through the production asynchronous PE
+LoadLibrary service into nested synchronous NE requests, and through actual
+`ThreadManager.runSlice` (thread-attach DllMain and thread body). Named/ordinal
+GPA results execute through the owned NE invocation ABI; this is not QT.
+Live dependencies are inspected under temporary native references, so removing
+their VFS files neither breaks later parent loads nor bypasses export checks.
+The candidate verifies retained refs and cleanup for both present/missing live
+exports. Logs are retained under
+`scratch/runs/20261018-outlaws-guest-lifecycle/` in the host workspace.

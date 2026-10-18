@@ -5310,6 +5310,7 @@ async function main() {
           resourceHost: ctx,
           log: console.log,
           findDll: findRuntimeDllBytes,
+          findDllSync: findRuntimeDllBytes,
         });
       } else {
         await handleLoadLibraryYield({
@@ -5318,6 +5319,7 @@ async function main() {
           resourceHost: ctx,
           log: console.log,
           findDll: findRuntimeDllBytes,
+          findDllSync: findRuntimeDllBytes,
         });
       }
       return true;
@@ -10479,6 +10481,7 @@ async function main() {
         resourceHost: ctx,
         log: console.log,
         findDll: findRuntimeDllBytes,
+        findDllSync: findRuntimeDllBytes,
       });
     }
 
@@ -10638,6 +10641,7 @@ async function main() {
         log: console.log,
         trace: TRACE_YIELD ? console.log : null,
         findDll: findRuntimeDllBytes,
+        findDllSync: findRuntimeDllBytes,
         // CLI-only bookkeeping: `module+0xVA` probes need this module's base
         // before the app can reach any code in it, so the breakpoint and
         // counter slots are re-armed here rather than at the next batch.
@@ -10770,6 +10774,7 @@ async function main() {
           log: console.log,
           trace: TRACE_YIELD ? console.log : null,
           findDll: findRuntimeDllBytes,
+          findDllSync: findRuntimeDllBytes,
         });
         threadManager.publishWorkerGlobals(e);
       }
@@ -10788,6 +10793,7 @@ async function main() {
           resourceHost: ctx,
           log: console.log,
           findDll: findRuntimeDllBytes,
+          findDllSync: findRuntimeDllBytes,
         });
         threadManager.publishWorkerGlobals(e);
       }

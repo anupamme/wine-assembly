@@ -3,23 +3,25 @@
 // IAT -> GetModuleHandle -> EAT -> native JMP -> NE lifecycle transactions.
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {createHostImports}=require('../lib/host-imports');
-const {serviceLoadLibraryYieldSync,findVfsDllBytes}=require('../lib/process-boot');
+const {serviceLoadLibraryYieldSync,handleLoadLibraryYield,findVfsDllBytes}=require('../lib/process-boot');
 const {loadDll,patchDllImports,callDllMain,finishDllInitialization}=require('../lib/dll-loader');
 const {neGuestCaller}=require('./helpers/ne-guest-caller');
 const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
 const R=require('../lib/region-map.generated');
 const {ThreadManager}=require('../lib/thread-manager');
+const {invokeNeEntrySync}=require('../lib/ne-invoke');
 
 async function main() {
   assert(process.env.WA_TEST_WASM,'explicit prebuilt module required');
   const module=await WebAssembly.compile(fs.readFileSync(process.env.WA_TEST_WASM));
   const memory=new WebAssembly.Memory({initial:8192,maximum:8192,shared:true});
-  const imports=createHostImports({getMemory:()=>memory.buffer,renderer:null,resourceJson:{}});
+  let vfs;
+  const imports=createHostImports({getMemory:()=>memory.buffer,renderer:null,resourceJson:{},get vfs(){return vfs;}});
   imports.host.memory=memory;
   const raw=(await WebAssembly.instantiate(module,imports)).exports;
   const bytes=new Uint8Array(memory.buffer),view=new DataView(memory.buffer),wa=p=>raw.guest_to_wasm(p)>>>0;
   const read=p=>view.getUint32(wa(p),true),write=(p,v)=>view.setUint32(wa(p),v,true);
-  let finished=0,events=[],vfs,removeAfterFirst=false;
+  let finished=0,events=[],removeAfterFirst=false,verifyGpa=false,gpaExecutions=0;
   let e={...raw,win16_bridge_module_release_finish(id){finished++;return raw.win16_bridge_module_release_finish(id);}};
   let stack=0x7408000;
   const records=()=>{
@@ -30,11 +32,23 @@ async function main() {
   };
   const service=()=>{
     const serial=e.win16_guest_request_token(),op=e.win16_guest_request_field(serial,0);
+    const handle=e.win16_guest_request_field(serial,1)>>>0;
     const beforeEsp=e.get_esp()>>>0;
     assert(serviceLoadLibraryYieldSync({exports:e,memoryBuffer:memory.buffer,
       findDllSync:(file,full)=>findVfsDllBytes(vfs,file,full),neInvokeOptions:{maxBlocks:10000,sliceBlocks:256}}));
     assert.equal(e.get_esp()>>>0,beforeEsp+(op===3?12:8));
     assert.equal(e.win16_guest_request_settle(serial,99),0,'duplicate settlement rejected');
+    if(verifyGpa&&op===3&&e.get_eax()) {
+      // Execute the exact far pointer returned to the PE caller through the
+      // owned NE invocation ABI. This is not a Quick Thunk transition.
+      const target=e.get_eax()>>>0,frame=e.win16_bridge_frame_begin();assert(frame);
+      try {
+        assert(e.win16_bridge_scope_begin(frame));
+        const id=e.win16_bridge_module_resolve(handle),ds=e.win16_bridge_module_data(id);
+        assert.equal(invokeNeEntrySync(e,{target,ds,instance:ds||id,heap:0,module:id})&0xffff,2);
+        gpaExecutions++;
+      } finally {assert(e.win16_bridge_frame_end(frame));}
+    }
     events.push({op,records:records()});return true;
   };
   function boot(fixture,source=neLifecycleImage({moduleUsage:true})) {
@@ -63,7 +77,8 @@ async function main() {
     }
     throw new Error('PE lifecycle caller exceeded bounded slices');
   }
-  const fixture=neGuestCaller();boot(fixture);removeAfterFirst=true;run();removeAfterFirst=false;
+  const fixture=neGuestCaller();boot(fixture);removeAfterFirst=true;verifyGpa=true;run();removeAfterFirst=false;verifyGpa=false;
+  assert.equal(gpaExecutions,2);
   assert.equal(e.get_esp()>>>0,stack+4);
   const handle=read(fixture.result);assert(handle>=32&&handle<=65535);
   assert.equal(read(fixture.result+4),handle);assert(read(fixture.result+8));
@@ -87,19 +102,68 @@ async function main() {
 
   const mainExports=e,secondary=await WebAssembly.instantiate(module,imports);
   secondary.exports.init_thread(1,e.get_image_base(),e.get_code_start(),e.get_code_end(),e.get_thunk_base(),e.get_thunk_end(),e.get_num_thunks(),0);
-  const manager=Object.create(ThreadManager.prototype),thread={instance:secondary,state:'active'};
+  const manager=new ThreadManager(module,memory,{exports:raw},()=>imports,{}),thread={instance:secondary,state:'active',tid:1};
   manager.threads=new Map([[123,thread]]);manager._runningThreadHandle=0;
   e=manager.cooperativeCallbackExports(thread);
   const threadStack=(raw.guest_stack_alloc(65536)>>>0)+65520;
   write(threadStack,0);e.set_esp(threadStack);e.set_eip(fixture.entry);run();
   assert.equal(e.get_esp()>>>0,threadStack+4);assert.equal(manager._runningThreadHandle,0);
   assert.equal(read(fixture.result),read(fixture.result+4));assert.deepEqual(records(),[]);
+  // The same secondary instance now runs through the actual scheduler path.
+  e.set_esp(threadStack);e.set_eip(fixture.entry);write(threadStack,0);
+  let scheduledServices=0;
+  manager._serviceDllYield=facade=>{scheduledServices++;return serviceLoadLibraryYieldSync({
+    exports:facade,memoryBuffer:memory.buffer,findDllSync:(file,full)=>findVfsDllBytes(vfs,file,full)});};
+  for(let i=0;i<100&&secondary.exports.get_eip();i++)manager.runSlice(1000,{quantumSteps:1000});
+  assert.equal(secondary.exports.get_eip(),0);assert.equal(scheduledServices,14,'thread attach DllMain plus thread body lifecycle');
+  assert.deepEqual(records(),[]);assert.equal(manager._runningThreadHandle,0);
   thread.state='exited';assert.throws(()=>e.get_eip(),/retired/);
   e=mainExports;
 
   const imported=neGuestCaller(0x400000,{ordinalImports:true});boot(imported);run();
   assert.equal(read(imported.result),read(imported.result+4));assert(read(imported.result+8));
   assert.equal(read(imported.result+8),read(imported.result+12));assert.equal(finished,1);
+
+  // A live dependency remains authoritative after its VFS source disappears.
+  const parent=neGuestCaller(0x400000,{path:'C:\\Outlaws\\HELPER.DLL',calls:[
+    [35,[0x402840]],[35,[0x4029c0]],[36,[{result:1}]],[36,[{result:0}]]
+  ]});
+  parent.bytes.write('C:\\Outlaws\\PARENT.DLL\0',0x29c0-0x1000+0x200);
+  boot(parent);vfs.files.clear();
+  vfs.files.set('c:\\outlaws\\helper.dll',{data:neLifecycleImage()});
+  vfs.files.set('c:\\outlaws\\parent.dll',{data:neLifecycleImage({importEntry:{module:'HELPER',symbol:'VALUE'}})});
+  e.run(1000);assert.equal(e.get_yield_reason(),18);service();
+  vfs.files.delete('c:\\outlaws\\helper.dll');run();
+  assert(read(parent.result)>=32);assert(read(parent.result+4)>=32);
+  assert.deepEqual(events[1].records.map(r=>r.refs),[2,1]);
+  assert.deepEqual(events[2].records.map(r=>r.refs),[1]);
+  assert.deepEqual(records(),[]);assert.equal(finished,2);
+
+  boot(parent);vfs.files.clear();
+  vfs.files.set('c:\\outlaws\\helper.dll',{data:neLifecycleImage()});
+  vfs.files.set('c:\\outlaws\\parent.dll',{data:neLifecycleImage({importEntry:{module:'HELPER',symbol:'ABSENT'}})});
+  e.run(1000);service();vfs.files.delete('c:\\outlaws\\helper.dll');
+  assert.throws(run,/Missing NE import HELPER.ABSENT/);
+  assert.deepEqual(records(),[{state:3,refs:1}],'failed parent preserves live dependency ownership');
+  require('../lib/ne-lifecycle').createNeLifecycle(e,{buffer:memory.buffer},[]).releaseGuest(read(parent.result));
+  assert.deepEqual(records(),[]);
+
+  // Production dynamic PE loader callback, including asynchronous outer lookup
+  // and the synchronous VFS lookup required by its nested NE transaction.
+  const dynamic=neGuestCaller(0x400000,{calls:[]});
+  dynamic.bytes.set([0x68,0x40,0x28,0x40,0,0xff,0x15,4,0x19,0x40,0,0xa3,0,0x27,0x40,0,0xc3],0x1200);
+  dynamic.bytes.write('C:\\Outlaws\\DYNAMIC.DLL\0',0x2840-0x1000+0x200);
+  boot(dynamic);
+  const nested=neGuestCaller(e.get_next_dll_addr()>>>0,{dll:true});
+  vfs.files.set('c:\\outlaws\\dynamic.dll',{data:nested.bytes});
+  e.run(1000);assert.equal(e.get_yield_reason(),5);
+  let syncLookups=0;
+  await handleLoadLibraryYield({exports:e,memoryBuffer:memory.buffer,
+    findDll:async(file,full)=>findVfsDllBytes(vfs,file,full),
+    findDllSync:(file,full)=>{syncLookups++;return findVfsDllBytes(vfs,file,full);}});
+  run();assert(read(dynamic.result));assert(syncLookups>0);
+  assert.equal(read(nested.result),read(nested.result+4));
+  assert(read(nested.result+8));assert.equal(finished,1);assert.deepEqual(records(),[]);
 
   const invalid=neGuestCaller(0x400000,{calls:[[37,[0,2]],[36,[0]],[37,[handle,2]],[36,[handle]]]});
   boot(invalid);run();
