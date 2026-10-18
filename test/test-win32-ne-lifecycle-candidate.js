@@ -228,6 +228,10 @@ async function main() {
   assert.equal(e.win16_bridge_fixed_acquire(12),0,'no unowned acquisition');
   assert.equal(e.win16_bridge_fixed_usage(12),0);
   const fixedA=fixed.load('FIXEDA');assert.equal(e.win16_bridge_fixed_usage(12),3);
+  const fixedData=inScope(()=>e.win16_bridge_module_data(fixedA));
+  const fixedDataAt=e.guest_to_wasm(e.win16_seg_base(fixedData>>>3))>>>0;
+  assert.equal(view.getUint32(fixedDataAt+12,true)>>>16,0xaabb,'LoadLibrary preserves high EAX');
+  assert.equal(view.getUint16(fixedDataAt,true),view.getUint16(fixedDataAt+2,true),'duplicate loads return one identity');
   const fixedB=fixedOther.load('FIXEDB');assert.equal(e.win16_bridge_fixed_usage(12),4);
   assert.equal(fixed.call(fixedA,'VALUE'),4,'real GetModuleUsage includes both importers and both loads');
   const far=fixed.call(fixedA,5);assert(far,'real ordinal lookup');
