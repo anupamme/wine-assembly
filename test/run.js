@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { withCliFailureCleanup } = require('../lib/cli-failure-cleanup');
 const { createHostImports } = require('../lib/host-imports');
 const frameIntervals = require('../lib/frame-intervals');
 const { loadDlls, callDllMain, detectRequiredDlls, shouldReportNtForDlls, loadWin16Dlls } = require('../lib/dll-loader');
@@ -1687,6 +1688,7 @@ function buildHandlerNameList() {
 }
 
 async function main() {
+  return withCliFailureCleanup(async onFailure => {
   let wasmBytes;
   // A PIN THAT CANNOT BE HONOURED IS FATAL. This used to fall through to the
   // `else` and compile from src/, so `--wasm=/typo/path.wasm` (or a stale
@@ -1759,6 +1761,10 @@ async function main() {
     for (let i = 0; i < logs.length; i++) console.log(logs[i]);
     logs.length = 0;
   };
+  onFailure(() => {
+    traceGateBatch = -1; // failure diagnostics are never hidden by a trace window
+    flushLogs();
+  });
   let stopped = false;
   let hostExitRequested = false;
   // Batches actually executed. Not the same as MAX_BATCHES once --max-seconds
@@ -1799,6 +1805,7 @@ async function main() {
     if (dedupLast && dedupLast.count > 1) logs.push(`  (x${dedupLast.count})`);
     dedupLast = null;
   };
+  onFailure(flushDedup);
   const pushApi = line => {
     if (!TRACE_API_DEDUP) { logs.push(line); return; }
     if (dedupLast && dedupLast.line === line) { dedupLast.count++; return; }
@@ -7325,6 +7332,17 @@ async function main() {
     return { close() { if (server) server.close(); } };
   })() : null;
 
+  // A rejected async loader/yield bypasses the normal end-of-loop close.
+  // Retire the control channel before propagating the original failure.
+  let controlClosed = false;
+  const closeControl = () => {
+    if (control && !controlClosed) {
+      control.close();
+      controlClosed = true;
+    }
+  };
+  onFailure(closeControl);
+
   const cpuProf = CPU_PROF_WINDOW ? {
     session: null, startedAt: 0,
     post(method, params) {
@@ -11018,7 +11036,7 @@ if (VERBOSE) {
   }
   // The control server would otherwise hold the process open; unref lets a
   // reply resolved in the final batch still flush while the exit path prints.
-  if (control) control.close();
+  closeControl();
   if (cpuProf && cpuProf.session) await cpuProf.stop(MAX_BATCHES);
   if (ctx.d3dCommands && D3DIM_GPU) {
     const d = ctx.d3dCommands.snapshot();
@@ -12448,11 +12466,13 @@ if (VERBOSE) {
   // the parent killed it. Every two-process test used to kill its seats for
   // exactly this reason. The run is over, so hang up the wire.
   if (VLAN_WIRE && process.connected) process.disconnect();
+  });
 }
 
 main().catch(async e => {
+  process.exitCode = process.exitCode || 1;
   console.error(e);
-  // Exit code deliberately unchanged; the threads have to be stopped either way
+  // The threads have to be stopped either way
   // or node waits on them forever and the error above never gets read.
   if (workerThreadHost) workerThreadHost.stop();
   if (closeD3DRender) {
