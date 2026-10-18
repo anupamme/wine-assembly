@@ -698,3 +698,22 @@ diehard, deus_ex, ut2003/ut2004, morrowind, pirates (Codex), bw2.
 be compared at the same batch. New failures: Forsaken's heap exhaustion on an
 unattended run, quake3's unreproducible fixture, and the scifi/oasaver
 default-clock frame.
+
+## Historical census recovery anchor — 18 October 2026
+
+The original tool addition is commit `2d722ab3766c288d13796ed9dad3f1ceeca8f1eb`
+(22 September). Its commit message independently records 27 OpenGL/Direct3D
+apps among 225 registry apps, seven `scr_*` D3DRM screensavers, and the
+launcher-noise cautions for `icewind_dale_demo` and `tworld`. The retained
+`project_gl_d3d_corpus_goal.md` memory identifies the originating session as
+`bd610256-7b4f-4ed1-afa0-9c3cf3412fbb` and records family counts GL7, D3DRM10,
+D3DIM9, D3D8 7, D3D9 2 with overlap.
+
+Neither source enumerates all 27 IDs. A matching transcript/census output was
+not found in the checked local Claude project files. This narrows recovery to
+the original tool and registry revision plus the contemporaneous binary
+inventory, or the originating session's saved output. Re-running today's
+tool against today's registry is not equivalent; scanning old registry paths
+against changed/missing binaries is also insufficient without identity checks.
+No historical census was rerun here and no membership or backend qualification
+is inferred from the counts.
