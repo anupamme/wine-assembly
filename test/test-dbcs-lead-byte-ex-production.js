@@ -3,6 +3,7 @@
 // Production PE loader/IAT/EAT and guest export JMPs; no handler substitution.
 const assert = require('node:assert/strict');
 const {bootRenderHarness} = require('./render-helper');
+const {ThreadManager} = require('../lib/thread-manager');
 const {makeFixture, BASE, API, iat} = require('../tools/kernel32-native-fixture');
 const tailCalls = !process.argv.includes('--no-tail-calls');
 // Independent contract ranges, including every boundary and every non-lead byte.
@@ -13,7 +14,13 @@ const ranges = new Map([
   [437, []], [1252, []], [10000, []], [65000, []], [65001, []],
 ]);
 (async () => {
-  const h = await bootRenderHarness({fonts: 'none', tailCalls}), e = h.exports;
+  let manager;
+  const h = await bootRenderHarness({fonts: 'none', tailCalls, extraHostOverrides: {
+    get_thread_locale: tid => manager.getThreadLocale(tid),
+    set_thread_locale: (locale, tid) => manager.setThreadLocale(locale, tid),
+  }}), e = h.exports;
+  // Use the production retained locale records; no classifier/handler override.
+  manager = new ThreadManager({}, h.memory, h.instance, () => ({}), {});
   const pe = makeFixture(), raw = rva => rva - 0x1000 + 0x200;
   const importedSlot = BASE + 0x1900 + API.length * 4;
   assert.equal(pe.readUInt32LE(raw(importedSlot - BASE)), 0);
@@ -46,6 +53,9 @@ const ranges = new Map([
   assert.equal(api('GetProcAddress', [module, entry.ordinal]), dynamic, 'ordinal identity');
   const imported = read(importedSlot); assert(imported && imported !== 0x1c00);
   const setOem = api('GetProcAddress', [module, string('SetConsoleOutputCP')]); assert(setOem);
+  const getOem = api('GetProcAddress', [module, string('GetOEMCP')]); assert(getOem);
+  const setLocale = api('GetProcAddress', [module, string('SetThreadLocale')]); assert(setLocale);
+  const getLocale = api('GetProcAddress', [module, string('GetThreadLocale')]); assert(getLocale);
   for (const pointer of [imported, dynamic]) {
     const check = (cp, ch, expected, error = 1234) => {
       api('SetLastError', [1234]);
@@ -57,13 +67,22 @@ const ranges = new Map([
         check(cp, ch, Number(spans.some(([lo, hi]) => ch >= lo && ch <= hi)));
       }
     }
-    for (const cp of [0, 3]) {
-      e.set_ansi_code_page(1252); check(cp, 0x81, 0);
-      e.set_ansi_code_page(932); check(cp, 0x81, 1); check(cp, 0xa0, 0);
-    }
+    e.set_ansi_code_page(1252); check(0, 0x81, 0);
+    e.set_ansi_code_page(932); check(0, 0x81, 1); check(0, 0xa0, 0);
+    assert.equal(call(setLocale, [0x0409]), 1); check(3, 0x81, 0);
     e.set_ansi_code_page(1252);
-    check(1, 0x81, 0); // initial OEM page 437
-    assert.equal(call(setOem, [932]), 1); check(1, 0x81, 1); check(1, 0xa0, 0);
+    for (const [locale, cp] of [[0x0411, 932], [0x0412, 949], [0x0804, 936],
+      [0x1004, 936], [0x0404, 950], [0x0c04, 950], [0x1404, 950], [0x10411, 932]]) {
+      assert.equal(call(setLocale, [locale]), 1); assert.equal(call(getLocale), locale);
+      check(0, 0x81, 0); check(3, 0x81, 1);
+      check(3, 0xa0, cp === 932 ? 0 : 1);
+    }
+    assert.equal(call(setLocale, [0x7777]), 1); check(3, 0x81, 0, 87);
+    assert.equal(call(setLocale, [0x0409]), 1); check(3, 0x81, 0);
+    e.set_ansi_code_page(1252);
+    assert.equal(call(getOem), 437); check(1, 0x81, 0);
+    assert.equal(call(setOem, [932]), 1);
+    assert.equal(call(getOem), 437); check(1, 0x81, 0); check(932, 0x81, 1);
     assert.equal(call(setOem, [437]), 1); check(1, 0x81, 0);
     check(2, 0x81, 0); // default Macintosh 10000
     check(932, 0x181, 1); check(932, 0x100, 0); check(932, -1, 0); // BYTE ABI

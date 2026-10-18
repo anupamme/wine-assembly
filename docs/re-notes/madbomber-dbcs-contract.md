@@ -19,14 +19,27 @@ classification operation, Macintosh 10000 and Unicode UTF-7/UTF-8 (65000/65001)
 also correctly have no DBCS lead bytes. Other unavailable pages fail explicitly;
 this is not a claim of general installed Windows NLS coverage or conversion
 support for those three additional pages. CP_MACCP selects the default US
-Macintosh page. Existing runtime alias conventions are retained: CP_ACP and
-CP_THREAD_ACP use process ANSI state; CP_OEMCP uses console output state.
-Per-thread locale and independent system OEM configuration remain limitations.
+Macintosh page. CP_ACP uses process ANSI state. CP_OEMCP matches GetOEMCP's
+system default 437, regardless of SetConsoleOutputCP. The new API deliberately
+does not reuse the older shared resolver's console-dependent OEM alias.
+
+CP_THREAD_ACP reads the calling thread's retained LCID through the existing
+host_get_thread_locale(current_thread_id) import. ThreadManager stores it on
+the calling thread record, and host.js and Worker routing already expose that
+identity. Supported LCIDs (ignoring the sort-ID high word) are en-US 0409
+(1252), Japanese 0411 (932), Korean 0412 (949), Chinese mainland/Singapore
+0804/1004 (936), and Chinese Taiwan/Hong Kong/Macao 0404/0C04/1404 (950).
+Other LCIDs explicitly fail with 87; complete Windows locale coverage remains
+unimplemented. The process ACP does not substitute for a thread locale.
 
 `test/test-dbcs-lead-byte-ex-production.js` authors actual guest calls through
 the production PE static IAT and dynamically resolved KERNEL32 EAT, including
 ordinal identity, stdcall ESP, all 256 bytes for every supported explicit page,
-ACP changes, default OEM/Mac aliases, BYTE narrowing, invalid pages, LastError
-preservation and recovery. Run it normally and with `--no-tail-calls` under an
+ACP changes, stable system OEM despite console changes, default Mac alias,
+guest SetThreadLocale/GetThreadLocale backed by production ThreadManager
+records, supported locale mappings independent of process ACP, BYTE narrowing,
+invalid pages/locales, LastError preservation and recovery. These locale calls
+exercise the main thread record; they do not establish concurrent Worker
+coverage. Run it normally and with `--no-tail-calls` under an
 exclusive runtime grant. No build, compiled fixture or original retry has
 been run for this source checkpoint.
