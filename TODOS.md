@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (bounded held-mouse diagnostic)
+  status: active (route-only heldpress preparation after trace cap)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Sole heldmouse diagnostic granted180s/210hard after LBreakout2 release. OMITdispatchflag to preserve paused API logging; routing+GetAsync/foreground/focus650ms window, independent250ms release. Freshreviewedmenu before ordinaryinput. No forcedstate/productionfix or gameplayclaim.
+  Next: Heldpress routed/acknowledged then menu cleared black; pollingAPItrace hit8MiB cap447ms afterenable, guestkilled/controller1. Root independentpins/originals/groupemptyPASS; no settledscreen/gameplay/highbitclaim. Failure docs886e1f279 main. Sourceprep next250ms ordinaryheldpress without APIlogging, sameguards; runtime waits LBreakout2.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1700,7 +1700,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LBreakout2 2.5.1 original Windows release
   id: NEW-GAME-LBREAKOUT2-20261018
-  status: active (reviewed main menu; gameplay/registration preparation)
+  status: active (ordinary gameplay validation)
   owner: /root/new_game_refill_after_supertux
-  Next: Original passive20261018-lbreakout2-passive-startup reviewed mainmenu, child2260640/controller2260630 exits0; root3192pins/originals/groupemptyPASS. Docs573fdf159 main. Worker source-prepares LocalGame controls; fresh lbreakout2_local_registration owns local-only corpus source/tests. No runtime until Outlaws release, no gameplayclaim.
+  Next: Localregistrationa31e8f184 main; root registry+220originalclient/219mapping/CRT verifierPASS integrationfixtureprepared. Sole180guest210hard gameplay grant on exacta4a4bc6a freshpins; prefer registeredroute if resolver proves same originalmapping, inspectbindings then paddle/ball separately. No gameplayclaim before evidence.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.

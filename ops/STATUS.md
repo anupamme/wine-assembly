@@ -1,4 +1,4 @@
-Current 2026-10-18: LBreakout2 original mainmenu reviewed, clean exits and root source/original/process checks passed. Outlaws owns bounded heldmouse diagnostic; no productionfix yet. LBreakout2 LocalGame controls and local corpus registration prepared source-only in parallel. No public deployment.
+Current 2026-10-18: Outlaws heldpress reached input route and cleared menu but polling trace hit8MiB guard before settled screen; failure retained and root postflight passed. Route-only next attempt preparing. LBreakout2 localregistrationa31e8f184 tested/pushed, exact fixture verified, sole gameplay validation granted. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
