@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws counted fixed-builtin lifecycle implementation active for verified nested WIN87EM call. SuperTux now passes setbuf using restored authentic CRT; bundled SDL_mixer routing audit precedes attributing Mix_OpenAudio failure to API support. All completed runtime PIDs absent. No public deployment.
+Current 2026-10-18: SuperTux original first level and ordinary left/right movement captured; root reviewed right movement and verified unchanged pins/empty process group after exit0. Jump/audio/FPS remain unverified. Outlaws counted fixed-builtin lifecycle passed source review and owns bounded build/native slot; original replay follows tested integration. One runtime, browser below4GiB admission, no public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

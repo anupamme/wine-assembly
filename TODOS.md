@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws nested load; SuperTux original startup)
+  status: active (Outlaws native validation; SuperTux reviewed level movement)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws exactstaticWIN87EM argument verified; countedfixedbuiltin import/explicit-reference lifecycle sourceimplementation active, generalnestedguard retained. SuperTux original CRT restored/verifypassedsetbuf; nextMix_OpenAudio hit whilebundledSDL_mixer not loaded, worker audits realDLL launchconfiguration beforeAPIclaim. One runtime grant, no browser below4GiB.
+  Next: Outlaws counted fixed-builtin candidate10f97b889 passed source review; sole bounded build/native slot granted after SuperTux release. SuperTux original first level and left/right movement reviewed, documentation/registration qualification next; jump/audio/FPS unverified. Browser admission remains below4GiB.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (owned nested Win16 LoadLibrary design/implementation)
+  status: active (counted fixed-builtin native conformance)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_nested_ne_load
-  Next: Pinned original WDIR62 uniqueKERNEL95call1:1a0c DS083e=WIN87EM verified byroot staticJS; runtimeargumentnotcaptured. Docs03d07d6 staged countedfixedimport+explicitrefs/free/usage/reset/alias prerequisite. Worker implementing realcountedbuiltin lifecycle/tests, notlegacyshortcut/generalguardremoval. No fresh runtime yet.
+  Next: Candidate10f97b889 implements counted fixed import/explicit references, retaining general nested guard. Independent source review found no demonstrated blocker; worker adding edge coverage and running sole bounded canonical/native suite. Original WDIR62 WIN87EM call remains next original replay after tested integration.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (real bundled DLL routing audit/startup)
+  status: active (reviewed first-level movement; evidence publication)
   owner: /root/new_game_refill_oct18
-  Next: Firststartup setbuf beforewindow traced missing integrationtest/binaries/dlls/msvcrt.dll; restored authenticSHA887eb5ce93edb7192ca3e9220f07f9ca0f94db02af5862ebcbdfcb852db99fd1. Secondrun20261018-supertux-crt-startup realCRT DllMain passes/setbufpassed, nextMix_OpenAudio failfast; bundledSDL_mixer exists but notloaded. Worker audits explicitrealDLL config, renewed oneboundedrun onlyifconfigurationcorrect. Child2197313/controller2197303 naturalexit1~157ms/rootPIDsabsent/pins3116+787unchanged, noimage/input/gameplay.
+  Next: Run20261018-supertux-gameplay reached Welcome to Antarctica with ordinary StartGame/Slot1/Down/Enter; root reviewed right-movement screenshots, worker reviewed left. Child2204602/controller2204591 exit0, root3117source+787originalpins unchanged/groupempty. No jump/audio/FPS claim; accelerated CLI clock caused timeout during thinktime. Worker publishing evidence/docs; registration remains separate.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
