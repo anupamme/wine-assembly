@@ -1,4 +1,4 @@
-Current 2026-10-18: Circus originalstartup failsfast atCRTDLL_fpreset; root3144pins150original/groupempty pass exits1. RealAPI implementation/conformance sourcework assigned, no silentstub. Barrage sole realcalendar/fullHUD readonlydiagnostic granted. No public deployment.
+Current 2026-10-18: Barrage realcalendar/fullHUD verified live180sdeadline/ammo36 and matchedelapsedtime; rootpostflight passed. Gameplay preparation active. Circus_fpreset sourcefix e7d496a61 independentlyreviewed clear, sole gatedbuild/nativevalidation grant withrealmath testimprovement. Notmerged pendingtests. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
