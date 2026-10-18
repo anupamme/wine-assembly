@@ -8,6 +8,7 @@ const fs=require('node:fs'),path=require('node:path');
 const {ThreadManager}=require('../lib/thread-manager');
 const STACK=0x700000, CALLBACK=0x402000, COUNT=0x403000;
 const extraWat=`
+ (func (export "beep_test_clear_yield") (global.set $yield_flag (i32.const 0)))
  (func (export "beep_test_library") (param i32) (result i32)
   (i32.store offset=16 (global.get $reg_base) (i32.const ${STACK}))
   (call $handle_LoadLibraryA (local.get 0) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
@@ -66,7 +67,7 @@ const extraWat=`
  const setErrorId=require('../src/api_table.json').find(a=>a.name==='SetLastError').id;
  const setErrorThunk=e.beep_test_thunk(setErrorId);
  bytes(CALLBACK,[0x68,...imm(9999),0xb8,...imm(setErrorThunk),0xff,0xd0,0xff,0x05,...imm(COUNT),0xb8,...imm(0xdeadbeef),0xc2,4,0]);
- const run=()=>{e.set_yield_flag(0);e.run(1000);};
+ const run=()=>{e.beep_test_clear_yield();e.run(1000);};
  const done=(expected,error)=>{assert.equal(e.get_eip(),0);assert.equal(e.get_esp(),STACK+12);assert.equal(e.get_eax(),expected);assert.equal(e.beep_test_get_error(),error);assert.equal(e.beep_test_frames(),0);assert.equal(e.beep_test_depth(),0);};
  e.beep_test_error(1234);e.beep_test_queue(CALLBACK);e.beep_test_begin(750,100);
  assert.equal(e.get_eip(),CALLBACK);run();assert.equal(e.guest_read32(COUNT),1);
@@ -103,6 +104,7 @@ const extraWat=`
  // APC: push duration/frequency, CALL internal test shim, record BOOL, ret4.
  const body=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(thunk),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
  body.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
+ nested.invalidate_code_range(CALLBACK,body.length);
  nested.beep_test_error(789);nested.beep_test_queue(CALLBACK);nested.beep_test_begin(750,100);
  nested.run(1000);assert.equal(nested.beep_test_depth(),2);
  ac.currentTime+=0.021;nested.run(1000);assert.equal(nested.guest_read32(COUNT+4),1);
@@ -110,21 +112,14 @@ const extraWat=`
  ac.currentTime+=0.081;nested.run(1000);assert.equal(nested.get_eip(),0);
  assert.equal(nested.get_eax(),1);assert.equal(nested.get_esp(),STACK+12);
  assert.equal(nested.beep_test_depth(),0);assert.equal(nested.beep_test_get_error(),789);
- // Production dynamic resolver, with only the same reviewed handler shim.
- // This is the synthetic KERNEL32 route, not the original game's loaded DLL.
+ // Production KERNEL32 image exports are separate from the API catalog.
+ // Keep its current absence explicit until the public API/export enable slice.
  for(const [address,text] of [[COUNT+32,'KERNEL32.DLL'],[COUNT+64,'Beep']])
   Buffer.from(text+'\0').forEach((b,i)=>nested.guest_write8(address+i,b));
  const library=nested.beep_test_library(COUNT+32);assert(library!==0);
- const dynamic=nested.beep_test_lookup(library,COUNT+64);assert(dynamic!==0);
- const dynamicBody=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(dynamic),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
- dynamicBody.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
- nested.beep_test_error(789);nested.beep_test_queue(CALLBACK);nested.beep_test_begin(750,100);
- nested.run(1000);assert.equal(nested.beep_test_depth(),2);
- ac.currentTime+=0.021;nested.run(1000);assert.equal(nested.guest_read32(COUNT+4),1);
- assert.equal(nested.beep_test_depth(),1);
- ac.currentTime+=0.081;nested.run(1000);assert.equal(nested.get_eip(),0);
- assert.equal(nested.get_eax(),1);assert.equal(nested.get_esp(),STACK+12);
- assert.equal(nested.beep_test_get_error(),789);
+ const dynamic=nested.beep_test_lookup(library,COUNT+64);assert.equal(dynamic,0);
+ assert.equal(nested.beep_test_get_error(),127);
+ assert(!require('../src/kernel32-exports.json').exports.some(x=>x.name==='Beep'));
  // Forced Worker-style retirement must cancel both nested output tokens
  // without calling the dead instance's private continuation/cleanup exports.
  nested.init_thread(1);nested.beep_test_init();
@@ -133,6 +128,7 @@ const extraWat=`
  const nestedThunk=nested.beep_test_thunk(9);
  const nestedBody=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(nestedThunk),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
  nestedBody.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
+ nested.invalidate_code_range(CALLBACK,nestedBody.length);
  nested.beep_test_queue(CALLBACK);nested.beep_test_begin(750,100);nested.run(1000);
  assert.equal(nested.beep_test_depth(),2);
  const retired=[nested.beep_test_token(),nested.beep_test_outer_token()];

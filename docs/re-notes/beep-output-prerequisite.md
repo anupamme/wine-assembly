@@ -204,3 +204,30 @@ actual loaded DLL resolves that image's export table and may return NULL
 without catalog fallback. The original MadBomber missing lookup therefore
 still needs module/export provenance; implementing the handler alone has not
 been demonstrated to repair that original lookup. No game retry was performed.
+
+### Guarded validation, 2026-10-19
+
+Normal build, pure output/retirement, compiled continuation, compiled broker
+with actual Node Worker retirement, production PE/NE/init_thread lifecycle,
+private invocation tokens and retired-stack lease regressions pass. Evidence:
+`/tmp/wa-crt-descriptor-oct18/scratch/runs/20261019-beep-validation/`.
+The continuation fixture currently compiles tail-call dispatch only. Controlled
+WebAudio establishes scheduling/cancellation boundaries, not audible hardware
+playback. Original game and public handler remain untouched.
+
+Preserved failures identified two sparse build inputs (test runner and bundled
+font/bundles), a nonexistent test yield-reset export, and callback code rewritten
+without cache invalidation. The fixture now exports its reset and invalidates
+each rewritten callback; nested APC depth remains strictly two. The token
+microfixture now imports the real audio lifecycle host rather than omitting the
+two new dependencies. No production code changed during this validation.
+
+The proposed positive dynamic fixture exposed a real, separate manifest gap:
+`src/kernel32-exports.json` omits Beep; `tools/gen-kernel32-image.js` derives the
+explicit image export surface from that manifest. GetProcAddress first recognizes
+the KERNEL32 image and resolves its export directory at RVA16384; API catalog9
+does not override this route. The test now verifies NULL/ERROR_PROC_NOT_FOUND
+and the manifest absence while the public implementation remains disabled.
+This is evidence of the generated-image gap, not yet proof of the original
+MadBomber hModule provenance. Positive dynamic and actual PE static-import tests
+remain required for a separate reviewed handler/export enable change.
