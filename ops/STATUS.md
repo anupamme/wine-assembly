@@ -1,4 +1,4 @@
-Current 2026-10-18: LBreakout2 registered paddleleft/right+idle and separateballlaunch reviewed; cleanexits/rootpins verified, corelane complete. Outlaws ordinary movement/passivecounts run granted; no keyboardcontrolclaim yet. Fresh worker selects next nonpublic title, audio/FPS/device followups remain separate. No public deployment.
+Current 2026-10-18: Outlaws ordinary Up/Left run cleanly exited but no clear camera movement; fourzero counters lack positivecontrol, so inputloss not established. Source counter/address/messagepath audit active. LMarbles original official package acquisition replaces qualifiedLBreakout2. No active runtime grant or public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
