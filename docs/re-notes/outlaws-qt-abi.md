@@ -336,3 +336,9 @@ Postflight found no surviving owned build/test processes. Reverse thunks,
 deeper nested callback traps, asynchronous yields and Worker QT remain outside
 the validated synchronous scope. Integration and any original-payload trial
 belong to the coordinator's next separately owned runtime step.
+
+## Original demo observation, 2026-10-18
+
+Run `scratch/runs/20261018-outlaws-original-qt-observation` used mainae4a34844 and modulef7c9f5c above, original archive501f37aa475b6c27c87ce04e30b5207f91b81603cb376aaa9ffde1647a40e7b3,31 verified records/30 unique VFS mounts. No guest input or licence response. PMPRO62F DllMain entered QT and trapped at batch29: EIP07504228, ESP074ff4b4, yield18/halt3. Compiled function10365 is win16_dispatch; trap offset0x18200f is its final fail-fast unreachable. Exact module/ordinal not established by this log. Blank teal640x480 stop.png reviewed by root; no menu/gameplay success.
+
+The CLI acknowledged host quit but remained alive; prepared85s watchdog killed child2137391 at16:02:13.981Z. Controller exited1. Root independent-postflight passed:3110 physical pins and original files unchanged, owned process group absent, free4,876,996,608B. Minimum sampled4,877,107,200B. Raw logs/controller/manifests and receipts retained in run directory. Next identify the missing Win16 import through existing failure-state diagnostics; do not replace trap with a silent success.

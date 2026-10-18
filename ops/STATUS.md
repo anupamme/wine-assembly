@@ -1,4 +1,4 @@
-Current 2026-10-18 TG93 completion: Verified cleanup reclaimed~2.61GB; free4.90GB before runtime. Outlaws synchronous QT gateway merged3070476bd, native7PASS and combinedbuild/direct/sparse/cooperativePASS exactf7c9f5c. FIFA owns bounded browser validation; original Outlaws CLI preparation source-only. Allignored evidence/WIP/originals preserved, no publicdeploy or licence decisions.
+Current 2026-10-18: Original Outlaws reached QT then failed in an unimplemented Win16 dispatcher path during PMPRO62F initialization; import identification next. Root postflight passed after85s watchdog cleanup, disk4.87GB. FIFA match reached but control test hit cutscene; shorter reviewed route prepared, control/audio/FPS unqualified. No runtime active, no public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
