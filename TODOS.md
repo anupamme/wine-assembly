@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (counted fixed-builtin native conformance)
+  status: active (canonical/full-native passed; smaller regression fixtures)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_nested_ne_load
-  Next: Candidate10f97b889 implements counted fixed import/explicit references, retaining general nested guard. Independent source review found no demonstrated blocker; worker adding edge coverage and running sole bounded canonical/native suite. Original WDIR62 WIN87EM call remains next original replay after tested integration.
+  Next: Candidate130377b90 canonical build and full native lifecycle passed (module9b20ff17). Independent delta review clear through e425d60c2; smaller extraction fixtures repaired after stale dependencies and deadline-limited retry. Fresh sole90s tests-only slot granted, no original replay until integration.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (reviewed first-level movement; evidence publication)
-  owner: /root/new_game_refill_oct18
-  Next: Run20261018-supertux-gameplay reached Welcome to Antarctica with ordinary StartGame/Slot1/Down/Enter; root reviewed right-movement screenshots, worker reviewed left. Child2204602/controller2204591 exit0, root3117source+787originalpins unchanged/groupempty. No jump/audio/FPS claim; accelerated CLI clock caused timeout during thinktime. Worker publishing evidence/docs; registration remains separate.
+  status: active (reviewed gameplay; local registration implementation)
+  owner: /root/supertux_registration
+  Next: Gameplay evidence merged/pushed fd0af8270. Original first-level left/right response reviewed; jump/audio/FPS unverified. Fresh /root/supertux_registration implements durable local-only registry/manifest/recovery recipe with pureJS tests; no runtime or public release.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
