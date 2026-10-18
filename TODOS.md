@@ -1513,7 +1513,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Aliens versus Predator 2 single-player demo
   id: NEW-GAME-AVP2-DEMO-20261010
-  status: ready (local textured Marine mission and W input captured; idle comparison pending)
+  status: review (paired original Marine movement qualified; browser/audio/FPS pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: none
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
