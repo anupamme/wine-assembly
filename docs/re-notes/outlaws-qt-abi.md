@@ -212,3 +212,86 @@ compiler layout hash `a44784ce3c83726a`. Final free disk was 2,417,893,376 bytes
 above the strict 2GiB floor. PID postflight found no surviving owned build/test
 processes. Build outputs stay in the isolated checkout; this note and the
 runner/command receipts provide recovery if ignored artifacts are lost.
+
+## QT gateway source candidate (2026-10-18)
+
+Task branch `task/outlaws-qt-gateway-oct18`, WAT checkpoint
+`4da5ed1de3065cd3d9cb17bf4552075f587747db`, test follow-up
+`77d4a0a31c5bb18233e40bcfadb8cf915673b3a6`, implements the gateway candidate.
+It remains off main pending canonical build, native execution and review.
+No QT execution or original-payload compatibility is claimed here.
+
+The native frame acquires its scope, executable target pin and mapping lease
+before replacing its first owned selector with the original aligned stack
+window. Incoming EBP becomes its offset in that window; arguments stay at S+4.
+The far continuation replaces the DWORD at S, which frame teardown restores
+before releasing backing. BP-relative scratch modifications are already visible
+in the original stack; there is no copied-stack fallback or copyback overwrite.
+Entry DS/ES/FS/GS are zero, DI/SI hold the old SS/FS low words and DX holds the
+new SS. Unspecified high halves follow the documented preservation convention.
+
+The QT return path accepts only the owned continuation and even final SP in
+the range S+4 through B-0x3c. It preserves independent EAX/EDX/ECX and actual
+RETF cleanup. The old strict LibEntry/WEP stack-word cleanup is unchanged.
+Native settlement owns the completed frame, verifies the original request
+serial, restores the CPU/segment/FP frame and return slot, then merges only
+the successful outputs. Failure restores the suspended caller and leaves its
+request parked. Worker and asynchronous invocation yields remain explicit errors.
+
+The source candidate includes ordinary QT_Thunk GetProcAddress dispatch, but
+must not be merged merely because pure tests pass. Pure driver cancellation,
+planner, fixture/image, existing guest-service and touched source gates passed.
+`test/test-ne-qt-gateway-candidate.js` is prepared, **not executed**: real PE
+lookup/call, original BP scratch writes, callee-entry segment/DX checks, SI/DI
+scratch observations, distinct full results, RETF 0/4/odd/overflow, trap/loop/
+corrupt-return/cancellation, foreign-owner rejection, and complete saved-context
+comparison on failure. Run both direct and sparse modes after a runtime grant:
+
+```sh
+bash tools/build.sh
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-gateway-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-gateway-candidate.js --sparse
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-guest-lifecycle-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-stack-lease-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-ownership-candidate.js
+```
+
+Prepared bounded runner: shared
+`scratch/runs/20261018-outlaws-qt-gateway/run-bounded.js`. Proposed budgets are
+180s for canonical build, 90s for sequential native tests, 64MiB incremental
+disk use, admission at 2GiB+80MiB free, stop at 2GiB+16MiB, and 8MiB logs.
+Build prerequisites omitted by the sparse checkout must be materialized
+narrowly: `fonts/Terminal.fon` and the two tracked `docs/dos-corpus/live/toyvm*`
+bundles. Cooperative scheduler execution, concurrent/nested native scenarios
+and original PMPRO62F remain further validation work; prepared tests are not
+evidence for those paths.
+
+The first granted canonical build passed in 20.3s, producing module
+`3f9aa27ee228fa6e450b7fecf7808d8041b72ed9bf2e948c00b9d219638814ee` from
+the candidate above, with unchanged region mirror. Minimum observed free disk
+was 2,306,793,472 bytes. Native attempts 1–3 failed **before gateway entry**:
+the actual PE lifecycle loaded handle 257 and obtained NE target 0x270040,
+but ordinary KERNEL32 GetProcAddress returned zero for QT_Thunk. The initial
+test assertion was sharpened to identify the pre-entry failure rather than
+assuming every interpreter slice must yield.
+
+Source fix `4d27fdc7365112921c8078e34c5c01b7cdaec8b5` adds QT_Thunk to
+`kernel32-exports.json` and regenerates the native image, which is the actual
+KERNEL32 lookup authority. Generic API-table registration alone was insufficient.
+Named ordinal 585 follows the manifest's emulator-ABI convention; it is not a
+claim about Windows version-specific ordinal assignments. The generator's
+positive/staleness/invalid-manifest pure checks pass. Follow-up
+`fb34f1534e0671942fc6be83d2b62250231d077c` prepares `--cooperative` execution
+through ThreadManager's production callback facade. Neither change has been
+built or run natively yet: the original runtime budget expired. All failed
+receipts remain in the run directory. A new epoch requires a fresh grant:
+
+```sh
+node /home/user/wine-assembly/scratch/runs/20261018-outlaws-qt-gateway/run-bounded.js build retry1-build-1 retry1-
+node /home/user/wine-assembly/scratch/runs/20261018-outlaws-qt-gateway/run-bounded.js native retry1-native-1 retry1-
+```
+
+The native runner now includes `--cooperative`. Deeper callback traps and
+nested reverse/lifecycle paths remain unvalidated; the frame teardown's sync
+depth check can reject an unwind if a deeper callback fails to unwind itself.
+Do not advertise those paths as supported based on the synchronous candidate.

@@ -1730,6 +1730,8 @@
     (call $handle_ne_guest_request (i32.const 2) (local.get $arg0) (i32.const 0)))
   (func $handle_GetProcAddress16 (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (call $handle_ne_guest_request (i32.const 3) (local.get $arg0) (local.get $arg1)))
+  (func $handle_QT_Thunk (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (call $handle_ne_guest_request (i32.const 4) (i32.load offset=8 (global.get $reg_base)) (i32.const 0)))
 
   (func $handle_LoadLibraryA (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (local $tmp i32) (local $src i32) (local $dst i32) (local $ch i32) (local $name_wa i32)

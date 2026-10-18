@@ -414,7 +414,7 @@
 
   ;; Win32 guest lifecycle request. The owning instance keeps its CPU parked;
   ;; no host completion may write registers after retirement or a newer call.
-  ;; Yield 18 is distinct from the PE loader's yield 5. QT is not implemented.
+  ;; Yield 18 is distinct from the PE loader's yield 5.
   (global $win16_guest_serial (mut i64) (i64.const 0))
   (global $win16_guest_pending (mut i64) (i64.const 0))
   (global $win16_guest_owner (mut i32) (i32.const 0))
@@ -430,10 +430,11 @@
     (local $esp i32) (local $pop i32) (local $i i32)
     (if (i32.or (global.get $is_win16) (global.get $yield_reason)) (then (return (i64.const 0))))
     (if (i64.ne (global.get $win16_guest_pending) (i64.const 0)) (then (return (i64.const 0))))
-    (if (i32.or (i32.lt_u (local.get $op) (i32.const 1)) (i32.gt_u (local.get $op) (i32.const 3)))
+    (if (i32.or (i32.lt_u (local.get $op) (i32.const 1)) (i32.gt_u (local.get $op) (i32.const 4)))
       (then (return (i64.const 0))))
     (local.set $esp (i32.load offset=16 (global.get $reg_base)))
     (local.set $pop (select (i32.const 12) (i32.const 8) (i32.eq (local.get $op) (i32.const 3))))
+    (if (i32.eq (local.get $op) (i32.const 4)) (then (local.set $pop (i32.const 4))))
     (if (i32.gt_u (local.get $esp) (i32.sub (i32.const -1) (local.get $pop)))
       (then (return (i64.const 0))))
     (loop $stack_bytes
@@ -479,6 +480,7 @@
   (func (export "win16_guest_request_settle") (param $serial i64) (param $value i32) (result i32)
     (local $pop i32)
     (if (i32.eqz (call $win16_guest_request_valid (local.get $serial))) (then (return (i32.const 0))))
+    (if (i32.eq (global.get $win16_guest_op) (i32.const 4)) (then (return (i32.const 0))))
     (local.set $pop (select (i32.const 12) (i32.const 8) (i32.eq (global.get $win16_guest_op) (i32.const 3))))
     (if (i32.gt_u (global.get $win16_guest_esp) (i32.sub (i32.const -1) (local.get $pop)))
       (then (return (i32.const 0))))
@@ -494,6 +496,37 @@
   (func $win16_guest_request_cancel (export "win16_guest_request_cancel")
     ;; Process reset/retirement invalidates old completions without resuming.
     (global.set $win16_guest_pending (i64.const 0)))
+
+  ;; QT settlement owns a completed native frame, never a host-supplied result.
+  ;; Restore everything first, revalidate the parked request, then merge only
+  ;; the independent successful outputs and actual RETF-adjusted stack.
+  (func (export "win16_guest_qt_settle") (param $serial i64) (param $token i64) (result i32)
+    (local $frame i32) (local $a i32) (local $d i32) (local $c i32) (local $sp i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i64.ne (local.get $serial) (global.get $win16_guest_pending))
+      (i32.or (i32.ne (global.get $win16_guest_op) (i32.const 4))
+        (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 2)))) (then (return (i32.const 0))))
+    (if (i64.ne (local.get $serial) (i64.load offset=384 (local.get $frame))) (then (return (i32.const 0))))
+    (if (i32.or (i32.eqz (i32.load offset=352 (local.get $frame)))
+      (i32.or (i32.ne (i32.load offset=48 (local.get $frame)) (global.get $win16_guest_esp))
+        (i32.ne (i32.load offset=64 (local.get $frame)) (global.get $win16_guest_eip))))
+      (then (return (i32.const 0))))
+    (local.set $a (i32.load offset=364 (local.get $frame)))
+    (local.set $d (i32.load offset=368 (local.get $frame)))
+    (local.set $c (i32.load offset=372 (local.get $frame)))
+    (local.set $sp (i32.load offset=376 (local.get $frame)))
+    (if (i32.eqz (call $win16_bridge_frame_end (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_guest_request_valid (local.get $serial))) (then (return (i32.const 0))))
+    (i32.store (global.get $reg_base) (local.get $a))
+    (i32.store offset=8 (global.get $reg_base) (local.get $d))
+    (i32.store offset=4 (global.get $reg_base) (local.get $c))
+    (i32.store offset=16 (global.get $reg_base) (local.get $sp))
+    (global.set $eip (global.get $win16_guest_return))
+    (global.set $win16_guest_pending (i64.const 0))
+    (global.set $yield_reason (i32.const 0))
+    (global.set $yield_flag (i32.const 0))
+    (i32.const 1))
 
   (func $win16_bridge_frame_valid (param $token i64) (result i32)
     (local $frame i32)
@@ -638,7 +671,7 @@
   ;; Acquire mapping lifetime only; no selector is published and no guest
   ;; state changes. Revalidate every page under the same lock as all mapping
   ;; mutations, so the JS planner is never mistaken for a lifetime guarantee.
-  (func (export "win16_bridge_stack_lease")
+  (func $win16_bridge_stack_lease (export "win16_bridge_stack_lease")
     (param $token i64) (param $base i32) (param $backing i32) (result i32)
     (local $i i32) (local $rec i32) (local $free i32) (local $offset i32) (local $fixed i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
@@ -700,6 +733,12 @@
           (i32.add (i32.load offset=256 (local.get $frame)) (i32.const 1)))
           (then (return (i32.const 0))))))
     (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    ;; QT owns the overwritten PE return slot until this exact frame ends.
+    ;; Scratch writes are already visible through the alias; never copy a
+    ;; private BP frame over them. Restore the return before dropping the lease.
+    (if (i32.load offset=352 (local.get $frame))
+      (then (call $gs32 (i32.load offset=48 (local.get $frame))
+        (i32.load offset=356 (local.get $frame)))))
     (if (i32.load offset=312 (local.get $frame))
       (then (i32.store offset=24 (call $win16_bridge_call_record (i32.load offset=308 (local.get $frame)))
         (i32.sub (i32.load offset=24 (call $win16_bridge_call_record (i32.load offset=308 (local.get $frame)))) (i32.const 1)))))
@@ -773,8 +812,8 @@
           (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
         (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
           (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0))))))
-    ;; CPU/segment restoration precedes lifetime release. A future published
-    ;; QT alias must be revoked here before releasing its backing lease.
+    ;; arena_give above revoked the QT alias under the DLL mutex; CPU and
+    ;; segment restoration also precede release of the backing lease.
     (call $win16_bridge_stack_lease_end (local.get $token))
     (i32.store offset=20 (local.get $frame) (i32.const 0))
     (global.set $win16_bridge_frame (local.get $previous))
@@ -877,7 +916,7 @@
   ;; scope prevents another instance's NE work; the mutex makes the ready
   ;; state, segment ownership and active-call increment one transaction.
   ;; +348 holds the exact pinned target so invoke_begin cannot switch modules.
-  (func (export "win16_bridge_invoke_target") (param $token i64) (param $target i32) (result i32)
+  (func $win16_bridge_invoke_target (export "win16_bridge_invoke_target") (param $token i64) (param $target i32) (result i32)
     (local $frame i32) (local $index i32) (local $id i32) (local $rec i32) (local $first i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
     (local.set $frame (i32.wrap_i64 (local.get $token)))
@@ -987,16 +1026,93 @@
     (call $lock_release (global.get $DLL_LOAD_LOCK))
     (i32.const 0))
 
+  ;; QT mode uses the original Win32 S+4 argument base. +352 marks the
+  ;; published alias, +356 saves [S], +360 bounds final SP, +364..376 hold
+  ;; independent EAX/EDX/ECX and final linear SP. These are frame-private.
+  (func (export "win16_bridge_qt_begin") (param $token i64) (param $target i32) (result i32)
+    (local $frame i32) (local $s i32) (local $b i32) (local $base i32) (local $sel i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i32.load offset=24 (local.get $frame))
+      (i32.ne (i32.load offset=264 (local.get $frame)) (i32.const 0))) (then (return (i32.const 0))))
+    (i64.store offset=384 (local.get $frame) (global.get $win16_guest_pending))
+    (local.set $s (i32.load offset=48 (local.get $frame)))
+    (local.set $b (i32.load offset=52 (local.get $frame)))
+    (local.set $base (i32.and (local.get $s) (i32.const 0xFFFF0000)))
+    (if (i32.or (i32.ne (i32.and (i32.or (local.get $s) (local.get $b)) (i32.const 1)) (i32.const 0))
+      (i32.or (i32.gt_u (local.get $base) (i32.const 0xFFFE0000))
+        (i32.ne (i32.and (local.get $b) (i32.const 0xFFFF0000)) (local.get $base))))
+      (then (return (i32.const 0))))
+    (if (i32.or (i32.lt_u (i32.sub (local.get $s) (local.get $base)) (i32.const 4))
+      (i32.or (i32.lt_u (local.get $b) (local.get $s))
+        (i32.lt_u (i32.sub (local.get $b) (local.get $s)) (i32.const 64))))
+      (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_scope_begin (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_invoke_target (local.get $token) (local.get $target)))
+      (then (return (i32.const 0))))
+    (if (i32.eqz (call $win16_bridge_stack_lease (local.get $token) (local.get $base) (call $g2w (local.get $base))))
+      (then (return (i32.const 0))))
+    ;; Reuse ordinary execution setup, but not its private argument stack or
+    ;; register ABI. Nothing executes between setup and alias publication.
+    (if (i32.eqz (call $win16_bridge_invoke_begin (local.get $token) (local.get $target)
+      (i32.const 0) (i32.const 0) (i32.const 0))) (then (return (i32.const 0))))
+    (i32.store offset=356 (local.get $frame) (call $gl32 (local.get $s)))
+    (i32.store offset=360 (local.get $frame) (i32.sub (local.get $b) (i32.const 0x3C)))
+    (call $win16_seg_set (i32.load offset=12 (local.get $frame)) (local.get $base)
+      (i32.const 0x10000) (i32.const 1) (i32.const 0))
+    (local.set $sel (call $win16_index_to_sel (i32.load offset=12 (local.get $frame))))
+    (i32.store offset=352 (local.get $frame) (local.get $sel))
+    (call $win16_set_sreg (i32.const 2) (local.get $sel))
+    (memory.copy (global.get $reg_base) (i32.add (local.get $frame) (i32.const 32)) (i32.const 32))
+    (i32.store offset=20 (global.get $reg_base) (i32.sub (local.get $b) (local.get $base)))
+    ;; Documented low words: DI=old SS, SI=old FS, DX=new SS.
+    ;; Unspecified high halves are preserved as an emulator convention.
+    (i32.store16 offset=28 (global.get $reg_base) (i32.load offset=92 (local.get $frame)))
+    (i32.store16 offset=24 (global.get $reg_base) (i32.load offset=100 (local.get $frame)))
+    (i32.store16 offset=8 (global.get $reg_base) (local.get $sel))
+    (call $win16_set_sreg (i32.const 0) (i32.const 0))
+    (call $win16_set_sreg (i32.const 3) (i32.const 0))
+    (call $win16_set_sreg (i32.const 4) (i32.const 0))
+    (call $win16_set_sreg (i32.const 5) (i32.const 0))
+    (call $gs32 (local.get $s) (i32.or (global.get $WIN16_BRIDGE_RETURN)
+      (i32.shl (global.get $WIN16_THUNK_SEL) (i32.const 16))))
+    (i32.const 1))
+
+  (func (export "win16_bridge_qt_result") (param $token i64) (param $field i32) (result i64)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i64.const -1))))
+    (if (i32.or (i32.eqz (i32.load offset=352 (i32.wrap_i64 (local.get $token))))
+      (i32.ne (i32.load offset=24 (i32.wrap_i64 (local.get $token))) (i32.const 2)))
+      (then (return (i64.const -1))))
+    (if (i32.gt_u (local.get $field) (i32.const 3)) (then (return (i64.const -1))))
+    (i64.extend_i32_u (i32.load offset=364
+      (i32.add (i32.wrap_i64 (local.get $token)) (i32.shl (local.get $field) (i32.const 2))))))
+
   (func $win16_bridge_invoke_return (param $ret_lin i32)
     (local $frame i32)
     (if (i32.or (i32.ne (local.get $ret_lin) (i32.const 0))
       (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))))
       (then (unreachable)))
     (local.set $frame (i32.wrap_i64 (global.get $win16_bridge_frame)))
+    (if (i32.load offset=352 (local.get $frame))
+      (then
+        (if (i32.or (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 1))
+          (i32.ne (global.get $sreg_ss) (i32.load offset=352 (local.get $frame)))) (then (unreachable)))
+        ;; th_retf16 dispatches only the actual popped thunk selector here;
+        ;; it deliberately leaves sreg_cs naming the returning NE code.
+        (if (i32.or (i32.ne (i32.and (i32.load offset=16 (global.get $reg_base)) (i32.const 1)) (i32.const 0))
+          (i32.or (i32.lt_u (i32.load offset=16 (global.get $reg_base))
+            (i32.add (i32.load offset=48 (local.get $frame)) (i32.const 4)))
+            (i32.gt_u (i32.load offset=16 (global.get $reg_base)) (i32.load offset=360 (local.get $frame)))))
+          (then (unreachable)))
+        (i32.store offset=364 (local.get $frame) (i32.load (global.get $reg_base)))
+        (i32.store offset=368 (local.get $frame) (i32.load offset=8 (global.get $reg_base)))
+        (i32.store offset=372 (local.get $frame) (i32.load offset=4 (global.get $reg_base)))
+        (i32.store offset=376 (local.get $frame) (i32.load offset=16 (global.get $reg_base))))
+      (else
     (if (i32.or (i32.ne (i32.load offset=24 (local.get $frame)) (i32.const 1))
       (i32.or (i32.ne (global.get $sreg_ss) (call $win16_index_to_sel (i32.load offset=12 (local.get $frame))))
         (i32.ne (i32.load offset=16 (global.get $reg_base)) (i32.load offset=260 (local.get $frame)))))
-      (then (unreachable)))
+      (then (unreachable)))))
     (i32.store offset=28 (local.get $frame)
       (i32.or (i32.and (i32.load (global.get $reg_base)) (i32.const 0xFFFF))
         (i32.shl (i32.load offset=8 (global.get $reg_base)) (i32.const 16))))
