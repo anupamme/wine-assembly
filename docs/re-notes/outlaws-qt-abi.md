@@ -265,3 +265,33 @@ narrowly: `fonts/Terminal.fon` and the two tracked `docs/dos-corpus/live/toyvm*`
 bundles. Cooperative scheduler execution, concurrent/nested native scenarios
 and original PMPRO62F remain further validation work; prepared tests are not
 evidence for those paths.
+
+The first granted canonical build passed in 20.3s, producing module
+`3f9aa27ee228fa6e450b7fecf7808d8041b72ed9bf2e948c00b9d219638814ee` from
+the candidate above, with unchanged region mirror. Minimum observed free disk
+was 2,306,793,472 bytes. Native attempts 1–3 failed **before gateway entry**:
+the actual PE lifecycle loaded handle 257 and obtained NE target 0x270040,
+but ordinary KERNEL32 GetProcAddress returned zero for QT_Thunk. The initial
+test assertion was sharpened to identify the pre-entry failure rather than
+assuming every interpreter slice must yield.
+
+Source fix `4d27fdc7365112921c8078e34c5c01b7cdaec8b5` adds QT_Thunk to
+`kernel32-exports.json` and regenerates the native image, which is the actual
+KERNEL32 lookup authority. Generic API-table registration alone was insufficient.
+Named ordinal 585 follows the manifest's emulator-ABI convention; it is not a
+claim about Windows version-specific ordinal assignments. The generator's
+positive/staleness/invalid-manifest pure checks pass. Follow-up
+`fb34f1534e0671942fc6be83d2b62250231d077c` prepares `--cooperative` execution
+through ThreadManager's production callback facade. Neither change has been
+built or run natively yet: the original runtime budget expired. All failed
+receipts remain in the run directory. A new epoch requires a fresh grant:
+
+```sh
+node /home/user/wine-assembly/scratch/runs/20261018-outlaws-qt-gateway/run-bounded.js build retry1-build-1 retry1-
+node /home/user/wine-assembly/scratch/runs/20261018-outlaws-qt-gateway/run-bounded.js native retry1-native-1 retry1-
+```
+
+The native runner now includes `--cooperative`. Deeper callback traps and
+nested reverse/lifecycle paths remain unvalidated; the frame teardown's sync
+depth check can reject an unwind if a deeper callback fails to unwind itself.
+Do not advertise those paths as supported based on the synchronous candidate.
