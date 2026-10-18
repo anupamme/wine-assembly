@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Mad Bomber retry preparation; qsort test preparation)
+  status: active (Beep audit; qsort validation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: MadBomber original resolves_fdopen then missingrewind API122 stopszlib; root3204pins140original/sharedCRT/groupemptyPASS no window. Realrewind source/tests assigned. Circus retainedqsort perthread frames/expectedtokens+ESP source work active. One runtime no public deploy.
+  Next: MadBomber resolvesrewind then originalMSVCR70 BeepGPA247NULL; root3207pins140original/sharedCRT/groupemptyPASS no window. Beep realAPI audit assigned, qsort solecompiledgrant; BW2observer parallel source-only.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1680,9 +1680,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Black & White 2 draw-layout provenance follow-up
   id: BW2-DRAW-LAYOUT-PROVENANCE-20261018
-  status: blocked (source audit complete; raw evidence missing, runtime disk-held)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Source audit212f0fa0 maps NULL bind, stateblockApply and Reset/init; delayed renderer consumption alone cannot explain prepack rejection. Raw scratch/runs/20261009T0335Z-black-white2-staging-fix missing. Need exact source/module identity and bounded before/after producer trace when runtime available; no speculativeproductionfix/newtitleclaim.
+  status: active (bounded layout observer implementation)
+  owner: /root/bw2_layout_observer
+  Next: Prior sourceaudit merged, raw scratch/runs/20261009T0335Z-black-white2-staging-fix missing. Implement opt-in bounded provenance observer and pure tests before live capture; no speculative rendererfix. Trace actual producer when runtime available.
   Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
 
 - [ ] Qualify FIFA98 touch usability, audio and logical gameplay FPS
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (reviewed qsort test preparation)
+  status: active (retained qsort compiled validation)
   owner: /root/crt_jump_ownership
-  Next: Instrument qsort only with perthread retained frames and distinct comparatorchild IDs, expectedtoken/returnESP before continuationmutation, nestedqsort preservation. Source f82157f3e pushed, actualx86 nested/yield/rejection tests authored notrun; independentreview clear, compiledtests queued behind originalretry. bsearch/initterm/othercallbacks and realjump handlers pending.
+  Next: Sourceclearf82157f3e pluscross-thread/capacity tests1ba5b7a0 syncedrewind; sole normalbuild/actualx86 nested/yield/noop/stale/trap/token regressions granted strictguards. Fullcallback/jump handlers pending.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (tested rewind original retry preparation)
+  status: active (Beep dynamic lookup source audit)
   owner: /root/crt_fdopen_prerequisite
-  Next: ONE20261018-madbomber-fdopen-retry proves_fdopen resolves07504880 atAPI110 thenrewind NULL atAPI122 zlibret00c6fcc5. No_fdopeninvocation/window/PNG. Root3204pins140original/sharedCRT/aafa600a/groupemptyPASS. Rewind reviewed/worker normalbuild+3testsPASS and rootnormalbuild/rewindPASS exactc3ae99a8. Next ONE original10/15/25 retry with freshpins, no automaticrepeat.
+  Next: Original20261018-madbomber-rewind-retry resolves_fdopen/rewind withoutinvocation then BeepGPA247NULL originalMSVCR70 caller007b85a9. Root3207pins140original/sharedCRT/c3ae99a8/groupemptyPASS. Audit realAPI availability/resolution no stub; no autoretry.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
