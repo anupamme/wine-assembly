@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws turn validation; Barrage direct-range preparation)
+  status: active (Barrage direct-range; fresh Outlaws replacement screening)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws sole settledhealthyturn test; Barrage Briefing verified but clippedreturn, nextsourceplan directrange ordinaryaim/fire. One runtime strict2GiBfloor no publicdeploy.
+  Next: Outlaws corequalified rootreviewed originalforward+registeredturn; fresh /root/new_game_refill_after_outlaws source-screening. Barrage sole registereddirectrange aim/fire test. One runtime strict2GiBfloor no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (sole settled healthy turn validation granted)
+  status: done (original launch, forward and registered turning reviewed)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Barrage released/root3243pins/groupemptyPASS. ONE settledturn grant freshfullcolor SHA+healthpositive/tint0 readiness, Left500ms independentrelease/read-onlyhealth beforeheldreleasedidle. Realclock fdmodule freshpins strict2GiBmargins/time/log guards no retry/build/browser.
+  Next: Root reviewedsettledturn before/held/idle directionalworldchange health10/tint0 allsamples; oneLeft500ms releasedorientationheld. Priorforward also reviewed. Run20261018-outlaws-settled-turn-observation root3149pins31original/groupemptyPASS exits0. Corequalified; combat/audioFPS/browser/fullgame remain unverified. Fresh /root/new_game_refill_after_outlaws screeningreplacement.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1721,7 +1721,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames Barrage 1.0.5 original Windows release
   id: NEW-GAME-BARRAGE-20261018
-  status: active (source preparation for direct shooting-range control)
+  status: active (sole registered direct-range aim/fire granted)
   owner: /root/new_game_refill_after_ltris
-  Next: RegisteredBriefing reached confirms6roundcost but returnclipped; PLANstop no aim/shot. Root3243pins45original/groupemptyPASS exits0. Prepare freshdirectEnterShootingRange route using knownbriefing semantics, or authenticdismissal/geometry evidence; no runtime whileOutlaws sole.
+  Next: Freshdirectrangeplan b2ce29d67 granted180/185/210s afterOutlawsrelease/rootpostflight. Exactregisteredroute/freshpinsfd; reviewedaim2points actual36baseline->single250msleft30idle. Diskrestored~82MB cleanpushedinactiveQTgateway sparsification free2.359GB. Strictguards no retry/build/browser.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
