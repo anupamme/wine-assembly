@@ -288,3 +288,57 @@ cache. Existing missing-export, guest lifecycle guard and retained-WEP cases
 also pass. PMPRO62 and the complete twelve-arm controller were not rerun for
 this focused correction; the controller production pin remains unchanged
 pending review of this production-source commit.
+
+## Original WEP failure: source review, 2026-10-18
+
+The retained `20261018-outlaws-fullsuite-native` run at source
+`3de949dd78a77cf532353263a27eff4c74089983` passed seven arms and stopped on
+original PMPRO62 final unload. The original image remains SHA-256
+`7e2b17e61e7e4808a50478ddcac06f65fcf9f3ffd741d747c8cb75e20cb05db9`.
+This review used the saved log, original image, NE relocation table and static
+8086 disassembly only; no new build, guest, browser or runtime test ran.
+
+The immediate cause is unimplemented **KERNEL.48, GetModuleUsage**. The saved
+host tail is `[96,3390482929,65584,138548597]`: `3390482929` is `0xCA16A9F1`,
+the final unimplemented-API marker in `win16_dispatch`; `65584` is the packed
+KERNEL module 1 / ordinal 48 key. The preceding 96 belongs to the earlier
+synthetic BADTRAP test, which does not clear the log before the original arm.
+This is not evidence of original PMPRO62 calling the guarded FreeLibrary path.
+
+The original NE entry table names WEP at segment 1 offset `0x00b4`.
+Its ordinary path calls `1:173a`, then `1:15ff`, then the near CRT cleanup at
+`1:1559`. Cleanup compares DS with SS at `1:1564`–`1:156a`; the retained trap
+records DS=55 and SS=71, so it takes the module-usage query path. At `1:156c`
+it pushes the WORD at DS:`003b`, and at `1:1570` performs the far import call.
+The relocation record at file offset 8149 has type 3, flags 1, site `1571`,
+module 1, ordinal 48, confirming the import independently of the host log.
+The logged return address `0x08421575` matches original offset `1575` with
+code base `0x08420000`. The saved EIP `0x0842156c` identifies the beginning of
+that translated block, not the far-call opcode itself.
+
+Initializer `1:0000` stores DI at DS:`003b`. The bridge supplies DI from
+`instance`, and `ne-lifecycle.js` supplies the module data selector as instance.
+Thus source flow predicts the pushed instance is 55; the failure log does not
+include the actual stack argument or data word, so that value is inferred,
+not directly sampled. On return the original code compares AX to 1 and skips
+destructor work when it is greater than 1. A constant successful answer would
+discard real reference-count semantics.
+
+A focused implementation must resolve both the module handles produced by
+GetModuleHandle/LoadLibrary and the DGROUP instance selector supplied to
+LibEntry. Bridge modules keep their authoritative refs at bridge-record +8;
+the legacy DLL refcount is a different store. Final release changes bridge
+state from ready (3) to terminating (4), retaining refs=1 while WEP executes.
+The query must remain valid during that terminating state, remain read-only,
+and return zero for invalid/stale handles. It must not change DS/SS to bypass
+the query or relax guest LoadLibrary/FreeLibrary guards.
+
+Next bounded validation, once the runtime lane is granted: add a synthetic
+NE import of KERNEL.48 which queries its saved initializer instance, exercise
+one/two/one references and the final WEP query, and cover invalid handles,
+module-handle aliases, caller restoration and preserved termination leases.
+Then run the unchanged original arm with a diagnostic snapshot of the
+argument and record refs at this import; inspect any later failure before
+claiming unload success. Finally run the complete twelve-arm controller.
+The four arms after original PMPRO62 remain unrun in the retained suite.
+No implementation change is included in this source-only review.
