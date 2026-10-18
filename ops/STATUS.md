@@ -1,3 +1,5 @@
+Current 2026-10-18: Mad Bomber original failure confirmed CRTDLL_fdopen lookupNULL; complete root postflight passed, real FILE/descriptor source work active. Circus nonlocal-jump ABI audit exposes dispatcher/callback lifetime requirements; expanded safe design active, no stub alias. Both lanes source-only, no runtime or public deploy.
+
 Current 2026-10-18: Circus original passes _iob/setbuf and reaches hidden window, then missing _setjmp; no menu/gameplay. Root3197pins150original/sharedCRT/process cleanup passed; real nonlocal jump source audit active. Mad Bomber sole bounded import diagnostic granted with mandatory sharedCRT prepin. No public deploy.
 
 Current 2026-10-18: Real bounded setbuf passed independent review, worker build/three compiled tests and root normalbuild/stdio; canonical67aaa6df. Circus next sole original passive retry with fresh pins. Mad Bomber short import diagnostic preparation queued; GPA NULL branch remains hypothesis. No public deploy.
