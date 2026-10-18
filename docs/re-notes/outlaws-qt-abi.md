@@ -113,7 +113,8 @@ exported mapping paths. Release of a reservation or split allocation must
 preflight its entire range before mutating any island. Decommit needs the same
 guard before zeroing or dropping PTEs. ThreadManager's retired-slot cleanup
 currently ignores the result from `guest_map_free`; a lease rejection must not
-silently discard stack ownership. These changes are not implemented here.
+silently discard stack ownership. These changes were absent at the initial
+preparatory checkpoint; the following source candidate supplies this prerequisite.
 
 The source candidate adds `win16_bridge_invoke_target`: under the frame's owned
 scope and DLL mutex it resolves a live executable selector to a ready module
@@ -122,3 +123,62 @@ existing frame teardown releases the pin. This does not expose QT or change
 LibEntry/WEP stack cleanup. `test-ne-qt-ownership-candidate.js` prepares native
 checks for invalid/data/unloaded addresses, duplicate binding, target changes,
 final-free exclusion and stale-frame teardown. Native checks are **not run**.
+
+## Mapping-lease source candidate (2026-10-18)
+
+The audited gap now holds 16 records of `{frameToken:i64, guestBase, backing}`.
+The module-call table is 24 records × 32 bytes at 0x8C00, ending at 0x8F00;
+the DLL/run/ref/size/selector tables end below 0x8C00 and resource descriptors
+begin at 0x9000. Handle reset zeros only the handle and resource areas, not
+this gap. The process arena's initial zeroing initializes it.
+
+`win16_bridge_stack_lease(token, alignedBase, expectedBacking)` requires the
+current owned frame and scope. Under `LOCK_VIRTUAL_MAP` it checks all 16 pages,
+both endpoints, physical identity and actual map-record ownership. Direct
+windows are admitted only inside the fixed main stack; direct heap/fallback
+stacks and DIB mappings are rejected. Sparse leases preserve mapping lifetime;
+they do not turn arbitrary HeapAlloc objects into owned thread stacks. A future
+gateway must use the caller's actual stack and report unsupported ownership.
+No alias selector or QT entry has been published by this change.
+
+Every map release preflights its entire reservation/continuation chain, every
+decommit preflights before zeroing/PTE removal, and commit/replacement preflights
+before changing an island. Section exports have their own full-range guard.
+This is deliberately conservative: a mutation elsewhere in a *single record*
+containing a leased page is also rejected. When no lease exists, guards avoid
+the additional map-record scan. Unrelated records remain usable. VirtualFree
+returns zero with ERROR_INVALID_ADDRESS on rejection; host map-free preserves
+mapped-view registration until successful release. The low fixed-stack path
+also reports a failed release/decommit while leased.
+
+Lock order is DLL mutex → virtual-map mutex in frame teardown; acquisition
+only takes the virtual-map mutex after validating its owned live frame. Mapping
+guards never acquire the DLL mutex, and mapped-view unregister acquires no
+locks. The lease ledger's own arena cannot be released while leases exist.
+Frame teardown restores CPU/segments before dropping its token's lease. A
+future selector publication must revoke that selector before this drop.
+Existing load_pe rejection on live frames prevents reset before any replacement.
+No lock remains held across guest execution.
+
+Retired cooperative and Worker stacks retain their `stackAlloc`, handle record
+and scheduler slot when map-free fails. Slot allocation retries retired frees;
+closing a duplicate guest handle does not delete scheduler ownership. Heap
+fallbacks were never in `stackAlloc` and remain outside this mapping lease.
+
+Pure retirement/planner checks, touched-source parens, logical-AND, test-tier,
+JS syntax and diff checks pass. Canonical build and native tests are **not run**.
+After an explicit runtime grant, build this candidate with `bash tools/build.sh`,
+then run (from its checkout, using its exact compiled module):
+
+```sh
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-stack-lease-candidate.js
+WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-qt-ownership-candidate.js
+node test/test-thread-send-scoped-loader.js
+```
+
+The first candidate executes real VirtualAlloc/VirtualFree IAT calls and covers
+direct/sparse, late-island atomicity, decommit/recommit, unrelated allocations,
+section metadata retention, constructed real split records, nested ownership,
+stale tokens, table capacity, failed reset and successful cleanup/retry.
+The scoped-loader regression compiles a small fixture, so it too awaits the
+native lane. No original game, browser, or QT execution is claimed.

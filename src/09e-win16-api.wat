@@ -635,6 +635,60 @@
     (local.set $frame (i32.wrap_i64 (global.get $win16_bridge_frame)))
     (i32.add (i32.load offset=16 (local.get $frame)) (i32.const 0x10000)))
 
+  ;; Acquire mapping lifetime only; no selector is published and no guest
+  ;; state changes. Revalidate every page under the same lock as all mapping
+  ;; mutations, so the JS planner is never mistaken for a lifetime guarantee.
+  (func (export "win16_bridge_stack_lease")
+    (param $token i64) (param $base i32) (param $backing i32) (result i32)
+    (local $i i32) (local $rec i32) (local $free i32) (local $offset i32) (local $fixed i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.load offset=268 (i32.wrap_i64 (local.get $token)))) (then (return (i32.const 0))))
+    (if (i32.or (i32.ne (i32.and (local.get $base) (i32.const 0xFFFF)) (i32.const 0))
+      (i32.gt_u (local.get $base) (i32.const 0xFFFE0000))) (then (return (i32.const 0))))
+    (if (i32.or (i32.eq (local.get $backing) (global.get $NULL_SENTINEL))
+      (i32.gt_u (local.get $backing) (i32.sub (i32.shl (memory.size) (i32.const 16)) (i32.const 0x10000))))
+      (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
+    ;; The fixed main stack lasts until process replacement (which live
+    ;; frames already block). Direct heap/fallback stacks are not admitted:
+    ;; heap_free has its own lifetime, outside the virtual mapping mutex.
+    (local.set $fixed (i32.and (i32.ge_u (local.get $backing) (global.get $GUEST_STACK))
+      (i32.le_u (i32.add (local.get $backing) (i32.const 0x10000)) (region.end $GUEST_STACK))))
+    (block $reject
+      (loop $pages
+        (if (i32.eqz (local.get $fixed))
+          (then (br_if $reject (i32.eqz (call $virtual_map_lease_page_owned
+            (i32.add (local.get $base) (local.get $offset)) (i32.add (local.get $backing) (local.get $offset)))))))
+        (br_if $reject (i32.ne (call $g2w (i32.add (local.get $base) (local.get $offset)))
+          (i32.add (local.get $backing) (local.get $offset))))
+        (br_if $reject (i32.ne (call $g2w (i32.add (local.get $base) (i32.add (local.get $offset) (i32.const 4095))))
+          (i32.add (local.get $backing) (i32.add (local.get $offset) (i32.const 4095)))))
+        (local.set $offset (i32.add (local.get $offset) (i32.const 4096)))
+        (br_if $pages (i32.lt_u (local.get $offset) (i32.const 0x10000))))
+      (loop $slots
+        (local.set $rec (call $virtual_map_lease_record (local.get $i)))
+        (br_if $reject (i64.eq (i64.load (local.get $rec)) (local.get $token)))
+        (if (i64.eqz (i64.load (local.get $rec))) (then (local.set $free (local.get $rec))))
+        (local.set $i (i32.add (local.get $i) (i32.const 1)))
+        (br_if $slots (i32.lt_u (local.get $i) (i32.const 16))))
+      (br_if $reject (i32.eqz (local.get $free)))
+      (i64.store (local.get $free) (local.get $token))
+      (i32.store offset=8 (local.get $free) (local.get $base))
+      (i32.store offset=12 (local.get $free) (local.get $backing))
+      (call $lock_release (global.get $LOCK_VIRTUAL_MAP)) (return (i32.const 1)))
+    (call $lock_release (global.get $LOCK_VIRTUAL_MAP)) (i32.const 0))
+
+  (func $win16_bridge_stack_lease_end (param $token i64)
+    (local $i i32) (local $rec i32)
+    (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
+    (loop $slots
+      (local.set $rec (call $virtual_map_lease_record (local.get $i)))
+      (if (i64.eq (i64.load (local.get $rec)) (local.get $token))
+        (then (memory.fill (local.get $rec) (i32.const 0) (i32.const 16))))
+      (local.set $i (i32.add (local.get $i) (i32.const 1)))
+      (br_if $slots (i32.lt_u (local.get $i) (i32.const 16))))
+    (call $lock_release (global.get $LOCK_VIRTUAL_MAP)))
+
   (func $win16_bridge_frame_end (export "win16_bridge_frame_end") (param $token i64) (result i32)
     (local $frame i32) (local $previous i64)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
@@ -719,6 +773,9 @@
           (i32.sub (i32.load (call $win16_task_shared (i32.const 44))) (i32.const 1)))
         (if (i32.eqz (i32.load (call $win16_task_shared (i32.const 44))))
           (then (i32.store (call $win16_task_shared (i32.const 40)) (i32.const 0))))))
+    ;; CPU/segment restoration precedes lifetime release. A future published
+    ;; QT alias must be revoked here before releasing its backing lease.
+    (call $win16_bridge_stack_lease_end (local.get $token))
     (i32.store offset=20 (local.get $frame) (i32.const 0))
     (global.set $win16_bridge_frame (local.get $previous))
     (call $lock_release (global.get $DLL_LOAD_LOCK))

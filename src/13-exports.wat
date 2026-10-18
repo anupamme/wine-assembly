@@ -3563,6 +3563,8 @@
     (local $cursor i32) (local $end i32) (local $next i32)
     (local $i i32) (local $rec i32) (local $base i32) (local $limit i32)
     (local $covered i32)
+    (if (call $virtual_map_lease_mutation_busy (local.get $guest) (local.get $size))
+      (then (return (i32.const 0))))
     (local.set $cursor (local.get $guest))
     (local.set $end (i32.add (local.get $guest) (local.get $size)))
     (block $done (loop $ranges
@@ -3633,7 +3635,8 @@
     (local $size i32) (local $i i32) (local $guest i32)
     (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
     (local.set $size (call $host_mapped_range_size (local.get $base)))
-    (if (i32.eqz (local.get $size))
+    (if (i32.or (i32.eqz (local.get $size))
+      (call $virtual_map_lease_mutation_busy (local.get $base) (local.get $size)))
       (then
         (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
         (return (i32.const 0))))
@@ -3698,9 +3701,9 @@
   ;; Paired with guest_map_alloc; heap_free cannot release a sparse mapping.
   (func (export "guest_map_free") (param $g i32) (result i32)
     (local $result i32)
-    (call $mapped_view_unregister (local.get $g))
     (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
-    (local.set $result (call $virtual_map_release (local.get $g)))
+    (local.set $result (call $virtual_map_release_locked (local.get $g)))
+    (if (local.get $result) (then (call $mapped_view_unregister (local.get $g))))
     (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
     (local.get $result))
 

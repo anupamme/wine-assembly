@@ -425,7 +425,7 @@ async function schedulerRetirement(module, scenario) {
   manager._maxWorkerThreads = 1; manager._log = () => {};
   let frees = 0, terminations = 0, releaseTermination;
   manager.mainInstance = { exports: { guest_map_free: stack => {
-    assert.equal(stack, 1234); frees++;
+    assert.equal(stack, 1234); frees++; return 1;
   } } };
   const thread = { link, tid: 1, state: 'active', stackAlloc: 1234, startAddr: 4096 };
   manager.threads.set(100, thread);
@@ -515,7 +515,7 @@ async function failedSpawnOwnership(module) {
   manager._maxWorkerThreads = 1; manager._log = () => {};
   manager._workerPeMeta = async () => ({});
   manager._workerWasmGlobals = () => ({});
-  manager.mainInstance = { exports: { guest_map_free: () => { freed++; } } };
+  manager.mainInstance = { exports: { guest_map_free: () => { freed++; return 1; } } };
   WorkerLink.prototype.start = async function () {
     this.worker = { terminate() { if (!allowExit) throw new Error('bootstrap exit failed'); } };
   };
