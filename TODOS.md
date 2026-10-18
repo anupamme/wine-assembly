@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Barrage revised controls; Circus _iob review)
+  status: active (Circus compiled validation; replacement source screening)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Barrage sole revisedhumanreview/executiongate gameplay; Circus_iob realdataimport sourcefix independentreview pendingcompiledtests. One runtime strict2GiBfloor no publicdeploy.
+  Next: Circus _iob independently reviewed; sole build/native validation granted. Barrage core gameplay qualified. Fresh /root/refill_after_barrage selects next original nonpublic title source-only. One runtime, strict disk floor, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1719,16 +1719,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Next: Root reviewed samegreenI20px left atsamey with PiecesPlaced0 then releaseidle retainsx whilegravitymovesy. Registeredrun20261018-ltris-registered-gameplay root3234pins40originalarchive/module/groupemptyPASS exits0. Rotation testednextsquare ambiguous, right/audioFPS/browser/fullgame unqualified. Fresh /root/new_game_refill_after_ltris selectingreplacement.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
-- [~] New-game lane: LGames Barrage 1.0.5 original Windows release
+- [x] New-game lane: LGames Barrage 1.0.5 original Windows release
   id: NEW-GAME-BARRAGE-20261018
-  status: active (revised review-time gate; sole gameplay retry granted)
+  status: done (reviewed original aim/fire and released idle)
   owner: /root/new_game_refill_after_ltris
-  Next: Previousrun harness-error5s humanreviewage blockedinput; root3244pins45original/groupemptyPASS exits0 noaim/fire. Purefix allows60s reviewedaffordance withunchangedimmediatefresh same-roundlive36 recheck; expiredround rejects. ONErevisedrun grant afterfreshpins strictguards. SafecleanpushedinactiveNEWT sparse reclaimed253MB free2.524GB.
+  Next: Root reviewed 20261018-barrage-reviewed-gameplay: two crosshair moves, one250ms shot impact, ammo36to30 holds releasedidle. Root3244pins45original/module/groupemptyPASS exits0. No durable score/audio/FPS/browser/fullgame claim. Replacement source screening assigned /root/refill_after_barrage.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (CRTDLL _iob data import source review)
+  status: active (CRTDLL _iob compiled conformance validation)
   owner: /root/new_game_refill_after_outlaws
-  Next: setbufaudit finds_iob dataIAT boundthunk, actualstreamthunk+64. Boundedfix e7e443da8 module-qualifiedstaticCRTDLL_iob reusesprocessshared96BFILEs, realDLLpath/reservedthunks preserved; compiledtests pending, /root/review_crt_iob independentreview. setbuf remainsfailfast realbuffering later; no build/runtime whileBarrage sole.
+  Next: Independent source review clear e7e443da8 static CRTDLL data imports. Sole normal gated build/native conformance granted; existing sequential memory reuse limitation explicit. setbuf stays fail-fast; no original game retry yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

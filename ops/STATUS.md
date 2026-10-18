@@ -1,3 +1,5 @@
+Current 2026-10-18: Barrage original registered aiming/fire/released-idle qualified with reviewed screenshots (20261018-barrage-reviewed-gameplay), no audio/FPS/fullgame claim. Circus _iob source review clear; sole compiled validation active. Fresh /root/refill_after_barrage source-screens replacement. One runtime, >2GiB floor, no public deploy.
+
 Current 2026-10-18: Barrage previousrun stoppedby5s humanreviewgate beforeinput; rootpostflightpassed. Revisedaffordanceage withfresh executionstate puretested, sole gameplayretry grant. Circus_iob dataimport fix sourceindependentreview active setbufstillfailfast. CleanpushedinactiveNEWT sparse reduction restored253MB free2.524GB preservingignoreddata. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
