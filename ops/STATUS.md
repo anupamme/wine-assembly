@@ -1,4 +1,4 @@
-Current 2026-10-18: SuperTux local registration4bd8cb22e merged/pushed after registry and exact original-manifest verification; registered runtime preparation active. Outlaws final query-scratch ownership correction and canary required before rebuilt conformance/integration. Earlier direct SuperTux level movement reviewed; jump/audio/FPS unknown. One runtime, no public deployment.
+Current 2026-10-18: Outlaws counted fixed-builtin lifecycle and owned scratch merged/pushed83bbb77fd after review, six worker tests and root exact-module build/fullnative/source tests. SuperTux owns registered startup runtime; original Outlaws replay preparation runs source-only. No public deployment; jump/audio/FPS qualification remains separate.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
