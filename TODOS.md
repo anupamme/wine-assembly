@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws diagnostic; LTris gameplay preparation)
+  status: active (LTris gameplay; Outlaws state audit)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws sole earlytransition read-onlyclock capture; LTris mainmenu verified, gameplay sourceprep and localregistration workers active. Originalpins/reviewedcaptures required; one runtime strict2GiBfloor. No publicdeploy.
+  Next: LTris sole registeredgameplay validation; Outlaws health/death/rendering predicate sourceaudit after clock continuity verified. One runtime strict2GiBfloor, no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (sole early-transition diagnostic granted)
+  status: active (source audit of health/death versus rendering)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: LTris released/rootpostflightPASS. ONE prepared0.5/1/2/3s PNG/read-onlyclock samples afterGOOD nowsolegrant; no keyboard/forward/guestwrites. Samefd1613e2 freshpins strict2GiBmargins/log/timeguards. Review timing uncertainty and death boundary honestly, no automaticretry.
+  Next: Earlytransition loading0.5/1/2s then sepia/skull town3s; sampledguest2498ms/host2499ms nojump. Root3149pins31original/groupemptyPASS exits0. Source-only HUDhealth/skull/death predicate audit to distinguish actualdeath/rendering; no repeatedtimingrun. LTris sole runtime.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1714,7 +1714,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LTris 1.2.8 original Windows release
   id: NEW-GAME-LTRIS-20261018
-  status: active (menu verified; gameplay and local registration preparation)
+  status: active (sole registered gameplay validation granted)
   owner: /root/new_game_refill_after_lmarbles
-  Next: Originalpassive20261018-ltris-passive-startup mainmenu rootreviewed; independent3192pins40original/archive/module/groupemptyPASS exits0. Gameplayworker prepares originalcontrols/piecemovement sourceplan; /root/ltris_local_registration owns localregistry/corpus/verifier pureJS. No LTris runtimegrant while Outlaws sole.
+  Next: Registration08028ae58 integrated; rootfixture40original39mapsCRT verified. Sole registeredltris_128 grant180/185/210s: pure routeproof/newpinsfd1613e2, ControlsPlayer1 bindings thenNormal0 samepiece lateral/rotation beyondgravity with balancedrelease. Strict2GiBmargins8MiBlog no retry/build/browser.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

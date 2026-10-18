@@ -1,4 +1,4 @@
-Current 2026-10-18: LTris original mainmenu independently reviewed;3192pins40original/groupempty pass. Gameplay preparation and separate localregistration sourceworkers active. Outlaws sole early-transition read-only clock/capture diagnostic granted after release. No public deployment.
+Current 2026-10-18: LTris localregistration integrated and fixture40files39mapsCRT verified; sole registered gameplay grant. Outlaws earlytransition clock tracks host2498/2499ms without sampledjump; source health/death/rendering audit now. Root runtimepostflight passed. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
