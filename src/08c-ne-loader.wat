@@ -2076,6 +2076,34 @@
       (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
     (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
 
+  ;; Fileless dependencies still own their dynamic name: relocation thunks
+  ;; refer to this slot until the last importing image releases its reference.
+  ;; They have no loaded image, guest alias, initializer or export table. The
+  ;; normal dependency links/refcounts/rollback/final release own their life.
+  ;; Match neBuiltinDependency's dynamic names; unknown names cannot publish.
+  (func $win16_bridge_module_publish_emulated (export "win16_bridge_module_publish_emulated")
+    (param $id i32) (result i32)
+    (local $rec i32)
+    (local.set $rec (call $win16_bridge_module_record (local.get $id)))
+    (if (i32.eqz (local.get $rec)) (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.ne (i32.load (local.get $rec)) (i32.const 1)))
+      (br_if $reject (i32.ne (i32.load offset=4 (local.get $rec)) (call $lock_owner_id)))
+      (br_if $reject (i32.load offset=28 (local.get $rec)))
+      (br_if $reject (call $win16_dll_loaded (local.get $id)))
+      (br_if $reject (i32.eqz
+        (i32.or (call $win16_dynamic_module_is_toolhelp (local.get $id))
+        (i32.or (call $win16_module_is_ver (local.get $id))
+        (i32.or (call $win16_module_is_lzexpand (local.get $id))
+        (i32.or (call $win16_dynamic_module_is7 (local.get $id) (i64.const 0x00454C4946495641)) ;; AVIFILE
+        (i32.or (call $win16_dynamic_module_is7 (local.get $id) (i64.const 0x004F45444956534D)) ;; MSVIDEO
+                (call $win16_dynamic_module_is7 (local.get $id) (i64.const 0x0059414C50534944))))))))) ;; DISPLAY
+      (i32.store (local.get $rec) (i32.const 3))
+      (i32.store offset=4 (local.get $rec) (i32.const 0))
+      (call $lock_release (global.get $DLL_LOAD_LOCK)) (return (i32.const 1)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK)) (i32.const 0))
+
   (func $win16_bridge_module_rollback (export "win16_bridge_module_rollback") (param $id i32) (result i32)
     (local $rec i32)
     (local.set $rec (call $win16_bridge_module_record (local.get $id)))

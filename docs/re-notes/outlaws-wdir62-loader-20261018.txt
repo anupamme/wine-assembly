@@ -67,3 +67,23 @@ another original run require a fresh root runtime grant.
 
 This checkpoint changes no production behavior. No game bytes, OS version,
 license answers, silent stubs or application DLL substitutions were changed.
+
+Source repair checkpoint (after diagnosis commit 4bf423608):
+ne-image now shares an explicit dependency classification with source closure
+and lifecycle. Fileless fixed modules bypass image lookup; CARDS/custom
+modules still require real images. Dynamic emulated dependencies are claimed
+through the native transaction record and linked to each importer. A narrow
+native publish operation validates the exact supported dynamic names and
+makes their owned identities ready without an image or fabricated exports.
+The existing reference/dependency release path removes them after the last
+importer or failed initializer. Direct LoadLibrary16/GetProcAddress16 access
+to these fileless dynamic modules is not added by this dependency-only fix.
+
+Source closure regression passes all fixed/dynamic names with ordinal and
+named imports, including unknown exports; missing CARDS/custom images retain
+typed errors. Original WDIR62 source replay now requests only the authentic
+WDIR62 image and completes its closure. Native fixtures are prepared for
+real USER/GDI/WIN87EM and TOOLHELP calls, two importer/coordinator identity
+sharing, failed init rollback, final release/reload over 30 cycles, and exact
+TOOLHELP.80/USER.65535 fail-fast. Build and native execution are pending grant;
+source-only tests do not establish successful guest initialization.

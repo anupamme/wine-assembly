@@ -204,6 +204,70 @@ async function main() {
     lifecycle.retryTermination(dependencyId);clean();onlyModule(0,0);
     console.log(JSON.stringify({case:name,actualIndirectWepRetry:true}));
   }
+  // Fileless imports execute the same real dispatcher as standalone Win16.
+  // Dynamic builtins retain native records, so two coordinators/importers can
+  // share the identity without an orphan slot or a synthetic guest module.
+  const builtinImage=(module,symbol,pushWord=false)=>{
+    const image=neLifecycleImage({importEntry:{module,symbol},importInValue:true});
+    if(pushWord)image.set([0x6a,0,0x90,0x90,0x90],0x210);
+    return image;
+  };
+  const builtinImages=new Map([
+    ['USERCALL',builtinImage('USER',60)],['GDICALL',builtinImage('GDI',87,true)],
+    ['FPUCALL',builtinImage('WIN87EM',1)],
+    ['TOOLA',builtinImage('TOOLHELP',76,true)],['TOOLB',builtinImage('TOOLHELP',76,true)],
+    ['TOOLBAD',builtinImage('TOOLHELP',80)],
+    ['USERBAD',builtinImage('USER',65535)],
+    ['TOOLZERO',neLifecycleImage({dependencies:['TOOLHELP'],result:0})],
+    ['TOOLTRAP',neLifecycleImage({dependencies:['TOOLHELP'],trapInit:true})],
+    ['ALLBUILTIN',neLifecycleImage({dependencies:['TOOLHELP','VER','AVIFILE','MSVIDEO','DISPLAY','LZEXPAND']})],
+  ]);
+  const builtins=createNeLifecycle(e,memory,builtinImages,{maxBlocks:10000,sliceBlocks:256});
+  const foreignBuiltins=createNeLifecycle(foreign,memory,builtinImages,{maxBlocks:10000,sliceBlocks:256});
+  const namedSlot=name=>{
+    for(let id=13;id<37;id++) {
+      const at=e.win16_dynamic_module_slot(id-13),n=bytes[at];
+      if(Buffer.from(bytes.slice(at+1,at+1+n)).toString('ascii')===name)return id;
+    }
+    return 0;
+  };
+  for(const name of ['USERCALL','GDICALL','FPUCALL']) {
+    const id=builtins.load(name),value=builtins.call(id,'VALUE');
+    if(name==='GDICALL')assert(value,'real GetStockObject result');else assert.equal(value,0);
+    builtins.release(id);clean();onlyModule(0,0);
+  }
+  const toolA=builtins.load('TOOLA'),toolSlot=namedSlot('TOOLHELP');assert(toolSlot);
+  assert.equal(view.getUint32(record(toolSlot)+8,true),1);
+  const toolB=foreignBuiltins.load('TOOLB');assert.equal(namedSlot('TOOLHELP'),toolSlot);
+  assert.equal(view.getUint32(record(toolSlot)+8,true),2,'two imported references');
+  assert.equal(builtins.call(toolA,'VALUE'),0);
+  assert.equal(foreignBuiltins.call(toolB,'VALUE'),0);
+  assert.equal(builtins.lookup(toolSlot,76),0,'dependency identity is not a fabricated export table');
+  for(const name of ['TOOLZERO','TOOLTRAP']) {
+    assert.throws(()=>builtins.load(name));clean();
+    assert.equal(view.getUint32(record(toolSlot)+8,true),2,'failed parent releases only its acquired ref');
+  }
+  builtins.release(toolA);assert.equal(namedSlot('TOOLHELP'),toolSlot);
+  assert.equal(foreignBuiltins.call(toolB,'VALUE'),0,'remaining importer retains callable identity');
+  foreignBuiltins.release(toolB);clean();onlyModule(0,0);assert.equal(namedSlot('TOOLHELP'),0);
+  for(const name of ['TOOLZERO','TOOLTRAP']) {
+    assert.throws(()=>builtins.load(name));clean();onlyModule(0,0);
+    assert.equal(namedSlot('TOOLHELP'),0,'sole failed parent leaves no builtin slot');
+  }
+  for(const name of ['TOOLBAD','USERBAD']) {
+    const id=builtins.load(name);hostLogTail.length=0;
+    assert.throws(()=>builtins.call(id,'VALUE'),WebAssembly.RuntimeError);
+    assert.equal(e.win16_last_module(),name==='TOOLBAD'?namedSlot('TOOLHELP'):2);
+    assert.equal(e.win16_last_ordinal(),name==='TOOLBAD'?80:65535,'trap reaches the original unsupported dispatcher entry');
+    clean();builtins.release(id);clean();onlyModule(0,0);
+  }
+  for(let iteration=0;iteration<30;iteration++) {
+    const id=builtins.load('ALLBUILTIN');
+    for(const name of ['TOOLHELP','VER','AVIFILE','MSVIDEO','DISPLAY','LZEXPAND'])assert(namedSlot(name));
+    builtins.release(id);clean();onlyModule(0,0);
+    for(const name of ['TOOLHELP','VER','AVIFILE','MSVIDEO','DISPLAY','LZEXPAND'])assert.equal(namedSlot(name),0);
+  }
+  console.log(JSON.stringify({case:'builtin-dependencies',actualFixedCalls:3,dynamicLifetime:true,unknownOrdinalTraps:true,reloadCycles:30}));
   let originalResult=null;
   if(original) {
     const inspected=inspectNeDll(original),moduleId=lifecycle.load('PMPRO62');clean();
