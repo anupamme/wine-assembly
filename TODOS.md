@@ -1534,7 +1534,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Validate merged DLL unload and CMR3 progression
   id: FREELIBRARY-EXITTHREAD-CMR3-20261010
-  status: review (implementation merged; stage loading observed, gameplay unresolved)
+  status: blocked (implementation merged; original diagnostic replay under automatic-review hold)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Main83947f6a6 plus57a148044/321e734aa integrate generation-aware unload/thread exit with recorded suites. Recovered original85638 progresses to UK Warwick loading then native free-list failure; this is not evidence of a new unload defect. CMR3 diagnostic replay105999 is held by automatic review; do not restart it. No driving qualification.
 
