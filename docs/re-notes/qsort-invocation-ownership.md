@@ -31,6 +31,12 @@ nested sorts, no-op sort inside a comparator, distinct sequential identities,
 budget yields, final array/ESP/root restoration, wrong ESP and stale expected
 child rejection with unchanged state, thread/process reset at nonzero frame
 depth, and guest comparator trap retention followed by explicit reset.
+It additionally exercises interleaved main/worker instances sharing memory,
+production init_thread and separate qsort frame partitions, with guest worker
+comparator execution. Controlled real-handler probes fill 63 retained frames
+and exhaust the identity allocator, asserting failed entry changes no state.
+These are not simultaneous OS Worker races. The same fixture accepts
+`--no-tail-calls` for the alternative compiler dispatch mode.
 At this checkpoint it has only passed JavaScript syntax review; it has not
 been compiled or run. Controlled direct-continuation probes supplement the
 guest path and are not claimed as guest execution themselves.
@@ -43,3 +49,22 @@ conservative source review baseline, not a proof of exhaustive producer coverage
 Deferred bsearch/initterm/atexit, window/media/APC callbacks, JS restoration,
 thread concurrency and SEH remain outstanding, as does actual x86 testing of
 both eventual nonlocal-jump dispatch modes. The nonlocal API review lock stays.
+
+## Pending validation recipe
+
+Wait for root's explicit sole-runtime release. Reuse the prior validation
+guard recipe in `scratch/runs/20261018-callback-token-validation/guard.js`,
+copied to a fresh run folder: admission above 2 GiB + 128 MiB, stop below
+2 GiB + 64 MiB, 180 seconds, 8 MiB logs, detached process groups and recorded
+canonical before/after hashes. Preserve existing ignored artifacts and logs.
+
+First restore only the missing test compiler closure (compile-src.js,
+test-dll-lifecycle-real-pe.js and tools/watx-closure.js, plus any verified
+transitive dependency), then run the authored fixture in both modes under
+the guard. Commands are `node --experimental-wasm-return_call
+test/test-qsort-invocation-ownership.js` and the same command with
+`--no-tail-calls`. Neither command has been executed at this checkpoint.
+Normal gated build and prior token/lifecycle/NE/arena regressions follow
+only if separately admitted and granted; the built region map differs from
+the old ignored candidate, so old compiled artifacts cannot validate this
+source. Verify exact sparse expansion bytes before restoring build closure.

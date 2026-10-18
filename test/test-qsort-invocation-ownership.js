@@ -38,9 +38,11 @@ function image({ nested = true, count = 3, trap = false } = {}) {
 async function main() {
   const wasm = compileSrcWasm((file, text) => file !== '13-exports.wat' ? text : text + `
     (export "test_qsort_continue_owned" (func $qsort_continue))
+    (export "test_qsort_begin_owned" (func $handle_qsort))
     (export "test_qsort_token" (func $invocation_current))
     (func (export "test_qsort_depth") (result i32) (global.get $qsort_depth))
-    (func (export "test_invocation_depth") (result i32) (global.get $invocation_depth))`);
+    (func (export "test_invocation_depth") (result i32) (global.get $invocation_depth))`,
+  { tailCalls: !process.argv.includes('--no-tail-calls') });
   const memory = new WebAssembly.Memory({ initial: 8192, maximum: 8192, shared: true });
   const ctx = { getMemory: () => memory.buffer, renderer: null,
     resourceJson: { menus: {}, dialogs: {}, strings: {}, bitmaps: {} }, onExit() {} };
@@ -122,6 +124,58 @@ async function main() {
   for (let i = 0; i < 20 && (x.get_eip() >>> 0) > 2; i++) x.run(1);
   assert.strictEqual(x.test_qsort_token(), nextRoot, 'empty qsort creates no callback identity');
   assert.throws(() => x.test_qsort_continue_owned(), WebAssembly.RuntimeError);
+
+  // Two actual WASM instances and production init_thread share the memory but
+  // retain independent qsort frames. This is interleaved execution, not a
+  // simultaneous OS Worker race or allocator-concurrency proof.
+  active();
+  const mainToken = x.test_qsort_token();
+  const mainFrames = Buffer.from(new Uint8Array(memory.buffer, REGION.QSORT_CONTEXTS, 4096));
+  const workerCtx = { ...ctx };
+  const workerImports = createHostImports(workerCtx); workerImports.host.memory = memory;
+  workerImports.host.log_i32 = () => {};
+  const { instance: workerInstance } = await WebAssembly.instantiate(wasm, workerImports);
+  const w = workerInstance.exports; workerCtx.exports = w;
+  w.init_thread(1, x.get_image_base(), x.get_code_start(), x.get_code_end(),
+    x.get_thunk_base(), x.get_thunk_end(), x.get_num_thunks(), x.get_rsrc_rva());
+  const workerRoot = w.test_qsort_token();
+  const workerSP = x.guest_alloc(0x10000) + 0xfff0;
+  dv.setUint32(translate(workerSP), 0, true); w.set_esp(workerSP);
+  w.test_qsort_begin_owned(address(0x1410), 2, 4, address(0x2200), 0, 0);
+  assert.strictEqual(w.test_qsort_depth(), 1);
+  assert.notStrictEqual(w.test_qsort_token(), mainToken);
+  assert.strictEqual(dv.getBigUint64(REGION.QSORT_CONTEXTS + 4096 + 40, true),
+    BigInt.asUintN(64, w.test_qsort_token()), 'worker child occupies its own partition');
+  for (let i = 0; i < 5000 && (w.get_eip() >>> 0) > 2; i++) w.run(1);
+  assert((w.get_eip() >>> 0) <= 2);
+  assert.deepStrictEqual(readArray(0x1410, 2), [4, 9]);
+  assert.strictEqual(w.test_qsort_token(), workerRoot);
+  assert.strictEqual(w.get_esp() >>> 0, (workerSP + 4) >>> 0);
+  assert.strictEqual(x.test_qsort_token(), mainToken);
+  assert.deepStrictEqual(Buffer.from(new Uint8Array(memory.buffer, REGION.QSORT_CONTEXTS, 4096)), mainFrames);
+  for (let i = 0; i < 5000 && (x.get_eip() >>> 0) > 2; i++) x.run(1);
+  assert((x.get_eip() >>> 0) <= 2);
+  assert.deepStrictEqual(readArray(0x1400, 3), [1, 2, 3]);
+  assert.strictEqual(w.test_qsort_token(), workerRoot);
+
+  // Controlled real-handler boundary probes: every successful entry publishes
+  // a retained frame; capacity or allocator exhaustion must publish nothing.
+  const directBegin = () => x.test_qsort_begin_owned(address(0x1400), 3, 4, address(0x2100), 0, 0);
+  const rejectBegin = () => {
+    const before = snapshot();
+    assert.throws(directBegin, WebAssembly.RuntimeError);
+    assert.deepStrictEqual(snapshot(), before);
+  };
+  begin({ nested: false });
+  for (let i = 0; i < 63; i++) directBegin();
+  assert.strictEqual(x.test_qsort_depth(), 63);
+  assert.strictEqual(x.test_invocation_depth(), 63);
+  rejectBegin();
+  begin({ nested: false });
+  dv.setBigUint64(REGION.CALLBACK_OWNERSHIP, (1n << 64n) - 2n, true);
+  directBegin();
+  assert.strictEqual(BigInt.asUintN(64, x.test_qsort_token()), (1n << 64n) - 1n);
+  rejectBegin();
   console.log('qsort invocation ownership PASS: real guest nested/CACA/yield path and unchanged rejection probes');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
