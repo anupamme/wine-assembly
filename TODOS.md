@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws WDIR62 dependencies; FIFA ordinary-action capture)
+  status: active (Outlaws built-in loader repair; FIFA evidence review)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: DOSalloc merged0069cc2e2/pushed528fd8811 canonical/nativePASS. Original PMPRO62F nowinitializes, next WDIR62LoadLibrary16 returns2 despite originalimagepresent; fresh worker sourceaudit builtindependencies. FIFA sole300s ordinaryactionrun granted, unchangedpins/guards.
+  Next: WDIR62 original replay confirms MissingNEimageGDI code2; generic fixed/dynamic built-in identity repair underway with ownershiptests. FIFA ordinary-action run complete all exits0: restart plus six arrows captured, rootreviewedframe sentTelegram1452. Independent evidence review deciding supported control scope; new browser below4GiB admission, no blindrepeat.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1617,7 +1617,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (WDIR62 built-in dependency resolution)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_wdir62_load
-  Next: Original20261018-outlaws-original-dosalloc-observation module65b7a674 passes PMPRO62F DllMain1 then WDIR62F LoadLibrary16 returns2/UnabletolinkWDIR62 dialog. OriginalWDIR62 present24216B; importsGDI,KERNEL,TOOLHELP,USER,WIN87EM and prepareNeSources onlyspecialcasesKERNEL. Missingbuiltindependency is sourcehypothesis (firstnotlogged). Rootpostflight3112pins/originals unchanged/survivorsempty; childexit1 natural270ms. Worker audit/realfix source-only whileFIFA runtime.
+  Next: Diagnosis4bf423608 independently replayed in integration: authenticWDIR62 parses, then gdi.dll missing producesNeLoadError2. Worker repairing both ne-sources and ne-lifecycle fixedbuiltins/dynamicTOOLHELP identity with references/rollback; ordinal80 remains unsupported until called/properlyimplemented. No runtime yet for repair.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (ordinary restart/action browser validation)
+  status: review (ordinary actions captured; control scope assessed)
   owner: /root/fifa_liveplay_plan_oct18
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Fresh20261018-fifa98-ordinary-action31tests/pinsPASS, sole300s granted after Outlaws release. Samece2cb0af/atomicpublisher/4GiBadmission3GiBguard; revised freshreviewed restartS100ms and promptdirectionalaction, setpieceaiming classifiedseparately. Prioratomicmatch/outer143 retained; noqualification until evidence.
+  Next: 20261018-fifa98-ordinary-action captures Srestart+sixarrowtrials+idle. Rootreviewed20 England5 moves relativepenaltyarea underUp;13Down differentplayer. All4exitreceipts0/all3PIDsabsent/portclosed/pins231fixturesunchanged; minfree3452895232B. PhotoTelegram1452 delivered. /root/review_fifa_action_evidence independently assesses ordinarycontrol acceptance, no invented stricttrio requirement; audioFPSdevice remain separate. Newbrowserheld4GiBadmission current4.205GB.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending

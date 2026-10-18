@@ -1,4 +1,4 @@
-Current 2026-10-18: DOS allocation merged/tested; original Outlaws passes PMPRO62F initialization, next WDIR62 dependency load returns2. Original DLL present; source worker auditing built-in dependencies. FIFA owns ordinary-action browser validation, no control qualification yet. No public deployment.
+Current 2026-10-18: FIFA ordinary-action capture completed with all exits0; reviewed frame sentTelegram1452, independent control-scope review underway. Outlaws source replay confirms GDI misclassified as file dependency; generic built-in identity/lifecycle repair active. No runtime active or public deployment; newbrowser below4GiB admission.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
