@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: FIFA player-control preparation21tests passed; /root/fifa_player_control granted sole300s ordinary-input browser run with strict2GiB+16MiB reserve. /root/outlaws_stack_lease remains source-only implementing mapping lifetime guards. FIFA menu fix12d9d9751 already merged; no duplicate screenshots of already accepted menu behavior.
+  Next: Outlaws source8c944b42 pushed; sole canonical/native slot granted after FIFA independent cleanup. FIFA match/ArrowUp evidence inconclusive; reserve guard observed actual floor breach1,837,821,952B, cause unknown. Source-only admission audit before further browser; no identical retry.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1617,7 +1617,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (QT caller-stack mapping lifetime prerequisite)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_stack_lease
-  Next: Guest lifecycle mainf3447c936 verified. QT preparation9f93c50be pushed offmain with PE/NE fixtures and aligned alias planner; native candidate notrun, QT absent. Fresh worker owns release/decommit/remap/retirement lifetime lease implementation and meaningful tests before QT exposure. No original gameplay claim.
+  Next: Mapping lifetime candidate8c944b42 pushed/refverified with pureJS tests and root source review; prerequisite includes atomic range guards and retired stack retention. Sole180s canonicalbuild then90s native/allocator validation granted after FIFA cleanup, estimated64MiB disk cost, admission2GiB+80MiB. QT remains absent, no gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1660,7 +1660,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Main12d9d9751 fixes stale automatic lock; match and Escape pause reviewed, player control/audio/FPS not qualified. Follow-up21test controller granted one300s run to inspect original control configuration and compare selected-player idle/direction/reverse evidence. Keep exact source2ff28b92/modulece2cb0af pins and independent cleanup.
+  Next: Run20261018-fifa98-player-control-prep reached match and ArrowUp, but idle kickoff/camera state differs and opposite direction absent: control inconclusive. Guard observed actual below-floor1,837,821,952B and killed owned browser; browserSIGKILL/controller1, outerexitunknown. Independent3PIDs absent/portclosed/allpins unchanged, free2.47GB. Worker source-only peak/admission audit before another browser.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
