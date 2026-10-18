@@ -14,6 +14,11 @@ async function main(){
   const bytes=new Uint8Array(memory.buffer),view=new DataView(memory.buffer);
   const wa=p=>e.guest_to_wasm(p)>>>0,read=p=>view.getUint32(wa(p),true),write=(p,v)=>view.setUint32(wa(p),v,true);
   let f,stack,seenQt=0;
+  function context(){
+    const token=e.win16_bridge_frame_begin();assert(token);const at=Number(token&0xffffffffn);
+    const result=[...bytes.slice(at+32,at+256),...bytes.slice(at+512,at+896)];
+    assert(e.win16_bridge_frame_end(token));return result;
+  }
   function boot(options={}) {
     f=neQtFixture(options);bytes.set(f.pe,e.get_staging());assert.equal(e.load_pe(f.pe.length)>>>0,f.entry);
     e.invalidate_code_range(f.entry,0x1000);stack=0x7408000;
@@ -70,10 +75,12 @@ async function main(){
     boot(options);const request=untilQt(),s=e.get_esp()>>>0,ret=read(s),b=e.get_ebp()>>>0;
     const regs=[e.get_eax(),e.get_ecx(),e.get_edx(),e.get_ebx(),e.get_esi(),e.get_edi()];
     const segments=Array.from({length:6},(_,i)=>e.win16_sreg(i)),fsBase=e.get_fs_base();
+    const before=context();
     assert.throws(service);assert.equal(e.get_yield_reason(),18,'failure remains parked');
     assert(e.win16_guest_request_valid(request));assert.equal(e.get_esp()>>>0,s);assert.equal(e.get_ebp()>>>0,b);assert.equal(read(s),ret);
     assert.deepEqual([e.get_eax(),e.get_ecx(),e.get_edx(),e.get_ebx(),e.get_esi(),e.get_edi()],regs);
     assert.deepEqual(Array.from({length:6},(_,i)=>e.win16_sreg(i)),segments);assert.equal(e.get_fs_base(),fsBase);
+    assert.deepEqual(context(),before,'complete captured CPU/lazy flags/segments/FP restored');
     // Pin and mapping lease were released even on trap or budget cancellation.
     const handle=read(0x402700);createNeLifecycle(e,memory,[]).releaseGuest(handle);
     e.win16_guest_request_cancel();
