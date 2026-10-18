@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (tested loader fix merged; original replay preparation)
+  status: active (original replay after tested loader integration)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_nested_ne_load
-  Next: Counted fixed-builtin lifecycle and owned scratch merged/pushed83bbb77fd. Reviewer clear, six worker testsPASS, root canonical exacta4a4bc6a/fullnative/sourcePASS. Original observation preparation assigned outlaws_original_qt_prepare; no runtime until SuperTux releases.
+  worker: /root/outlaws_original_qt_prepare
+  Next: Original fixed-lifecycle replay granted sole60s/85shard using exacta4a4bc6a. Worker outlaws_original_qt_prepare reports prior nested-load passed, reading start.san/resolving frame APIs; capture/terminal pending, no gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (registered route startup validation)
+  status: active (registered startup verified; gameplay preparation)
   owner: /root/supertux_registration
-  Next: Local registration4bd8cb22e and originals verified. Worker granted sole60s/85shard registered startup using refreshed83bbb77fd/a4a4bc6a pins; absolute Croot relocation remains runtime unproved until result. Earlier direct gameplay reviewed, jump/audio/FPS unverified.
+  Next: Registered startup20261018-supertux-registered-startup exits0, root reviewed menu/3119pins unchanged/groupempty. Evidence merged c9ead0a49. Worker source-prepares ordinary registered level/movement/jump using original bindings and documented timing; no runtime until Outlaws release. Audio/FPS/device unverified.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
