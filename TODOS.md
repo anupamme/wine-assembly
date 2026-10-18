@@ -1511,9 +1511,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Next: Load/publication serialization cfe411bdc/1b3c20aec/7a2953021/89524faca and real unload83947f6a6 are on main. Historical comments about stub FreeLibrary and held-branch adaptation are superseded. Current next action is fresh CMR3/Alice original gameplay validation; reproduce a current boundary before changing loader behavior.
   Done: Concurrent load/free/import tests preserve exact images and module ownership, callback execution stays live without deadlock, normal Alice gameplay/browser revalidated.
 
-- [ ] New-game lane: Aliens versus Predator 2 single-player demo
+- [x] New-game lane: Aliens versus Predator 2 single-player demo
   id: NEW-GAME-AVP2-DEMO-20261010
-  status: review (paired original Marine movement qualified; browser/audio/FPS pending)
+  status: done (original browser launch and paired CLI gameplay reviewed; device/audio/FPS separate)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: none
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
@@ -1668,3 +1668,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Merged6b269258 is an ancestor of main. Exact combined canonical build,16CPU suites,42 observations each WebGL1/2 and22 each actual Worker sync mode passed, including state144 TRUE RGBA substitution and alpha/depth cases. Retained archive68e7b0f SHA independently reverified. This closes the stale test-box blocker only for explicit TRUE; default/FALSE filtering and alpha-key precedence remain open.
   Evidence: docs/palette-combined-validation-20261015.txt; docs/legacy-colorkey-sdk-contract.md; scratch/runs/20261015-palette-combined
+
+- [ ] AVP2 browser gameplay, audio and FPS follow-up
+  id: AVP2-BROWSER-AUDIO-FPS-20261018
+  status: ready
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Original browser launcher reaches menu, paired CLI movement qualified. Use ordinary browser menu input to reach Marine mission, capture control, inspect existing audio/perf instrumentation and record exact limitations. No public deployment.
+  Evidence: scratch/runs/20261018-avp2-browser-launch; scratch/runs/20261018-avp2-paired-plan
