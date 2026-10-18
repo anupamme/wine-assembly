@@ -67,8 +67,8 @@ These tests validate the checker, not emulator execution or invocation safety.
 
 ## Remaining implementation acceptance
 
-The token implementation below still requires compiled validation. Instrument
-and test all remaining context producers beyond synchronous nested execution:
+The token implementation below has focused native validation. Instrument and
+test all remaining context producers beyond synchronous nested execution:
 retained CACA contexts and chained callbacks, JS COM, cross-thread SendMessage,
 timer/wave/APC entry and completion, and abort/exception/destruction paths.
 Ordinary guest calls and run-budget slices must preserve identity. Returned
