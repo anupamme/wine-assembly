@@ -1,4 +1,4 @@
-Current 2026-10-18: LMarbles registered gameplay qualified: root reviewed blue selection/movement and Moves18-to17; pins/originals/groupempty pass. Fresh replacement worker new_game_refill_after_lmarbles source-screening. Outlaws sole real-time registered turn validation granted after batch-clock audit; death causality unproved. No public deployment.
+Current 2026-10-18: Outlaws real-time registered capture already dead at first settled town; no keyboard sent, root3149pins/originals/groupempty pass. Source death/clock audit active without repeated runtime. LMarbles qualified; fresh LTris1.2.8 original Win32 acquisition/closure lane active under50MB. Runtime idle pending ready plan. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

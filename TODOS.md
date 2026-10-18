@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws menu diagnostic preparation; LMarbles startup)
+  status: active (Outlaws source audit; LTris original acquisition)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two lanes: Outlaws source-only positivepump/counter/queue diagnostic preparation; LMarbles sole boundedoriginal passive startup. SuperTux/LBreakout2 corequalified; strict2GiBfloor and one runtime, no publicdeploy.
+  Next: LMarbles corequalified reviewed selection/movement; freshworker /root/new_game_refill_after_lmarbles acquires officialLTris1.2.8Win32ZIP under50MB for hash/license/importclosure/passivelaunchplan. Outlaws death-before-turn sourceaudit, runtime idle until ready. Strict2GiBfloor one runtime; no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (sole real-time registered turn validation granted)
+  status: active (source audit of death before live-turn capture)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Clockaudit a80580c82: prior500ms hold spans34.4s batchclock; death causality unproved. Existing realticks/time-scale1 preservingcalendarUTC now sole180/185/210s validation grant freshpinsfd1613e2. Alive Left-first/no forward, deathcontamination review, strictdisk/logguards no retry/build/browser.
+  Next: Real-time registeredrun20261018-outlaws-realtime-turn-observation first settledtown alreadydead; no keyboardinput. Root3149pins31original/groupemptyPASS bothexit0. Realclock alone insufficient, cause unproved. Bounded source/timestamp/health-clock audit now, no identicalruntime retry. Priorforwardcontrol remains reviewed.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1711,3 +1711,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/new_game_refill_after_lbreakout
   Next: Run20261018-lmarbles-corrected-selection: root reviewed selectionring and blue tile2,1->4,1 Moves18->17 ordinaryRight with balancedrelease; independent3279pins86original/groupemptyPASS bothexit0. Core qualified; clippedhostedges/audioFPS/browser/fullgame remain unverified. Fresh /root/new_game_refill_after_lmarbles selecting replacement source-only.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
+
+- [~] New-game lane: LGames LTris 1.2.8 original Windows release
+  id: NEW-GAME-LTRIS-20261018
+  status: active (original source acquisition and import closure)
+  owner: /root/new_game_refill_after_lmarbles
+  Next: Official SourceForge ltris-1.2.8-win32.zip listed2.4MB; no existinglocal/public/qualified match found. Acquire under50MB retained, hash/archive/license/PE32 imports DLL-data closure and passiveplan; no runtime/build/browser yet. Preserve2GiBfloor.
+  Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
