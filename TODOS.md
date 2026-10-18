@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus original retry; Mad Bomber import diagnostic preparation)
+  status: active (Circus setjmp audit; Mad Bomber import trace)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Real bounded setbuf passed independent review, worker normalbuild/3compiledtests and root normalbuild/stdio; canonical67aaa6df. Circus next sole passive original retry after fresh pins. Mad Bomber source identifies possible GPA NULL wrapper branch, not proven; short trace prep queued. One runtime, no public deploy.
+  Next: Circus original passed setbuf next failfast_setjmp, root3197pins150original/groupemptyPASS; source-only real nonlocal jump audit. Mad Bomber sole10/15/25 filtered import diagnostic granted after complete freshpins. One runtime, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (reviewed setbuf integrated; passive original retry)
+  status: active (CRTDLL setjmp/longjmp source audit)
   owner: /root/new_game_refill_after_outlaws
-  Next: Real NULL setbuf independently reviewed and compiled regressions pass, root normalbuild/stdio exact67aaa6df. Prepare fresh150original/source/module pins for ONE passive60/65/85 retry, no inputs; retain fail-fast unsupported buffers/copied FILEs.
+  Next: Original20261018-circuslinux-setbuf-retry passed_iob/setbuf reacheswaveOut/thread hidden0x0window then_setjmp00464038 return00409ddc. No menu/PNG. Root3197pins150original/sharedCRT/module/groupemptyPASS exits1. Audit real ABI/nonlocal jump semantics, no silent alias or stub; source-only.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (bounded import lookup trace preparation)
+  status: active (sole bounded import diagnostic)
   owner: /root/refill_after_barrage
-  Next: Original packed zlib wrapper has explicit GPA NULL returnFALSE branch RVA12cd0; not proven executed. Prepare filteredLoadLibraryA/GetProcAddress10/15/25 diagnostic2MiBlog, sharedMSVCRT887eb5ce mandatoryprepin. No runtime until Circus release.
+  Next: Prepared95cb9e341 pure guards pass. Sole ONE10/15/25s2MiBlog filteredLLA/GPA name+return diagnostic granted after freshsource/module140original/sharedMSVCRT pins. No input/guestpatch/automaticretry; distinguish proven missing import from hypothesis.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
