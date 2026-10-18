@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (TG93 cleanup complete; serialized validation resumed)
+  status: active (FIFA browser; original Outlaws preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: TG93 authorized cleanup reclaimed~2.05GB, verified4.342GB free; originals/evidence retained. Outlawscee09f851 solefresh120sbuild+90snative retry granted. FIFA telemetry ready, browser waits slot plusfresh4GiB admission; B&W2 sourceaudit preserved, no secondnewtitle falselyclaimed.
+  Next: TG93cleanup total~2.61GB free4.90GB verified. Outlaws QT merged3070476bd native7PASS and root direct/sparse/cooperativePASS exactf7c9f5c. FIFA /root/fifa_control_resume ownssole300s browser retainedce2cb0af explicitoverride. /root/outlaws_original_qt_prepare prepares original90s CLI source-only. No newtitlequalification yet.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (fresh compiled validation after disk recovery)
+  status: active (gateway merged; original launch preparation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_qt_gateway
-  Next: Candidatecee09f851 includes explicitQT export and reviewer fixture fixes; fresh120sbuild+90snative retry granted after usercleanup restored4.342GB. Preserve earlierpregateway failures. Actual direct/sparse/cooperative/native results pending; keepoffmain.
+  worker: /root/outlaws_original_qt_prepare
+  Next: QT merged/pushed3070476bd after reviewedsource and canonical/nativevalidation exactf7c9f5c. Original31filepayload next bounded CLI launch prepared source-only whileFIFA browserruns. No original/reverse/deepnested/WorkerQT success claimed.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: blocked (browser admission needs4GiB; telemetry source preparation complete)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  status: active (bounded player-control browser validation)
+  owner: /root/fifa_control_resume
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Fresh controller20261018-fifa98-allocation-telemetry-prep completed29pureJS tests, root independently passed8allocation tests. Browser remains blocked4GiB admission/3GiBearlystop (current2.33GB); oldce2cb0af module pin must failclosed against changed root8694d56d until explicit asset choice. Preserve180priorartifacts; no playercontrol/audio/FPS qualification.
+  Next: Usercleanup restored4.90GB; freshsource29testsPASS and retainedce2cb0af HTTPoverride verified. Sole300s originalrun granted with4GiBpre/postlaunch admission and3GiBearlystop/ownedallocationtelemetry. Causalplayercontrol requires comparableidle/opposite evidence; no priorunqualifiedclaim reused.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending

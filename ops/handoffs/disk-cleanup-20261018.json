@@ -3890,15 +3890,36 @@
       "path": "/tmp/wa-outlaws-map-lease-oct18",
       "head": "67753f0525b9a2194336fa2b5041a9238ab6491c",
       "oldPatterns": "/src/\n/lib/\n/test/*.js\n/test/helpers/\n/test/tiers.json\n/tools/*.js\n/CLAUDE.md\n/package.json\n/package-lock.json\n/docs/re-notes/outlaws-qt-abi.md\n/tools/\n/test/\n/*\n!/*/\n/src/\n/lib/\n/tools/\n/test/\n/docs/re-notes/outlaws-qt-abi.md\n/fonts/Terminal.fon\n/docs/dos-corpus/live/toyvm-bundle.js\n/docs/dos-corpus/live/toyvm-jit-bundle.js\n"
+    },
+    {
+      "path": "/tmp/wa-palette-20261014",
+      "head": "c2192e014f24f4566f8b1e71ce22f136798feb3a",
+      "remoteBranch": "codex/palette-runtime-wip-20261014",
+      "verifiedRemote": "c2192e014f24f4566f8b1e71ce22f136798feb3a",
+      "oldPatterns": null
+    },
+    {
+      "path": "/tmp/wa-legacy-key",
+      "head": "cc2cd796754b38c2ee0045075e70bb5e9edf1093",
+      "remoteBranch": "task/legacy-colorkey-contract-audit",
+      "verifiedRemote": "cc2cd796754b38c2ee0045075e70bb5e9edf1093",
+      "oldPatterns": "docs\nlib\ntest"
+    },
+    {
+      "path": "/tmp/wa-outlaws-original-startup",
+      "head": "53f64b52756cc88e9330a7526c81cec2d1f29ba4",
+      "remoteBranch": "task/outlaws-original-startup",
+      "verifiedRemote": "53f64b52756cc88e9330a7526c81cec2d1f29ba4",
+      "oldPatterns": "docs\ntools"
     }
   ],
   "freeBytesBefore": 2290343936,
-  "freeBytesAfter": 4342824960,
+  "freeBytesAfter": 4902735872,
   "notes": [
     "643 duplicate files replaced with relative symlinks to retained hash-identical files inside same integration root; all643 links reverified against543 unique targets.",
-    "Five clean HEADs confirmed ancestors of origin/main; excluded only tracked materialization via sparse-checkout. Ignored builds/binaries/evidence/WIP untouched.",
+    "Eight inactive clean worktrees had tracked materialization reduced: five merged main ancestors, three exact remote branch HEADs independently verified. Ignored builds/binaries/evidence/WIP untouched.",
     "Hardlink attempt failed EXDEV before modification; first removal pass matched0 files and removednone.",
     "No shared HEAD/index changes, no public deploy. Runtime resumed serialized."
   ],
-  "restore": "To rematerialize one duplicate: copy its realpath to a temporary sibling, then rename temporary file over symlink; do not write through symlink. Verify recorded SHA256. To restore retired tracked source: reapply each saved oldPatterns via git sparse-checkout set --no-cone --stdin, after ensuring disk capacity. Git preserves source, not ignored game data."
+  "restore": "To rematerialize one duplicate: copy its realpath to a temporary sibling, then rename temporary file over symlink; do not write through symlink. Verify recorded SHA256. To restore retired tracked source: reapply each saved oldPatterns via git sparse-checkout set --no-cone --stdin, after ensuring disk capacity. Git preserves source, not ignored game data. If oldPatterns is null, the prior worktree was full; git sparse-checkout disable restores its tracked files when disk permits."
 }
