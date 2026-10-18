@@ -1,3 +1,5 @@
+Current 2026-10-18: Fresh workers /root/crt_fdopen_prerequisite and /root/crt_jump_ownership implement required descriptor metadata and callback lifetime prerequisites from completed audits. Mad Bomber/Circus still lack gameplay; source-only work, review before serialized build/runtime. No public deploy.
+
 Current 2026-10-18: Mad Bomber original failure confirmed CRTDLL_fdopen lookupNULL; complete root postflight passed, real FILE/descriptor source work active. Circus nonlocal-jump ABI audit exposes dispatcher/callback lifetime requirements; expanded safe design active, no stub alias. Both lanes source-only, no runtime or public deploy.
 
 Current 2026-10-18: Circus original passes _iob/setbuf and reaches hidden window, then missing _setjmp; no menu/gameplay. Root3197pins150original/sharedCRT/process cleanup passed; real nonlocal jump source audit active. Mad Bomber sole bounded import diagnostic granted with mandatory sharedCRT prepin. No public deploy.

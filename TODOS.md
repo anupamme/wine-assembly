@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus nonlocal dispatch design; Mad Bomber fdopen implementation)
+  status: active (fresh CRT descriptor and callback ownership workers)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Mad Bomber trace proves CRTDLL_fdopen GPA NULL drives original zlib FALSE; root3146pins140original/sharedCRT/groupemptyPASS. Real fdopen source implementation assigned. Circus setjmp audit requires dispatcher register restore exception and robust callback/thread lifetime guards; expanded source design underway. No runtime currently, no public deploy.
+  Next: Design handoffs integrated; fresh /root/crt_fdopen_prerequisite implements descriptor access/mode/shared ownership prerequisite, /root/crt_jump_ownership implements sealed callback producer census and ownership hooks. Source-only until review, no fake APIs; root serializes subsequent builds/runtime.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (nonlocal jump callback ownership design)
-  owner: /root/new_game_refill_after_outlaws
-  Next: Audit a24732740: old32B jmpbuf ABI; existing_setjmp3 zero stub unusable, normal dispatch epilogue overwrites restored registers. Enumerate sync/deferred callback lifetime tokens and safe same-thread invocation guard before bounded real handlers/tests. Unsupported unwind must failfast. Source-only.
+  status: active (callback ownership prerequisite implementation)
+  owner: /root/crt_jump_ownership
+  Next: Expanded ed219820b design complete; fresh worker implements complete producer census and enforceable lifetime hooks/tests before real jump handlers. Existing depth not sufficient. Cross-thread/callback/SEH unsupported contexts must reject safely. Source-only no runtime.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (real CRT fdopen source implementation)
-  owner: /root/refill_after_barrage
-  Next: 20261018-madbomber-import-diagnostic confirms CRTDLL_fdopen GPA NULL atoriginalzlibRVA12cc5 causingFALSE, no window. Root3146pins140original/sharedCRT67aaa6df/groupemptyPASS exits1. Implement real descriptor-to-FILE ownership/mode/shared-position/close semantics with conformance, source review before runtime.
+  status: active (descriptor metadata prerequisite implementation)
+  owner: /root/crt_fdopen_prerequisite
+  Next: Design fd4988f1b shows WAT lacks read-only descriptor access/mode metadata. Fresh worker implementing coherent shared descriptor query/metadata prerequisite and binary-first adoption semantics/tests; no dummy FILE, no access escalation or text-as-binary silence. Source-only until review.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
