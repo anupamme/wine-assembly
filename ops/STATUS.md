@@ -1,4 +1,4 @@
-Current 2026-10-18: FIFA core complete; next lanes Outlaws and SuperTux0.1.3. Outlaws ordinal loader fix410eb2d7b validated on original, next owned nested KERNEL95 load in WDIR62LibEntry. Fresh source implementation active. SuperTux original787files verified, sole passive startup granted. No public deployment.
+Current 2026-10-18: Outlaws counted fixed-builtin lifecycle implementation active for verified nested WIN87EM call. SuperTux now passes setbuf using restored authentic CRT; bundled SDL_mixer routing audit precedes attributing Mix_OpenAudio failure to API support. All completed runtime PIDs absent. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

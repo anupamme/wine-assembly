@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: FIFA corecomplete7ea9cce4c, separatedevice/audioFPS task. Outlaws ordinalbuiltins merged410eb2d7b; originalnextKERNEL95 nestedload guard in WDIR62LibEntry. /root/outlaws_nested_ne_load sourceimplementation; SuperTux official787filesverified /root/new_game_refill_oct18 sole60s/85shard passive startupgranted.
+  Next: Outlaws exactstaticWIN87EM argument verified; countedfixedbuiltin import/explicit-reference lifecycle sourceimplementation active, generalnestedguard retained. SuperTux original CRT restored/verifypassedsetbuf; nextMix_OpenAudio hit whilebundledSDL_mixer not loaded, worker audits realDLL launchconfiguration beforeAPIclaim. One runtime grant, no browser below4GiB.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1617,7 +1617,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (owned nested Win16 LoadLibrary design/implementation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_nested_ne_load
-  Next: Original20261018-outlaws-original-builtins-observation module9bf60517 reaches WDIR62LibEntry then KERNEL95 LoadLibrary livebridgeframe guard, NOT TOOLHELP80. Child2189050/controller2189042 naturalexit1~205ms; root3113pins/originals unchanged/survivorsempty/free3.79GB. Preserve guard until real nestedownership/refcount/rollback/cancellation supported. Fresh worker source-only whileSuperTux runtime.
+  Next: Pinned original WDIR62 uniqueKERNEL95call1:1a0c DS083e=WIN87EM verified byroot staticJS; runtimeargumentnotcaptured. Docs03d07d6 staged countedfixedimport+explicitrefs/free/usage/reset/alias prerequisite. Worker implementing realcountedbuiltin lifecycle/tests, notlegacyshortcut/generalguardremoval. No fresh runtime yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (verified original passive startup)
+  status: active (real bundled DLL routing audit/startup)
   owner: /root/new_game_refill_oct18
-  Next: Official GitHub original7,623,968B installer SHA256bc4893dbb84a02beb8958dab1c922a7f715aa08ed463d2a0efa6bc58d79c9a9b extracted without execution;787files/dependencyclosure/hashes verified, no missingpayload. Packet docs/supertux-013-launch.json; rootgranted60s/85shard passive startup exact9bf60517 after sourcepins, noinput/licenceresponses. Gameplay untested.
+  Next: Firststartup setbuf beforewindow traced missing integrationtest/binaries/dlls/msvcrt.dll; restored authenticSHA887eb5ce93edb7192ca3e9220f07f9ca0f94db02af5862ebcbdfcb852db99fd1. Secondrun20261018-supertux-crt-startup realCRT DllMain passes/setbufpassed, nextMix_OpenAudio failfast; bundledSDL_mixer exists but notloaded. Worker audits explicitrealDLL config, renewed oneboundedrun onlyifconfigurationcorrect. Child2197313/controller2197303 naturalexit1~157ms/rootPIDsabsent/pins3116+787unchanged, noimage/input/gameplay.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
