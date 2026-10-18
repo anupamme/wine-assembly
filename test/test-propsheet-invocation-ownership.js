@@ -34,11 +34,19 @@ async function main() {
   let hook = () => {}; imports.host.get_ticks = () => { hook(); return 17; };
   const { instance } = await WebAssembly.instantiate(wasm, imports);
   const x = ctx.exports = instance.exports, dv = new DataView(memory.buffer);
-  const callback = ret => [0xb9, ...u32(30), 0x49, 0x75, 0xfd, 0xff, 0x15, ...u32(BASE + 0x1900), 0xb8, ...u32(73), 0xc2, ret, 0];
+  // Guest instructions read each stdcall argument before making the API call:
+  // mov eax,[esp+disp8]; mov [capture+offset],eax. Separate records survive
+  // nested callbacks and prove the argument order, values and guest pointer.
+  const callback = (ret, capture = BASE + 0x2300) => [
+    ...[4, 8, 12].flatMap((disp, i) =>
+      [0x8b, 0x44, 0x24, disp, 0xa3, ...u32(capture + i * 4)]),
+    0xb9, ...u32(30), 0x49, 0x75, 0xfd, 0xff, 0x15, ...u32(BASE + 0x1900),
+    0xb8, ...u32(73), 0xc2, ret, 0];
   let sp, root, page;
   function begin(ret = 12) {
     hook = () => {};
-    const b = pe([[0x2000, [0xc3]], [0x2100, callback(ret)], [0x2200, callback(12)]]);
+    const b = pe([[0x2000, [0xc3]], [0x2100, callback(ret)],
+      [0x2200, callback(12, BASE + 0x2310)]]);
     const raw = r => r - 0x1000 + 0x200;
     b.writeUInt32LE(0x1a00, raw(0x1900)); b.writeUInt32LE(0, raw(0x1904));
     b.write('GetTickCount\0', raw(0x1a02));
@@ -56,11 +64,18 @@ async function main() {
   }
   const send = () => x.t_page(page, x.guest_to_wasm(page), 2);
   begin(); const children = []; let nesting = false;
+  const argsAt = rva => [0, 4, 8].map(offset => x.guest_read32(BASE + rva + offset) >>> 0);
   hook = () => {
     children.push(x.t_token()); assert.notEqual(x.t_token(), root);
-    if (nesting) { assert.equal(x.t_depth(), 2); return; }
+    if (nesting) {
+      assert.equal(x.t_depth(), 2);
+      assert.deepEqual(argsAt(0x2310), [0, 1, page + 40], 'nested PSPCB_RELEASE arguments');
+      return;
+    }
+    assert.deepEqual(argsAt(0x2300), [0, 2, page], 'outer PSPCB_CREATE arguments');
     const outer = x.t_token(); nesting = true;
     assert.equal(x.t_page(page + 40, x.guest_to_wasm(page + 40), 1), 73);
+    assert.deepEqual(argsAt(0x2300), [0, 2, page], 'nested callback preserves outer capture');
     assert.equal(x.t_token(), outer); assert.equal(x.t_depth(), 1); nesting = false;
   };
   for (let i = 0; i < 2; i++) {

@@ -15,6 +15,8 @@ the original owner remains current; that behavior is not nonlocal-jump proof.
 
 `test/test-propsheet-invocation-ownership.js` authors real x86 callbacks using
 an imported GetTickCount and RET 12. It exercises nested and sibling callbacks,
+with guest instructions capturing all three stdcall arguments in separate
+records and asserting NULL hwnd, CREATE/RELEASE message and guest page pointer;
 multiple run slices, missing flag/function, malformed RET, bounded timeout,
 guest trap, host exception, leaked child, equal-depth sibling substitution,
 changed synchronous depth and process retirement. Capacity and ID exhaustion
