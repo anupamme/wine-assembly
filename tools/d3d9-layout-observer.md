@@ -4,6 +4,68 @@ Source-only diagnostic for BW2-DRAW-LAYOUT-PROVENANCE-20261018. It does not
 repair a layout, select a producer, or classify the missing October 9 evidence.
 No guest/browser run or module/source placement validation has been performed.
 
+## Node harness adapter (source-only)
+
+`tools/d3d9-layout-capture.js` supplies the concrete adapters; it is not enabled
+by `test/run.js` or a browser flag. Its tests execute the real
+`GuestRpc.createMainBroker().serveRpc` and `D3D9Host.Bridge.call`, with synthetic
+shared memory and a pre-existing inert device entry. They reach the actual
+layout loads and FVF rejection without instantiating WAT or a renderer:
+
+```
+node --test tools/d3d9-layout-capture.test.js tools/d3d9-layout-observer.test.js
+```
+
+Harness placement, once separately authorized for a live run:
+
+1. Call `Capture.identity({moduleBytes, repository, runId})` with the exact byte
+   buffer passed to module compilation. It hashes those bytes and reads the
+   checkout HEAD and dirty status with Git. This records actual inputs; it does
+   not certify that an existing module was built from that commit. Retain the
+   matching build receipt and generated region map. A dirty checkout requires
+   a separately retained source manifest/diff before any source attribution.
+2. Construct `Capture.create({identity, getMemory, getExports, capacity})` on
+   the host. The memory getter returns the current buffer; the exports getter
+   supplies the consuming instance. The adapter requires `guest_to_wasm`, checks
+   both ends of every guest word, and rejects the NULL sentinel or a split word.
+   DX lookup uses the checked device slot and current generated `DX_OBJECTS`
+   base/size, type 20 and misc1. There is no affine address fallback.
+3. Call `capture.attachHost(ctx.d3d9Bridge)` before any guest execution. It
+   preserves an existing callback, hooks the exact production read and wraps
+   host entry. On the broker use its existing per-slot table factory:
+   `slot => capture.brokerTable(tableFor(slot), slot)`. This creates a table
+   view without modifying the original. The real request slot is scoped only
+   during the synchronous import; nested calls and exceptions restore it.
+   An optional third argument is a getter for an independently known actual
+   guest thread ID. Without that getter the ID is null, not slot+1 or the
+   consuming main instance's ID. Unscoped direct host calls have null thread.
+4. On each issuing Worker construct its own capture adapter, then call
+   `capture.installWorker(imports, apiTable, getExports, actualSlot)` after the
+   final overrides and before instantiation. The late exports getter reads
+   `get_current_thread_id()` from that executing instance. The harness still
+   owns enabling/restoring API logging on each instance and transporting the
+   bounded snapshots out of each Worker. This adapter does not add a Worker
+   control message or silently change API logging.
+5. Save `capture.snapshot()` before evidence metadata; call `capture.dispose()`
+   during cleanup and inspect its restoration results. A later callback owner
+   is preserved and reported as a restoration conflict.
+
+The current D3D9 broker path publishes `{t:'rpc', slot}` with its control-block
+arguments. There is **no shared request ID** exposed at draw issue and host
+consumption. All capture correlation fields therefore remain null; the report
+explicitly sets `crossBoundaryPairingQualified` and
+`producerAttributionQualified` to false. A slot identifies an origin, not a
+unique call. The exact host samples and per-instance order remain useful, but
+must not be joined by sequence number, timestamp, pointer or slot as proof of
+a producer. Adding a real shared request token is a separate protocol change.
+
+Live validation still needs the module/build/source receipt, per-Worker import
+placement/logging and snapshot transport checks, and an authorized run. The
+Boat was reported stopped with snapshot verification at
+2026-10-15T19:22:25.445Z; the prior scoped resume returned HTTP 403 and remains
+unresolved. This source checkpoint does not retry or bypass it. No October 9
+raw evidence has been recovered or reconstructed.
+
 `node --test tools/d3d9-layout-observer.test.js` runs only synthetic JS tests.
 The production-hook test executes the exact read/validation prefix extracted
 from `lib/d3d9-host.js`; it is not a compiled WAT or browser integration test.

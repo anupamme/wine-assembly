@@ -37,6 +37,10 @@ comparator execution. Controlled real-handler probes fill 63 retained frames
 and exhaust the identity allocator, asserting failed entry changes no state.
 These are not simultaneous OS Worker races. The same fixture accepts
 `--no-tail-calls` for the alternative compiler dispatch mode.
+The fixture now preinstantiates the sibling before loading guest code, then
+attaches the thread while the comparator is active. This avoids active data
+segments overwriting live shared state; late module instantiation is not
+covered. Both modes passed again during the bsearch validation milestone.
 It now passes compiled execution in both dispatch modes. Controlled direct-continuation probes supplement the
 guest path and are not claimed as guest execution themselves.
 

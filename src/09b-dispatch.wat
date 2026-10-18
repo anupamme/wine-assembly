@@ -1323,56 +1323,19 @@
         (global.set $yield_reason (i32.const 0))
         (return)))
 
-    ;; _initterm continuation — init function returned, call next entry
+    ;; Validate retained CRT callback identity, mode and return ESP.
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0003))
-      (then
-        (local.set $arg0 (i32.const 0))
-        ;; Find next non-NULL entry
-        (block $done (loop $scan
-          (br_if $done (i32.ge_u (global.get $initterm_ptr) (global.get $initterm_end)))
-          (local.set $arg0 (call $gl32 (global.get $initterm_ptr)))
-          (global.set $initterm_ptr (i32.add (global.get $initterm_ptr) (i32.const 4)))
-          (if (local.get $arg0)
-            (then
-              (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-              (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $initterm_thunk))
-              (global.set $eip (local.get $arg0))
-              (global.set $steps (i32.const 0))
-              (return)))
-          (br $scan)))
-        ;; All done — return to original _initterm caller
-        (global.set $eip (global.get $initterm_ret))
-        (return)))
-
-    ;; Normal CRT exit() callback returned. Continue draining the atexit
-    ;; registry in LIFO order; the final step reports the saved exit code.
+      (then (call $crt_callback_continue (i32.const 0)) (return)))
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA002C))
-      (then
-        (call $crt_atexit_run_next)
-        (return)))
-
-    ;; Returning CRT cleanup callback: the caller return frame is still on ESP.
+      (then (call $crt_callback_continue (i32.const 1)) (return)))
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0038))
-      (then (call $crt_cexit_run_next) (return)))
+      (then (call $crt_callback_continue (i32.const 2)) (return)))
 
     ;; bsearch continuation — comparator returned eax = sign(key - elem).
     ;; eax==0 → hit; eax<0 → narrow to [low, mid); eax>0 → narrow to [mid+1, high).
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA000C))
       (then
-        ;; compar's ret popped the thunk addr; our 2 pushed args remain.
-        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
-        (if (i32.eqz (i32.load offset=0 (global.get $reg_base)))
-          (then
-            (i32.store offset=0 (global.get $reg_base) (i32.add (global.get $bsearch_base)
-              (i32.mul (global.get $bsearch_mid) (global.get $bsearch_size))))
-            (global.set $eip (global.get $bsearch_ret))
-            (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-            (return)))
-        (if (i32.lt_s (i32.load offset=0 (global.get $reg_base)) (i32.const 0))
-          (then (global.set $bsearch_high (global.get $bsearch_mid)))
-          (else (global.set $bsearch_low
-            (i32.add (global.get $bsearch_mid) (i32.const 1)))))
-        (call $bsearch_probe)
+        (call $bsearch_continue)
         (return)))
 
     ;; qsort comparator returned; swap if needed and schedule the next pair.

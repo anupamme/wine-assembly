@@ -2894,9 +2894,6 @@
   (global $MMIO_BUF_SIZE i32 (i32.const 8192))
   (global $rgn_counter (mut i32) (i32.const 0))
   ;; _initterm trampoline state
-  (global $initterm_ptr (mut i32) (i32.const 0))  ;; current position in fn ptr table
-  (global $initterm_end (mut i32) (i32.const 0))  ;; end of fn ptr table
-  (global $initterm_ret (mut i32) (i32.const 0))  ;; original caller return address
   (global $initterm_thunk (mut i32) (i32.const 0)) ;; guest addr of initterm-return thunk
   ;; CRT atexit registry. The callback array contains guest function pointers
   ;; and grows on demand; normal exit() drains it in reverse registration
@@ -2904,17 +2901,8 @@
   (global $atexit_table (mut i32) (i32.const 0))
   (global $atexit_count (mut i32) (i32.const 0))
   (global $atexit_capacity (mut i32) (i32.const 0))
-  (global $atexit_exit_code (mut i32) (i32.const 0))
   (global $atexit_ret_thunk (mut i32) (i32.const 0))
   ;; bsearch trampoline state (CACA000C continuation drives the search)
-  (global $bsearch_key     (mut i32) (i32.const 0))  ;; guest ptr to key
-  (global $bsearch_base    (mut i32) (i32.const 0))  ;; guest ptr to array base
-  (global $bsearch_size    (mut i32) (i32.const 0))  ;; element size in bytes
-  (global $bsearch_compar  (mut i32) (i32.const 0))  ;; guest fn ptr (cdecl comparator)
-  (global $bsearch_low     (mut i32) (i32.const 0))  ;; inclusive lower bound
-  (global $bsearch_high    (mut i32) (i32.const 0))  ;; exclusive upper bound
-  (global $bsearch_mid     (mut i32) (i32.const 0))  ;; current probe index
-  (global $bsearch_ret     (mut i32) (i32.const 0))  ;; caller return address
   (global $bsearch_thunk   (mut i32) (i32.const 0))  ;; guest addr of CACA000C thunk
   ;; qsort trampoline state. Adjacent comparisons make the continuation small
   ;; and let swaps use sparse-safe guest byte accesses (CACA002D).
