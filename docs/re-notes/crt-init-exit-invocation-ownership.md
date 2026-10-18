@@ -1,6 +1,6 @@
 # Retained CRT initializer and termination callback ownership
 
-2026-10-18 source checkpoint; **not compiled or runtime validated yet**.
+2026-10-18 retained ownership milestone, compiled and runtime validated.
 No `_setjmp` or `longjmp` API is enabled by this change.
 
 The exact source inventory before implementation was:
@@ -52,7 +52,7 @@ registry reset is explicit: the existing instance-global registry's process
 reset/Worker sharing behavior is not fixed or validated by this slice.
 
 Source checks: parser/paren checks, census and its mutation tests, generated
-region mirror, JS syntax and diff checks. Dynamic tests are authored only.
+region mirror, JS syntax and diff checks. Dynamic tests pass in both modes.
 The census adds the CRT helper/handler records and updates only the three CRT
 dispatch cases plus the historical test exit wrapper; all labels stay pending.
 The wrapper preserves its historical post-return-word stack convention.
@@ -73,3 +73,31 @@ Restore only the compiler/test closure and run this fixture with and without
 guard: admission above 2 GiB + 128 MiB, stop below 2 GiB + 64 MiB, 180 seconds,
 8 MiB logs, recorded canonical hashes and detached process-group cleanup.
 Preserve ignored modules and run evidence before any build.
+
+## Validation receipt
+
+2026-10-18, source `64c5182b5` (fixture `05231e6c4`, including populated exit
+and cexit registry capacity/identity exhaustion failure-atomicity checks):
+normal gated build, actual guest CRT fixture in both dispatch modes, qsort and
+bsearch in both modes, token primitives, production PE/NE/init_thread lifecycle,
+and existing CRT close/stream/returning-cleanup and startup-helper tests pass.
+The callback tests check registry count and bytes remain unchanged on failed
+entry, alongside all retained frame and invocation bytes. No game was run.
+
+Candidate SHA-256 is
+`859e7e86b5bd7a763b94eb5a0eb2ac23f70fda274db5a6610f403d862a33aebd`.
+Canonical `db326070` stayed unchanged. All thirteen process groups exited;
+no guard fired. Lowest recorded free disk was 2,804,133,888 bytes. Evidence is
+`scratch/runs/20261018-crt-init-exit-validation/`, including per-command logs
+and JSON, guard, artifact hashes, sparse expansion/recovery receipts and the
+preserved prior canonical module. The initial exact sparse addition was 836
+files, 15,047,822 source bytes / 16,769,024 allocated bytes; render-helper.js
+added another 9,023 source bytes / 12,288 allocated bytes for CRT regressions.
+
+Two failed setup/gate receipts are retained. The build ESP gate recognized the
+removed cexit helper; its delegation rule now recognizes only exit, cexit and
+initterm calling the retained helper, and the full build passed on retry. The
+first CRT close test lacked sparse render-helper.js; restoring that tracked
+dependency and using existing root NODE_PATH dependencies passed, without an
+installation or production change. Compiled artifacts remain in this task's
+ignored build directory; restore the recorded sparse closure to reproduce.
