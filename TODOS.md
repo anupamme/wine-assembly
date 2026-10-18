@@ -1614,9 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (selector fix prepared; native validation pending)
-  owner: /root/outlaws_resume_oct17
-  Next: Reviewed task candidate9ee92c0e5 contains selector/lifecycle fixes, KERNEL95/96 ownership guards, imported-export validation and structured indirect WEP recovery. Root tiny transaction tests PASS; independent source and real-guest fixture reviews complete. Full native suite including new cases remains UNRUN; exact controller production pin d5b940 unchanged. Await disk reserve and sole-box admission, then native/original PMPRO62 validation before main merge.
+  status: active (named-import fix reviewed; full native validation pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/outlaws_full_suite_oct18
+  Next: TG90 permits local testing. Original six suite stages passed before named HELPER.VALUE import trapped; original PMPRO62 was not reached. Fix5acc078acdb3c383b70cb339daddf4d6aea30678 resolves names against the importing image; canonical build, synthetic native lifecycle including colliding importer offsets, tiny transactions and pure-NE loader pass. Fresh worker updates reviewed controller pin and runs all12 stages including original PMPRO62. Lifecycle changes remain off main until validation. Evidence: scratch/runs/20261018-outlaws-local-native and20261018-outlaws-named-import-fix.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
