@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: blocked (runtime headroom; bounded source work completed)
+  status: active (TG93 cleanup complete; serialized validation resumed)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlawscee09f851 source corrections complete offmain awaiting safe native rebuild; FIFA browser4GiB admission unmet. B&W2 source provenance and bounded newtitle inventory complete, no eligible secondtitle established by that pass. No workers falsely labelledactive. Resume after resource capacity or new actionable evidence changes; preserve all holds.
+  Next: TG93 authorized cleanup reclaimed~2.05GB, verified4.342GB free; originals/evidence retained. Outlawscee09f851 solefresh120sbuild+90snative retry granted. FIFA telemetry ready, browser waits slot plusfresh4GiB admission; B&W2 sourceaudit preserved, no secondnewtitle falselyclaimed.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: blocked (safe rebuild headroom required; source fixes complete)
+  status: active (fresh compiled validation after disk recovery)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: none
-  Next: Latestcee09f851 pushed/refverified includes explicitQT export and both reviewer test corrections, puretestsPASS. No worker running. Needs fresh boundedbuild/native direct+sparse/cooperative on safeheadroom after volatile diskdrop; old module/nativefailures predate fix. Candidate remains offmain, no originalgame success.
+  worker: /root/outlaws_qt_gateway
+  Next: Candidatecee09f851 includes explicitQT export and reviewer fixture fixes; fresh120sbuild+90snative retry granted after usercleanup restored4.342GB. Preserve earlierpregateway failures. Actual direct/sparse/cooperative/native results pending; keepoffmain.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
