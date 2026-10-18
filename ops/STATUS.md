@@ -1,3 +1,5 @@
+Current 2026-10-18: MadBomber rewindlookup passes nextBeepNULL, rootpostflightPASS; Beepsourceaudit active. Qsort solecompiledvalidation, BW2observer sourceimplementation thirdlane. GL27 exacthistoricalmembership and oldBW2rawtrace remainmissing; staleIWaudit mustnot trigger mergedfixes. Telegram95 answered photo1470. No publicdeploy.
+
 Current 2026-10-18: Rewind reviewed/compiledPASS including rootnormalbuild+rewind exactc3ae99a8; next MadBomber originalretry packet. Qsort sourceclear tests queued. Separate source-only GLD3D27/crash-sweep reconciliation active. No publicdeploy.
 
 Current 2026-10-18: Rewind c6f955b1 reviewed, sole compiled validation granted; retainedqsort f82157f3e source under independent review. Finished clean remoteverified Outlawsregistrationffad825d1 sparse narrowing restored ~288MB, free2.578GB, ignored originals/evidence preserved. No game/public deploy.
