@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (synchronous callback retention audit)
-  owner: /root/circus_sync_callback_retention
-  Next: CRTinit/exit ec55f099e reviewed and dualguest/build/qsort/bsearch/token/lifecycle/CRT regressions PASS; root integration buildPASS exact859e7e86. Fresh worker inventories remaining synchronous window callback retention and meaningful guest tests. Jump APIs remain disabled; other families/registry lifetime/concurrency/SEH/jump semantics still pending.
+  status: active (remaining callback ownership prerequisites)
+  owner: /root/circus_remaining_callbacks
+  Next: Syncwindow cb4fdc918 independently reviewed; dualguest and window/token/lifecycle regressions PASS. Root normalbuild exact2abd71d3 PASS. Fresh worker selects next retained callback family; jump APIs remain disabled, no gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (real alertable Beep continuation)
+  status: active (public Beep production routing validation queued)
   owner: /root/crt_fdopen_prerequisite
-  Next: Original rewind retry stops at Beep GetProcAddress NULL. Cause not yet established: catalog has API9 even for stub, but loaded DLL lookup uses its actual export directory. Beep handler remains unimplemented on main; reviewed alertable/retirement candidate and actualWorker/broker fixtures pending compiled validation. Synthetic routing cannot establish original MSVCR70 lookup resolution; no original retry yet.
+  Next: Publichandler and explicit KERNEL32 export6bca68ada independently source-clear. Actual PE IAT/dynamic EAT positive/failure fixtures authored; serialized dualdispatch validation next. Original MSVCR70 hModule provenance and hardware audio remain separate, no original retry yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

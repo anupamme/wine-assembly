@@ -1,3 +1,7 @@
+Current 2026-10-18: Syncwindow cb4fdc918 reviewed and dualguest/window regressions PASS; root build exact2abd71d3 PASS. Fresh Circus remaining-callback source lane active. Public Beep6bca68ada independently source-clear, production routing validation queued. Neither game qualified; inbox96 already answered, no public deploy.
+
+Current 2026-10-18: Beep continuation/retirement b1aada2aa reviewed, bothdispatch nestedAPC plus lifecyclebroker/actualOSWorker tests PASS; root normalbuild PASS440c4f4e. Public handler/export enabling source preparation next, original lookup route not yet proven. Circus syncwindow sourceclear queued for solevalidation after main sync. Telegram96 answered1474, no newgameplay image/publicdeploy.
+
 Current 2026-10-18 correction: Mad Bomber Beep NULL lookup is unresolved independently of the stub. Catalog API9 exists; loaded-DLL GetProcAddress can fail through export-directory lookup. Reviewed Beep continuation/retirement and extended Worker/broker fixtures await validation; no claim this resolves original lookup. Circus synchronous callback retention source work active.
 
 Current 2026-10-18: CRT init/exit ec55f099e reviewed and worker full regression suite PASS; root integration build PASS exact859e7e86. Circus synchronous callback retention fresh source worker active. Beep retirement source review clear; lifecycle broker/actualWorker/routing fixture preparation pending compiled grant. Main gameplay remains unqualified for these two titles; no public deploy.
