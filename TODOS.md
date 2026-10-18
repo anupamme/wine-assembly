@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (descriptor compiled tests; callback token implementation)
+  status: active (fdopen adoption; callback token implementation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Descriptor1e8515342 source review clear; sole gatedbuild/native tests granted within strict disk admission. Callbackcensus c32fce97e source/mutation tests pass, retained offmain pending first token instrumentation. Two workers active, no game retry or public deploy.
+  Next: Descriptor prerequisite passed worker normalbuild/compiledIO/broker/dup/stdio/lazy tests; root normalbuild/compiledIO PASS exact2f73127d. Worker continues real binary fdopen adoption source-only. Callback token primitives/hooks source implementation active, still no jump handlers. One runtime, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1735,7 +1735,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (descriptor prerequisite compiled validation)
+  status: active (binary fdopen adoption source implementation)
   owner: /root/crt_fdopen_prerequisite
-  Next: Descriptor1e8515342 atomicCRTopen/query/dup/append source independently clear and realVFS tests pass. Sole gatedbuild/compiled IO+broker/regressions granted; add lazy query and broker open cases. fdopen adoption not implemented yet; no game retry.
+  Next: Prerequisite1e8515342+baa7ecacd reviewed and workercompiledtestsPASS; root normalbuild/compiledIO PASS exact2f73127d. Next real binary fdopen adoption with access/mode checks, samefd/cursor ownership and atomic/revalidated publication; actual close/dup/failure tests. Unsupported text explicit; no OSWorker/concurrentadoption claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

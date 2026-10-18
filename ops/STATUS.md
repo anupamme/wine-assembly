@@ -1,3 +1,5 @@
+Current 2026-10-18: Descriptor prerequisite passed worker normalbuild/compiledIO/broker/dup/stdio/lazy tests; root normalbuild/compiledIO PASS exact2f73127d. Worker proceeds real binary fdopen adoption source-only; callback token implementation continues independently. No game retry/public deploy; existing ownership coverage limits remain.
+
 Current 2026-10-18: Descriptor1e8515342 independently reviewed, sole compiled validation granted under disk guards. Callbackcensus c32fce97e source/mutation tests passed; offmain until actual token instrumentation, worker continuing source-only. Disk reserve recovered via sparse narrowing; no gameplay qualification or public deploy.
 
 Current 2026-10-18: Fresh workers /root/crt_fdopen_prerequisite and /root/crt_jump_ownership implement required descriptor metadata and callback lifetime prerequisites from completed audits. Mad Bomber/Circus still lack gameplay; source-only work, review before serialized build/runtime. No public deploy.
