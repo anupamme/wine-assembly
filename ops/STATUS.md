@@ -1,4 +1,4 @@
-Current 2026-10-18: Circus original passes_fpreset and stopsatsetbuf(NULL); root3145pins150original/groupempty pass. Realstdio buffering sourceaudit assigned. Barrage sole finalrealcalendar/fullHUD gameplay grant onnew0c617764module withfreshdiskadmission. No public deployment.
+Current 2026-10-18: Barrage previousrun stoppedby5s humanreviewgate beforeinput; rootpostflightpassed. Revisedaffordanceage withfresh executionstate puretested, sole gameplayretry grant. Circus_iob dataimport fix sourceindependentreview active setbufstillfailfast. CleanpushedinactiveNEWT sparse reduction restored253MB free2.524GB preservingignoreddata. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
