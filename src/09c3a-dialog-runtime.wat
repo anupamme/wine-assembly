@@ -1,18 +1,10 @@
   ;; ============================================================
-  ;; STEP 5 dormant additions: $wnd_send_message + $create_findreplace_dialog
+  ;; Synchronous window messages and native find/replace dialogs
   ;; ============================================================
-  ;; Status: STEP 5 — dormant. The helpers below compile and are reachable
-  ;; only by future code. $handle_FindTextA still calls $host_show_find_dialog,
-  ;; the JS-side find dialog is unchanged, and the test gate is unaffected.
-  ;; STEP 8 will (a) flip $handle_FindTextA to $create_findreplace_dialog,
-  ;; (b) delete the JS path, and (c) rewire the test bridge.
-
   ;; Send a message to a window. Routes WAT-native wndprocs (wndproc >=
-  ;; 0xFFFF0000) directly through $wat_wndproc_dispatch. For x86 wndprocs
-  ;; the message is queued via the existing PostMessage queue (PostMessage
-  ;; semantics, not synchronous SendMessage — return value is always 0).
-  ;; True synchronous WAT->x86 SendMessage would require a nested $run
-  ;; invocation; defer that until a consumer actually needs the return.
+  ;; 0xFFFF0000) directly through $wat_wndproc_dispatch. Guest x86 wndprocs
+  ;; run synchronously in bounded nested $run slices. Win16 and idle host
+  ;; shadows use the post queue instead and report incomplete delivery.
   ;; This is where painting nests: a wndproc that is holding a scratch rect
   ;; sends a message, and whatever that paints takes scratch slots of its own.
   ;; Marking here and resetting on the way out recycles everything the inner
@@ -40,6 +32,7 @@
     (local $result i32) (local $edit_state i32) (local $edit_state_w ptr<EditState>)
     (local $edit_len_before i32)
     (local $sync_rounds i32) (local $sleep_rounds i32) (local $old_sleep_yielded i32)
+    (local $expected_child i64) (local $expected_root i64) (local $expected_depth i32)
     (local.set $wp (call $wnd_table_get (local.get $hwnd)))
     (if (i32.eqz (local.get $wp)) (then (return (i32.const 0))))
     (local.set $ctrl_class (call $ctrl_table_get_class (local.get $hwnd)))
@@ -193,6 +186,12 @@
     (local.set $old_steps (global.get $steps))
     (local.set $old_yield_reason (global.get $yield_reason))
     (local.set $old_yield_flag (global.get $yield_flag))
+    ;; Allocate before touching the guest frame. These locals belong to this
+    ;; nested WAT call, so another synchronous send cannot overwrite them.
+    (call $sync_depth_enter)
+    (local.set $expected_child (call $invocation_current))
+    (local.set $expected_root (global.get $invocation_root))
+    (local.set $expected_depth (global.get $sync_msg_depth))
     ;; Push args + return thunk on guest stack. Wndproc is stdcall ret 0x10
     ;; so it pops these on return; ESP returns to its current value.
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 16)))
@@ -206,7 +205,6 @@
     (global.set $steps (i32.const 0))
     (global.set $yield_reason (i32.const 0))
     (global.set $yield_flag (i32.const 0))
-    (call $sync_depth_enter)
     ;; A synchronous native-control procedure may legitimately execute more
     ;; than one interpreter slice (property-sheet Cancel walks every tab/page
     ;; before destroying the frame). Continue bounded slices until the return
@@ -254,6 +252,20 @@
           (call $host_log_i32 (local.get $lParam))
           (br $sync_done)))
       (br $sync_run)))
+    ;; Never pop whichever child happens to be current. A nested deferred
+    ;; callback may still own execution when the bounded run stops. Reject
+    ;; before restoring any caller state; host-quiescent reset owns recovery.
+    (if (i64.ne (local.get $expected_child) (call $invocation_current))
+      (then (unreachable)))
+    (if (i64.ne (local.get $expected_root) (global.get $invocation_root))
+      (then (unreachable)))
+    (if (i32.ne (local.get $expected_depth) (global.get $sync_msg_depth))
+      (then (unreachable)))
+    ;; A completed stdcall must consume the four arguments and return word.
+    ;; An incomplete bounded send retains its historical abandonment result.
+    (if (i32.and (i32.eqz (global.get $eip))
+          (i32.ne (local.get $old_esp) (i32.load offset=16 (global.get $reg_base))))
+      (then (unreachable)))
     (global.set $sleep_yielded (local.get $old_sleep_yielded))
     (call $sync_depth_leave)
     (global.set $wnd_send_completed (i32.eqz (global.get $eip)))
