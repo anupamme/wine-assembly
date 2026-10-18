@@ -59,19 +59,20 @@ function mountBundledFonts(ctx, { scalable = true } = {}) {
 // The old form spliced it in front of a trailing `)` that no longer exists,
 // which matched nothing and silently dropped every extraWat export.
 const harnessWasmCache = new Map();
-function compileHarnessWasm(extraWat) {
-  if (harnessWasmCache.has(extraWat)) return harnessWasmCache.get(extraWat);
+function compileHarnessWasm(extraWat, tailCalls) {
+  const key = JSON.stringify([extraWat, tailCalls]);
+  if (harnessWasmCache.has(key)) return harnessWasmCache.get(key);
   const bytes = compileSrcWasm(!extraWat ? null : (file, source) =>
-    (file === '13-exports.wat' ? `${source}\n${extraWat}\n` : source));
-  harnessWasmCache.set(extraWat, bytes);
+    (file === '13-exports.wat' ? `${source}\n${extraWat}\n` : source), { tailCalls });
+  harnessWasmCache.set(key, bytes);
   return bytes;
 }
 
 async function bootRenderHarness({
   extraHostOverrides = {}, extraWat = '', width = 640, height = 480,
-  fonts = 'all', memory: suppliedMemory = null,
+  fonts = 'all', memory: suppliedMemory = null, tailCalls = true,
 } = {}) {
-  const wasmBytes = compileHarnessWasm(extraWat);
+  const wasmBytes = compileHarnessWasm(extraWat, tailCalls);
   const memory = suppliedMemory ||
     new WebAssembly.Memory({ initial: 8192, maximum: 8192, shared: true });
   const canvas = createCanvas(width, height);

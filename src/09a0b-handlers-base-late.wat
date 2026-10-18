@@ -33,6 +33,7 @@
   (func $exit_thread_after_dll_unload (export "exit_thread_after_dll_unload") (param $code i32)
     (call $enum_rsrc_thread_cleanup)
     (call $apc_drop_shared_current)
+    (call $beep_retire_thread (global.get $current_thread_id))
     (call $host_exit_thread (local.get $code))
     (global.set $yield_reason (i32.const 2))
     (global.set $yield_flag (i32.const 1))
@@ -327,6 +328,149 @@
     (i32.store offset=0 (global.get $reg_base) (call $env_set (local.get $arg0) (local.get $arg1) (i32.const 0)))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
   )
+
+  ;; Internal alertable continuation prerequisite. Public Beep remains disabled
+  ;; until all thread/process retirement paths can retire these records.
+  ;; Fixed per-thread records survive forced retirement without heap leakage.
+  ;; Record: prev, ESP, return EIP, output token, saved last-error, reserved,
+  ;; invocation token(i64). Each nested call owns a distinct bounded record/token.
+  (global $BEEP_CONTEXTS i32 (region.addr $BEEP_CONTEXTS 0))
+  (global $BEEP_CONTEXTS_SIZE i32 (region.size $BEEP_CONTEXTS))
+  (global $beep_frames (mut i32) (i32.const 0))
+  (global $beep_depth (mut i32) (i32.const 0))
+  (global $beep_owner (mut i64) (i64.const 0))
+  (func $beep_frame_at (param $depth i32) (result i32)
+    (if (i32.or (i32.ge_u (local.get $depth) (i32.const 64))
+        (i32.ge_u (i32.sub (global.get $current_thread_id) (i32.const 1)) (i32.const 16))) (then (unreachable)))
+    (i32.add (region.addr $BEEP_CONTEXTS 0)
+      (i32.add (i32.mul (i32.sub (global.get $current_thread_id) (i32.const 1)) (i32.const 2048))
+        (i32.mul (local.get $depth) (i32.const 32)))))
+  ;; The scheduler calls this on the main instance after marking a thread
+  ;; exited. No dead Worker's private globals or invocation stack are touched.
+  (func $beep_retire_thread (export "beep_retire_thread") (param $tid i32)
+    (local $root i64)
+    (if (i32.ge_u (i32.sub (local.get $tid) (i32.const 1)) (i32.const 16)) (then (return)))
+    (local.set $root (i64.atomic.load (i32.add (region.addr $CALLBACK_OWNERSHIP 16)
+      (i32.mul (i32.sub (local.get $tid) (i32.const 1)) (i32.const 528)))))
+    (drop (call $host_beep_retire_thread (local.get $tid) (i32.wrap_i64 (local.get $root))
+      (i32.wrap_i64 (i64.shr_u (local.get $root) (i64.const 32))))))
+  (global $beep_cont_thunk (mut i32) (i32.const 0))
+  (func $beep_ensure_thunk
+    (local $wa i32)
+    (if (global.get $beep_cont_thunk) (then (return)))
+    (global.set $num_thunks (call $thunk_reserve))
+    (local.set $wa (i32.add (global.get $THUNK_BASE)
+      (i32.mul (global.get $num_thunks) (i32.const 8))))
+    (i32.store (local.get $wa) (i32.const 0xcaca0040))
+    (i32.store offset=4 (local.get $wa) (i32.const 0))
+    (global.set $beep_cont_thunk (i32.add (global.get $image_base)
+      (i32.sub (local.get $wa) (global.get $GUEST_BASE))))
+    (global.set $num_thunks (i32.add (global.get $num_thunks) (i32.const 1)))
+    (call $update_thunk_end))
+
+  (func $beep_finish (param $status i32)
+    (local $p i32) (local $wa i32)
+    (local.set $p (global.get $beep_frames))
+    (local.set $wa (local.get $p))
+    (call $invocation_leave (i64.load offset=24 (local.get $wa)))
+    (global.set $last_error (select (i32.load offset=16 (local.get $wa))
+      (i32.sub (i32.const 0) (local.get $status)) (i32.gt_s (local.get $status) (i32.const 0))))
+    (i32.store (global.get $reg_base) (i32.gt_s (local.get $status) (i32.const 0)))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=4 (local.get $wa)) (i32.const 12)))
+    (global.set $eip (i32.load offset=8 (local.get $wa)))
+    (global.set $beep_frames (i32.load (local.get $wa)))
+    (global.set $beep_depth (i32.sub (global.get $beep_depth) (i32.const 1)))
+    (global.set $apc_alert_sleep (i32.const 0))
+    (global.set $sleep_yielded (i32.const 0))
+    (global.set $sleep_timeout (i32.const 0))
+    (global.set $handler_set_eip (i32.const 1))
+    (global.set $steps (i32.const 0)))
+
+  (func $beep_continue
+    (local $wa i32) (local $status i32)
+    ;; No stale continuation may consume another callback's output or frame.
+    (if (i32.eqz (global.get $beep_frames)) (then (unreachable)))
+    (local.set $wa (global.get $beep_frames))
+    (if (i64.ne (i64.load offset=24 (local.get $wa)) (call $invocation_current)) (then (unreachable)))
+    (if (i32.ne (i32.load offset=4 (local.get $wa)) (i32.load offset=16 (global.get $reg_base))) (then (unreachable)))
+    (if (i32.ne (i32.load offset=8 (local.get $wa))
+          (call $gl32 (i32.load offset=4 (local.get $wa)))) (then (unreachable)))
+    ;; APC completion returns to this private thunk with the original Beep
+    ;; frame still intact. WAIT_IO_COMPLETION/EAX from its drain is private;
+    ;; only beep_finish publishes the final BOOL to the original caller.
+    (if (call $apc_pending) (then
+      (call $io_apc_ensure_thunk)
+      (call $io_apc_push (global.get $beep_cont_thunk))
+      (call $io_apc_continue)
+      (return)))
+    (local.set $status (call $host_beep_status (i32.load offset=12 (local.get $wa)) (i32.const 1)))
+    (if (local.get $status) (then (call $beep_finish (local.get $status)) (return)))
+    ;; Actual output completion governs success. A short sleep merely yields
+    ;; to the host/audio event loop and limits polling; it cannot complete tone.
+    (global.set $eip (global.get $beep_cont_thunk))
+    (global.set $handler_set_eip (i32.const 1))
+    (global.set $steps (i32.const 0))
+    (global.set $yield_reason (i32.const 0))
+    (global.set $yield_flag (i32.const 1))
+    (global.set $sleep_yielded (i32.const 1))
+    (global.set $sleep_timeout (i32.const 1))
+    (global.set $apc_alert_sleep (i32.const 1))
+    (global.set $apc_alert_ret (global.get $beep_cont_thunk))
+    (global.set $apc_alert_esp (i32.load offset=4 (local.get $wa))))
+
+  (func $beep_begin (param $frequency i32) (param $duration i32)
+    (local $p i32) (local $wa i32) (local $token i32) (local $owner i64)
+    ;; A synchronous host callback cannot service parked slices. Reject before
+    ;; creating sound or retained state; do not silently finish a partial wait.
+    (if (global.get $sync_msg_depth) (then
+      (global.set $last_error (i32.const 50))
+      (i32.store (global.get $reg_base) (i32.const 0))
+      (i32.store offset=16 (global.get $reg_base)
+        (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
+      (return)))
+    (call $invocation_validate)
+    (if (i64.ne (global.get $beep_owner) (global.get $invocation_root)) (then
+      (global.set $beep_frames (i32.const 0))
+      (global.set $beep_depth (i32.const 0))
+      (global.set $beep_owner (global.get $invocation_root))
+      (global.set $beep_cont_thunk (i32.const 0))))
+    (local.set $p (call $beep_frame_at (global.get $beep_depth)))
+    (local.set $owner (call $invocation_enter))
+    (global.set $beep_depth (i32.add (global.get $beep_depth) (i32.const 1)))
+    (call $beep_ensure_thunk)
+    (local.set $wa (local.get $p))
+    (i32.store (local.get $wa) (global.get $beep_frames))
+    (i32.store offset=4 (local.get $wa) (i32.load offset=16 (global.get $reg_base)))
+    (i32.store offset=8 (local.get $wa) (call $gl32 (i32.load offset=16 (global.get $reg_base))))
+    (i32.store offset=16 (local.get $wa) (global.get $last_error))
+    (i64.store offset=24 (local.get $wa) (local.get $owner))
+    (global.set $beep_frames (local.get $p))
+    (local.set $token (call $host_beep_start (local.get $frequency) (local.get $duration) (global.get $current_thread_id)
+      (i32.wrap_i64 (global.get $invocation_root))
+      (i32.wrap_i64 (i64.shr_u (global.get $invocation_root) (i64.const 32)))))
+    (i32.store offset=12 (local.get $wa) (local.get $token))
+    (if (i32.le_s (local.get $token) (i32.const 0)) (then (call $beep_finish (local.get $token)) (return)))
+    (call $beep_continue))
+
+  ;; Explicit owning-thread teardown. Foreign/retired invocation state fails
+  ;; closed. External forced retirement cancels host output without invoking
+  ;; this private stack; its fixed partition is reset by the next root owner.
+  (func $beep_cleanup (export "beep_cleanup")
+    (local $p i32) (local $wa i32) (local $token i32)
+    (block $done (loop $next
+      (br_if $done (i32.eqz (global.get $beep_frames)))
+      (local.set $p (global.get $beep_frames))
+      (local.set $wa (local.get $p))
+      (call $invocation_leave (i64.load offset=24 (local.get $wa)))
+      (local.set $token (i32.load offset=12 (local.get $wa)))
+      (drop (call $host_beep_cancel (local.get $token)))
+      (drop (call $host_beep_status (local.get $token) (i32.const 1)))
+      (global.set $beep_frames (i32.load (local.get $wa)))
+      (global.set $beep_depth (i32.sub (global.get $beep_depth) (i32.const 1)))
+      (br $next)))
+    (global.set $apc_alert_sleep (i32.const 0))
+    (global.set $sleep_yielded (i32.const 0))
+    (global.set $sleep_timeout (i32.const 0)))
 
   ;; 482: Beep — STUB: unimplemented
   (func $handle_Beep (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)

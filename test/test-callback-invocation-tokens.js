@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseSource } = require('../tools/watx');
 const { compileClosure } = require('../tools/watx-closure');
+const { createAudioHost } = require('../lib/host-audio');
 const src = name => fs.readFileSync(path.join(__dirname, '../src', name), 'utf8');
 const cache = src('04-cache.wat');
 const ownership = cache.slice(cache.indexOf(';; BEGIN CALLBACK INVOCATION OWNERSHIP'),
@@ -16,6 +17,8 @@ const helpers = parseSource(src('04-cache.wat'), '04-cache.wat')
   .filter(node => node[1] === 'func' && ['$sync_depth_enter', '$sync_depth_leave'].includes(node[2]))
   .map(render).join('\n');
 const source = `(import "host" "memory" (memory 1 1 shared))
+  (import "host" "beep_process_begin" (func $host_beep_process_begin (param i32 i32) (result i32)))
+  (import "host" "beep_thread_begin" (func $host_beep_thread_begin (param i32 i32 i32 i32 i32) (result i32)))
   (region.declare-fixed $CALLBACK_OWNERSHIP (base 0) (size 0x2110) (align 16))
   (global $current_thread_id (mut i32) (i32.const 1))
   ${['spill_active','ip','spill_base','spill_end','spill_pins','spill_desk_forced','sync_msg_depth']
@@ -40,8 +43,10 @@ const compiled = compileClosure({ source, vfs: new Map() }, { tailCalls: true })
 assert(compiled.success, compiled.error);
 const mod = new WebAssembly.Module(compiled.wasmBinary);
 const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
+const audio = createAudioHost({getMemory:()=>memory.buffer},{}).imports;
 const instance = tid => {
-  const x = new WebAssembly.Instance(mod, { host: { memory } }).exports;
+  const x = new WebAssembly.Instance(mod, { host: { memory,
+    beep_process_begin:audio.beep_process_begin,beep_thread_begin:audio.beep_thread_begin } }).exports;
   x.setTid(tid); return x;
 };
 const x = instance(1);

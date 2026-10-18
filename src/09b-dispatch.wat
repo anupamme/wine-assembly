@@ -1404,6 +1404,10 @@
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0032))
       (then (call $io_apc_continue) (return)))
 
+    ;; Internal Beep output continuation; public Beep is still disabled.
+    (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0040))
+      (then (call $beep_continue) (return)))
+
     ;; In-proc CoCreateInstance steps (see $com_activate_begin).
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0033))
       (then (call $com_activate_after_gco) (return)))

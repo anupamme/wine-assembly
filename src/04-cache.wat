@@ -2299,7 +2299,10 @@
     (global.set $invocation_root (local.get $root))
     (global.set $invocation_depth (i32.const 0))
     (i64.store offset=16 (global.get $invocation_slot) (local.get $root))
-    (i64.atomic.store (global.get $invocation_slot) (local.get $root)))
+    (i64.atomic.store (global.get $invocation_slot) (local.get $root))
+    (drop (call $host_beep_thread_begin (i32.add (local.get $tid) (i32.const 1))
+      (i32.wrap_i64 (local.get $root)) (i32.wrap_i64 (i64.shr_u (local.get $root) (i64.const 32)))
+      (i32.wrap_i64 (local.get $epoch)) (i32.wrap_i64 (i64.shr_u (local.get $epoch) (i64.const 32))))))
 
   (func $invocation_process_begin
     (local $epoch i64) (local $root i64)
@@ -2308,6 +2311,8 @@
     (local.set $epoch (call $invocation_new_id))
     (local.set $root (call $invocation_new_id))
     (i64.atomic.store (region.addr $CALLBACK_OWNERSHIP 8) (local.get $epoch))
+    (drop (call $host_beep_process_begin (i32.wrap_i64 (local.get $epoch))
+      (i32.wrap_i64 (i64.shr_u (local.get $epoch) (i64.const 32)))))
     (call $invocation_install (i32.const 0) (local.get $epoch) (local.get $root)))
 
   (func $invocation_thread_begin (param $tid i32)
@@ -2324,6 +2329,8 @@
         (local.set $epoch (i64.atomic.rmw.cmpxchg (region.addr $CALLBACK_OWNERSHIP 8)
           (i64.const 0) (local.get $candidate)))
         (if (i64.eqz (local.get $epoch)) (then (local.set $epoch (local.get $candidate))))))
+    (drop (call $host_beep_process_begin (i32.wrap_i64 (local.get $epoch))
+      (i32.wrap_i64 (i64.shr_u (local.get $epoch) (i64.const 32)))))
     (local.set $root (call $invocation_new_id))
     (call $invocation_install (local.get $tid) (local.get $epoch) (local.get $root)))
 

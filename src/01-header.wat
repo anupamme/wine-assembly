@@ -329,8 +329,12 @@
   ;; reg_delete_value(hKey, valueNameWA, isWide) → error code
 
   ;; Audio host imports
-  ;; Bounded output-token prerequisite; no Beep handler uses it yet.
-  (import "host" "beep_start" (func $host_beep_start (param i32 i32) (result i32)))
+  ;; Audio output lifetimes share the invocation allocator's monotonic IDs.
+  (import "host" "beep_process_begin" (func $host_beep_process_begin (param i32 i32) (result i32)))
+  (import "host" "beep_thread_begin" (func $host_beep_thread_begin (param i32 i32 i32 i32 i32) (result i32)))
+  (import "host" "beep_retire_thread" (func $host_beep_retire_thread (param i32 i32 i32) (result i32)))
+  (import "host" "beep_shutdown" (func $host_beep_shutdown (result i32)))
+  (import "host" "beep_start" (func $host_beep_start (param i32 i32 i32 i32 i32) (result i32)))
   (import "host" "beep_status" (func $host_beep_status (param i32 i32) (result i32)))
   (import "host" "beep_cancel" (func $host_beep_cancel (param i32) (result i32)))
   (import "host" "message_beep" (func $host_message_beep (param i32)))
