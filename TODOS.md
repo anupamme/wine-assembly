@@ -1735,9 +1735,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (validated Beep integrated; original retry next)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: PublicBeep1247a3d2c reviewed production static/dynamic calls and continuation bothdispatch plus Worker retirement PASS. Root normalbuild203163dd PASS. Original log identifies KERNEL32 handle; next fresh pinned original retry to establish actual progress. No gameplay or audible hardware proof.
+  status: active (original Beep lookup fixed; IsDBCSLeadByteEx next)
+  owner: /root/madbomber_dbcs_export
+  Next: Original20261019-madbomber-beep-retry resolves Beep then API288 IsDBCSLeadByteEx NULL; no invocation/gameplay. Root3221pins140original/sharedCRT/processabsence PASS. Fresh worker implements real codepage semantics/export conformance source-only; Circus owns native validation.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] Legacy texture cube API conformance

@@ -1,3 +1,5 @@
+Current 2026-10-18: Original Mad Bomber now resolves Beep, next IsDBCSLeadByteEx NULL; no screenshot/gameplay. Fresh /root/madbomber_dbcs_export source active. Circus propertypage sole native validation granted; cube API fixture source active. Root original postflight3221pins/processabsence PASS.
+
 Current 2026-10-18: PublicBeep1247a3d2c reviewed dual production routes/continuation/Worker tests PASS, root build203163dd PASS; original Mad Bomber retry next. Circus propertypagec542cbd74 source reviewed plus argument assertions awaiting serialized validation. Cube API fixture source worker active. No new gameplay/public deploy.
 
 Current 2026-10-18: Syncwindow cb4fdc918 reviewed and dualguest/window regressions PASS; root build exact2abd71d3 PASS. Fresh Circus remaining-callback source lane active. Public Beep6bca68ada independently source-clear, production routing validation queued. Neither game qualified; inbox96 already answered, no public deploy.
