@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws input diagnostic preparation; LBreakout2 startup)
+  status: active (Outlaws control validation; replacement selection after LBreakout2)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Two lanes: Outlaws heldmouse discriminator sourceprep, LBreakout2 sole original passive60s85hard startup. SuperTux corequalified. All runtime serialized; no publicdeploy/browser under4GiB.
+  Next: SuperTux and LBreakout2 core registeredgameplay qualified. Outlaws next sole ordinarymovement/passivecounts validation; fresh new_game_refill_after_lbreakout selects eligible nonpublic original title source-only, no download/build. Disk2.568GB strict2GiB floor.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (town level reviewed; keyboard control investigation)
+  status: active (ordinary keyboard movement with passive counts)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Ordinary heldpress MainGame->GOOD reaches renderedtown/revolver/HUD/chickens in20261018-outlaws-held-route-observation; root reviewed screenshot/postflight3118pins/originals/groupemptyPASS, both exit0. Left250ms hostdelivery acknowledged but viewpointchange unproved. Worker documents partialresult and source-audits keyboard sampling/focus before further run; no gameplayqualification yet.
+  Next: Townlevel/keyboardaudit docsf1423dbd1 main; original handleskeys beforeDispatchMessage. Granted sole next ordinaryUp/turn500ms+idle with source-backed passivecounts438a60/438a00/43aaa0/493ab0, no APIpollinglogs or forcedstate,180s210hard strictguards. Sourceprep first then runtime, await actualcontrolproof.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1700,7 +1700,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LBreakout2 2.5.1 original Windows release
   id: NEW-GAME-LBREAKOUT2-20261018
-  status: active (short-route paddle and ball validation)
+  status: done (registered paddle movement and ball launch reviewed)
   owner: /root/new_game_refill_after_supertux
-  Next: Sole180guest210hard registeredgameplay granted after Outlaws cleanrelease. Proven shortmenu directly to reviewedlevel, verifiedarrows+Space with independentrelease and idle; no repeathelp. Freshpins/modulea4a4bc6a,2GiBmargins8MiBlog; await actualcontrolevdence/exits.
+  Next: Controlledrun20261018-lbreakout2-controlled-gameplay rootreviewed same-life paddle320->196->442 idle and separateSpaceballrelease; laterlifeloss retained. Both exit0/root3413pins230originals/groupemptyPASS. Docsdf05a7330 pushed. No sustainedplay/audio/FPS/device claim. Fresh new_game_refill_after_lbreakout selecting replacement.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.

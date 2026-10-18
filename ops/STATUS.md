@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws ordinary heldmouse MainGame->GOOD reaches reviewed rendered town; clean exits and root original/source/group checks passed. Keyboard movement remains unverified and source audit active. LBreakout2 sole short-route paddle/ball validation granted. No public deployment.
+Current 2026-10-18: LBreakout2 registered paddleleft/right+idle and separateballlaunch reviewed; cleanexits/rootpins verified, corelane complete. Outlaws ordinary movement/passivecounts run granted; no keyboardcontrolclaim yet. Fresh worker selects next nonpublic title, audio/FPS/device followups remain separate. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
