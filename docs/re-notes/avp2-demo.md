@@ -169,3 +169,9 @@ Run20261018-avp2-paired-plan replayed the actual recorded menu batches in two fr
 ### Registered browser launcher verified, 2026-10-18
 
 Run20261018-avp2-browser-launch independently verifies original AVP2.exe -> actual ShellExecute lithtech.exe -cmdfile avp2cmds.txt -> Single Player Demo1.0.9.2 main menu on Chrome151 with D3DIM WebGL. Canonical module d6187fed and all18 original assets verified over HTTP; source0da708e7. Controller/browser exit0 after52.175s. Root reviewedscene5. Cooperative non-isolated512MiB environment; no browser gameplay inputs, audible-quality or FPS qualification. Core original launch plus controlled gameplay is satisfied by this browser route and the separate pairedCLI movement evidence; browser gameplay/device/audio/FPS follow-up remains.
+
+### Browser ordinary gameplay checkpoint, 2026-10-18
+
+Run20261018-avp2-browser-gameplay on source9c4c0cb80, canonical moduled6187fed, Chrome151 WebGL cooperative512MiB reaches original Marine mission through ordinary reviewed menus. Root reviewedscene61/63: bounded D input shifts static wall/support/corridor geometry, confirming browser control. W approached teammate but was not alone used as control proof. Browser and controller cleaned up normally after296.305s, postflightmodule unchanged and trackedtree clean. Screenshot sentTelegram1432.
+
+Existing FPS graph reports214presents over35.837s (~5.97presents/s), with logicalFps null. This CPU/software-GPU debug-page measurement is not hardware-device or logicalFPS qualification. Running22050Hz stereo16-bit audio voices/context metadata does not prove audible quality. Observer attachment briefly resized viewport to800x600 before correction to1100x800; this harness limitation is retained, not attributed to emulator. Further audible-quality/logicalFPS/device evidence remains open.

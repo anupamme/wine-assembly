@@ -1671,7 +1671,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] AVP2 browser gameplay, audio and FPS follow-up
   id: AVP2-BROWSER-AUDIO-FPS-20261018
-  status: ready
+  status: review (browser gameplay passed; audible quality/logical FPS/device evidence pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Original browser launcher reaches menu, paired CLI movement qualified. Use ordinary browser menu input to reach Marine mission, capture control, inspect existing audio/perf instrumentation and record exact limitations. No public deployment.
+  Next: Browser Marine mission/control reviewed20261018-avp2-browser-gameplay. ~5.97presents/s on softwareGPU debugpage, logicalFpsnull; runningaudio metadata only. Capture audiblequality and logicalframe/device metrics separately; no publicdeployment.
   Evidence: scratch/runs/20261018-avp2-browser-launch; scratch/runs/20261018-avp2-paired-plan
