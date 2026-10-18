@@ -1,3 +1,5 @@
+Current 2026-10-18: Mad Bomber original resolves_fdopen then stops at missingrewind; root completepins/cleanupPASS, no window/gameplay. Realrewind source/tests active; Circus retainedqsort frame/token work active independently. No runtime/public deploy.
+
 Current 2026-10-18: Combined fdopen and synchronous invocation tokens passed root normalbuild/fdopen IO+broker+dynamic/lifecycle tests, canonicalaafa600a. Mad Bomber original retry preparation next; Circus retained callback family source work continues before real jumps. No gameplay or public deployment claim.
 
 Current 2026-10-18: Binary fdopen73e0802a7 source checkpoint under independent review, compiled tests pending. Callbacktoken2fdafb676 independently reviewed under explicit quiescence limits; sole compiled validation granted subject to strict disk reserve. No original game retry or public deploy.
