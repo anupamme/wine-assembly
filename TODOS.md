@@ -1616,8 +1616,8 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-OUTLAWS-DEMO-20261015
   status: active (original Win16 import failure diagnosis)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_original_qt_prepare
-  Next: Original module f7c9f5c run 20261018-outlaws-original-qt-observation entered QT and trapped in win16_dispatch function10365 at0x18200f during PMPRO62F DllMain. Blank teal frame reviewed, no gameplay. CLI quit did not terminate;85s watchdog SIGKILL, root independent3110pins/originals unchanged and survivors empty. Next identify exact Win16 module/ordinal from existing diagnostics; preserve fail-fast behavior.
+  worker: /root/outlaws_cli_failure_drain
+  Next: Original run 20261018-outlaws-original-qt-observation trapped at unimplemented Win16 import inside QT/PMPRO62F. Existing module/ordinal diagnostics were buffered then skipped by CLI exception; stdin also prevented exit. Fresh worker /root/outlaws_cli_failure_drain owns generic exceptional-path log drain/control cleanup plus regressions, source-only until runtime grant. Preserve fail-fast trap. Root postflight confirmed3110pins/originals unchanged and no survivors.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
