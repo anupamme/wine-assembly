@@ -1,3 +1,9 @@
+Current 2026-10-18: Rewind reviewed/compiledPASS including rootnormalbuild+rewind exactc3ae99a8; next MadBomber originalretry packet. Qsort sourceclear tests queued. Separate source-only GLD3D27/crash-sweep reconciliation active. No publicdeploy.
+
+Current 2026-10-18: Rewind c6f955b1 reviewed, sole compiled validation granted; retainedqsort f82157f3e source under independent review. Finished clean remoteverified Outlawsregistrationffad825d1 sparse narrowing restored ~288MB, free2.578GB, ignored originals/evidence preserved. No game/public deploy.
+
+Current 2026-10-18: Mad Bomber original resolves_fdopen then stops at missingrewind; root completepins/cleanupPASS, no window/gameplay. Realrewind source/tests active; Circus retainedqsort frame/token work active independently. No runtime/public deploy.
+
 Current 2026-10-18: Combined fdopen and synchronous invocation tokens passed root normalbuild/fdopen IO+broker+dynamic/lifecycle tests, canonicalaafa600a. Mad Bomber original retry preparation next; Circus retained callback family source work continues before real jumps. No gameplay or public deployment claim.
 
 Current 2026-10-18: Binary fdopen73e0802a7 source checkpoint under independent review, compiled tests pending. Callbacktoken2fdafb676 independently reviewed under explicit quiescence limits; sole compiled validation granted subject to strict disk reserve. No original game retry or public deploy.
