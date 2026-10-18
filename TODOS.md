@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws built-in loader repair; FIFA touch layout)
+  status: active (Outlaws ordinal dependency repair; next-title selection)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: WDIR62 original replay confirms MissingNEimageGDI code2; generic fixed/dynamic built-in identity repair underway with ownershiptests. FIFA ordinary-action run complete all exits0: restart plus six arrows captured, rootreviewedframe sentTelegram1452. Independent evidence review deciding supported control scope; new browser below4GiB admission, no blindrepeat.
+  Next: FIFA core registered/reviewedkeyboardgameplay/touchlayout complete7ea9cce4c; touchdevice/audioFPS followup separate. /root/new_game_refill_oct18 selecting next nonqualified original candidate beyond prior18excluded. Outlaws native ordinaldependency validation underway; reviewer namedimport ownership gap requires explicitunsupported rejection before merge.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (keyboard gameplay accepted; touch layout implementation)
-  owner: /root/fifa_touch_layout
+  status: done (core registration, reviewed keyboard gameplay, touch layout; device qualification separate)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Independent review accepts ordinary keyboard response: control20 sameEngland5 moves relativepenaltyarea underUp;13Down corroborates/14idle supporting. No mandatory sameplayertrio needed for limited scope; exact exclusivecausality/comprehensivecontrols/audioFPSdevice remainunqualified. Registration exists; lib/apps.js lacks touchControls. Fresh /root/fifa_touch_layout adds only observed arrows/Srestart/EscMenu with sourcechecks; no browser below4GiBadmission. Photo1452 delivered.
+  Next: Merged/pushed7ea9cce4c adds4wayarrows/S Pass-Restart/EscMenu; rootregistry+touchtestsPASS. Independentordinaryactionreview accepts selectedplayer response, photo1452 delivered. Core complete, no further repetitive keyboardcapture. FIFA-TOUCH-AUDIO-FPS-20261018 tracks unvalidatedgeometry/simultaneoustouch/device/audioFPS; no publicrelease.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
@@ -1684,3 +1684,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Source audit212f0fa0 maps NULL bind, stateblockApply and Reset/init; delayed renderer consumption alone cannot explain prepack rejection. Raw scratch/runs/20261009T0335Z-black-white2-staging-fix missing. Need exact source/module identity and bounded before/after producer trace when runtime available; no speculativeproductionfix/newtitleclaim.
   Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
+
+- [ ] Qualify FIFA98 touch usability, audio and logical gameplay FPS
+  id: FIFA-TOUCH-AUDIO-FPS-20261018
+  status: blocked (browser admission below4GiB; device/audio/FPS evidence missing)
+  owner: unowned
+  Next: Core keyboardgameplay accepted and touchlayout7ea9cce4c merged. Validate touchgeometry/simultaneousinput on device, audio listening/reference and logicalFPS separately. Existing captures do not establish these. Preserve originals; no publicdeployment.
