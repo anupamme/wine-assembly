@@ -274,3 +274,27 @@ The original MadBomber hModule attribution and any game retry remain separate
 from this candidate. The earlier observed generated-export absence is fixed
 explicitly here, without claiming that the original failing call has been
 reproduced or repaired.
+
+### Public-route validation completed
+
+Synced main66af4d0db (sync-window ownership) without source conflicts. Normal
+gated build and production PE static-import/dynamic-EAT fixture pass in both
+tail-call and non-tail modes. The updated production-handler continuation
+passes in both modes, including the actual dynamic export inside nested APCs.
+Pure output/retirement and compiled seven-import broker with actual OS Worker
+retirement also pass. No unrelated CRT family was rerun. Evidence is retained
+at `/tmp/wa-crt-descriptor-oct18/scratch/runs/20261019-beep-public-validation/`.
+
+One initial build stopped on the host-audio whole-file census hash after a
+review-requested comment correction. Its failure receipt remains intact; only
+that comment-only source pin was refreshed. No behavioral fix was needed in
+this validation. All process groups are absent, no disk/deadline/log guard
+fired, and canonical module2abd71d3 remained unchanged. Controlled WebAudio
+still does not establish audible hardware playback.
+
+Original log provenance is now established independently: retained rewind
+retry `output.log` lines777-778 records API159 LoadLibraryA("KERNEL32.DLL")
+returning00db7e54; line1745 records API247 GetProcAddress on that same handle
+for Beep, followed by NULL. This identifies the named DLL; it does not trace
+the exact internal resolver branch or demonstrate original-game success after
+the fix. No original game retry occurred during this validation.
