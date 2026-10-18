@@ -1,0 +1,92 @@
+Outlaws KERNEL.184 GlobalDOSAlloc candidate, 2026-10-18
+
+Trigger: retained original run 20261018-outlaws-original-qt-diagnostic-observation
+identifies KERNEL.184 GLOBALDOSALLOC, return address 0x089316ea, while PMPRO62F
+initializes through QT. Original executable/archive and module f7c9f5c are
+unchanged. This note is source/conformance work, not an original-app success.
+
+Primary implementation reference, read 2026-10-18:
+https://raw.githubusercontent.com/wine-mirror/wine/master/dlls/krnl386.exe16/global.c
+GlobalDOSAlloc16/GlobalDOSFree16 establish the DWORD byte count, high-word real
+paragraph/low-word protected selector, first-MB placement, zero on allocation
+failure, selector input to free, zero on successful free and input on failure.
+https://raw.githubusercontent.com/wine-mirror/wine/master/dlls/krnl386.exe16/dosmem.c
+DOSMEM_AllocBlock rounds to paragraphs. These references describe behavior;
+the implementation here uses this repository's existing memory machinery.
+
+Design:
+- Search conventional guest addresses 0x10000..0xA0000. These are DOS/VGA ABI
+  bounds, not invented Wasm region addresses. Low DOS/BIOS data and the video
+  aperture are excluded. virtual_range_edge_locked respects committed maps,
+  uncommitted reservations, and the affine direct window. If an image's direct
+  window covers the conventional range, allocation truthfully fails.
+- Publish sparse ownership while holding LOCK_VIRTUAL_MAP; back it through
+  virtual_map_commit_locked with coalescing OFF so neighboring allocations
+  cannot become one release unit. Backing remains allocator-selected.
+- This initial allocator reserves whole 4KB pages per block. Descriptor limits
+  and GlobalSize expose the paragraph-rounded requested size. Finite capacity,
+  fragmentation, selector, reservation-table and backing failures return zero.
+  Zero-byte allocations are explicitly rejected; exact historical Windows
+  zero-size behavior is not established by these sources.
+- Consecutive protected selectors describe 64KB pieces; the head retains DOS
+  ownership separately from ordinary Win16 arena flags. Free accepts only the
+  exact live owning selector, never a paragraph, alias, tail or ordinary global
+  selector. Release returns the backing reservation and restores arena slots.
+  GlobalFree routes DOS owners to the same release path and propagates failure.
+- GlobalReAlloc of a DOS owner remains fail-fast (diagnostic CA161184), since
+  its existing high-arena growth/copy behavior would invalidate the real-mode
+  address. This is an explicit unsupported operation, not a successful stub.
+  No DOS interrupts, DPMI host, real-mode execution or general DOS emulator
+  support is claimed. Generic selector mutation/lifetime changes are outside
+  this bounded implementation.
+
+Validation so far: JS fixture syntax, WAT fragment balance, logical operands,
+test-tier discovery, region-literal gate and diff whitespace pass. No compile,
+native test, browser or original payload run has occurred for this candidate.
+
+Pending separately granted build/native lane:
+  bash tools/build.sh
+  node test/test-win16-globaldosalloc.js
+  node test/test-win16-globalsize-updatergn.js
+  node test/test-win16-freelibrary-arena.js
+
+The new fixture drives ordinal 184/185 through real Pascal frames. It checks
+DX:AX/cleanup, byte aliasing through real paragraph and protected selectors,
+paragraph sizes and multi-selector tail, invalid/overflow/zero size, descriptor
+exhaustion, collision with uncommitted ownership, adjacent allocations surviving
+free, invalid ownership/double free, reuse, GlobalFree and total exhaustion.
+Canonical build and native results must be appended before integration.
+
+Original validation plan after reviewed integration: coordinator refreshes all
+JS/source/module pins, retains the original archive/mounts, and executes one
+separately granted bounded original launch with fatal diagnostic draining.
+Record new build hash and compare the next API/return point with KERNEL.184
+0x089316ea. Passing this API only establishes progress beyond that boundary;
+inspect screenshot/logs and independently verify owned process exits and
+unchanged originals. Do not infer menu, licensing, media or gameplay success.
+
+First granted validation epoch (candidate 9e2e69a95):
+Canonical build passed in 19.04s (PID2159651 exit0), minimum free disk
+4,367,847,424 bytes. Module SHA256:
+e31da202eb77b31220f8067f233cf4f685f64857367576a69b4395eebcbb6dc9
+Compatibility module:
+865e1e3ded0457c3f8a1eeed6ac0851a9eb56345df4bdc900dd4f0805bce870d
+Region mirror unchanged:
+8a27d3ea0da7fbfcb6f96c91ef590a2a20a568a68aa068594322026b3b203478
+Native fixture PID2160636 exited1 after 2.83s in win16_set_sreg during the
+first zero-size return: fixture chose PE imagebase400000 but used historical
+NE arena100000 without mapping it. Its frame hit the null sentinel. Corrected
+fixture uses imagebase100000. This failure does not establish API behavior.
+Both PIDs are absent; original receipts/logs retained under
+scratch/runs/20261018-outlaws-globaldosalloc. Runtime explicitly released.
+
+Independent review then identified low-address decoded-code retirement:
+virtual_map_release retires translations, while arena_give invalidates high
+arena slots. DOSFree now holds the map lock through successful release,
+invalidation of the real low pages, and arena restoration, preventing reuse
+between release and invalidation. Failed release preserves ownership/bytes.
+Fixture now decodes a RET on the real low page and probes its cache after
+free, and covers map-table failure after selector acquisition/reservation
+rollback, reservation-table exhaustion, direct-window collision, lease-blocked
+DOSFree/GlobalFree, ordinary arena reuse, and explicit unsupported DOS realloc.
+These changes await the next separately granted canonical/native epoch.
