@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws fullsuite; FIFA98 harness correction)
+  status: active (Outlaws KERNEL32 validation; FIFA98 input diagnosis)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: TG90 local authorization active. Outlaws owns sole runtime; original DLL focused unload passes and fullsuite runs next. FIFA98 local launch/menu proved, review-command race needs correction before ready-click retry. No concurrent browser/build; AVP2 quality/device follow-up remains separate.
+  Next: Outlaws original files recovered, internal lifecycle merged, readable KERNEL32 source validation owns sole runtime; guest lifecycle/QT wiring still separate. FIFA98 ready-click passed, Stadium Select Play remains unproven, source diagnosis parallel. No public deployment.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (full12-arm native validation of reviewed module usage fix)
+  status: active (original payload recovered; readable KERNEL32 validation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_module_usage_oct18
-  Next: Productiona62466211 passed focused original PMPRO62 load/61exports/refcounts/finalunload. Controller pin b6e97f6c reviewed and pushed. /root/outlaws_full_suite_oct18 owns sole runtime for fresh fullsuite after FIFA postflight confirms cleanup. No lifecycle mainmerge before complete validation.
+  worker: /root/outlaws_kernel32_restore
+  Next: Internal lifecycle merged dddfa4d6a all12nativePASS. Original archive501f37aa and all31payload hashes restored in scratch/runs/20261018-outlaws-original-recovery; missing fixture resolved. Readable KERNEL32 source22422c794 pushed on task/outlaws-kernel32-image-oct18, worker owns sole runtime for canonical/direct/sparse/publication/EAT/hook/lifecycle tests. Guest ordinals35–37/QT remain absent, no gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (stale screenshot command guard correction; source-only)
+  status: active (ready click passed; Stadium Select input diagnosis)
   owner: /root/fifa_resume_oct17
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Original231-file local route reaches Demo Match and Escape Main Menu. Controller rejected MatchSelect command referencing scene8 after scene9, before click delivery; not a demonstrated emulator blocker. Browser0/controller1; owned PIDs absent, pins unchanged. /root/fifa_local_ready_oct18 corrects review-command timing with regression, no browser rerun while Outlaws owns runtime. Evidence scratch/runs/20261018-fifa98-local-ready-prep.
+  Next: Original keyboard Config.1 ready-click reaches Stadium Select on dddfa4d6a/module3b5655. Initial Play plus one reviewed move/dwell follow-up did not advance; input-coordinate hypothesis unproven. Browser/controller/tool0, clean postflight and231fixtures unchanged. Source-only worker diagnoses retained evidence20261018-fifa98-local-static-identity before another run.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending

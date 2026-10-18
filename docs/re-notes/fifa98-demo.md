@@ -620,3 +620,7 @@ and guide-backed player arrows/S/D may follow if a match is reached; preserve
 idle/held/released evidence. Tests execute the actual validator for the exact
 normalized click, fresh paths, unchanged observer, initial idle, foreign eval
 rejection and existing bounds.
+
+### Local ready-click checkpoint, 2026-10-18
+
+Run `20261018-fifa98-local-static-identity` uses main `dddfa4d6a` and canonical module `3b5655d5d7e6046bfaa21c90d39abe34a279eff8957700f284282cd6b0fe98e3`. Original keyboard Config.1 assignment and ready click reach Stadium Select. Play does not advance after the initial reviewed click and one ordinary move/dwell follow-up. Cursor behavior suggests an input-coordinate issue, not yet proved. No match or controlled gameplay claim. Browser/controller/supervisor/tool exit0, owned PIDs absent, server closed, source pins and231 original fixture hashes unchanged. The module differs from earlier failed harness runs, so progress cannot be attributed solely to the review-gate correction.
