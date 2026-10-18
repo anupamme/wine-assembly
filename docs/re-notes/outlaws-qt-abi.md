@@ -122,7 +122,8 @@ and pins it atomically. A pinned frame cannot change its module or entry target;
 existing frame teardown releases the pin. This does not expose QT or change
 LibEntry/WEP stack cleanup. `test-ne-qt-ownership-candidate.js` prepares native
 checks for invalid/data/unloaded addresses, duplicate binding, target changes,
-final-free exclusion and stale-frame teardown. Native checks are **not run**.
+final-free exclusion and stale-frame teardown. Native checks were **not run**
+at that checkpoint; the later mapping-lease validation below ran them.
 
 ## Mapping-lease source candidate (2026-10-18)
 
@@ -165,10 +166,10 @@ and scheduler slot when map-free fails. Slot allocation retries retired frees;
 closing a duplicate guest handle does not delete scheduler ownership. Heap
 fallbacks were never in `stackAlloc` and remain outside this mapping lease.
 
-Pure retirement/planner checks, touched-source parens, logical-AND, test-tier,
-JS syntax and diff checks pass. Canonical build and native tests are **not run**.
-After an explicit runtime grant, build this candidate with `bash tools/build.sh`,
-then run (from its checkout, using its exact compiled module):
+Pure retirement/planner checks (including an original-source negative control),
+touched-source parens, logical-AND, test-tier, JS syntax and diff checks pass.
+The canonical build and native tests below passed after the coordinator's
+exclusive runtime grant. Recovery commands, from this candidate checkout:
 
 ```sh
 WA_TEST_WASM="$PWD/build/wine-assembly.wasm" node test/test-ne-stack-lease-candidate.js
@@ -180,5 +181,34 @@ The first candidate executes real VirtualAlloc/VirtualFree IAT calls and covers
 direct/sparse, late-island atomicity, decommit/recommit, unrelated allocations,
 section metadata retention, constructed real split records, nested ownership,
 stale tokens, table capacity, failed reset and successful cleanup/retry.
-The scoped-loader regression compiles a small fixture, so it too awaits the
-native lane. No original game, browser, or QT execution is claimed.
+The scoped-loader regression compiles a small fixture and also passed during
+the granted native lane.
+No original game, browser, or QT execution is claimed.
+
+Native validation evidence is retained at
+`scratch/runs/20261018-outlaws-map-lease/` in the shared checkout. Build-1
+rejected a raw guest-heap address in the new test; the test now derives it from
+the region mirror. Build-2/3 exposed missing sparse-checkout build inputs
+(Terminal.fon and two tracked generated toyvm bundles), materialized narrowly.
+Build-4 passed all canonical gates and compilation within the original 180s
+budget. WAT source is exactly commit `8c944b42b9b2166ea8da033b928caf59b71a6097`.
+
+`native-1` passed all six sequential checks in 9.7 seconds: the lease candidate,
+QT executable-target pin candidate, scoped-loader Worker retirement, existing
+virtual-decommit-unmaps, virtual-map-split-commit and virtual-map-split-rollback.
+An additional foreign-owner-ID bind/end/free rejection case passed in a focused
+candidate rerun within the original 90s native budget. This changes the native
+owner identity to exercise rejection; it is not a claim of simultaneous Worker
+guest execution. All subprocesses exited zero; no disk/deadline kill occurred.
+The earlier build failures remain retained separately.
+
+Tested canonical module SHA-256:
+`8694d56d8961a498594367ff165fa6c850f35161378b1c7edee56baea86dcc6f`.
+Compatibility module:
+`8ee46cf03d40802402efa69a8639c1f0f723527c38d66c40dbebd2d9c1fe83ea`.
+Region mirror (unchanged):
+`8a27d3ea0da7fbfcb6f96c91ef590a2a20a568a68aa068594322026b3b203478`;
+compiler layout hash `a44784ce3c83726a`. Final free disk was 2,417,893,376 bytes,
+above the strict 2GiB floor. PID postflight found no surviving owned build/test
+processes. Build outputs stay in the isolated checkout; this note and the
+runner/command receipts provide recovery if ignored artifacts are lost.

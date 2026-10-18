@@ -55,7 +55,8 @@ async function main() {
   assert(e.win16_bridge_frame_end(token));
   assert.equal(e.win16_bridge_stack_lease(token,0x7400000,wa(0x7400000)),0,'stale frame');
   token=e.win16_bridge_frame_begin();assert(token);assert(e.win16_bridge_scope_begin(token));
-  for(const invalid of [0x4100000,0x50000000,0x32000000])
+  const directHeap=R.BASE.GUEST_HEAP_BASE-R.BASE.GUEST_BASE+0x400000;
+  for(const invalid of [directHeap,0x50000000,0x32000000])
     assert.equal(e.win16_bridge_stack_lease(token,invalid,wa(invalid)),0,'heap/DIB/unmapped windows excluded');
   assert(e.win16_bridge_frame_end(token));
 
@@ -67,6 +68,11 @@ async function main() {
   const island=base+0x20000;
   write(base,0x11223344);write(island,0x55667788);
   token=begin(island);
+  const owner=e.get_current_thread_id();e.set_current_thread_id(owner+1);
+  assert.equal(e.win16_bridge_stack_lease(token,island,wa(island)),0,'foreign owner cannot bind');
+  assert.equal(e.win16_bridge_frame_end(token),0,'foreign owner cannot drop lease');
+  assert.equal(e.guest_map_free(base),0,'foreign mapping caller sees shared lease');
+  e.set_current_thread_id(owner);
   const before=[wa(base),wa(island),read(base),read(island)];
   assert.equal(e.guest_map_free(base),0,'reservation release busy');
   assert.equal(vfree(base,0,0x8000),0,'VirtualFree reports failed release');
