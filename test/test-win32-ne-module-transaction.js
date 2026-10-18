@@ -321,8 +321,24 @@ view.setUint32(usageRecord,3,true);view.setUint32(legacyRefs,oldLegacyRefs,true)
 // handle-table slot. Preserve the real module's original segment base.
 const dllRecord=first.win16_dll_rec(parentId),oldBase=view.getUint32(dllRecord+4,true);
 view.setUint32(dllRecord+4,100,true);
-assert.equal(first.win16_module_usage(first.win16_dll_data_sel(parentId)),2);
+const highInstance=first.win16_dll_data_sel(parentId),handleTable=first.win16_handle_table();
+assert.equal(first.win16_module_usage(highInstance),2);
+const oldNext=first.win16_handle_next_get(),collisionSlot=handleTable+(highInstance-0x100)*4;
+const oldCollision=view.getUint32(collisionSlot,true);
+first.win16_handle_next_set(highInstance-0x100);view.setUint32(collisionSlot,0x12345678,true);
+assert.equal(first.win16_module_usage(highInstance),2,'live DGROUP wins over unrelated UI mapping');
+view.setUint32(collisionSlot,oldCollision,true);first.win16_handle_next_set(oldNext);
 view.setUint32(dllRecord+4,oldBase,true);
+// Real alias allocation must never produce selector-shaped values, including
+// reuse of a vacant slot. Generic object allocation may use those slots.
+const tableBefore=bytes.slice(handleTable,handleTable+0x4000);
+bytes.fill(0,handleTable,handleTable+0x4000);first.win16_handle_next_set(0);
+for(let i=1;i<=6;i++)assert.equal(first.win16_h16(0x10000+i),0x100+i);
+assert.equal(first.win16_h16(0x00d10001),0x108,'skip selector-shaped new slot');
+assert.equal(first.win16_h16(0x00d10002),0x109,'skip selector-shaped free slot');
+assert.equal(first.win16_h16(0x12345678),0x107,'UI map capacity preserved');
+for(let i=3;i<37;i++)assert.notEqual(first.win16_h16(0x00d10000+i)&7,7);
+bytes.set(tableBefore,handleTable);first.win16_handle_next_set(oldNext);
 for(const h of [0,0xffff,0xfffe,0x100,first.win16_h16(0x12345678)])assert.equal(first.win16_module_usage(h),0);
 // Execute the real argument reader, KERNEL dispatcher and far API return.
 // Only the outer controlled guest runner is synthetic in this tiny harness.

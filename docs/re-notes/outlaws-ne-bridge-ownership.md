@@ -369,3 +369,13 @@ selector above the handle-table base. The native fixture now imports KERNEL.48
 in VALUE and WEP, saves initializer DI in DGROUP, and makes WEP reject a count
 other than one. Native and unchanged-original validation are pending at this
 source checkpoint; the controller's production pin is deliberately unchanged.
+
+Review identified that the generic handle table starts at 0x100 and can overlap
+DGROUP selectors (`index * 8 + 7`). Module aliases now skip selector-shaped
+slots, both on fresh allocation and reuse; generic UI mappings retain their
+existing capacity. GetModuleUsage ignores non-module mappings while resolving
+a live DGROUP. This makes the two accepted module identities disjoint without
+changing UI handle interpretation. Tiny regressions exercise an occupied UI
+slot equal to DGROUP, fresh/reused reserved slots and all module IDs. These
+rules apply to newly initialized processes; no live old-module migration is
+performed.

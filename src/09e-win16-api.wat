@@ -244,7 +244,7 @@
   ;; holds tens of entries for these apps, not thousands, and a hash would be
   ;; more machinery than the problem has.
   (func $win16_h16 (param $h32 i32) (result i32)
-    (local $t i32) (local $i i32)
+    (local $t i32) (local $i i32) (local $module i32)
     (if (i32.eqz (local.get $h32)) (then (return (i32.const 0))))
     ;; No range check on the way in. A 16-bit handle mapped a second time is a
     ;; real bug — it allocates a fresh entry for an object that already has one
@@ -255,6 +255,11 @@
     ;; back when its object is destroyed.
     (if (i32.eq (local.get $h32) (i32.const -1)) (then (return (i32.const 0xFFFF))))
     (local.set $t (call $win16_handle_table))
+    ;; Module APIs also accept DGROUP selectors, whose low bits are always 7.
+    ;; Keep module aliases disjoint from that namespace. UI object mappings
+    ;; can still use those slots: their APIs do not accept instance selectors.
+    (local.set $module (i32.eq (i32.and (local.get $h32) (i32.const 0xFFFF0000))
+      (i32.const 0x00D10000)))
     (local.set $i (i32.const 1))
     (block $done (loop $scan
       (br_if $done (i32.gt_u (local.get $i) (call $win16_handle_next_get)))
@@ -270,14 +275,21 @@
     (local.set $i (i32.const 1))
     (block $reused (loop $free
       (br_if $reused (i32.gt_u (local.get $i) (call $win16_handle_next_get)))
-      (if (i32.eqz (i32.load (i32.add (local.get $t) (i32.shl (local.get $i) (i32.const 2)))))
+      (if (i32.and
+            (i32.eqz (i32.load (i32.add (local.get $t) (i32.shl (local.get $i) (i32.const 2)))))
+            (i32.eqz (i32.and (local.get $module)
+              (i32.eq (i32.and (i32.add (local.get $i) (global.get $WIN16_HANDLE_BASE)) (i32.const 7)) (i32.const 7)))))
         (then
           (i32.store (i32.add (local.get $t) (i32.shl (local.get $i) (i32.const 2)))
                      (local.get $h32))
           (return (i32.add (local.get $i) (global.get $WIN16_HANDLE_BASE)))))
       (local.set $i (i32.add (local.get $i) (i32.const 1)))
       (br $free)))
-    (if (i32.ge_u (call $win16_handle_next_get) (global.get $WIN16_HANDLE_MAX))
+    (local.set $i (i32.add (call $win16_handle_next_get) (i32.const 1)))
+    (if (i32.and (local.get $module)
+          (i32.eq (i32.and (i32.add (local.get $i) (global.get $WIN16_HANDLE_BASE)) (i32.const 7)) (i32.const 7)))
+      (then (local.set $i (i32.add (local.get $i) (i32.const 1)))))
+    (if (i32.gt_u (local.get $i) (global.get $WIN16_HANDLE_MAX))
       (then
         (call $host_log_i32 (i32.const 0xCA16A9F4))
         (call $host_log_i32 (local.get $h32))
@@ -291,7 +303,7 @@
         (call $host_log_i32 (i32.load (i32.add (local.get $t)
           (i32.shl (i32.sub (call $win16_handle_next_get) (i32.const 3)) (i32.const 2)))))
         (unreachable)))
-    (call $win16_handle_next_set (i32.add (call $win16_handle_next_get) (i32.const 1)))
+    (call $win16_handle_next_set (local.get $i))
     (i32.store (i32.add (local.get $t)
                         (i32.shl (call $win16_handle_next_get) (i32.const 2)))
                (local.get $h32))
@@ -7014,7 +7026,7 @@
             (local.set $mapped (i32.load (i32.add (call $win16_handle_table)
               (i32.shl (local.get $mapped) (i32.const 2)))))
             (if (i32.ne (i32.and (local.get $mapped) (i32.const 0xFFFF0000)) (i32.const 0x00D10000))
-              (then (return (i32.const 0)))))
+              (then (local.set $mapped (i32.const 0)))))
           ;; Selectors may exceed HANDLE_BASE; an absent table slot is not
           ;; itself a reason to reject a live DGROUP selector.
           (else (local.set $mapped (i32.const 0))))))
