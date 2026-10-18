@@ -2,9 +2,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const {bootRenderHarness}=require('./render-helper');
-const {compileSrcWasm}=require('./compile-src');
 const {audioContext}=require('./test-beep-output');
-const fs=require('node:fs'),path=require('node:path');
 const {ThreadManager}=require('../lib/thread-manager');
 const tailCalls=!process.argv.includes('--no-tail-calls');
 const STACK=0x700000, CALLBACK=0x402000, COUNT=0x403000;
@@ -92,17 +90,11 @@ const extraWat=`
  assert.equal(e.beep_test_frames(),0);assert.equal(e.beep_test_depth(),0);
  assert.equal(h.host.beep_status(cleanup,0),-6);assert.equal(e.apc_alertable_sleeping(),0);
 
- // Production Beep remains disabled. For nested *guest* calls only, compile
- // a single exact test shim routing that existing stub to the real internal
- // helper. This is not evidence of shipping dynamic export availability.
- const source=fs.readFileSync(path.join(__dirname,'../src/09a0b-handlers-base-late.wat'),'utf8');
- const stub='(func $handle_Beep (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)\n    (call $crash_unimplemented (local.get $name_ptr))\n  )';
- assert(source.includes(stub),'public handler intentionally remains unimplemented');
- const wasm=compileSrcWasm((file,s)=>file==='13-exports.wat'?s+extraWat:file==='09a0b-handlers-base-late.wat'?s.replace(stub,stub.replace('(call $crash_unimplemented (local.get $name_ptr))','(call $beep_begin (local.get $arg0) (local.get $arg1))')):s,{tailCalls});
- const nested=new WebAssembly.Instance(new WebAssembly.Module(wasm),{host:h.host,gdi:h.gdi}).exports;
+ // Unmodified production handler and dispatch, with observation exports only.
+ const nested=new WebAssembly.Instance(h.module,{host:h.host,gdi:h.gdi}).exports;
  nested.beep_test_init();h.hostCtx.exports=nested;
  const thunk=nested.beep_test_thunk(9);
- // APC: push duration/frequency, CALL internal test shim, record BOOL, ret4.
+ // APC: push duration/frequency, CALL production Beep, record BOOL, ret4.
  const body=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(thunk),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
  body.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
  nested.invalidate_code_range(CALLBACK,body.length);
@@ -114,13 +106,20 @@ const extraWat=`
  assert.equal(nested.get_eax(),1);assert.equal(nested.get_esp(),STACK+12);
  assert.equal(nested.beep_test_depth(),0);assert.equal(nested.beep_test_get_error(),789);
  // Production KERNEL32 image exports are separate from the API catalog.
- // Keep its current absence explicit until the public API/export enable slice.
  for(const [address,text] of [[COUNT+32,'KERNEL32.DLL'],[COUNT+64,'Beep']])
   Buffer.from(text+'\0').forEach((b,i)=>nested.guest_write8(address+i,b));
  const library=nested.beep_test_library(COUNT+32);assert(library!==0);
- const dynamic=nested.beep_test_lookup(library,COUNT+64);assert.equal(dynamic,0);
- assert.equal(nested.beep_test_get_error(),127);
- assert(!require('../src/kernel32-exports.json').exports.some(x=>x.name==='Beep'));
+ const dynamic=nested.beep_test_lookup(library,COUNT+64);assert.notEqual(dynamic,0);
+ const dynamicBody=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(dynamic),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
+ dynamicBody.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
+ nested.invalidate_code_range(CALLBACK,dynamicBody.length);
+ nested.beep_test_error(789);nested.beep_test_queue(CALLBACK);nested.beep_test_begin(750,100);
+ nested.run(1000);assert.equal(nested.beep_test_depth(),2);
+ ac.currentTime+=0.021;nested.run(1000);assert.equal(nested.guest_read32(COUNT+4),1);
+ assert.equal(nested.beep_test_depth(),1);
+ ac.currentTime+=0.081;nested.run(1000);assert.equal(nested.get_eip(),0);
+ assert.equal(nested.get_eax(),1);assert.equal(nested.get_esp(),STACK+12);
+ assert.equal(nested.beep_test_get_error(),789);
  // Forced Worker-style retirement must cancel both nested output tokens
  // without calling the dead instance's private continuation/cleanup exports.
  nested.init_thread(1);nested.beep_test_init();
@@ -152,5 +151,5 @@ const extraWat=`
  assert.equal(h.host.beep_thread_begin(2,...oldRoot,...oldEpoch),-995);
  assert.equal(h.host.beep_process_begin(...oldEpoch),-995);
  h.hostCtx.stopAudio();
- console.log('Internal Beep alertable continuation, actual guest APC/nesting and cancellation: PASS; public Beep still disabled; tailCalls='+tailCalls);
+ console.log('Production Beep alertable continuation, actual guest APC/nesting and cancellation: PASS; tailCalls='+tailCalls);
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -250,3 +250,51 @@ canonical module. The original non-tail disk-stop receipt remains retained as
 `test-beep-continuation.json`. Both dispatch modes are now validated. The cause
 of the first transient disk drop was not established; no memory size, assertions
 or guard threshold changed for the retry.
+
+### Source-only public handler/export enable candidate
+
+The candidate now delegates `$handle_Beep` to the validated alertable entry
+helper. KERNEL32 gains exactly one named export, Beep, using new emulator ABI
+ordinal586; no previous ordinal changes. The generator updates only its marked
+image-export section. The ESP checker recognizes only this named front door's
+delegation to `$beep_begin`, whose continuation owns the 12-byte stdcall cleanup.
+No API catalog additions or global name-resolution fallback were introduced.
+
+The continuation fixture now invokes the unchanged production handler, with
+no handler substitution, and executes the real dynamic KERNEL32 image JMP
+inside a nested guest APC. A new `test-beep-production.js` fixture loads an
+actual deterministic PE containing a Beep import, checks the patched IAT and
+the independently resolved KERNEL32 EAT pointer, then executes both guest
+routes. It asserts pending alertable completion, BOOL/ESP/last-error behavior,
+invalid frequency/zero duration, unsupported long duration and suspended
+output. Both fixtures accept `--no-tail-calls`. Audio remains controlled; the
+new source candidate and positive routes have not been built or run yet.
+
+The original MadBomber hModule attribution and any game retry remain separate
+from this candidate. The earlier observed generated-export absence is fixed
+explicitly here, without claiming that the original failing call has been
+reproduced or repaired.
+
+### Public-route validation completed
+
+Synced main66af4d0db (sync-window ownership) without source conflicts. Normal
+gated build and production PE static-import/dynamic-EAT fixture pass in both
+tail-call and non-tail modes. The updated production-handler continuation
+passes in both modes, including the actual dynamic export inside nested APCs.
+Pure output/retirement and compiled seven-import broker with actual OS Worker
+retirement also pass. No unrelated CRT family was rerun. Evidence is retained
+at `/tmp/wa-crt-descriptor-oct18/scratch/runs/20261019-beep-public-validation/`.
+
+One initial build stopped on the host-audio whole-file census hash after a
+review-requested comment correction. Its failure receipt remains intact; only
+that comment-only source pin was refreshed. No behavioral fix was needed in
+this validation. All process groups are absent, no disk/deadline/log guard
+fired, and canonical module2abd71d3 remained unchanged. Controlled WebAudio
+still does not establish audible hardware playback.
+
+Original log provenance is now established independently: retained rewind
+retry `output.log` lines777-778 records API159 LoadLibraryA("KERNEL32.DLL")
+returning00db7e54; line1745 records API247 GetProcAddress on that same handle
+for Beep, followed by NULL. This identifies the named DLL; it does not trace
+the exact internal resolver branch or demonstrate original-game success after
+the fix. No original game retry occurred during this validation.

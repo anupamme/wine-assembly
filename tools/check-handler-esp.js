@@ -116,6 +116,8 @@ for (const file of SRC) {
     // entry/continuation owns the cdecl pop for these three front doors.
     if (['exit', '_cexit', '_initterm'].includes(funcName) &&
         /call \$crt_callback_begin\b/.test(code)) delegates = true;
+    // Beep's retained continuation owns the stdcall pop across alertable waits.
+    if (funcName === 'Beep' && /call \$beep_begin\b/.test(code)) delegates = true;
     // Three spellings of "esp += N": the historical wasm-global form, the
     // per-thread register-file form where esp is slot +16 of $reg_base, and
     // `(call $amstream_finish RESULT (i32.const N))` or
