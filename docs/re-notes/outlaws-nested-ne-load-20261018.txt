@@ -137,3 +137,50 @@ driver propagation, explicit builtin lifetime and transaction tests together;
 a WIN87EM-name special case would not implement that contract. Existing guards,
 original bytes, module ownership and legacy loader remain unchanged. No build,
 native guest, browser or original executable ran in this task.
+
+Narrow fixed-builtin stage assessment (follow-up audit)
+
+A synchronous fixed-builtin-only adapter could avoid the nested request ABI
+entirely: decode the Win16 argument, acquire an already available dispatcher
+identity and complete the far return in this same WAT invocation. Image-backed
+and dynamic names must retain the current guard. This is a useful independent
+first stage, but a name whitelist plus win16_h16 is not sufficient ownership.
+
+The existing fixed imports are skipped in loadOwned and carry no dependency
+reference. Existing legacy LoadLibrary increments refs only for dynamic IDs;
+legacy FreeLibrary similarly ignores fixed IDs. GetModuleUsage scans loaded
+images, so it returns zero for fileless builtins. Adding only an explicit-load
+counter would omit WDIR62's own WIN87EM import reference. The bridge module
+record's eight words are all occupied; its 24-bit dependency mask identifies
+dynamic IDs 13..36. Adding the eleven fileless fixed IDs exceeds one DWORD.
+
+Concrete smallest coherent stage: declare separate process-owned fixed counts
+and per-importer fixed masks; acquire/link fixed import references while loading
+each owned image, unwind them on rollback and final release, and count explicit
+acquisitions separately enough to avoid consuming imports on invalid/double
+FreeLibrary. Define handle creation/reuse and usage for that unified identity.
+Process replacement clears the state under the existing arena lifetime rule.
+Keep static dispatcher availability independent of guest refcounts, but never
+claim a fabricated permanent guest reference. Share the lookup/accounting with
+the narrow guarded Win16 load/free/usage adapters. Do not modify the singleton
+PE request protocol or enable file-backed nested loading in this stage.
+
+Primary reference inspected:
+https://raw.githubusercontent.com/wine-mirror/wine/master/dlls/krnl386.exe16/ne_module.c
+GetModuleUsage16 returns the resolved module count. NE_FreeModule decrements
+that count and frees referenced modules after final termination; builtin modules
+are actual lifetime objects there too. This supports real counted ownership,
+not treating every builtin LoadLibrary as an uncounted successful handle.
+Wine's image-backed builtin representation is not a blueprint for manufacturing
+images in this emulator. Our fileless adapter still needs its own explicit state.
+
+Required narrow-stage native tests: A and B both import WIN87EM (two import refs),
+A LibEntry loads it twice (two additional refs), both handles identify the same
+dispatcher, two frees leave both importer references, A/B unload remove their
+own references; rejected A initializer removes only A's import; completed guest
+acquisitions stay guest-owned. Include failed handle allocation rollback,
+unknown name, CARDS, dynamic module rejection, unknown ordinal trap, count
+overflow, two instances sharing one process, independent processes and reset.
+Exercise a real WIN87EM far dispatcher call, full caller restoration and nested
+call32 preservation. This is more than a local guard relaxation; it should be
+reviewed and tested as its own lifecycle change before original replay.
