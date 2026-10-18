@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Mad Bomber retry preparation; qsort test preparation)
+  status: active (Beep continuation; retained callback families)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: MadBomber original resolves_fdopen then missingrewind API122 stopszlib; root3204pins140original/sharedCRT/groupemptyPASS no window. Realrewind source/tests assigned. Circus retainedqsort perthread frames/expectedtokens+ESP source work active. One runtime no public deploy.
+  Next: Mad Bomber real Beep prerequisite8497462d reviewed with pure audio test PASS; alertable continuation/APC tests active. Circus qsort9589eaec validated; next retained bsearch family source work. Root integration build PASS718297bd; no new gameplay screenshot.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1680,9 +1680,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Black & White 2 draw-layout provenance follow-up
   id: BW2-DRAW-LAYOUT-PROVENANCE-20261018
-  status: blocked (source audit complete; raw evidence missing, runtime disk-held)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Source audit212f0fa0 maps NULL bind, stateblockApply and Reset/init; delayed renderer consumption alone cannot explain prepack rejection. Raw scratch/runs/20261009T0335Z-black-white2-staging-fix missing. Need exact source/module identity and bounded before/after producer trace when runtime available; no speculativeproductionfix/newtitleclaim.
+  status: active (live provenance harness pending)
+  owner: /root/bw2_layout_observer
+  Next: Bounded observerdcc67fee reviewed and seven pure tests PASS; merged in integration. Metadata detached, observation errors disqualify pairing. Live harness/module/thread/broker correlation and current original draw evidence remain unverified; old Oct9 raw trace missing.
   Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
 
 - [ ] Qualify FIFA98 touch usability, audio and logical gameplay FPS
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (reviewed qsort test preparation)
+  status: active (retained bsearch independent review)
   owner: /root/crt_jump_ownership
-  Next: Instrument qsort only with perthread retained frames and distinct comparatorchild IDs, expectedtoken/returnESP before continuationmutation, nestedqsort preservation. Source f82157f3e pushed, actualx86 nested/yield/rejection tests authored notrun; independentreview clear, compiledtests queued behind originalretry. bsearch/initterm/othercallbacks and realjump handlers pending.
+  Next: Qsort9589eaec independently reviewed, normal build and dual-mode actual x86 tests/regressions PASS. Bsearch source78dcb1076 and authored guest tests now under independent review; jump APIs remain disabled pending remaining callback coverage.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (tested rewind original retry preparation)
+  status: active (real alertable Beep continuation)
   owner: /root/crt_fdopen_prerequisite
-  Next: ONE20261018-madbomber-fdopen-retry proves_fdopen resolves07504880 atAPI110 thenrewind NULL atAPI122 zlibret00c6fcc5. No_fdopeninvocation/window/PNG. Root3204pins140original/sharedCRT/aafa600a/groupemptyPASS. Rewind reviewed/worker normalbuild+3testsPASS and rootnormalbuild/rewindPASS exactc3ae99a8. Next ONE original10/15/25 retry with freshpins, no automaticrepeat.
+  Next: Original rewind retry stops at Beep NULL. Host lifetime prerequisite8497462d independently reviewed; root normal build9176e819, pure audio and compiled sibling broker PASS. Implement alertable continuation preserving BOOL through APC and cancellation before enabling API.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

@@ -2914,13 +2914,6 @@
   (global $bsearch_thunk   (mut i32) (i32.const 0))  ;; guest addr of CACA000C thunk
   ;; qsort trampoline state. Adjacent comparisons make the continuation small
   ;; and let swaps use sparse-safe guest byte accesses (CACA002D).
-  (global $qsort_base      (mut i32) (i32.const 0))
-  (global $qsort_count     (mut i32) (i32.const 0))
-  (global $qsort_size      (mut i32) (i32.const 0))
-  (global $qsort_compar    (mut i32) (i32.const 0))
-  (global $qsort_pass      (mut i32) (i32.const 0))
-  (global $qsort_index     (mut i32) (i32.const 0))
-  (global $qsort_ret       (mut i32) (i32.const 0))
   (global $qsort_thunk     (mut i32) (i32.const 0))
   ;; DLL loader state
   ;; DLL row count is process-owned in DLL_SHARED, never an instance global.
