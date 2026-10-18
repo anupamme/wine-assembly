@@ -454,6 +454,9 @@
       (i64.or (i64.shl (global.get $win16_guest_serial) (i64.const 32))
         (i64.extend_i32_u (global.get $win16_guest_owner))))
     (global.set $handler_set_eip (i32.const 1))
+    ;; Decoded CALL/JMP dispatch checks steps before assigning return EIP.
+    ;; Park both dispatch paths with the original frame until host settlement.
+    (global.set $steps (i32.const 0))
     (global.set $yield_reason (i32.const 18))
     (global.set $yield_flag (i32.const 1))
     (global.get $win16_guest_pending))

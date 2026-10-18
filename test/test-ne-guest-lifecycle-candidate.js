@@ -39,6 +39,8 @@ async function main() {
   };
   function boot(fixture,source=neLifecycleImage({moduleUsage:true})) {
     bytes.set(fixture.bytes,e.get_staging());assert.equal(e.load_pe(fixture.bytes.length)>>>0,fixture.entry);
+    // Each case replaces code at the same VA in this retained interpreter.
+    e.invalidate_code_range(fixture.entry,0x1000);
     stack=0x7408000;
     if(process.argv.includes('--sparse')) {
       const mapped=e.guest_stack_alloc(65536)>>>0;assert(mapped);

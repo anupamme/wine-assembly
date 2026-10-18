@@ -54,4 +54,7 @@ failure rollback. It also prepares direct/sparse stack variants, a live
 cooperative secondary-instance facade, duplicate loads after VFS removal,
 invalid/stale aliases, explicit failed-WEP recovery using synthetic-only
 repair, and cancelled/stale/changed-frame completion checks. Its execution
-is deferred pending the sole runtime grant.
+passed with direct and sparse stacks on 2026-10-18 using the canonical
+build (module SHA-256 `ce2cb0af121e6f904f4af2b6d77f171350df3663498dd790de82d277eb31a164`).
+This validates the explicitly wired callback and facade; production dynamic
+PE resolver routing and scheduler dispatch still require separate coverage.
