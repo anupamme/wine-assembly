@@ -69,7 +69,7 @@ function create({identity: pinnedIdentity, getMemory, getExports, capacity = 128
         let id = null;
         try { id = getThreadId(); } catch (_) {}
         origin = {slot, id};
-        try { return Reflect.apply(original, table, args); }
+        try { return Reflect.apply(original, this, args); }
         finally { origin = previous; }
       };
       return scoped;
@@ -83,13 +83,15 @@ function create({identity: pinnedIdentity, getMemory, getExports, capacity = 128
         if (typeof previous === 'function') return previous.call(this, values);
       }
       options.onLayoutRead = onLayoutRead;
-      cleanup.push(() => {
+      const restore = () => {
         if (options.onLayoutRead !== onLayoutRead) return false;
         if (descriptor) Object.defineProperty(options, 'onLayoutRead', descriptor);
         else delete options.onLayoutRead;
         return true;
-      });
-      host.installGPU(bridge, 'call', 'host-entry');
+      };
+      try { host.installGPU(bridge, 'call', 'host-entry'); }
+      catch (error) { restore(); throw error; }
+      cleanup.push(restore);
       return host;
     },
     snapshot() {

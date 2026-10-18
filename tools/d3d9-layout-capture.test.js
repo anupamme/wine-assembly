@@ -32,7 +32,8 @@ function fixture() {
 
 test('actual broker dispatch reaches real Bridge exact layout read with scoped origin',()=>{
   const f=fixture();
-  const imports={gpu_gl_call:(...args)=>f.bridge.call(...args)};
+  let receiver = 'not called';
+  const imports={gpu_gl_call:function(...args){receiver=this;return f.bridge.call(...args);}};
   const broker=Rpc.createMainBroker(f.memory,slot=>f.capture.brokerTable(imports,slot),
     {gpu_gl_call:{params:['i32','i32','i32'],results:['i32']}},{});
   const v=Rpc.views(f.memory,4).i32;
@@ -40,6 +41,7 @@ test('actual broker dispatch reaches real Bridge exact layout read with scoped o
   v[Rpc.SLOT.ARGS]=0x30001;v[Rpc.SLOT.ARGS+1]=f.descriptor;
   Atomics.store(v,Rpc.SLOT.STATUS,Rpc.STATUS_REQ);
   assert.equal(broker.serveRpc(4),true);
+  assert.equal(receiver,undefined,'instrumentation preserves the real broker receiver');
   assert.equal(v[Rpc.SLOT.RESULT],-1);
   assert.match(f.bridge.lastError.message,/FVF 0/);
   const packet=f.capture.snapshot(), host=packet.observers[0];
@@ -79,6 +81,19 @@ test('nested and throwing origin scopes restore and later callback owners surviv
     [{slot:2,id:11},{slot:8,id:31},{slot:2,id:11},null]);
   const later=()=>{}; f.bridge.options.onLayoutRead=later;
   assert.ok(f.capture.dispose().includes(false));assert.equal(f.bridge.options.onLayoutRead,later);
+});
+
+test('failed host installation restores existing callback descriptor',()=>{
+  const capture=Capture.create({getMemory:()=>new ArrayBuffer(4096),getExports:()=>({})});
+  const previous=()=>{}, options={};
+  Object.defineProperty(options,'onLayoutRead',{value:previous,writable:true,configurable:true,enumerable:false});
+  const before=Object.getOwnPropertyDescriptor(options,'onLayoutRead');
+  const bridge={options};
+  Object.defineProperty(bridge,'call',{value(){return 7;},writable:false,configurable:false});
+  assert.throws(()=>capture.attachHost(bridge),TypeError);
+  assert.deepEqual(Object.getOwnPropertyDescriptor(options,'onLayoutRead'),before);
+  assert.equal(bridge.call(),7);
+  assert.ok(capture.dispose().every(Boolean));
 });
 
 test('identity hashes supplied exact bytes and reads real source checkout state',()=>{
