@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws gateway source implementation active /root/outlaws_qt_gateway, canonical/native pending. FIFA telemetry29tests complete, browser blocked4GiB; /root/new_game_ready_refill selecting an unqualified original local demo with permitted source-only work, not yet counted as active game. Serialize runtime grants.
+  Next: Outlaws QT candidate8fcbca17e in native validation: first direct arm failed before expectedyield18, laterarms unrun; worker diagnoses, no merge. Refill inventory found no eligible secondnewtitle in boundedpass, not poolwide blocker. B&W2 rendering provenance /root/bw2_layout_provenance is compatibility followup only. FIFA blocked4GiB.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1617,7 +1617,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (QT gateway implementation after validated lifetime prerequisite)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_qt_gateway
-  Next: Mainca29cb087 native mappinglease/targetpin prerequisite reviewed and validated, mergedmodule8694d56d matches candidate. Fresh worker implements real PE->NE QT gateway with aligned leased stack alias, exact frame/return cleanup and failure conformance; source-only until runtime grant. Original game not yet validated.
+  Next: Candidate8fcbca17e canonicalbuild passed, first actualPE->NE native arm failed expectedyield18 versus0; retained failure and laterarms unrun. Worker diagnoses within bounded grant; independent source review no definite supported-sync blocker, nested reverse/callback cleanup remains limited. Keep offmain until native+review.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1676,3 +1676,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Run20261018-avp2-audio-capture records10.113s actualgame WebM, decoded stereo non-silent peak0.2445/RMS0.0530. Root reviewedscene62. Browser and independently observed controller exit0; prior143 cause remains unknown. Audible quality needs listening; logicalFPS/device remain unqualified.
   Evidence: scratch/runs/20261018-avp2-browser-launch; scratch/runs/20261018-avp2-paired-plan
+
+
+- [~] Black & White 2 draw-layout provenance follow-up
+  id: BW2-DRAW-LAYOUT-PROVENANCE-20261018
+  status: active (source and retained-evidence audit only)
+  owner: /root/bw2_layout_provenance
+  Next: Follow docs/re-notes/bw2-rendering-handoff-20261018.txt; recover small retained producer/identity receipts if available, map declaration/FVF writers and live versus recorded state. SetFVF0 already fixed; current reproduction unproved. Original scratch/runs/20261009T0335Z-black-white2-staging-fix missing locally. No runtime or new-title qualification.
+  Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
