@@ -38,3 +38,36 @@ or slot replacement is not made safe. Other synchronous runners, retained
 CACA families, cross-thread send, JS COM, timer/wave/APC paths, SEH, saved-buffer
 validation and the dispatcher nonlocal restore exception remain separate
 prerequisites. The inventory continues to mark all ownership pending.
+
+## Granted compiled validation
+
+The source-only status above was superseded by root-granted validation on
+`6f8e31979c0a31381f7018db37311e4b5b96ae70`, incorporating reviewed main
+`ea57e62de`. Both dispatch variants of the actual-x86 fixture passed, including
+the explicit guest-captured CREATE/RELEASE argument values and nested records.
+The normal gated build, existing property-sheet page-handles, wide and
+main-hwnd regressions, synchronous-window ownership, private token and
+production PE/NE/thread-lifecycle tests all passed. No game was run.
+
+The candidate is 1,870,624 bytes, SHA-256
+`da72a16f9551cb2cd8bc2f0ee636eb966ec9c7cde9a56931201bb6d1fb11a2c7`.
+The root canonical artifact remained SHA-256
+`203163dda45d61b905a53bfbe2ad0128d006092b087a73d48a776bafd330ead0`.
+All nine process groups exited; no disk, deadline or log guard fired. Minimum
+sampled free space was 3,250,712,576 bytes. Guards admitted above 2 GiB + 128 MiB,
+stopped below 2 GiB + 64 MiB, and capped each command at 180 seconds and 8 MiB.
+
+Evidence remains in the isolated worktree under
+`scratch/runs/20261018-propsheet-ownership-validation/`: per-command receipts
+and logs, artifact hashes, prior canonical/combined copies, source pins,
+preflight and guard. The granted preflight's actual free space was
+3,316,080,640 bytes (the initial board claim quoted an earlier reading).
+Restore its exact `build-closure-paths.txt` with sparse-checkout before
+reproduction; restore the verified 94,208-byte `test/binaries/calc.exe` from
+the fixture source recorded in `granted-preflight.json`. Use the existing
+`/tmp/wa-local-runtime-deps/node_modules` through NODE_PATH, without installs.
+Run the nine commands recorded in the JSON receipts under `guard.js` and a
+fresh disk admission. Git does not preserve these ignored artifacts; keep the
+evidence directory and fixture separately. The task checkout is narrowed after
+validation, preserving its ignored build and evidence. Remaining ownership
+and jump prerequisites above are unchanged.
