@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws counted fixed-builtin lifecycle and owned scratch merged/pushed83bbb77fd after review, six worker tests and root exact-module build/fullnative/source tests. SuperTux owns registered startup runtime; original Outlaws replay preparation runs source-only. No public deployment; jump/audio/FPS qualification remains separate.
+Current 2026-10-18: Original Outlaws main menu reviewed; child/controller exit0 and root independent source/original/group postflight PASS. SuperTux owns registered real-time gameplay validation. Outlaws ordinary Main Game preparation and missing local corpus registration run source-only in parallel. One runtime; no public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

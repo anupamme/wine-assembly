@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (original replay after tested loader integration)
+  status: active (main menu verified; gameplay and local registration preparation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Original fixed-lifecycle replay granted sole60s/85shard using exacta4a4bc6a. Worker outlaws_original_qt_prepare reports prior nested-load passed, reading start.san/resolving frame APIs; capture/terminal pending, no gameplay claim.
+  Next: Original20261018-outlaws-original-fixed-lifecycle-observation reached reviewed mainmenu; child2232312/controller2232304 exit0, root independentpostflight3118pins/originals/groupemptyPASS. Source-only Main Game/control prep active; fresh outlaws_local_registration owns missing local corpus mapping. No gameplay/audio claim; runtime waits SuperTux.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (registered startup verified; gameplay preparation)
+  status: active (registered real-time gameplay validation)
   owner: /root/supertux_registration
-  Next: Registered startup20261018-supertux-registered-startup exits0, root reviewed menu/3119pins unchanged/groupempty. Evidence merged c9ead0a49. Worker source-prepares ordinary registered level/movement/jump using original bindings and documented timing; no runtime until Outlaws release. Audio/FPS/device unverified.
+  Next: Sole180s guest210shard gameplay grant after Outlaws release; documented --real-ticks, independently balanced holds, inspect Options binding before jump. Source/module/original pins refreshed; softquit corrected185s. No build/browser/audioFPS claim.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
