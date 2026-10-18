@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (tested Peek/Get fix merged; original control replay)
+  status: active (forward control reviewed; live turning follow-up)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Fixe4f5b1c60+expandedtests20b30c1f7 merged/pushed; independentreviewclear, rootnormalbuild exactfd1613e2/nativeexpandedPASS. Soleoriginal180s210hard heldMainGameGOOD->level Up/turn500ms+idle granted freshpins/newmodule, no highrateAPIlogs. Originalcausality/playercontrol awaitactualevidence.
+  Next: Run20261018-outlaws-peek-fix-observation exactfd1613e2: root reviewed Up before/held/settled street-to-HOTEL displacement. Both processes exit0; independent3118pins/originals/groupemptyPASS. Left-before already death/skull: no live-turn/release-idle claim. Worker publishing scoped evidence and preparing registered-route turn-before-forward follow-up; no runtime grant. No audio/FPS/fullgame qualification.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (source-backed motion/selection diagnostic preparation)
+  status: active (sole registered motion/selection diagnostic granted)
   owner: /root/new_game_refill_after_lbreakout
-  Next: Coordinateconversion correct minusclient23,43. OriginalSDLmotion classifiesmarble; buttonUP selects onlycursormode1; arrowKEYUP requiresselection. Samepointmotionsuppression hypothesis unproven. Audit852b2b147 main; sourceprep deliberateemptytile->marblemove/click with passivepositivepoll/state snapshots; no runtime until PeekGet release.
+  Next: Outlaws explicitly released and root postflight passed. Worker refreshing current3c6b9ff69/fd1613e2 pins before one registered180s210hard diagnostic: positivepoll, reviewed emptytile-to-marble motion, mode1/selection and balanced legal arrow. No guessedoffset/statewrites; strict2GiB margins,8MiBlog, no build/browser/retry.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
