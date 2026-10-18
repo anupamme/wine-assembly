@@ -4,8 +4,8 @@
 prerequisite in `crt-setjmp.md`. The first adds an enforceable source inventory
 and mutation tests. The second authors private token state and synchronous
 hooks, described below. **Neither implements `_setjmp` or `longjmp`.** The
-original Circus Linux failure is unchanged. No build, guest execution or
-browser was run on this task branch.
+original Circus Linux failure is unchanged. A later validation grant covered
+the normal build and focused native tests below; no game or browser was run.
 
 `node tools/callback-ownership-census.js` checks the maintained inventory in
 `tools/callback-ownership-census.json`. `tools/build.sh` runs the check after
@@ -85,7 +85,7 @@ one and negative return values, multiple buffers, threads, SEH, forged/changed
 buffers and no partial mutation on rejection. The broader design remains in
 `crt-setjmp.md`; this inventory does not supersede or complete it.
 
-## Private token state and synchronous hooks (authored, not runtime validated)
+## Private token state and synchronous hooks
 
 The delimited `CALLBACK INVOCATION OWNERSHIP` block in `04-cache.wat` now owns
 an 8,464-byte allocated private region. A shared unsigned 64-bit CAS allocator
@@ -121,10 +121,10 @@ sync helpers in a tiny shared-memory module. Authored assertions cover nested
 and sibling identities, expected-token mismatch, independent depth, multiple
 instances, thread-ID mismatch, occupied-slot bootstrap rejection, slot and
 same-memory process reuse, aborted child retirement, stack limits, allocator
-exhaustion, and copied before/after state on rejection. **This compiled test has
-not been run.** Existing NE helper fixtures now include the real token block;
+exhaustion, and copied before/after state on rejection. Existing NE helper
+fixtures now include the real token block;
 the arena fixture uses a real paired enter instead of fabricating depth for its
-final leave. Those compiled regressions also await the build/native grant.
+final leave. These compiled regressions passed under the subsequent grant.
 
 The census now has 374 records. Its reviewed delta is only the ten private
 primitive functions, two sync helpers, PE/NE loader hooks, and `init_thread`.
@@ -138,3 +138,50 @@ owners, regenerated region-map mirror, JS syntax, census mutation tests and
 current-source gate, and diff checks. A separate token fragment was avoided
 because 127 existing fragments plus `main.watx` already consume the compiler's
 128 source-location slots; the token block stays in the existing cache fragment.
+
+## Granted native validation
+
+The normal gated build and the following tests passed on source checkpoint
+`2fdafb67600bb2afdefaeb896b44ac2c5abc513c` (merged current main's descriptor
+prerequisite). The resulting candidate is 1,867,397 bytes, SHA-256
+`e8be19c496d4bf44a4925045976b4ca1d3cfe6d3126c15751ee839096a996dfd`.
+The canonical artifact remained
+`2f73127d24220248885e32c886538d236a68b04ae6ce7dec7b5fb8a012182166`.
+
+- `test-callback-invocation-tokens.js`: actual private WAT and sync helpers.
+- `test-win32-ne-context.js` and `test-win32-ne-module-transaction.js`:
+  real extracted NE helpers with the actual token block.
+- `test-thread-arena-spill.js`: full source compilation and arena regressions.
+- New `test-callback-invocation-lifecycle.js`: the normal production artifact,
+  actual PE loader, standalone NE loader, PE-to-NE delegation and `init_thread`.
+  Synthetic images exercise same-memory process and worker-slot replacement;
+  stale instances trap without changing copied private state. Image entry code
+  is not executed, so this is loader integration, not x86 jump conformance.
+
+The first two build attempts stopped for absent sparse-checkout source files
+(`test/run.js`, then compiler provenance tests); a first NE module test stopped
+for its absent image fixture. Their failed receipts/logs are retained. Restoring
+only those exact dependencies allowed the unmodified normal gates and tests
+to pass; no gate was bypassed. All child process groups were absent at exit,
+no disk/time/log guard fired, and canonical SHA-256 checks stayed identical.
+
+Evidence is retained under the task worktree's
+`scratch/runs/20261018-callback-token-validation/`: command-specific JSON
+receipts/logs, `guard.js`, and `artifacts.json`. Admission required strictly
+more than 2 GiB + 128 MiB free; the running stop threshold was 2 GiB + 64 MiB.
+The minimum sampled successful-test free space was 2,286,010,368 bytes.
+The guard also bounded each process group to 180 seconds and logs to 8 MiB.
+Sampling does not establish a continuous filesystem minimum between checks.
+
+`source-sparse-patterns.txt` in that evidence directory records the exact build
+checkout closure before narrowing. To reproduce, restore those patterns with
+`git sparse-checkout set --no-cone --stdin`, then run `bash tools/build.sh` and
+the five tests above under the same admission/stop guards. Preserve the ignored
+candidate/compat wasm and logs separately: Git only backs up source and this
+recipe. The completed task checkout was narrowed again to its changed files
+to recover disk for the next worker.
+
+Remaining limits: allocator concurrency was not exercised by OS workers;
+process/slot resets still require host quiescence. Deferred/JS/timer/wave/APC
+ownership, matched retained expected tokens, actual dual-dispatch x86 jumps,
+SEH and saved-buffer validation remain outstanding. The API review lock stays.
