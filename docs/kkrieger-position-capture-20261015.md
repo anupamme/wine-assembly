@@ -173,3 +173,9 @@ the unrelated historical Zuma external artifact.
 ## Local test preparation after TG90 (2026-10-18)
 
 The user explicitly authorized runtime tests on the persistent box. The original executable, readme and scene.org text plus parent manifest are present and pass existing controller pins. System Chrome exists. Puppeteer25.7.0 is now installed under /tmp/wa-local-runtime-deps with downloads disabled; integration node_modules links there. No kkrieger browser test has yet run. AVP2 owns the serialized runtime lane. After its release, use the existing gameplay-capture controller with WA_INPUT_PROGRESS=1 and WA_POSITION_CAPTURE=1, pin current clean source and canonical module, and personally review menu/level gates. Existing bounded W/release limits remain unchanged.
+
+### Local attempt and failure visibility
+
+Run20261018-kkrieger-local-latency (source8b2fc7486, moduled6187fed) ended04:40:46UTC, about295s after launch, with detached Frame in assertDelivery/shot. The review worker inspected advancing loading screens throughscene28; menu/level never confirmed and no gameplay inputs or CS-owner samples were produced. Canonical HTTP/asset delivery and postflight pins passed. Controller exit1, no browser/controller remained after cleanup. Underlying cause is unknown; kernel log access is unavailable, so memory pressure is not established as cause.
+
+The controller now retains at most64KiB of Chrome stderr plus page-error/close, frame-detached, browser-disconnected and process-exit events. Each lifecycle event marks whether cleanup had already started, to distinguish cleanup consequences from preceding failures. Guest behavior and input bounds are unchanged. Syntax/diff checks and11canonical delivery tests pass; these new host failure records are not yet runtime-tested.

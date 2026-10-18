@@ -109,9 +109,26 @@ async function main() {
     write('asset-preflight', meta.assetPreflight);
     browser = await puppeteer.launch({executablePath: '/usr/bin/google-chrome', headless: true,
       args: ['--no-sandbox', '--enable-unsafe-swiftshader'], protocolTimeout: 5000});
+    // Retain host failure evidence without treating a detached frame as a guest crash.
+    // Bound stderr independently of a noisy driver or a long loading screen.
+    let stderrBytes = 0;
+    browser.process()?.stderr?.on('data', chunk => {
+      const bytes = Buffer.from(chunk).subarray(0, Math.max(0, 65536 - stderrBytes));
+      if (bytes.length) fs.appendFileSync(path.join(out, 'chrome-stderr.log'), bytes);
+      stderrBytes += bytes.length;
+    });
+    browser.process()?.on('exit', (code, signal) => event('browser-process-exit', {
+      code, signal, duringCleanup: !!meta.cleanupStartedAt,
+    }));
+    browser.on('disconnected', () => event('browser-disconnected', {duringCleanup: !!meta.cleanupStartedAt}));
     meta.browser = await browser.version();
     write('browser-endpoint', {wsEndpoint: browser.wsEndpoint(), deadline: meta.deadline});
     page = await browser.newPage();
+    page.on('error', error => event('page-error', {message: String(error), duringCleanup: !!meta.cleanupStartedAt}));
+    page.on('close', () => event('page-close', {duringCleanup: !!meta.cleanupStartedAt}));
+    page.on('framedetached', frame => event('frame-detached', {
+      url: frame.url(), duringCleanup: !!meta.cleanupStartedAt,
+    }));
     await page.setCacheEnabled(false);
     await page.setBypassServiceWorker(true);
     await page.evaluateOnNewDocument(installPageDeliveryGuard, moduleHash);
@@ -232,6 +249,7 @@ async function main() {
     if (!loadedModules.length || loadedModules.some(m => m.sha256 !== moduleHash)) throw Error('Loaded module identity unverified');
   } catch (error) { meta.error = error.stack; throw error; }
   finally {
+    meta.cleanupStartedAt = new Date().toISOString();
     await Promise.all(moduleReads);
     write('loaded-modules', loadedModules);
     if (page) for (const key of ['Enter', 'w', 'a']) await page.keyboard.up(key).catch(() => {});

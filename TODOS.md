@@ -1607,9 +1607,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Improve and validate original .kkrieger control responsiveness
   id: KKRIEGER-CONTROL-LATENCY-20261015
-  status: ready (TG90 local runtime authorized; serialized live measurement pending)
+  status: ready (local browser attempt failed before menu; failure diagnostics prepared)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Read-only CS wait/main EIP/cooperative-owner samples merged0b95d3233,10focused testsPASS. Retained run118738 suggests audio critical-section/main-loop delay but owner/duration attribution unproved. TG90 authorizes persistent-box testing. Prepare local browser/controller prerequisites, then reuse bounded W/release route under serialized admission; no scheduler fix or FPS claim.
+  Next: Read-only CS wait/main EIP/cooperative-owner samples merged0b95d3233,10focused testsPASS. Retained run118738 suggests audio critical-section/main-loop delay but owner/duration attribution unproved. TG90 authorizes persistent-box testing. Local attempt20261018-kkrieger-local-latency ended detached Frame before menu; no CS-owner samples. Host stderr/lifecycle diagnostics prepared; next serialized retry after AVP2 pair, inspect root cause before scheduler changes.
   Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
 
 - [~] New-game lane: Outlaws original Windows single-player demo
