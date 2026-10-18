@@ -8,6 +8,7 @@ const {loadDll,patchDllImports,callDllMain,finishDllInitialization}=require('../
 const {neGuestCaller}=require('./helpers/ne-guest-caller');
 const {neLifecycleImage}=require('./helpers/ne-lifecycle-image');
 const R=require('../lib/region-map.generated');
+const {ThreadManager}=require('../lib/thread-manager');
 
 async function main() {
   assert(process.env.WA_TEST_WASM,'explicit prebuilt module required');
@@ -18,8 +19,9 @@ async function main() {
   const raw=(await WebAssembly.instantiate(module,imports)).exports;
   const bytes=new Uint8Array(memory.buffer),view=new DataView(memory.buffer),wa=p=>raw.guest_to_wasm(p)>>>0;
   const read=p=>view.getUint32(wa(p),true),write=(p,v)=>view.setUint32(wa(p),v,true);
-  let finished=0,events=[],vfs;
-  const e={...raw,win16_bridge_module_release_finish(id){finished++;return raw.win16_bridge_module_release_finish(id);}};
+  let finished=0,events=[],vfs,removeAfterFirst=false;
+  let e={...raw,win16_bridge_module_release_finish(id){finished++;return raw.win16_bridge_module_release_finish(id);}};
+  let stack=0x7408000;
   const records=()=>{
     const arena=view.getUint32(R.BASE.WIN16_PROCESS_ARENA,true);
     if(!arena)return [];
@@ -36,31 +38,42 @@ async function main() {
     events.push({op,records:records()});return true;
   };
   function boot(fixture,source=neLifecycleImage({moduleUsage:true})) {
-    e.win16_guest_request_cancel();
     bytes.set(fixture.bytes,e.get_staging());assert.equal(e.load_pe(fixture.bytes.length)>>>0,fixture.entry);
-    e.set_eip(fixture.entry);e.set_esp(0x7408000);write(0x7408000,0);
+    stack=0x7408000;
+    if(process.argv.includes('--sparse')) {
+      const mapped=e.guest_stack_alloc(65536)>>>0;assert(mapped);
+      stack=mapped+65520;
+      assert.notEqual(wa(stack),(stack-0x400000+e.get_guest_base())>>>0,'actual sparse stack');
+    }
+    e.set_eip(fixture.entry);e.set_esp(stack);write(stack,0);
     vfs={files:new Map([['c:\\outlaws\\demo.dll',{data:source}]]),_resolvePath:p=>p.toLowerCase()};
     finished=0;events=[];
   }
   function run() {
     for(let i=0;i<1000;i++) {
       e.run(1000);
-      if(e.get_yield_reason()===18)service();
+      if(e.get_yield_reason()===18) {
+        service();
+        if(removeAfterFirst&&events.length===1)vfs.files.clear();
+      }
       else assert.equal(e.get_yield_reason(),0,'only lifecycle host requests supported');
       if(!e.get_eip())return;
     }
     throw new Error('PE lifecycle caller exceeded bounded slices');
   }
-  const fixture=neGuestCaller();boot(fixture);run();
-  assert.equal(e.get_esp()>>>0,0x7408004);
+  const fixture=neGuestCaller();boot(fixture);removeAfterFirst=true;run();removeAfterFirst=false;
+  assert.equal(e.get_esp()>>>0,stack+4);
   const handle=read(fixture.result);assert(handle>=32&&handle<=65535);
   assert.equal(read(fixture.result+4),handle);assert(read(fixture.result+8));
   assert.equal(read(fixture.result+8),read(fixture.result+12));assert.equal(read(fixture.result+16),0);
+  assert.equal(read(fixture.result+20),0,'void FreeLibrary preserves prior EAX');
+  assert.equal(read(fixture.result+24),0,'duplicate free also preserves EAX');
   assert.deepEqual(events.map(x=>x.records[0]?.refs||0),[1,2,2,2,2,1,0]);
   assert.equal(finished,1,'real WEP returned before one final unload');assert.deepEqual(records(),[]);
 
   // Real DLL image, mapped and imported normally. Its initializer issues the
   // same lifecycle calls while callDllMain holds the PE callback gate.
+  vfs.files.set('c:\\outlaws\\demo.dll',{data:neLifecycleImage({moduleUsage:true})});
   const dll=neGuestCaller(e.get_next_dll_addr()>>>0,{dll:true});
   const mapped=loadDll(e,memory.buffer,dll.bytes,'C:\\Outlaws\\CALLER.DLL');
   assert.equal(mapped.loadAddr,dll.entry-0x2000,'fixture preferred placement');
@@ -70,12 +83,47 @@ async function main() {
   assert.equal(read(dll.result),read(dll.result+4));assert.equal(read(dll.result+8),read(dll.result+12));
   assert.equal(finished,2);assert.deepEqual(records(),[]);
 
+  const mainExports=e,secondary=await WebAssembly.instantiate(module,imports);
+  secondary.exports.init_thread(1,e.get_image_base(),e.get_code_start(),e.get_code_end(),e.get_thunk_base(),e.get_thunk_end(),e.get_num_thunks(),0);
+  const manager=Object.create(ThreadManager.prototype),thread={instance:secondary,state:'active'};
+  manager.threads=new Map([[123,thread]]);manager._runningThreadHandle=0;
+  e=manager.cooperativeCallbackExports(thread);
+  const threadStack=(raw.guest_stack_alloc(65536)>>>0)+65520;
+  write(threadStack,0);e.set_esp(threadStack);e.set_eip(fixture.entry);run();
+  assert.equal(e.get_esp()>>>0,threadStack+4);assert.equal(manager._runningThreadHandle,0);
+  assert.equal(read(fixture.result),read(fixture.result+4));assert.deepEqual(records(),[]);
+  thread.state='exited';assert.throws(()=>e.get_eip(),/retired/);
+  e=mainExports;
+
+  const invalid=neGuestCaller(0x400000,{calls:[[37,[0,2]],[36,[0]],[37,[handle,2]],[36,[handle]]]});
+  boot(invalid);run();
+  for(let i=0;i<4;i++)assert.equal(read(invalid.result+i*4),0,'invalid/stale aliases never resolve or fabricate success');
+  assert.deepEqual(records(),[]);
+
   for(const [name,source,code] of [['missing',null,2],['malformed',new Uint8Array(4),11]]) {
     const f=neGuestCaller(0x400000,{calls:[[35,[0x402840]]]});boot(f,source);
     if(!source)vfs.files.clear();run();assert.equal(read(f.result),code,name);assert.deepEqual(records(),[]);
   }
   const zero=neGuestCaller(0x400000,{calls:[[35,[0x402840]]]});boot(zero,neLifecycleImage({result:0}));
   assert.throws(run,/AX zero/);assert.equal(e.get_yield_reason(),18);assert.deepEqual(records(),[]);
+  const oldToken=e.win16_guest_request_token();
+  const unresolved=neGuestCaller(0x400000,{calls:[[35,[0x402840]]]});
+  boot(unresolved,neLifecycleImage({importEntry:{module:'HELPER',symbol:'ABSENT'}}));
+  assert.equal(e.win16_guest_request_settle(oldToken,123),0,'process reset invalidates pending request');
+  vfs.files.set('c:\\outlaws\\helper.dll',{data:neLifecycleImage()});
+  assert.throws(run,/Missing NE import/);assert.equal(e.get_yield_reason(),18);assert.deepEqual(records(),[]);
+  const badWep=neGuestCaller(0x400000,{calls:[[35,[0x402840]],[36,[{result:0}]]]});
+  boot(badWep,neLifecycleImage({trapWep:true}));
+  let failure;try{run();}catch(error){failure=error;}
+  assert(failure?.neRecovery);assert.deepEqual(records(),[{state:4,refs:1}]);assert.equal(finished,0);
+  const retainedId=failure.neRecovery.modules[0],frame=e.win16_bridge_frame_begin();assert(frame);
+  const target=e.win16_bridge_module_termination(retainedId,0),codeBase=e.win16_seg_base(target>>>19);
+  bytes.set([0xb8,1,0,0xca,2,0],wa(codeBase+(target&65535)));
+  e.invalidate_code_range(codeBase+(target&65535),6);assert(e.win16_bridge_frame_end(frame));
+  failure.neRecovery.retry(retainedId);assert.deepEqual(records(),[]);assert.equal(finished,1);
+  const pending=e.win16_guest_request_token(),savedEsp=e.get_esp();
+  e.set_esp(savedEsp+4);assert.equal(e.win16_guest_request_settle(pending,0),0,'changed frame cannot settle');
+  e.set_esp(savedEsp);e.win16_guest_request_cancel();assert.equal(e.win16_guest_request_settle(pending,0),0);
   const trap=neGuestCaller(0x400000,{calls:[[35,[0x402840]]]});boot(trap,neLifecycleImage({trapInit:true}));
   assert.throws(run);assert.equal(e.get_yield_reason(),18,'trap never resumes suspended PE caller');
   assert.deepEqual(records(),[],'initializer failure rolls back');

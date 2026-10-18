@@ -20,8 +20,10 @@ They never settle the PE caller as if an initialization had completed.
 Unsupported layouts, async NE waits, traps and budget exhaustion also remain
 diagnostic. Other existing parser errors are not broadly recategorized.
 
-Yield 18 belongs to an instance-local monotonic serial, lock owner and saved
-EIP/ESP. Settlement checks all four, consumes exactly 8 or 12 bytes including
+Yield 18 carries the lock owner in the low half of its token and an
+instance-local monotonic serial in the high half, plus saved EIP/ESP.
+The handler rejects wrapped or unmapped stdcall frames before any load.
+Settlement checks identity and frame, consumes exactly 8 or 12 bytes including
 the return address, and rejects duplicates. Source names are copied with a
 bounded bytewise guest translator before any NE scope; transitive VFS images
 are privately copied and inspected before staging. A ready native module is
@@ -48,4 +50,8 @@ Source checks: `test-ne-sources.js`, `test-ne-guest-service.js`,
 balance, logical operands, API/ESP gates and browser script versions.
 `test-ne-guest-lifecycle-candidate.js` requires `WA_TEST_WASM` and exercises
 actual PE IAT/EAT calls, refs, GPA, WEP, a mapped DLL's nested DllMain and
-failure rollback. Its execution is deferred pending the sole runtime grant.
+failure rollback. It also prepares direct/sparse stack variants, a live
+cooperative secondary-instance facade, duplicate loads after VFS removal,
+invalid/stale aliases, explicit failed-WEP recovery using synthetic-only
+repair, and cancelled/stale/changed-frame completion checks. Its execution
+is deferred pending the sole runtime grant.

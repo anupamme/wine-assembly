@@ -7,7 +7,7 @@ const { canonicalNeName, prepareNeSources } = require('../lib/ne-sources');
 const { NeLoadError } = require('../lib/ne-load-error');
 const { neLifecycleImage } = require('./helpers/ne-lifecycle-image');
 
-for (const name of ['demo', 'DEMO.DLL', 'C:\\Outlaws\\Demo.dll', 'c:/outlaws/demo.DLL'])
+for (const name of ['demo', 'DEMO.DLL', 'C:\\Outlaws\\Demo.dll', 'c:/outlaws/demo.DLL', 'C:DEMO.DLL'])
   assert.equal(canonicalNeName(name), 'DEMO');
 for (const name of ['', 'a\0.dll', 'x.exe', '../', 'abcdefghijklmnop.dll'])
   assert.throws(() => canonicalNeName(name));
@@ -24,6 +24,9 @@ assert.deepEqual(requests, [['demo.dll', 'C:\\Outlaws\\Demo.dll'], ['helper.dll'
 root.fill(0); helper.fill(0);
 assert.equal(prepared.sources.get('DEMO')[0], 0x4d, 'source snapshot survives VFS mutation');
 assert.equal(prepared.sources.get('HELPER')[0], 0x4d);
+const relative=[];
+prepareNeSources('C:DEMO',(file,full)=>{relative.push(full);return neLifecycleImage();});
+assert.deepEqual(relative,['C:DEMO.dll'],'drive-relative bare name receives DLL extension before VFS lookup');
 
 assert.throws(() => prepareNeSources('missing', () => null), e => e instanceof NeLoadError && e.guestCode === 2);
 assert.throws(() => prepareNeSources('bad', () => new Uint8Array(2)), e => e instanceof NeLoadError && e.guestCode === 11);
