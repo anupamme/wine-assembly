@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (named-import fix reviewed; full native validation pending)
+  status: active (KERNEL48 GetModuleUsage implementation; native validation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_full_suite_oct18
-  Next: TG90 permits local testing. Original six suite stages passed before named HELPER.VALUE import trapped; original PMPRO62 was not reached. Fix5acc078acdb3c383b70cb339daddf4d6aea30678 resolves names against the importing image; canonical build, synthetic native lifecycle including colliding importer offsets, tiny transactions and pure-NE loader pass. Fresh worker updates reviewed controller pin and runs all12 stages including original PMPRO62. Lifecycle changes remain off main until validation. Evidence: scratch/runs/20261018-outlaws-local-native and20261018-outlaws-named-import-fix.
+  worker: /root/outlaws_module_usage_oct18
+  Next: Seven native stages passed at3de949dd78; original PMPRO62 final WEP traps on missing KERNEL48 GetModuleUsage, diagnosed from original relocation and packed API marker. Diagnosis5cb199395 pushed off-main. Implement authoritative module/instance refcount query and meaningful regressions, then unchanged original/full suite; no lifecycle merge yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1672,7 +1672,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] AVP2 browser gameplay, audio and FPS follow-up
   id: AVP2-BROWSER-AUDIO-FPS-20261018
-  status: review (browser gameplay passed; audible quality/logical FPS/device evidence pending)
+  status: review (real gameplay audio non-silent; quality/logical FPS/device unverified)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Browser Marine mission/control reviewed20261018-avp2-browser-gameplay. ~5.97presents/s on softwareGPU debugpage, logicalFpsnull; runningaudio metadata only. Capture audiblequality and logicalframe/device metrics separately; no publicdeployment.
+  Next: Run20261018-avp2-audio-capture records10.113s actualgame WebM, decoded stereo non-silent peak0.2445/RMS0.0530. Root reviewedscene62. Browser and independently observed controller exit0; prior143 cause remains unknown. Audible quality needs listening; logicalFPS/device remain unqualified.
   Evidence: scratch/runs/20261018-avp2-browser-launch; scratch/runs/20261018-avp2-paired-plan
