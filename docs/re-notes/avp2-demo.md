@@ -145,3 +145,11 @@ Use `node tools/fetch-candidate-corpus.js --id=avp2-demo` with unshield
 installed, then `node tools/verify-avp2-recovery.js`. The durable receipt is
 `docs/avp2-recovery-20261015.json`. Original launcher execution and its generated
 command file remain separate runtime work; no gameplay claim follows.
+
+## Original launcher registration, 2026-10-18
+
+The local-only registry route `avp2_demo` now selects original `game/AVP2.exe`, with the 18-file cabinet payload and C:\ working directory. It is not promoted to the desktop and has not been run on current main. The launcher must generate its own command file and child launch; no command file or configuration override is supplied.
+
+All 18 retained payload sizes/hashes passed `tools/verify-avp2-recovery.js` against `/home/user/wine-assembly/scratch/runs/20261014-avp2-source-recovery/original-payload`. Direct manifest-writer validation produced the expected 17 companion files including lithtech.exe and Profiles/Default.prf. The existing candidate-browser-manifest regression and browser cache-version gate passed. The generic `--prepare` attempt on this payload-only tree failed because it reruns source extraction and the source-cd installer is absent there; a full recipe tree is needed for that command. The direct writer check is not a successful end-to-end recovery run. Original payload hashes still pass afterward.
+
+The historical 67-file capture was an entire VFS snapshot, not a second cabinet inventory. Its difference from 18 does not establish 49 missing original files. Recover or regenerate the authentic capture before comparing contents. CLI ShellExecute requires capture/replay; the browser child-launch path exists but this route remains unvalidated. The stopped saved runtime bx_9ef2wdsw and scoped resume403 block fresh launcher, gameplay, audio and FPS validation.

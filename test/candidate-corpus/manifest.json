@@ -302,7 +302,11 @@
         }
       ],
       "manual": "Original 18-file cabinet payload recovery verified from the pinned ISO; requires unshield for the IS6 cabinet. Run original game/AVP2.exe to generate avp2cmds.txt and capture its actual lithtech.exe child launch. Generated command file/launcher export are not synthesized by acquisition. See docs/re-notes/avp2-demo.md.",
-      "notes": "Reviewed original Marine mission movement and texture repair: runs/20261011T0836Z-avp2-bltfast-gameplay. The capture used retained source plus the BltFast repair, subsequently merged as6613fe863; it is not a new current-main run. Logical FPS and audio remain unverified. No registered dashboard launch route or public desktop release yet. AVP1 Alien/Marine demos are different titles.",
+      "notes": "Reviewed original Marine mission movement and texture repair: runs/20261011T0836Z-avp2-bltfast-gameplay. The capture used retained source plus the BltFast repair, subsequently merged as6613fe863; it is not a new current-main run. Logical FPS and audio remain unverified. Original launcher registered as avp2_demo for local corpus use; current-main launch remains unvalidated, no public desktop release. AVP1 Alien/Marine demos are different titles.",
+      "browser": {
+        "fileRoot": "game",
+        "exe": "game/AVP2.exe"
+      },
       "postExtract": [
         {
           "type": "extractArchive",
