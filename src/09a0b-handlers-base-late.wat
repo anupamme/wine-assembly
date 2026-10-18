@@ -329,8 +329,7 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
   )
 
-  ;; Internal alertable continuation prerequisite. Public Beep remains disabled
-  ;; until all thread/process retirement paths can retire these records.
+  ;; Alertable Beep continuation; process/thread retirement fences host tokens.
   ;; Fixed per-thread records survive forced retirement without heap leakage.
   ;; Record: prev, ESP, return EIP, output token, saved last-error, reserved,
   ;; invocation token(i64). Each nested call owns a distinct bounded record/token.
@@ -472,7 +471,7 @@
     (global.set $sleep_yielded (i32.const 0))
     (global.set $sleep_timeout (i32.const 0)))
 
-  ;; 482: Beep — STUB: unimplemented
+  ;; Beep: bounded host tone with alertable completion and stdcall cleanup.
   (func $handle_Beep (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     (call $beep_begin (local.get $arg0) (local.get $arg1))
   )
