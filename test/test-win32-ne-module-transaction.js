@@ -37,7 +37,7 @@ helpers.push('win16_kernel');
 helpers.push('win16_GetModuleUsage','win16_module_usage','win16_arg16','win16_api_key',
  'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16','win16_h16_forget',
  'win16_bridge_fixed_load_api','win16_bridge_fixed_free_api','win16_bridge_fixed_api_stack',
- 'win16_cstr_to_pstr','win16_far_to_guest',
+ 'win16_cstr_to_pstr','win16_far_to_guest','win16_name_scratch',
  'win16_dynamic_module_is_toolhelp','win16_module_is_ver','win16_module_is_lzexpand','win16_dynamic_module_is7');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
 // Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
@@ -54,6 +54,7 @@ code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 8)','(i32.const 4104)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 104)','(i32.const 4200)')
+ .replaceAll('(region.addr $GUEST_STACK 0x200)','(i32.add (global.get $GUEST_STACK) (i32.const 512))')
  .replaceAll('(region.end $GUEST_STACK)','(i32.add (global.get $GUEST_STACK) (global.get $GUEST_STACK_SIZE))');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,

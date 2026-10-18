@@ -208,6 +208,12 @@ async function main() {
   // Fileless imports execute the same real dispatcher as standalone Win16.
   // Fixed import edges and explicit acquisitions share an identity, but a
   // guest FreeLibrary must never consume an importer's owned edge.
+  const fixedScratchCanaries=[R.BASE.GUEST_STACK+512,e.guest_to_wasm(R.BASE.GUEST_STACK+512)>>>0]
+    .map(at=>({at,bytes:bytes.slice(at,at+64)}));
+  const checkFixedScratch=()=>{
+    for(const saved of fixedScratchCanaries)assert.deepEqual(bytes.slice(saved.at,saved.at+64),saved.bytes,
+      'nested loads and name queries preserve suspended PE fixed-stack bytes');
+  };
   const fixedImages=new Map([
     ['FIXEDA',neFixedLifecycleImage()],
     ['FIXEDB',neLifecycleImage({dependencies:['WIN87EM']})],
@@ -243,6 +249,7 @@ async function main() {
   assert.equal(view.getUint16(fixedDataAt,true),view.getUint16(fixedDataAt+2,true),'duplicate loads return one identity');
   assert.equal(fixed.call(queryId,7),view.getUint16(fixedDataAt,true),'imported identity GetModuleHandle');
   assert.equal(fixed.call(fixedA,8),0,'unknown named WIN87EM export stays absent');
+  checkFixedScratch();
   const fixedB=fixedOther.load('FIXEDB');assert.equal(e.win16_bridge_fixed_usage(12),4);
   assert.equal(fixed.call(fixedA,'VALUE'),4,'real GetModuleUsage includes both importers and both loads');
   const far=fixed.call(fixedA,5);assert(far,'real ordinal lookup');
@@ -269,6 +276,7 @@ async function main() {
   fixedOther.release(fixedB);assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
   assert.equal(fixed.call(queryId,7),0,'final alias retired');fixed.release(queryId);
   const kernelId=fixed.load('FIXEDKERNEL');assert(fixed.call(kernelId,8),'known named KERNEL.GetModuleHandle resolves');
+  checkFixedScratch();
   fixed.call(kernelId,4);fixed.release(kernelId);clean();
   const fixedWep=fixed.load('FIXEDWEP');
   assert.throws(()=>fixed.release(fixedWep),/termination retained/);

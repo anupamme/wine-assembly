@@ -6993,7 +6993,7 @@
       (local.set $n (i32.add (local.get $n) (i32.const 1))) (br $string)))
     ;; This API must not overwrite the suspended PE caller's fixed stack.
     ;; Its invocation owns scratch after the first 1KiB context snapshot.
-    (local.set $scratch (i32.add (i32.load offset=16 (i32.wrap_i64 (global.get $win16_bridge_frame))) (i32.const 1024)))
+    (local.set $scratch (call $win16_name_scratch))
     (call $win16_cstr_to_pstr (local.get $name) (local.get $scratch) (i32.const 1))
     (local.set $id (call $win16_system_module_id (call $g2w (local.get $scratch))))
     (local.set $handle (call $win16_bridge_fixed_acquire (local.get $id)))
@@ -7149,6 +7149,13 @@
   ;; Scratch for the Pascal string above, at the unused bottom of the 32-bit
   ;; task's stack region, which a 16-bit task never touches.
   (func $win16_name_scratch (result i32)
+    ;; Name-based queries can run inside LibEntry/QT as well as LoadLibrary.
+    ;; Their temporary Pascal strings belong to the current invocation, never
+    ;; to the suspended PE caller's fixed stack. Keep standalone placement.
+    (if (i64.ne (global.get $win16_bridge_frame) (i64.const 0))
+      (then
+        (if (i32.eqz (call $win16_bridge_frame_valid (global.get $win16_bridge_frame))) (then (unreachable)))
+        (return (i32.add (i32.load offset=16 (i32.wrap_i64 (global.get $win16_bridge_frame))) (i32.const 1024)))))
     (region.addr $GUEST_STACK 0x200))
 
   ;; KERNEL.95 LoadLibrary(lpszLibFile) -> HINSTANCE, or an error code below 32.
