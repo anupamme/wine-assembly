@@ -18,6 +18,9 @@ function audioContext() {
 function fixture(ac=audioContext(), sharedAudio={}) {
  const ctx={getMemory:()=>new ArrayBuffer(4096),sharedAudio};
  const host=createAudioHost(ctx,{}).imports;
+ host.beep_process_begin(1,0);host.beep_thread_begin(1,2,0,1,0);
+ const start=host.beep_start;
+ host.beep_start=(f,d,tid=1,lo=2,hi=0)=>start(f,d,tid,lo,hi);
  ctx._voices._ensureCtx=()=>ac;
  return {ctx,host,ac,sharedAudio};
 }
@@ -55,7 +58,8 @@ function cases() {
  const ids=Array.from({length:64},()=>h.beep_start(500,100));assert(ids.every(x=>x>0));
  assert.equal(h.beep_start(500,100),-8);
  for(const token of ids){h.beep_cancel(token);assert.equal(h.beep_status(token,1),-995);}
- const stop=h.beep_start(500,100);ctx.stopAudio();assert.equal(h.beep_status(stop,1),-995);
+ const stop=h.beep_start(500,100);ctx.stopAudio();assert.equal(h.beep_status(stop,1),-6);
+ assert.equal(h.beep_start(500,100),-995);
  const unavailable=fixture(null);assert.equal(unavailable.host.beep_start(500,100),-50);
  unavailable.ctx.audioTap=()=>({active:true,pcm(){throw Error('recorder must not become output');}});
  assert.equal(unavailable.host.beep_start(500,100),-50,'recording never changes availability');

@@ -907,6 +907,8 @@
   ;; The allocator/epoch must survive process resets on the same memory.
   (region.declare $CALLBACK_OWNERSHIP (size 0x00002110) (align 0x00000010)
     (owner "04-cache.wat:$invocation_new_id"))
+  (region.declare $BEEP_CONTEXTS (size 0x00008000) (align 0x00000010)
+    (owner "09a0b-handlers-base-late.wat:$beep_frame_at"))
   (region.declare $QSORT_CONTEXTS (size 0x00010000) (align 0x00000010)
     (owner "09a6-handlers-crt.wat:$qsort_frame_at"))
   (region.declare $BSEARCH_CONTEXTS (size 0x00010000) (align 0x00000010)
