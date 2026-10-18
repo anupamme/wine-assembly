@@ -63,8 +63,9 @@ clock/event completion, early end, cancellation, stale tokens, bounds/capacity,
 shared ownership, teardown, partial graph failure and recorder independence.
 `test-beep-output-broker.js` authors real compiled WAT import calls through a
 sibling instance and the synchronous broker, with shared token observations.
-Neither test has run yet; syntax, import-signature generation, WAT balance,
-logical-operand, silent-stub and ownership-census source checks passed.
+Both tests passed during root integration on 18 October; the normal gated build
+also passed. Syntax, import-signature generation, WAT balance, logical-operand,
+silent-stub and ownership-census source checks passed.
 The controlled graph is not evidence of audible browser playback or actual
 OS Worker scheduling.
 
@@ -73,4 +74,17 @@ alertable APC dispatch/resumption without early BOOL return, cancellation on
 unwind/thread/process exit, preservation of errors and stack ABI, tests of
 APCs queued before and during the wait and nested Beep, and dynamic thunk
 execution. No new guest-visible Beep success, sound hardware validation,
-compiled build, native test or game retry is claimed by this checkpoint.
+game retry is claimed by this checkpoint.
+
+## Integration validation
+
+Independent review found no prerequisite blocker. Root normal build produced
+`9176e8197f14f73aff9e7ef850e367ccedd51214d29887f0892df07d6340f0cc`;
+the real compiled sibling-instance broker test and controlled audio-host test
+passed. This proves import transport and tone lifecycle with a controlled audio
+boundary, not OS Worker races, audible playback, or complete Beep semantics.
+Evidence: `scratch/runs/20261018-beep-prerequisite-integration/` in the integration
+worktree. Two disk-guard stops are retained; prior module stayed unchanged and
+process groups were subsequently confirmed absent. After narrowing only clean,
+remote-verified finished worktrees, build and broker runs completed without guards
+and minimum free space was 2,811,142,144 bytes. Prior module remains preserved.
