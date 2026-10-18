@@ -3394,7 +3394,7 @@
       "targets": [],
       "sha256": "b133c66cfb6f9127f378b2733f39ad88d4c76a88657fe3d0b40896dc805495fd",
       "kind": "continuation",
-      "reason": "Retained bsearch comparator source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3419,7 +3419,7 @@
       ],
       "sha256": "db362d44da8874d009012729ba54a80d8dbe352224900c72b278a984fd0069f7",
       "kind": "continuation",
-      "reason": "Retained bsearch comparator source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3433,7 +3433,7 @@
       "targets": [],
       "sha256": "394e44fbc1ed1c875c775a231820a28390cdfd8ee48c60b417ef4614f1956de6",
       "kind": "continuation",
-      "reason": "Retained bsearch comparator source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3445,7 +3445,7 @@
       "targets": [],
       "sha256": "8637e30971f2179e641ca94e80dfce77ac3216947dc559344d0f8d8c323f1c1a",
       "kind": "continuation",
-      "reason": "Retained bsearch comparator source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3470,7 +3470,7 @@
       ],
       "sha256": "06a5c9043e53adb2636c2e136175b0f5fa863560b92574c95a0d629ea2dbb756",
       "kind": "callback",
-      "reason": "Retained bsearch comparator source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
@@ -3562,7 +3562,7 @@
       ],
       "sha256": "420fa25448b3388b0b27ac833dd326393035fbf68e2815222fa2b64bb2b8d646",
       "kind": "callback",
-      "reason": "Retained bsearch comparator source milestone: expected child, parent, root and return ESP; guest conformance authored but not yet run. Other families remain pending.",
+      "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
       "ownership": "pending"
     },
     {
