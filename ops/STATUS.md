@@ -1,4 +1,4 @@
-Current 2026-10-18: Barrage reaches shooting scene but timeup before aim; root3243pins45original/groupempty pass, countdown/fullHUD sourceaudit active. CircusLinux originalWindows acquisition/closure replaces qualifiedOutlaws. Telegram94 screenshots delivered1464/1465/1466 (Outlaws,LTris,LMarbles). Runtimeidle pendingreadyplan; no public deployment.
+Current 2026-10-18: CircusLinux150originals/PEclosure verified with8API support risks; soleboundedpassive launch grant. Barrage countdown usescalendar time; source audit finds pinnedcalendar batchadvance despite realticks. Realcalendar/fullHUD diagnostic sourceprep, runtimepending. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
