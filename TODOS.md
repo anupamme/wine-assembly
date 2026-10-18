@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (forward control reviewed; live turning follow-up)
+  status: active (sole registered live-turn validation granted)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Run20261018-outlaws-peek-fix-observation exactfd1613e2: root reviewed Up before/held/settled street-to-HOTEL displacement. Both processes exit0; independent3118pins/originals/groupemptyPASS. Left-before already death/skull: no live-turn/release-idle claim. Worker publishing scoped evidence and preparing registered-route turn-before-forward follow-up; no runtime grant. No audio/FPS/fullgame qualification.
+  Next: Forward success/death-contaminated turn evidence integrated2afba88ff. Root independently cleared LMarbles runtime. Registered-turn PLAN now sole grant180/185/210s exactfd1613e2 fresh3149pins: ordinary MainGameGOOD then freshalive Left before forward; inspect death contamination/release idle. No retry/build/browser/publicdeploy.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (sole registered motion/selection diagnostic granted)
+  status: active (source audit of missing positive control)
   owner: /root/new_game_refill_after_lbreakout
-  Next: Outlaws explicitly released and root postflight passed. Worker refreshing current3c6b9ff69/fd1613e2 pins before one registered180s210hard diagnostic: positivepoll, reviewed emptytile-to-marble motion, mode1/selection and balanced legal arrow. No guessedoffset/statewrites; strict2GiB margins,8MiBlog, no build/browser/retry.
+  Next: Selection diagnostic20261018-lmarbles-selection-observation reached TutorialMoves18 but positivepoll4035c9 zero twice despitearming. Stopped before boardinput; no lostdelivery claim. Both exit0 root3279pins86original/groupemptyPASS. Evidence integrated7eb6eff3b; worker audits counter coverage/currentexecution source-only before next diagnostic. No coordinatehack or runtime grant.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.

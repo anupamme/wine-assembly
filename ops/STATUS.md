@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws forward control independently reviewed on fixedfd1613e2; street-to-HOTEL movement visible, but death preceded Left so live turning remains unverified. Both processes exit0 and3118pins/originals/groupempty pass. LMarbles sole registered selection diagnostic granted after freshpins; Outlaws follow-up source preparation only. No public deployment.
+Current 2026-10-18: Outlaws forward evidence integrated2afba88ff; sole registered live-turn validation granted, turning before forward to avoid prior death contamination. LMarbles diagnostic stopped at missing positive counter; root3279pins86original/groupempty pass, source audit active, evidence7eb6eff3b. One runtime, no public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
