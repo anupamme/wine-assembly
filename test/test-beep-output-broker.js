@@ -21,7 +21,10 @@ const {GuestThreadHost,WorkerLink}=require('../lib/guest-thread-host');
  h.hostCtx._voices._ensureCtx=()=>ac;
  const broker=RPC.createMainBroker(h.memory,h.host,sigs,{});
  const remote=RPC.createWorkerImports(h.memory,sigs,msg=>broker.serveRpc(msg.slot),{slot:3});
- const host={...h.host};for(const n of ['beep_process_begin','beep_thread_begin','beep_retire_thread','beep_shutdown','beep_start','beep_status','beep_cancel'])host[n]=remote.imports.host[n];
+ const calls=new Map(),host={...h.host};
+ for(const n of ['beep_process_begin','beep_thread_begin','beep_retire_thread','beep_shutdown','beep_start','beep_status','beep_cancel']){
+  calls.set(n,0);host[n]=(...args)=>{calls.set(n,calls.get(n)+1);return remote.imports.host[n](...args);};
+ }
  const e=new WebAssembly.Instance(h.module,{host,gdi:h.gdi}).exports;
  assert.equal(e.tone_process(1,0),1);assert.equal(e.tone_thread(1,2,0,1,0),1);
  const id=e.tone_start(750,100);assert(id>0);assert.equal(ac.nodes.length,1);
@@ -34,7 +37,8 @@ const {GuestThreadHost,WorkerLink}=require('../lib/guest-thread-host');
  const retired=e.tone_start(800,200);assert.equal(e.tone_retire(1,2,0),1);
  assert.equal(e.tone_status(retired,0),-6);assert.equal(e.tone_start(800,200),-995);
  assert.equal(e.tone_shutdown(),1);assert.equal(e.tone_process(1,0),-995);
- assert(remote.stats.sync>=16,'all seven returning imports use synchronous broker');
+ for(const [name,count] of calls)assert(count>0,'compiled broker route exercised: '+name);
+ assert.equal(remote.stats.sync,[...calls.values()].reduce((sum,n)=>sum+n,0),'every exercised import used synchronous broker');
  // An actual OS Worker blocks in the compiled import while main retires its
  // owner. Release that already-issued request only after installing a new root.
  const worker=new Worker(`
