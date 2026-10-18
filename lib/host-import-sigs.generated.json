@@ -1,6 +1,6 @@
 {
   "generated_from": "src/main.watx include closure",
-  "count": 273,
+  "count": 276,
   "sigs": {
     "log": {
       "params": [
@@ -962,6 +962,32 @@
       "params": [
         "i32",
         "i32",
+        "i32"
+      ],
+      "results": [
+        "i32"
+      ]
+    },
+    "beep_start": {
+      "params": [
+        "i32",
+        "i32"
+      ],
+      "results": [
+        "i32"
+      ]
+    },
+    "beep_status": {
+      "params": [
+        "i32",
+        "i32"
+      ],
+      "results": [
+        "i32"
+      ]
+    },
+    "beep_cancel": {
+      "params": [
         "i32"
       ],
       "results": [

@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (retained bsearch source implementation)
+  status: active (retained bsearch independent review)
   owner: /root/crt_jump_ownership
-  Next: Qsort9589eaec independently reviewed, normal build and dual-mode actual x86 tests/regressions PASS. Next bsearch retained ownership and meaningful guest tests; jump APIs remain disabled pending remaining callback coverage.
+  Next: Qsort9589eaec independently reviewed, normal build and dual-mode actual x86 tests/regressions PASS. Bsearch source78dcb1076 and authored guest tests now under independent review; jump APIs remain disabled pending remaining callback coverage.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
   status: active (real alertable Beep continuation)
   owner: /root/crt_fdopen_prerequisite
-  Next: Original rewind retry stops at Beep NULL. Host lifetime prerequisite8497462d independently reviewed; pure audio test PASS, compiled broker pending. Implement alertable continuation preserving BOOL through APC and cancellation before enabling API.
+  Next: Original rewind retry stops at Beep NULL. Host lifetime prerequisite8497462d independently reviewed; root normal build9176e819, pure audio and compiled sibling broker PASS. Implement alertable continuation preserving BOOL through APC and cancellation before enabling API.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

@@ -329,6 +329,10 @@
   ;; reg_delete_value(hKey, valueNameWA, isWide) → error code
 
   ;; Audio host imports
+  ;; Bounded output-token prerequisite; no Beep handler uses it yet.
+  (import "host" "beep_start" (func $host_beep_start (param i32 i32) (result i32)))
+  (import "host" "beep_status" (func $host_beep_status (param i32 i32) (result i32)))
+  (import "host" "beep_cancel" (func $host_beep_cancel (param i32) (result i32)))
   (import "host" "message_beep" (func $host_message_beep (param i32)))
   ;; message_beep(uType) — play system sound (0=default, 0x10=error, 0x30=warning, 0x40=info)
   (import "host" "play_sound" (func $host_play_sound (param i32 i32 i32) (result i32)))

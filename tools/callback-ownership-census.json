@@ -274,7 +274,7 @@
     {
       "file": "lib/host-audio.js",
       "name": "host-file",
-      "sha256": "de22be581007f3cefd18aa322ec4bec07cfe46fd46929b53ab712e65ecb19726",
+      "sha256": "acf140a1bff58d6a20e803df4468369d5d18de51c9fd2154be849be471f1be47",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"
