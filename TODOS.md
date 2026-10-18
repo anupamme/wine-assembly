@@ -1480,11 +1480,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Evidence: scratch/alice-preflight-20261009/preflight.json; scratch/alice-preflight-20261009/import-audit.json; scratch/alice-preflight-20261009/transfer.json; docs/re-notes/alice-demo.md
 
 
-- [ ] Sizeless virtual decommit corrupts neighboring allocation
+- [x] Sizeless virtual decommit corrupts neighboring allocation
   id: VIRTUAL-DECOMMIT-NEIGHBOR-20261009
-  status: ready
+  status: done (main13da5a055 and prior build/regression receipts verified)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: test-virtual-decommit-zero fails neighboring allocation page0 untouched with unchanged HEAD helpers and prefix candidate. Static cause: virtual_map_decommit_zero chooses each scanned record end when size0, so all higher allocations are zeroed. Bound once to the owning reservation before scanning; handle invalid/interior bases and split mappings with tests. Do not attribute this baseline failure to prefix patch. Native tests only on temporary boat, serialize with game lanes.
+  Next: Closed by reconciliation: current main retains13da5a055 zero-size decommit bound and neighboring-allocation regression. Board Oct11 01:44 records full build/decommit suites PASS;01:52 requests closure, shared task already reconciled Oct12. No duplicate implementation or new runtime performed.
   Evidence: scratch/runs/20261009T0608Z-virtual-prefix-initial/result.json
 
 - [x] New-game lane: Baldurs Gate II demo
