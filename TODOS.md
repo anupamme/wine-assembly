@@ -1471,11 +1471,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: American McGee's Alice demo
   id: NEW-GAME-ALICE-DEMO-20261009
-  status: active
+  status: blocked (original media/evidence recovery and post-merge gameplay revalidation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: root direct; gameplay proven on held candidate, lifecycle correctness review before main
+  worker: none (evidence recovery pending)
   candidate: test/binaries/win98-games-a-d/american McGees-alice_demo-OpenGL.exe
-  Next: Held runtime d5a47f240 pushed codex/alice-dll-lifetime-20261009, NOT main. Full build and seven loader suites pass, including unrooted cycles, cross-cycle detach callbacks, actual Worker unload, and automatic dependency references in native/Worker routes; module862681ea, run20261009T2330Z-dll-cycle-worker-review. Concurrent two-Worker control still fails: shared PE_STAGING content and DLL table slot are overwritten; serialize staging/publication and graph mutation before integration. Then rerun original Alice and browser. Earlier native movement2151 remains separate build evidence; local candidate media missing.
+  Next: Serialization and generation-aware unload already merged (cfe411bdc/83947f6a6 and followups); do not redo staging/lifetime fix. Original archive/extracted media and scratch/alice-preflight-20261009 absent locally. Recover hash-pinned archive and2151 captures; then current-main ordinary New Game/Easy/W and browser input. Historical native gameplay usesa2dae641/main23614c85e+candidate.patch, not later held candidates. See docs/re-notes/alice-return-fire-reconciliation-20261018.md.
   Done: Original demo launches with ordinary input, player-controlled gameplay independently reviewed, exact build/media and screenshots retained; menus do not qualify.
   Evidence: scratch/alice-preflight-20261009/preflight.json; scratch/alice-preflight-20261009/import-audit.json; scratch/alice-preflight-20261009/transfer.json; docs/re-notes/alice-demo.md
 
@@ -1497,11 +1497,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] User priority: Return Fire demo
   id: NEW-GAME-RETURN-FIRE-DEMO-20261009
-  status: active
+  status: review (historical gameplay recorded; original capture recovery pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: return-fire-demo
   priority: user-first
-  Next: Correct windowed depth/palette and ordinary H/W gameplay verified in native run20261009T2046Z-return-fire-realized-native and browser run20261009T2050Z-return-fire-realized-browser. Build/focused display suites pass run20261009T2045Z-return-fire-realized-build. Audio output presence now observed in run20261009T2052Z-return-fire-browser-audio (99/100 non-silent windows, running44100Hz clock); recording retained, sound quality/sync and logical FPS still unverified. Registered local-only, no public deploy.
+  Next: Registration/palette-depth/media recovery already main. 58originalpayload hashes+archive verified locally; original2046native/2050browser captures and2052audio absent. Recover original build/input/screenshots to review recorded ordinary H/W gameplay; audioquality/logicalFPS separate from this Done criterion. See docs/re-notes/alice-return-fire-reconciliation-20261018.md; no new runtime/publicdeploy.
   Done: Registered launch, ordinary input visibly changes gameplay, reviewed screenshot with original source/build evidence; FPS/audio separate.
 
 - [ ] Serialize shared DLL mapping and lifetime mutation
@@ -1680,9 +1680,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Black & White 2 draw-layout provenance follow-up
   id: BW2-DRAW-LAYOUT-PROVENANCE-20261018
-  status: active (live provenance harness pending)
-  owner: /root/bw2_layout_observer
-  Next: Bounded observerdcc67fee reviewed and seven pure tests PASS; merged in integration. Metadata detached, observation errors disqualify pairing. Live harness/module/thread/broker correlation and current original draw evidence remain unverified; old Oct9 raw trace missing.
+  status: blocked (live Worker placement/correlation and stopped runtime box)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Observer and capture adapters integrated through e6fd3b86f; independent review corrections201758750 and root12JS tests PASS. Live Worker logging/transport placement, matching region-map receipt and request correlation remain unverified. Savedbx_9ef2wdsw stopped; prior scopedresume403 unresolved. No producer attribution or current original draw evidence.
   Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
 
 - [ ] Qualify FIFA98 touch usability, audio and logical gameplay FPS
@@ -1728,9 +1728,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (retained bsearch independent review)
-  owner: /root/crt_jump_ownership
-  Next: Qsort9589eaec independently reviewed, normal build and dual-mode actual x86 tests/regressions PASS. Bsearch source78dcb1076 and authored guest tests now under independent review; jump APIs remain disabled pending remaining callback coverage.
+  status: active (retained CRT init/exit callback implementation)
+  owner: /root/circus_init_exit_ownership
+  Next: Bsearche263d0ae3 source reviewed, both guest dispatch modes and qsort/token/lifecycle regressions PASS. Fresh worker takes init/exit callback ownership; jump APIs remain disabled pending remaining callback coverage and full semantics.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
