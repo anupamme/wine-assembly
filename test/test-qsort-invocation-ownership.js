@@ -51,6 +51,13 @@ async function main() {
   imports.host.log_i32 = () => {};
   const { instance } = await WebAssembly.instantiate(wasm, imports);
   const x = instance.exports; ctx.exports = x;
+  // Instantiate before any live comparator: active data segments reapply to
+  // imported shared memory. Thread attachment itself still occurs below.
+  const workerCtx = { ...ctx };
+  const workerImports = createHostImports(workerCtx); workerImports.host.memory = memory;
+  workerImports.host.log_i32 = () => {};
+  const { instance: workerInstance } = await WebAssembly.instantiate(wasm, workerImports);
+  const w = workerInstance.exports; workerCtx.exports = w;
   const dv = new DataView(memory.buffer), translate = p => x.guest_to_wasm(p);
   const readArray = (rva, n) => Array.from({ length: n }, (_, i) => dv.getInt32(translate(address(rva) + i * 4), true));
   let initialSP;
@@ -135,11 +142,6 @@ async function main() {
   active();
   const mainToken = x.test_qsort_token();
   const mainFrames = Buffer.from(new Uint8Array(memory.buffer, REGION.QSORT_CONTEXTS, 4096));
-  const workerCtx = { ...ctx };
-  const workerImports = createHostImports(workerCtx); workerImports.host.memory = memory;
-  workerImports.host.log_i32 = () => {};
-  const { instance: workerInstance } = await WebAssembly.instantiate(wasm, workerImports);
-  const w = workerInstance.exports; workerCtx.exports = w;
   w.init_thread(1, x.get_image_base(), x.get_code_start(), x.get_code_end(),
     x.get_thunk_base(), x.get_thunk_end(), x.get_num_thunks(), x.get_rsrc_rva());
   const workerRoot = w.test_qsort_token();

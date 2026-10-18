@@ -50,7 +50,9 @@ async function main() {
     const { instance } = await WebAssembly.instantiate(wasm, imports);
     ctx.exports = instance.exports; return instance.exports;
   };
-  const x = await make(), dv = new DataView(memory.buffer);
+  // Instantiate all modules before loading/running guest state: active data
+  // segments are reapplied at instantiation even with imported shared memory.
+  const x = await make(), w = await make(), dv = new DataView(memory.buffer);
   const get = rva => dv.getUint32(x.guest_to_wasm(addr(rva)), true);
   let sp;
   const begin = options => {
@@ -115,7 +117,6 @@ async function main() {
   // Shared-memory, interleaved actual instances; not concurrent OS Workers.
   active(); const mainToken = x.t_token();
   const mainFrames = Buffer.from(new Uint8Array(memory.buffer, REGION.BSEARCH_CONTEXTS, 4096));
-  const w = await make();
   w.init_thread(1, x.get_image_base(), x.get_code_start(), x.get_code_end(),
     x.get_thunk_base(), x.get_thunk_end(), x.get_num_thunks(), x.get_rsrc_rva());
   const wr = w.t_token(), wsp = x.guest_alloc(0x10000) + 0xfff0;
