@@ -31,6 +31,8 @@ helpers.push('win16_apply_relocs','win16_module_name','win16_module_id','win16_s
  'win16_pstr_eq','win16_dynamic_module_id','win16_import_constant','win16_thunk_for',
  'win16_thunk_count_get','win16_thunk_count_set');
 helpers.push('win16_kernel');
+helpers.push('win16_GetModuleUsage','win16_module_usage','win16_arg16','win16_api_key',
+ 'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
 // Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
 // reached is a distinct host Error, never the RuntimeError expected from the
@@ -105,7 +107,7 @@ function instance(id) {
 }
 const first=instance(1),second=instance(2);
 for(const ordinal of [95,96])assert.throws(()=>first.win16_kernel(ordinal),/Legacy KERNEL handler reached/,'ordinary NE dispatch still reaches its handler');
-const cpu=(e)=>({globals:Object.fromEntries(saved.map(n=>[n,e['get_'+n]()])),files:Object.fromEntries(['reg','fpu','mmx','xmm'].map(n=>{const p=e['get_'+n+'_base']();return[n,Buffer.from(bytes.slice(p,p+(n==='reg'?32:128)))];}))});
+const cpu=(e)=>({globals:Object.fromEntries(saved.map(n=>[n,e['get_'+n]()])),files:Object.fromEntries(['reg','fpu','mmx','xmm'].map(n=>{const p=e['get_'+n+'_base']();return[n,bytes.slice(p,p+(n==='reg'?32:128))];}))});
 function seed(e,value){
  for(let i=0;i<saved.length;i++)e['set_'+saved[i]]((value+i*0x10203)|0);
  e.set_code16(0);e.set_is_win16(0);
@@ -297,17 +299,59 @@ for(const name of ['HASORD','HASNAME']) {
 foreignLifecycle.release(foreignId);calls=0;
 const parentId=lifecycle.load('parent.dll'),afterInit=calls;
 assert.equal(afterInit,2,'dependency then parent initialized exactly once');
+const parentInstance=first.win16_dll_data_sel(parentId);
+const parentHandle=first.win16_h16(0x00d10000|parentId);
+assert.equal(first.win16_module_usage(parentInstance),1);
+assert.equal(first.win16_module_usage(parentHandle),1);
 assert.equal(lifecycle.load('PARENT'),parentId);assert.equal(calls,afterInit,'ready acquisition skips initializer');
+assert.equal(first.win16_module_usage(parentInstance),2);
+assert.equal(first.win16_module_usage(parentHandle),2);
+// Legacy loaded DLLs have an implicit import ref until LoadLibrary records an
+// explicit count. Use the actual loaded record with bridge ownership removed
+// temporarily; restore it before exercising coordinator lifecycle operations.
+const usageRecord=first.win16_handle_table()+0x8c00+(parentId-13)*32;
+const legacyRefs=first.win16_dll_refs_ptr(parentId),oldLegacyRefs=view.getUint32(legacyRefs,true);
+view.setUint32(usageRecord,0,true);
+for(const [stored,expected] of [[0,1],[1,1],[2,2],[1,1]]) {
+ view.setUint32(legacyRefs,stored,true);assert.equal(first.win16_module_usage(parentInstance),expected);
+ assert.equal(first.win16_module_usage(parentHandle),expected);
+}
+view.setUint32(usageRecord,3,true);view.setUint32(legacyRefs,oldLegacyRefs,true);
+// A selector above HANDLE_BASE must not be rejected merely for lacking a
+// handle-table slot. Preserve the real module's original segment base.
+const dllRecord=first.win16_dll_rec(parentId),oldBase=view.getUint32(dllRecord+4,true);
+view.setUint32(dllRecord+4,100,true);
+assert.equal(first.win16_module_usage(first.win16_dll_data_sel(parentId)),2);
+view.setUint32(dllRecord+4,oldBase,true);
+for(const h of [0,0xffff,0xfffe,0x100,first.win16_h16(0x12345678)])assert.equal(first.win16_module_usage(h),0);
+// Execute the real argument reader, KERNEL dispatcher and far API return.
+// Only the outer controlled guest runner is synthetic in this tiny harness.
+function queryUsage(handle,expected) {
+ const before=cpu(first),stack=0x7fd00,oldStack=bytes.slice(stack,stack+6),reg=first.get_reg_base();
+ view.setUint16(stack,0x10,true);view.setUint16(stack+2,first.get_sreg_cs(),true);view.setUint16(stack+4,handle,true);
+ view.setUint32(reg+16,stack,true);
+ const immutable=bytes.slice(BACKING,BACKING+944*65536);
+ assert.equal(first.win16_kernel(48),1);
+ assert.equal(view.getUint32(reg,true),expected);assert.equal(view.getUint32(reg+16,true),stack+6,'Pascal WORD cleanup');
+ assert.equal(first.get_eip(),first.get_seg_base_cs()+0x10,'far return restored');
+ assert.equal(first.get_sreg_ds(),before.globals.sreg_ds);assert.equal(first.get_sreg_ss(),before.globals.sreg_ss);
+ assert.deepEqual(bytes.slice(BACKING,BACKING+944*65536),immutable,'query leaves module records/refs/pins untouched');
+ for(const [n,v] of Object.entries(before.globals))first['set_'+n](v);
+ for(const [n,b] of Object.entries(before.files))bytes.set(b,first['get_'+n+'_base']());
+ bytes.set(oldStack,stack);
+}
 assert(lifecycle.lookup(parentId,'VALUE'));assert.equal(lifecycle.lookup(parentId,'WEP'),lifecycle.lookup(parentId,3));
 assert.equal(lifecycle.lookup(parentId,'MISSING'),0);assert.equal(lifecycle.lookup(parentId,4),0);
 whileRunning=()=>{
  const r=first.win16_bridge_module_record(parentId);assert.equal(view.getUint32(r+24,true),1,'active module pin');
+ queryUsage(parentInstance,2);queryUsage(parentHandle,2);queryUsage(0xfffe,0);
  const beforeGuestFree=bytes.slice(),beforeGlobals=saved.map(n=>first['get_'+n]());
  for(const ordinal of [95,96])assert.throws(()=>first.win16_kernel(ordinal),WebAssembly.RuntimeError,'actual KERNEL dispatcher rejects bridge guest lifecycle');
  assert.deepEqual(bytes,beforeGuestFree,'rejected guest lifecycle changes no segments/refs/pins');
  assert.deepEqual(saved.map(n=>first['get_'+n]()),beforeGlobals);
  // Two refs: dropping the extra ref is legal; freeing the executing image is not.
  lifecycle.release(parentId);assert.throws(()=>lifecycle.release(parentId),/release rejected/);
+ queryUsage(parentInstance,1);
 };
 const savedBuffer=global.Buffer;global.Buffer=undefined;
 try {
@@ -317,7 +361,13 @@ try {
 const afterCall=calls;
 
 lifecycle.release(parentId);assert.equal(calls,afterCall,'extra reference does not terminate');
+whileRunning=()=>{
+ const r=first.win16_bridge_module_record(parentId);
+ assert.equal(view.getUint32(r,true),4,'final WEP retains terminating module');
+ queryUsage(parentInstance,1);queryUsage(parentHandle,1);whileRunning=undefined;
+};
 lifecycle.release(parentId);assert.equal(calls,afterCall+2,'parent and sole dependency WEP executed');
+assert.equal(first.win16_module_usage(parentInstance),0);assert.equal(first.win16_module_usage(parentHandle),0,'stale module handle');
 assert.equal(lifecycle.lookup(parentId,2),0,'retired module not visible');
 for(const name of ['ZERO','TRAP']) {
  assert.throws(()=>lifecycle.load(name),name==='ZERO'?/AX zero/:WebAssembly.RuntimeError);

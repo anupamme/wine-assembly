@@ -62,6 +62,7 @@ async function main() {
     ['MISSING',neLifecycleImage({dependencies:['ABSENT']})],
     ['CYCLE',neLifecycleImage({dependencies:['CYCLE']})],
     ['IMPORT',neLifecycleImage({importLocalInit:true})],
+    ['USAGE',neLifecycleImage({moduleUsage:true})],
     ['ORDIMPORT',neLifecycleImage({importEntry:{module:'HELPER',symbol:2}})],
     ['NAMEIMPORT',neLifecycleImage({importEntry:{module:'HELPER',symbol:'VALUE'}})],
     ['OTHERNAME',neLifecycleImage({importEntry:{module:'HELPER',symbol:'ENTRY'}})],
@@ -98,6 +99,14 @@ async function main() {
   lifecycle.release(id);assert.equal(invocations,beforeFree);
   lifecycle.release(id);assert.equal(invocations,beforeFree+2,'actual parent/dependency WEP');clean();
   assert.equal(lifecycle.lookup(id,2),0);
+  const usage=lifecycle.load('USAGE');clean();
+  assert.equal(lifecycle.call(usage,'VALUE'),1);clean();
+  assert.equal(lifecycle.load('USAGE'),usage);
+  assert.equal(lifecycle.call(usage,'VALUE'),2);clean();
+  lifecycle.release(usage);
+  assert.equal(lifecycle.call(usage,'VALUE'),1);clean();
+  // WEP itself calls the relocated import and rejects an answer other than 1.
+  lifecycle.release(usage);clean();
   for(const name of ['ZERO','TRAP']) {
     let failure;try{lifecycle.load(name);}catch(error){failure=error;}
     assert(failure,'real failed initialization must throw');if(name==='ZERO')assert.match(failure.message,/AX zero/);

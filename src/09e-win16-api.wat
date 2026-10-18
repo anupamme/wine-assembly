@@ -6516,6 +6516,8 @@
     ;; nothing has loaded, and zero is the answer Windows gives for those.
     (if (i32.eq (local.get $ordinal) (i32.const 47))
       (then (call $win16_GetModuleHandle) (return (i32.const 1))))
+    (if (i32.eq (local.get $ordinal) (i32.const 48))
+      (then (call $win16_GetModuleUsage) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 50))
       (then (call $win16_GetProcAddress) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 95))
@@ -6991,6 +6993,67 @@
                 (call $win16_dll_unload (local.get $id))
                 (call $win16_dynamic_module_release (local.get $id))))))))
     (i32.store offset=0 (global.get $reg_base) (i32.const 1))
+    (call $win16_api_return (i32.const 2)))
+
+  ;; KERNEL.48 accepts either a module handle or its DGROUP instance. Unlike
+  ;; resource lookup, an invalid handle must never fall back to current CS/DS.
+  (func $win16_module_usage (param $handle i32) (result i32)
+    (local $id i32) (local $mapped i32) (local $rec i32) (local $refs i32)
+    (local.set $handle (i32.and (local.get $handle) (i32.const 0xFFFF)))
+    (if (i32.or (i32.eqz (local.get $handle))
+                (i32.eq (local.get $handle) (i32.const 0xFFFF)))
+      (then (return (i32.const 0))))
+    ;; h32 intentionally traps on unknown handles; queries instead validate
+    ;; the table index before reading it, and reject non-module objects.
+    (if (i32.ge_u (local.get $handle) (global.get $WIN16_HANDLE_BASE))
+      (then
+        (local.set $mapped (i32.sub (local.get $handle) (global.get $WIN16_HANDLE_BASE)))
+        (if (i32.and (i32.ne (local.get $mapped) (i32.const 0))
+              (i32.le_u (local.get $mapped) (call $win16_handle_next_get)))
+          (then
+            (local.set $mapped (i32.load (i32.add (call $win16_handle_table)
+              (i32.shl (local.get $mapped) (i32.const 2)))))
+            (if (i32.ne (i32.and (local.get $mapped) (i32.const 0xFFFF0000)) (i32.const 0x00D10000))
+              (then (return (i32.const 0)))))
+          ;; Selectors may exceed HANDLE_BASE; an absent table slot is not
+          ;; itself a reason to reject a live DGROUP selector.
+          (else (local.set $mapped (i32.const 0))))))
+    (local.set $id (i32.const 1))
+    (block $missing (loop $scan
+      (br_if $missing (i32.ge_u (local.get $id)
+        (i32.add (global.get $WIN16_DYNAMIC_BASE) (global.get $WIN16_DYNAMIC_MODULES))))
+      (if (i32.ne (call $win16_dll_loaded (local.get $id)) (i32.const 0))
+        (then
+          (if (i32.or
+                (i32.eq (local.get $mapped) (i32.or (i32.const 0x00D10000) (local.get $id)))
+                (i32.and (i32.eqz (local.get $mapped))
+                  (i32.eq (local.get $handle) (call $win16_dll_data_sel (local.get $id)))))
+            (then
+              ;; Bridge records are process-owned, including when a different
+              ;; invocation queries them. State 4 retains the final ref for WEP.
+              (if (i32.ge_u (local.get $id) (global.get $WIN16_DYNAMIC_BASE))
+                (then
+                  (local.set $rec (i32.add (call $win16_handle_table)
+                    (i32.add (i32.const 0x8C00) (i32.shl
+                      (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)) (i32.const 5)))))
+                  (if (i32.load (local.get $rec))
+                    (then (return (i32.load offset=8 (local.get $rec)))))))
+              ;; Legacy import loads have an implicit initial reference; its
+              ;; LoadLibrary promotes that to an explicit count on acquisition.
+              (local.set $refs (i32.load (call $win16_dll_refs_ptr (local.get $id))))
+              (return (select (local.get $refs) (i32.const 1) (local.get $refs)))))))
+      (local.set $id (i32.add (local.get $id) (i32.const 1)))
+      (br $scan)))
+    ;; The pure-NE main image is not in the DLL table and owns one task ref.
+    (if (i32.and (i32.ne (global.get $win16_ne_off) (i32.const 0))
+          (i32.and (i32.eqz (global.get $win16_task_module))
+            (i32.eq (local.get $handle) (call $win16_index_to_sel (global.get $win16_auto_data)))))
+      (then (return (i32.const 1))))
+    (i32.const 0))
+
+  (func $win16_GetModuleUsage
+    (i32.store (global.get $reg_base)
+      (call $win16_module_usage (call $win16_arg16 (i32.const 0))))
     (call $win16_api_return (i32.const 2)))
 
   ;; KERNEL.47 queries already-loaded modules. A named miss must be zero:

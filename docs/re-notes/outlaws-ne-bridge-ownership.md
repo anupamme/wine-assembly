@@ -342,3 +342,30 @@ argument and record refs at this import; inspect any later failure before
 claiming unload success. Finally run the complete twelve-arm controller.
 The four arms after original PMPRO62 remain unrun in the retained suite.
 No implementation change is included in this source-only review.
+
+### KERNEL.48 implementation checkpoint, 2026-10-18
+
+The dispatcher now implements GetModuleUsage with a read-only lookup of loaded
+module handles and DGROUP instance selectors. Bridge ownership records supply
+their actual reference count, including state 4 during final WEP; legacy DLLs
+use their explicit loader count or the existing implicit import reference.
+The standalone pure-NE task image owns one task reference. Unresolved and
+retired module handles return zero, without resource lookup's current-CS fallback
+or the generic handle decoder's invalid-handle trap. This covers loaded NE
+images; builtin dispatcher identities without a loaded NE image have no NE
+reference record and return zero.
+
+Primary implementation reference: Wine's
+[GetModuleUsage16](https://github.com/wine-mirror/wine/blob/master/dlls/krnl386.exe16/ne_module.c)
+resolves NE_GetPtr and returns the module count, or zero for an unresolved handle.
+No constant success path replaces the bridge's count, and the original DLL,
+guest LoadLibrary/FreeLibrary guards and termination retention are unchanged.
+
+The tiny transaction fixture compiles the actual dispatcher, argument reader,
+handler and far return. It checks both handles, 1/2/1 references, state-4 WEP,
+invalid/stale/non-module handles, Pascal cleanup, unchanged module memory and
+caller restoration. It also covers legacy implicit/explicit refs and a DGROUP
+selector above the handle-table base. The native fixture now imports KERNEL.48
+in VALUE and WEP, saves initializer DI in DGROUP, and makes WEP reject a count
+other than one. Native and unchanged-original validation are pending at this
+source checkpoint; the controller's production pin is deliberately unchanged.
