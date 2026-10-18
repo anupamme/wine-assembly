@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (LTris gameplay; Outlaws state audit)
+  status: active (Outlaws health diagnostic; fresh replacement screening)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: LTris sole registeredgameplay validation; Outlaws health/death/rendering predicate sourceaudit after clock continuity verified. One runtime strict2GiBfloor, no publicdeploy.
+  Next: LTris corequalified narrowordinarylateralcontrol independently reviewed; freshworker /root/new_game_refill_after_ltris screening next nonpublicoriginal title. Outlaws sole next boundedread-onlyhealth/tint discriminator after pureprep. One runtime strict2GiBfloor, no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (source audit of health/death versus rendering)
+  status: active (read-only health/HUD discriminator preparation and grant)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Earlytransition loading0.5/1/2s then sepia/skull town3s; sampledguest2498ms/host2499ms nojump. Root3149pins31original/groupemptyPASS exits0. Source-only HUDhealth/skull/death predicate audit to distinguish actualdeath/rendering; no repeatedtimingrun. LTris sole runtime.
+  Next: Sourceworker mapped inventoryhealth+20 initializer10, damage/gain counters, HUDheart predicate and independentpalette tint. Retainedruns lack numericstate. ONE passive4sample health/counters/tint discriminator granted after purepointerchecks/freshpins, strictguards no guestwrites/keyboard/build/browser/retry.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1714,7 +1714,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LTris 1.2.8 original Windows release
   id: NEW-GAME-LTRIS-20261018
-  status: active (sole registered gameplay validation granted)
+  status: done (registered lateral player control independently reviewed)
   owner: /root/new_game_refill_after_lmarbles
-  Next: Registration08028ae58 integrated; rootfixture40original39mapsCRT verified. Sole registeredltris_128 grant180/185/210s: pure routeproof/newpinsfd1613e2, ControlsPlayer1 bindings thenNormal0 samepiece lateral/rotation beyondgravity with balancedrelease. Strict2GiBmargins8MiBlog no retry/build/browser.
+  Next: Root reviewed samegreenI20px left atsamey with PiecesPlaced0 then releaseidle retainsx whilegravitymovesy. Registeredrun20261018-ltris-registered-gameplay root3234pins40originalarchive/module/groupemptyPASS exits0. Rotation testednextsquare ambiguous, right/audioFPS/browser/fullgame unqualified. Fresh /root/new_game_refill_after_ltris selectingreplacement.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
