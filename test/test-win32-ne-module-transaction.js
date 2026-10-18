@@ -35,7 +35,8 @@ helpers.push('win16_kernel');
 helpers.push('win16_GetModuleUsage','win16_module_usage','win16_arg16','win16_api_key',
  'win16_api_return','win16_handle_next_get','win16_handle_next_set','win16_h16','win16_h16_forget',
  'win16_bridge_fixed_load_api','win16_bridge_fixed_free_api','win16_bridge_fixed_api_stack',
- 'win16_cstr_to_pstr','win16_name_scratch','win16_far_to_guest');
+ 'win16_cstr_to_pstr','win16_far_to_guest',
+ 'win16_dynamic_module_is_toolhelp','win16_module_is_ver','win16_module_is_lzexpand','win16_dynamic_module_is7');
 let code=block+'\n'+transactions+'\n'+helpers.map(form).join('\n');
 // Execute the real KERNEL ordinal dispatcher. Any unrelated legacy handler
 // reached is a distinct host Error, never the RuntimeError expected from the
@@ -413,6 +414,20 @@ whileRunning=()=>{
   assert.equal(first.win16_bridge_fixed_load_api(),0,'truncated load stack');
   assert.equal(first.win16_bridge_fixed_free_api(),0,'truncated free stack');
   assert.deepEqual(bytes.slice(4104,4304),fixedState,'malformed calls leave all fixed refs unchanged');
+  const nameAt=translate(first.get_seg_base_ds()+0x80),savedName=bytes.slice(nameAt,nameAt+7);
+  const scratchAt=fixture.GUEST_STACK+0x200,scratchBefore=bytes.slice(scratchAt,scratchAt+64);
+  const count=first.win16_bridge_fixed_usage(1);
+  try {
+   bytes.set(Buffer.from('KERNEL\0'),nameAt);
+   view.setUint32(reg+16,apiSp,true);view.setUint16(apiAt+2,first.get_sreg_cs(),true);
+   view.setUint16(apiAt+4,0x80,true);view.setUint16(apiAt+6,first.get_sreg_ds(),true);
+   assert.equal(first.win16_kernel(95),1,'actual narrow fixed acquisition');
+   const handle=view.getUint16(reg,true);assert(handle>=32);
+   assert.equal(first.win16_bridge_fixed_usage(1),count+1);
+   assert.deepEqual(bytes.slice(scratchAt,scratchAt+64),scratchBefore,'PE fixed stack scratch untouched');
+   view.setUint32(reg+16,apiSp,true);view.setUint16(apiAt+4,handle,true);
+   assert.equal(first.win16_kernel(96),1);assert.equal(first.win16_bridge_fixed_usage(1),count);
+  } finally {bytes.set(savedName,nameAt);}
  } finally {
   bytes.set(apiBytes,apiAt);
   for(const [n,v] of Object.entries(apiBefore.globals))first['set_'+n](v);

@@ -6977,7 +6977,7 @@
     (i32.lt_u (call $gl16 (i32.load offset=16 (global.get $reg_base)))
       (call $win16_seg_limit (call $win16_sel_to_index (local.get $sel)))))
   (func $win16_bridge_fixed_load_api (result i32)
-    (local $sel i32) (local $off i32) (local $limit i32) (local $name i32) (local $n i32) (local $id i32) (local $handle i32)
+    (local $sel i32) (local $off i32) (local $limit i32) (local $name i32) (local $n i32) (local $id i32) (local $handle i32) (local $scratch i32)
     (if (i32.eqz (call $win16_bridge_fixed_api_stack (i32.const 8))) (then (return (i32.const 0))))
     (local.set $sel (call $win16_arg16 (i32.const 1)))
     (local.set $off (call $win16_arg16 (i32.const 0)))
@@ -6991,8 +6991,11 @@
         (i32.ge_u (i32.add (local.get $off) (local.get $n)) (local.get $limit))) (then (return (i32.const 0))))
       (br_if $terminated (i32.eqz (call $gl8 (i32.add (local.get $name) (local.get $n)))))
       (local.set $n (i32.add (local.get $n) (i32.const 1))) (br $string)))
-    (call $win16_cstr_to_pstr (local.get $name) (call $win16_name_scratch) (i32.const 1))
-    (local.set $id (call $win16_system_module_id (call $g2w (call $win16_name_scratch))))
+    ;; This API must not overwrite the suspended PE caller's fixed stack.
+    ;; Its invocation owns scratch after the first 1KiB context snapshot.
+    (local.set $scratch (i32.add (i32.load offset=16 (i32.wrap_i64 (global.get $win16_bridge_frame))) (i32.const 1024)))
+    (call $win16_cstr_to_pstr (local.get $name) (local.get $scratch) (i32.const 1))
+    (local.set $id (call $win16_system_module_id (call $g2w (local.get $scratch))))
     (local.set $handle (call $win16_bridge_fixed_acquire (local.get $id)))
     (if (i32.eqz (local.get $handle)) (then (return (i32.const 0))))
     (i32.store16 (global.get $reg_base) (local.get $handle))
