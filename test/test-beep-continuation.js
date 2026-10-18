@@ -6,6 +6,7 @@ const {compileSrcWasm}=require('./compile-src');
 const {audioContext}=require('./test-beep-output');
 const fs=require('node:fs'),path=require('node:path');
 const {ThreadManager}=require('../lib/thread-manager');
+const tailCalls=!process.argv.includes('--no-tail-calls');
 const STACK=0x700000, CALLBACK=0x402000, COUNT=0x403000;
 const extraWat=`
  (func (export "beep_test_clear_yield") (global.set $yield_flag (i32.const 0)))
@@ -58,7 +59,7 @@ const extraWat=`
   (i32.add (global.get $image_base) (i32.sub (local.get $wa) (global.get $GUEST_BASE))))
 `;
 (async()=>{
- const h=await bootRenderHarness({extraWat,fonts:'none'}),e=h.exports,ac=audioContext();
+ const h=await bootRenderHarness({extraWat,fonts:'none',tailCalls}),e=h.exports,ac=audioContext();
  h.hostCtx._voices._ensureCtx=()=>ac;
  e.beep_test_init();
  const bytes=(address,data)=>data.forEach((b,i)=>e.guest_write8(address+i,b));
@@ -97,7 +98,7 @@ const extraWat=`
  const source=fs.readFileSync(path.join(__dirname,'../src/09a0b-handlers-base-late.wat'),'utf8');
  const stub='(func $handle_Beep (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)\n    (call $crash_unimplemented (local.get $name_ptr))\n  )';
  assert(source.includes(stub),'public handler intentionally remains unimplemented');
- const wasm=compileSrcWasm((file,s)=>file==='13-exports.wat'?s+extraWat:file==='09a0b-handlers-base-late.wat'?s.replace(stub,stub.replace('(call $crash_unimplemented (local.get $name_ptr))','(call $beep_begin (local.get $arg0) (local.get $arg1))')):s);
+ const wasm=compileSrcWasm((file,s)=>file==='13-exports.wat'?s+extraWat:file==='09a0b-handlers-base-late.wat'?s.replace(stub,stub.replace('(call $crash_unimplemented (local.get $name_ptr))','(call $beep_begin (local.get $arg0) (local.get $arg1))')):s,{tailCalls});
  const nested=new WebAssembly.Instance(new WebAssembly.Module(wasm),{host:h.host,gdi:h.gdi}).exports;
  nested.beep_test_init();h.hostCtx.exports=nested;
  const thunk=nested.beep_test_thunk(9);
@@ -151,5 +152,5 @@ const extraWat=`
  assert.equal(h.host.beep_thread_begin(2,...oldRoot,...oldEpoch),-995);
  assert.equal(h.host.beep_process_begin(...oldEpoch),-995);
  h.hostCtx.stopAudio();
- console.log('Internal Beep alertable continuation, actual guest APC/nesting and cancellation: PASS; public Beep still disabled');
+ console.log('Internal Beep alertable continuation, actual guest APC/nesting and cancellation: PASS; public Beep still disabled; tailCalls='+tailCalls);
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -231,3 +231,12 @@ and the manifest absence while the public implementation remains disabled.
 This is evidence of the generated-image gap, not yet proof of the original
 MadBomber hModule provenance. Positive dynamic and actual PE static-import tests
 remain required for a separate reviewed handler/export enable change.
+
+The subsequently added `--no-tail-calls` fixture option passes the compiler mode
+to both the render harness and nested test module. Its first guarded attempt
+was killed before test output when available disk transiently dropped from
+2,777,149,440 to 2,180,575,232 bytes. The process group is absent and canonical
+module unchanged; available disk recovered to 2,773,151,744 immediately after
+termination. No 600MB retained artifact was found in this worktree. Non-tail
+validation remains incomplete; the failed receipt is retained separately from
+the passing tail-call receipt. No unchanged retry was attempted.
