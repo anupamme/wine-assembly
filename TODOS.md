@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (held-mouse input discriminator preparation)
+  status: active (bounded held-mouse diagnostic)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Original mousepoll uses GetAsyncKeyState highbit; CLI click down/up samebatch is a plausible missedpress cause, keyboarddelivery unproved. Audit848fbb3d0 main; worker source-prepares250ms independentrelease with bounded route/dispatch/APItraces, no productionfix. Dashboard results now distinguish directmenu startupPASS and activationFAILED; localregistration prepared. Runtime waits LBreakout2.
+  Next: Sole heldmouse diagnostic granted180s/210hard after LBreakout2 release. OMITdispatchflag to preserve paused API logging; routing+GetAsync/foreground/focus650ms window, independent250ms release. Freshreviewedmenu before ordinaryinput. No forcedstate/productionfix or gameplayclaim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1700,7 +1700,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LBreakout2 2.5.1 original Windows release
   id: NEW-GAME-LBREAKOUT2-20261018
-  status: active (original passive startup validation)
+  status: active (reviewed main menu; gameplay/registration preparation)
   owner: /root/new_game_refill_after_supertux
-  Next: OfficialZIP a152c0867abf9bc39563db932ebcd0797ed3e35d20f21c2dca2a81e321313675 3322804B;230originals verified,220clientfiles with5bundledDLLs+authenticCRT. Source docs4c7c4f911 main; worker granted sole60sguest85hard passive run freshpins/currenta4a4bc6a,2GiBguards8MiBlog. No gameplay claim.
+  Next: Original passive20261018-lbreakout2-passive-startup reviewed mainmenu, child2260640/controller2260630 exits0; root3192pins/originals/groupemptyPASS. Docs573fdf159 main. Worker source-prepares LocalGame controls; fresh lbreakout2_local_registration owns local-only corpus source/tests. No runtime until Outlaws release, no gameplayclaim.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.

@@ -1,4 +1,4 @@
-Current 2026-10-18: LBreakout2 verified original package and complete client DLL closure now in sole bounded passive startup. Outlaws source audit identifies possible same-batch mouse-release mismatch; heldpress with targeted input traces preparing, no production fix or gameplay claim. Both direct Outlaws dashboard evidence records published with honest menu/failed-activation scope. No public deployment.
+Current 2026-10-18: LBreakout2 original mainmenu reviewed, clean exits and root source/original/process checks passed. Outlaws owns bounded heldmouse diagnostic; no productionfix yet. LBreakout2 LocalGame controls and local corpus registration prepared source-only in parallel. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
