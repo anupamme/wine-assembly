@@ -1,4 +1,4 @@
-Current 2026-10-18: FIFA shorter live-play control run owns sole runtime; qualification pending. Outlaws CLI failure cleanup d1e956e94 pushed task branch, pure/direct-QT positive and prechange negative checked; async DllMain regression remains before integration. No public deploy, source/evidence preserved; disk4.66GB before FIFA admission.
+Current 2026-10-18: Outlaws original identifies missing KERNEL.184 GlobalDOSAlloc after mergedCLI fix3bd051ca9; natural299ms error exit/root postflight clean. Fresh API implementation worker source-only; FIFA owns sole300s atomic-published live-play retry. No new gameplay qualification/public deployment; original evidence preserved.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 

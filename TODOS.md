@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (FIFA live-play validation; Outlaws CLI failure regressions)
+  status: active (Outlaws GlobalDOSAlloc implementation; FIFA live-play retry)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws d1e956e94 task branch has generic error-log drain/stdin cleanup; directQT native positive and prechange timeout negative pass, async DllMain regression preparation still needed before integration. FIFA /root/fifa_liveplay_plan_oct18 now owns sole300s browser after native release, shorter reviewed live-play route; no control qualification yet.
+  Next: Original Outlaws diagnostic identifies KERNEL.184 GLOBALDOSALLOC through QT; naturalexit1 in299ms and rootpostflightPASS. Fresh /root/outlaws_globaldosalloc owns real API semantics/tests source-only. FIFA /root/fifa_liveplay_plan_oct18 sole300s browser granted with tested atomicpublisher and unchanged runtime pins/guards.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (original Win16 import failure diagnosis)
+  status: active (GlobalDOSAlloc implementation and conformance)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_cli_failure_drain
-  Next: Worker /root/outlaws_cli_failure_drain pushed d1e956e94 generic buffered-error drain/control cleanup. Root puretestPASS; actual CLI directQT unknownKERNEL65535 printsdiagnostic/exits1, prechange remainsalive20s negativecontrol. Async DllMain fixture preparing source-only while FIFA runtime; relevant async validation required before main merge. Original dispatcher failure remains, no stub or gameplay claim.
+  worker: /root/outlaws_globaldosalloc
+  Next: Original20261018-outlaws-original-qt-diagnostic-observation identifies KERNEL.184 GLOBALDOSALLOC ret0x089316ea in PMPRO62F QT. Naturalexit1~299ms; root independent3111pins/original unchanged/survivors[]. CLI fix3bd051ca9 works. Fresh worker implements real allocation/selector semantics and tests source-only whileFIFA runtime; no stub/generalDOS claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (shorter live-play browser control validation)
+  status: active (atomic-published live-play control retry)
   owner: /root/fifa_liveplay_plan_oct18
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Fresh20261018-fifa98-liveplay-control unchangedcontroller29tests/pinsPASS, sole300s browser granted after Outlaws native release. Same retainedce2cb0af;4GiBadmission/3GiBearlystop. Short reviewed route then comparable idle/up/down; reject cutscenes/setpieces. Root collects actual terminal and evidence before qualification.
+  Next: Fresh20261018-fifa98-liveplay-atomic31tests/pinsPASS, rootatomicconcurrenttestPASS. Sole300s grant after Outlaws cleanrelease; allcommands atomicpublisher only, unchangedce2cb0af/4GiBadmission3GiBearlystop. PriorPlay89s harnessrace preserved, no game failure claim. Require comparable live-play idle/up/down beforequalification.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
