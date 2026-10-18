@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Barrage passive launch; Outlaws fade preparation)
+  status: active (Outlaws fade diagnostic; Barrage gameplay preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Barrage verifiedoriginal sole boundedpassive launch grant; Outlaws source-only fadecallback diagnostic preparation. Diskmargin restored via cleanpushedinactiveWT sparse reduction preservingignoredbuilds/evidence. One runtime strict2GiBfloor no publicdeploy.
+  Next: Barrage originalmenu verified gameplay+localregistration sourceworkers active; Outlaws solefadecallback diagnostic. One runtime strict2GiBfloor, no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (source preparation for tint fade callback diagnostic)
+  status: active (sole fade callback discriminator granted)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Originaltransition countdown637 callback4359a0 subtractstrunc(delta*0.51); initial255plateau intentional. Actualcallback/deltas unknown, 1msroundingstall only arithmetic hypothesis. Prepare positivefunctionentry and readonlycountdown/lasttime/direction/health/tint atsettledintervals; no runtimegrant whileBarrage sole.
+  Next: Barrage rootpostflightpassed/released. ONE4later3/5/8/12s callback/rearmcounts and readonlyfade/health/tint samples granted freshpinsfd1613e2 strictguards; classifyactualcallback/rearm before roundinghypothesis. No keyboard/guestwrites/build/browser/retry.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1721,7 +1721,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames Barrage 1.0.5 original Windows release
   id: NEW-GAME-BARRAGE-20261018
-  status: active (sole original passive launch granted after guard checks)
+  status: active (menu verified; gameplay and registration preparation)
   owner: /root/new_game_refill_after_ltris
-  Next: OriginalZIP1455807B bc4f43d1 45files4256910B11DLL+CRT closure verified. Sole60/65/85s passive-w45mount12seed noinput grant afterpurecontroller/currentpins/freshdiskadmission. Safe cleanpushedPeekGetWT sparsification recovered~65MB free2.352GB; strict2GiBmargins8MiBlog no build/browser/retry.
+  Next: Originalmainmenu rootreviewed;3196pins45originalarchive/module/groupemptyPASS bothPIDsabsent exits0. Gameplayworker sourceprepares originalbriefing/aim/fire measurableeffect; fresh /root/barrage_local_registration localregistry/corpus/verifier pureJS. No Barrage runtimegrant whileOutlaws sole.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
