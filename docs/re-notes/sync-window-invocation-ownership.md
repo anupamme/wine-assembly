@@ -1,6 +1,6 @@
 # Synchronous window invocation retention
 
-2026-10-18 source milestone; authored dynamic fixtures have NOT RUN.
+2026-10-18 retained ownership milestone; compiled and runtime validated.
 No `_setjmp` or `longjmp` API is enabled.
 
 Inventory selected `wnd_send_message_inner` in `09c3a-dialog-runtime.wat`:
@@ -45,8 +45,24 @@ This is not simultaneous Worker coverage or actual Circus gameplay evidence.
 
 Source validation: complete tracked-source ownership census and nonlocal API
 gate PASS; only wnd_send_message_inner's census fingerprint/calls changed,
-with ownership still pending. Parser, JS syntax and diff checks PASS. Both
-compiled dispatch modes, normal gated build and existing parent/child paint,
-window positioning, CRT and invocation regressions await independent review
-and a serial runtime grant. Remaining broader jump blockers remain documented
-in crt-setjmp.md and the CRT ownership notes.
+with ownership still pending. Parser, JS syntax and diff checks PASS. Both compiled dispatch modes, the normal gated build, existing parent/child
+paint, window positioning/minmax and token/production-lifecycle regressions
+PASS on reviewed Beep integration f947e5158 plus source checkpoint 63bcb64a2.
+Unchanged CRT/qsort/bsearch tests were not repeated. Candidate normal module
+SHA-256 is `2abd71d3643218bd84b5a2b017ad386f7b6df1cc270c461c1b9d423b81ea21c7`
+(1,870,501 bytes). No original game or browser was run.
+
+Evidence lives in isolated worktree `/tmp/wa-circus-sync-window-oct18`, under
+`scratch/runs/20261018-sync-window-validation/`: per-command logs/guard receipts,
+prior canonical module, exact source closure and disk preflights, fresh process
+group audit and artifact hashes. Normal candidate/combined sources remain in
+`build/`. The fixture modules are compiled in memory; reproduce with
+`NODE_PATH=/tmp/wa-local-runtime-deps/node_modules node test/test-sync-window-ownership.js`
+and the same command with `--no-tail-calls`. The initial windowpos/minmax runs
+failed solely because ignored `test/binaries/calc.exe` was absent. Their failed
+receipts are retained; restoring the exact 94,208-byte fixture from the shared
+worktree (SHA receipt retained) let both unchanged tests pass. No package was
+installed. All ten guarded process groups were independently absent afterward;
+canonical `440c4f4e` remained unchanged and no resource guard fired.
+Remaining broader jump blockers remain documented in crt-setjmp.md and the CRT
+ownership notes.
