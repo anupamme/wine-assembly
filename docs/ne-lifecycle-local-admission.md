@@ -10,8 +10,9 @@ requires an idle runtime lane. A successful preparation is not a suite pass.
 Both modes also require the existing `WA_NE_LIFECYCLE_COMMIT`, fresh external
 `WA_NE_LIFECYCLE_EVIDENCE` directory, and `WA_NE_ORIGINAL` original PMPRO62 DLL
 (SHA-256 `7e2b17e61e7e4808a50478ddcac06f65fcf9f3ffd741d747c8cb75e20cb05db9`).
-Production src/lib remain pinned to `5acc078acdb3c383b70cb339daddf4d6aea30678`,
-including the reviewed importer-owned named-import resolution fix.
+Production src/lib remain pinned to `a62466211ea61f4d199f7057622a4e2ce98e82b7`,
+including importer-owned named-import resolution, KERNEL.48 GetModuleUsage,
+and module aliases reserved separately from instance selectors.
 
 The version-1 JSON config contains:
 
@@ -41,10 +42,13 @@ commands are retained under the shared repository's
 `scratch/runs/20261018-outlaws-local-inputs/`. The restored lifecycle donor is
 excluded because its hash is not in the reviewed allowlist. The original DLL
 is retained under `scratch/runs/20261015-outlaws-oemkeyscan-native/original-loader-fixtures/`.
-The earlier local preparation passed; the earlier native suite stopped at
-NAMEIMPORT after six passing arms. Focused named-import regressions passed for
-the new production pin; they do not establish a full-suite or original PMPRO62
-pass. Refresh infrastructure identities and verify every supplied input for
+Earlier local preparation passed. The first native suite stopped at NAMEIMPORT
+after six passing arms; the next passed seven arms and stopped at original
+PMPRO62 termination because KERNEL.48 was missing. Focused canonical/native
+validation of this production pin passed, including unchanged PMPRO62's 61
+exports, duplicate reference, and final unload, with evidence retained under
+`scratch/runs/20261018-outlaws-module-usage/`. These focused results do not
+establish a full twelve-arm suite pass. Refresh infrastructure identities and verify every supplied input for
 each new run; missing files, dependencies, and mismatched hashes remain hard
 failures.
 
