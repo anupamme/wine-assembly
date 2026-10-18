@@ -89,6 +89,11 @@ function instance(id, pure = 0) {
       return ga - globals.image_base + globals.GUEST_BASE;
     },
     watch(wa, size) {
+      if (wa === 1024) {
+        unpublished();assert.equal(size,200);
+        assert(bytes.subarray(wa,wa+size).every(value=>value===0),'fixed lifetime reset before publication');
+        return;
+      }
       unpublished(); assert.equal(wa, BACKING); assert.equal(size, SIZE);
       assert.equal(bytes[BACKING], 0); assert.equal(bytes[BACKING + SIZE - 1], 0);
     },

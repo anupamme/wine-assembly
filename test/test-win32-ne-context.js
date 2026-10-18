@@ -31,7 +31,7 @@ code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.end $GUEST_STACK)','(i32.add (global.get $GUEST_STACK) (global.get $GUEST_STACK_SIZE))');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
- DLL_LOAD_LOCK:0x1100,LOCK_VIRTUAL_MAP:0x1104,VIRTUAL_MAP_STATE:0x1120,VIRTUAL_MAP_TABLE:0x1200,current_thread_id:1};
+ DLL_LOAD_LOCK:0x1100,LOCK_VIRTUAL_MAP:0x1110,VIRTUAL_MAP_STATE:0x1120,VIRTUAL_MAP_TABLE:0x1200,current_thread_id:1};
 const globalNames=[...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s)]+)/g)].map(m=>m[1]))];
 const declared=new Set([...code.matchAll(/\(global \$([^\s)]+)/g)].map(m=>m[1]));
 const mutable=[];

@@ -18,7 +18,9 @@ function form(name) {
 const api = fs.readFileSync(path.join(dir,'09e-win16-api.wat'),'utf8');
 const block = api.slice(api.indexOf(';; BEGIN WIN32 NE INVOCATION CONTEXT'),api.indexOf(';; END WIN32 NE INVOCATION CONTEXT'));
 const loader = fs.readFileSync(path.join(dir,'08c-ne-loader.wat'),'utf8');
-const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'),loader.indexOf(';; END WIN32 NE MODULE TRANSACTIONS'));
+// Include the following guest aliases/retain-name helpers used by the real JS
+// coordinator as well as the transaction table itself.
+const transactions = loader.slice(loader.indexOf(';; BEGIN WIN32 NE MODULE TRANSACTIONS'));
 const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_entry','win16_entry_lookup','win16_dll_ordinal','win16_name_table_find','win16_pstr_eq_pstr','win16_dll_init_entry','win16_dll_data_sel','win16_dll_heap_size','win16_dll_path_id_valid','win16_handle_table','win16_dynamic_module_slot','win16_dynamic_module_release',
  'load_ne_dll_sized','win16_dll_staging','win16_dll_rec','win16_dll_loaded','win16_dll_unload','win16_dll_run_ptr','win16_dll_refs_ptr','win16_dll_image_size_ptr','win16_arena_base','win16_task_shared','win16_next_seg_get','win16_next_seg_set',
   'win16_arena_take','win16_arena_give','win16_arena_free_head','win16_alloc_segment','win16_arena_slot_base',
@@ -55,7 +57,7 @@ code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.end $GUEST_STACK)','(i32.add (global.get $GUEST_STACK) (global.get $GUEST_STACK_SIZE))');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
- DLL_LOAD_LOCK:0x1100,LOCK_VIRTUAL_MAP:0x1104,VIRTUAL_MAP_STATE:0x1120,VIRTUAL_MAP_TABLE:0x1200,
+ DLL_LOAD_LOCK:0x1100,LOCK_VIRTUAL_MAP:0x1110,VIRTUAL_MAP_STATE:0x1120,VIRTUAL_MAP_TABLE:0x1200,
  current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
  WIN16_NAME_KERNEL:0x70000};
 const globalNames=[...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s)]+)/g)].map(m=>m[1]))];
@@ -418,7 +420,7 @@ whileRunning=()=>{
   const scratchAt=fixture.GUEST_STACK+0x200,scratchBefore=bytes.slice(scratchAt,scratchAt+64);
   const count=first.win16_bridge_fixed_usage(1);
   try {
-   bytes.set(Buffer.from('KERNEL\0'),nameAt);
+   bytes.set([75,69,82,78,69,76,0],nameAt);
    view.setUint32(reg+16,apiSp,true);view.setUint16(apiAt+2,first.get_sreg_cs(),true);
    view.setUint16(apiAt+4,0x80,true);view.setUint16(apiAt+6,first.get_sreg_ds(),true);
    assert.equal(first.win16_kernel(95),1,'actual narrow fixed acquisition');
