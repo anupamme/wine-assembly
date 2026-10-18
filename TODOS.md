@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws Win16 import diagnosis; FIFA control-plan preparation)
+  status: active (FIFA live-play validation; Outlaws CLI failure regressions)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws original run 20261018-outlaws-original-qt-observation reached real QT then Win16 dispatcher fail-fast during PMPRO62F DllMain. Root postflight passed; next identify import without silent stub. FIFA 20261018-fifa98-control-resume reached match but control trial hit cutscene; shorter reviewed route prepared, no qualification. Runtime serialized; no active runtime.
+  Next: Outlaws d1e956e94 task branch has generic error-log drain/stdin cleanup; directQT native positive and prechange timeout negative pass, async DllMain regression preparation still needed before integration. FIFA /root/fifa_liveplay_plan_oct18 now owns sole300s browser after native release, shorter reviewed live-play route; no control qualification yet.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1617,7 +1617,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: active (original Win16 import failure diagnosis)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_cli_failure_drain
-  Next: Original run 20261018-outlaws-original-qt-observation trapped at unimplemented Win16 import inside QT/PMPRO62F. Existing module/ordinal diagnostics were buffered then skipped by CLI exception; stdin also prevented exit. Fresh worker /root/outlaws_cli_failure_drain owns generic exceptional-path log drain/control cleanup plus regressions, source-only until runtime grant. Preserve fail-fast trap. Root postflight confirmed3110pins/originals unchanged and no survivors.
+  Next: Worker /root/outlaws_cli_failure_drain pushed d1e956e94 generic buffered-error drain/control cleanup. Root puretestPASS; actual CLI directQT unknownKERNEL65535 printsdiagnostic/exits1, prechange remainsalive20s negativecontrol. Async DllMain fixture preparing source-only while FIFA runtime; relevant async validation required before main merge. Original dispatcher failure remains, no stub or gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: ready (shorter live-play control observation plan)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  status: active (shorter live-play browser control validation)
+  owner: /root/fifa_liveplay_plan_oct18
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Run 20261018-fifa98-control-resume ended normally with match reached; ArrowUp occurred in referee/card cutscene, opposite input never dispatched, control inconclusive. All pins/231fixtures unchanged; disk minimum4190121984B. PLAN-NEXT.txt gives shorter7-input reviewed menu route and comparable live-play idle/up/down criteria within270s cutoff; no repeat of identical trial.
+  Next: Fresh20261018-fifa98-liveplay-control unchangedcontroller29tests/pinsPASS, sole300s browser granted after Outlaws native release. Same retainedce2cb0af;4GiBadmission/3GiBearlystop. Short reviewed route then comparable idle/up/down; reject cutscenes/setpieces. Root collects actual terminal and evidence before qualification.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
