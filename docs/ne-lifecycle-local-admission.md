@@ -48,9 +48,26 @@ PMPRO62 termination because KERNEL.48 was missing. Focused canonical/native
 validation of this production pin passed, including unchanged PMPRO62's 61
 exports, duplicate reference, and final unload, with evidence retained under
 `scratch/runs/20261018-outlaws-module-usage/`. These focused results do not
-establish a full twelve-arm suite pass. Refresh infrastructure identities and verify every supplied input for
+establish a full twelve-arm suite pass. The subsequent complete suite result is
+recorded below. Refresh infrastructure identities and verify every supplied input for
 each new run; missing files, dependencies, and mismatched hashes remain hard
 failures.
 
 Bounded source-only checks: `node test/test-ne-local-admission.js` and
 `node --check tools/run-win32-ne-lifecycle-native.js`.
+
+Full local validation at controller commit
+`b6e97f6ccf7ad3aee389e347255b49a3a6acade7` passed fresh admission and all twelve
+arms on 2026-10-18: canonical build, host driver, native invocation, tiny
+context, image validation, tiny lifecycle, native lifecycle, original PMPRO62,
+tiny arena, real allocator, pure-NE bounds, and pure-NE loader. The original DLL
+passed initialization, all 61 named/ordinal lookup pairs, duplicate references,
+and final unload. The canonical module SHA-256 is
+`3b5655d5d7e6046bfaa21c90d39abe34a279eff8957700f284282cd6b0fe98e3`.
+Evidence and recovery recipes are retained in
+`scratch/runs/20261018-outlaws-module-usage-fullsuite-native/`; fresh admission
+is in `scratch/runs/20261018-outlaws-module-usage-fullsuite-prepare/`.
+Controller and all children exited zero, all twelve owned groups were empty,
+postflight passed, and 2,993,885,184 bytes remained free after evidence copies.
+This validates the native bridge lifecycle, not original Outlaws gameplay,
+browser execution, or QT_Thunk.
