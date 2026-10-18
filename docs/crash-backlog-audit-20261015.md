@@ -1,5 +1,35 @@
 # JezzBall and Invisible War backlog audit — 15 October 2026
 
+## Superseding reconciliation — 18 October 2026
+
+Checked against main `e661285b2`. The October 15 snapshot below is historical:
+its statements that IW transport and renderer candidates are absent from main
+must **not** be used to queue duplicate implementation or integration work.
+
+Current source contains `lib/process-send-broker.js` with receiver ownership
+and retirement handling, and `lib/d3d9-backend.js` contains colorless-pass and
+independent RGB/dead-alpha handling. Both `3fdb29373` (combined native validation
+record/fixture repair) and `9eb485acb` (renderer validation record) are main
+ancestors. Adapted implementations mean patch-unique historical commits alone
+are not evidence of missing behavior.
+
+[Combined native results](iw-combined-native-result-20261015.md) record eight
+passing arms; [renderer results](iw-render-candidate-review-20261015.md#runtime-gate-completed-supersedes-preparation-only-status-above)
+record 77 observations per WebGL version and a discriminating negative control.
+Those existing receipts establish their scoped conformance, not current original
+IW playability. This reconciliation ran no tests or games and did not re-review
+raw screenshots. General pointer-message marshalling, cooperative transport,
+current original-game evidence, audio/device/FPS remain separate obligations.
+JezzBall's completed fixes remain completed; no repeat implementation is queued.
+
+For GL/D3D work, Darkstone's bounded draw trace `cffd439e2` is already merged
+and needs actual capture. B&W2's missing historical raw trace still prevents a
+causal renderer fix; bounded provenance instrumentation is now assigned to
+`/root/bw2_layout_observer`. The exact historical 27-app membership list is
+still missing; do not replace it with a guessed list or claim the goal complete.
+
+## Historical October 15 snapshot (superseded where noted above)
+
 Source-only reconciliation against `5a31fcce8055e8385dba8ed76f6457767143068b`.
 Remote main was subsequently verified at `5f43d41f54950151f08ad7cab3b536d9ed150bbd`;
 the intervening six files concern CMR3 registration and color-key documentation,
