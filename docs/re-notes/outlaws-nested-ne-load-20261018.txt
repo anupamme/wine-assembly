@@ -1,0 +1,139 @@
+Nested guest LoadLibrary in owned NE initialization: source audit and implementation gates
+2026-10-18, base 410eb2d7bd040ae4840fb43af112ab0366320b90.
+
+Original-byte finding
+
+Retained run 20261018-outlaws-original-builtins-observation stops at the explicit
+KERNEL.95 guard in win16_kernel while WDIR62 LibEntry owns a bridge frame.
+Its runtime log does not contain the Win16 stack argument. The original image
+SHA256 722d1ecab96d80ae0f1ab9f71522b55841a43cf07277d233ccdfad6166e96ce9
+has exactly one KERNEL.95 relocation chain site: segment 1:1a0d, relocation
+record file offset 11621. The far CALL opcode is 1:1a0c. Immediately before it,
+1:1a07 pushes DS, 1:1a08 loads AX=083e, and 1:1a0b pushes AX. Automatic data
+segment 3, file base 18432, contains "WIN87EM\0" at 083e (file offset 20542).
+The preceding cmp word [003f],0 / je bypasses this call only when zero.
+Thus the unique static call requests WIN87EM, a fixed fileless builtin already
+in this image's import closure. This is static inference from the original
+code/data, not a new runtime sampling of DS or the string. No DLL replacement
+or missing original file is indicated by this evidence.
+
+Reproduce (read-only, no build/runtime):
+  node tools/inspect-outlaws-nested-load.js /home/user/wine-assembly/scratch/runs/20261018-outlaws-original-recovery/original/payload/wdir62.dll
+The script pins the image, validates it with inspectNeDll, enumerates relocation
+chains, and checks the exact argument-producing instructions and data string.
+For independent raw disassembly subtract 1024 from printed file addresses:
+  objdump -D -b binary -m i8086 --start-address=0x1e00 --stop-address=0x1e33 ORIGINAL_WDIR62_DLL
+
+Why this is not a one-guard change
+
+win16_guest_request_begin is a singleton PE stdcall request, rejects an existing
+pending request, captures a 32-bit linear ESP/return and settles by adding 8/12
+bytes. The outer PE LoadLibrary16 request is still pending during this LibEntry.
+A nested Win16 call instead has SS:SP, a far return and Pascal four-byte name
+argument. Neither overwriting the singleton nor calling its settle export is
+valid. invokeNeEntrySync and invokeNeQtSync reject every yield; createNeLifecycle
+has no scoped source-service context to pass to a recursively invoked guest.
+Module claim rejects initializing/unloading identities and exposes only ready
+images. Source closure skips fixed builtins only as dependencies: directly
+loading WIN87EM through prepareNeSources still requests a file. Existing fixed
+builtin import identities have no owned explicit LoadLibrary reference record.
+The native frame chain already supports same-owner nesting, CPU restoration,
+module call pins, execution leases and sync-depth cache pins; reuse those
+invariants rather than introducing a second loader.
+
+Implementation stages (production remains fail-fast until all enabled paths pass)
+
+1. Add a separate frame-owned nested request record, never the PE singleton.
+   Bind it to full frame generation token, owner/thread, process lifetime,
+   request serial and captured SS:SP/CS:IP. Accept only a live running frame
+   with no unresolved request in that frame. Decode and validate the complete
+   far-return/argument span and bounded far string before mutation. Park dispatch
+   without changing the far return. Expose only exact-token read/settle/cancel.
+   Settlement after child teardown validates the same frame and stack, writes
+   AX and performs the existing Win16 Pascal far-return mechanics for four
+   argument bytes. Preserve high register halves, DS/ES/SS, flags and parent
+   request. Cancellation invalidates before frame storage can be reused.
+   Do not allocate frame fields by copying addresses: use declared layout and
+   audit the current frame scratch bound and all snapshot/restore consumers.
+
+2. Pass an internal synchronous lifecycle context down serviceNeGuestYieldSync,
+   createNeLifecycle and both invocation drivers. It carries the exact facade,
+   memory, synchronous VFS resolver, cancellation and one shared remaining-work
+   budget plus maximum nesting depth. A nested yield dispatches only this owned
+   service; unrelated yields still fail loudly. Child frames acquire the same
+   owner execution lease and sync-depth pin while the suspended caller retains
+   its own module pin. No await, scheduler borrowing or DLL mutex across guest
+   execution/source service. Count all child blocks against the outer budget;
+   resetting a fresh 100000-block allowance per recursion is not bounded work.
+   Promise-returning source resolvers remain explicitly unsupported.
+
+3. Implement explicit LoadLibrary ownership for fixed fileless builtins as well
+   as real image/dynamic modules. WIN87EM must resolve the actual fixed dispatcher
+   identity, with no synthetic DLL or fake initializer. Keep permanent dispatcher
+   availability separate from acquired guest references; use stable module handle
+   aliases and real usage accounting. Define matching FreeLibrary/GetModuleUsage
+   behavior and ensure GetProcAddress resolves that same identity. Fixed module
+   handles must not be mistaken for owned image records or DGROUP selectors.
+   CARDS still requires its real image and must not enter this fileless path.
+
+4. For real DLLs, resolve/copy the closure synchronously and use the existing
+   native claim/link/stage/LibEntry/publish transaction. A ready duplicate adds
+   one explicit reference; a fresh load becomes visible only after successful
+   LibEntry. A nested load is an explicit acquired reference, not an automatic
+   bitmask import dependency: repeated loads need repeated releases. Journal
+   each acquired reference until settlement; if settlement fails, release the
+   unreturned acquisition. After successful settlement the guest owns it, even
+   if its caller later rejects initialization; do not silently invent unloads
+   for already-returned handles. Import dependencies still roll back with their
+   failed transaction. WEP failure retains the actual termination record and
+   recovery ownership; aggregate cleanup failures without hiding the cause.
+
+5. Recursive loads of an initializing ancestor must stay a precise diagnostic
+   until an explicit same-owner provisional-reference protocol is implemented
+   and independently validated against intended Win16 semantics. Do not publish
+   an initializing image as ready, deadlock on the current owner's transaction,
+   or guess a guest error number. Other-owner loading/unloading is likewise not
+   permission to expose an incomplete handle. Detect recursion before attempting
+   a source lookup (ready-only liveModule currently cannot distinguish it).
+   Nested FreeLibrary that would retire an actively executing module remains
+   protected by call pins; termination reentry and stale handles need explicit
+   tests before enabling that operation. Unsupported operations remain loud.
+
+Required test sequence and acceptance
+
+Source/pure-JS checks: verifier above; dispatcher/ABI structural gates; resolver
+Promise rejection; shared budget/depth and cancellation propagation; service
+facade identity; no mutation for unsupported recursive acquisition. Do not call
+mocked successful JS coordinator tests proof of guest execution.
+
+After a fresh root runtime grant, actual-helper tests must cover nested request
+creation/settlement/cancel, stack bounds, Pascal cleanup, wrong-owner/stale/out-
+of-order/double completion, parent PE request unchanged, frame reuse, full CPU
+and original PE/private stack canaries, balanced lease/sync-depth counts.
+
+Canonical build then full-interpreter synthetic PE -> A.LibEntry -> KERNEL.95
+-> B.LibEntry -> return is mandatory. Test B's imports initialize first; B
+exports are usable only after its successful initializer; duplicate ready load
+counts 1/2/1; final unload/reload; missing image returns the existing typed error;
+child rejection/trap/cancel/budget exhaustion unwinds only owned frames and
+staging; unreturned reference rollback; retained failed WEP; recursion A->B->A
+diagnoses without publication; foreign instance cannot steal completion or
+release pins. Include three levels, nested QT entry, and nested Win16 call32
+scratch to catch parent-state corruption. Exercise actual WIN87EM identity and
+dispatcher through a synthetic caller, matching unload/usage behavior, and
+unknown ordinal fail-fast. Run existing lifecycle/context/QT/guest-bridge tests
+unchanged and verify pure-NE legacy loading remains intact.
+
+Only after review/build/native admission should a separately granted original
+run capture the actual far name and verify this boundary is crossed. The next
+TOOLHELP.80 import is still unsupported and has not been observed executing.
+No gameplay or initialization success claim follows from this source audit.
+
+Scope decision
+
+This checkpoint deliberately contains the evidence verifier and staged protocol,
+not production changes. A correct general nested lifecycle requires request ABI,
+driver propagation, explicit builtin lifetime and transaction tests together;
+a WIN87EM-name special case would not implement that contract. Existing guards,
+original bytes, module ownership and legacy loader remain unchanged. No build,
+native guest, browser or original executable ran in this task.
