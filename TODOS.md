@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus setbuf compiled validation; Mad Bomber zlib attach audit)
+  status: active (Circus original retry; Mad Bomber import diagnostic preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Circus bounded real NULL setbuf b62952fb1 independently reviewed; sole compiled validation granted. Mad Bomber original passive launch failed zlib attach; root3146pins140original/groupemptyPASS. Source audit active, no automatic retry. One runtime, no public deploy.
+  Next: Real bounded setbuf passed independent review, worker normalbuild/3compiledtests and root normalbuild/stdio; canonical67aaa6df. Circus next sole passive original retry after fresh pins. Mad Bomber source identifies possible GPA NULL wrapper branch, not proven; short trace prep queued. One runtime, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (setbuf compiled conformance validation)
+  status: active (reviewed setbuf integrated; passive original retry)
   owner: /root/new_game_refill_after_outlaws
-  Next: Bounded real setbuf NULL for owned consistent FILEs b62952fb1 pushed, tests authored not run. Independent source review clear; sole gated build and compiled tests granted including individual rejection cases. Custom buffers and inconsistent/copied FILEs remain fail-fast; no game retry.
+  Next: Real NULL setbuf independently reviewed and compiled regressions pass, root normalbuild/stdio exact67aaa6df. Prepare fresh150original/source/module pins for ONE passive60/65/85 retry, no inputs; retain fail-fast unsupported buffers/copied FILEs.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (original zlib initializer source audit)
+  status: active (bounded import lookup trace preparation)
   owner: /root/refill_after_barrage
-  Next: ONE passive run20261018-madbomber-passive-startup exits1 zlib DllMain c6fb80 returnsFALSE; no window or input. Root3146pins140original/module unchanged groupempty. Shared auto MSVCRT lacked prerun hash, explicit limitation; add futurepin. Original initializer source audit, no automatic retry.
+  Next: Original packed zlib wrapper has explicit GPA NULL returnFALSE branch RVA12cd0; not proven executed. Prepare filteredLoadLibraryA/GetProcAddress10/15/25 diagnostic2MiBlog, sharedMSVCRT887eb5ce mandatoryprepin. No runtime until Circus release.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
