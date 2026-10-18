@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws native validation; SuperTux reviewed level movement)
+  status: active (Outlaws scratch correction; SuperTux registered route)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws counted fixed-builtin candidate10f97b889 passed source review; sole bounded build/native slot granted after SuperTux release. SuperTux original first level and left/right movement reviewed, documentation/registration qualification next; jump/audio/FPS unverified. Browser admission remains below4GiB.
+  Next: Outlaws final owned-scratch correction/rebuild/conformance active; unsupported general nested operations still trap. SuperTux local registration4bd8cb22e merged with verified original manifest; registered runtime preparation active, earlier direct-route gameplay accepted narrowly. One runtime; no browser below4GiB.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (canonical/full-native passed; smaller regression fixtures)
+  status: active (owned scratch correction and final conformance)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_nested_ne_load
-  Next: Candidate130377b90 canonical build and full native lifecycle passed (module9b20ff17). Independent delta review clear through e425d60c2; smaller extraction fixtures repaired after stale dependencies and deadline-limited retry. Fresh sole90s tests-only slot granted, no original replay until integration.
+  Next: Prior canonical/fullnative passed; c16 corrected LoadLibrary scratch, but review found GetModuleHandle/named GetProcAddress still using legacy caller scratch. Worker must fix shared helper and extend canary, then has sole120sbuild90stests grant. Tiny transaction passed; corrected arena/context and prebuilt guest/QT suites pending. No original replay until tested integration.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1693,7 +1693,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: SuperTux 0.1.3 original Windows release
   id: NEW-GAME-SUPERTUX013-20261018
-  status: active (reviewed gameplay; local registration implementation)
+  status: active (local registration merged; registered runtime preparation)
   owner: /root/supertux_registration
-  Next: Gameplay evidence merged/pushed fd0af8270. Original first-level left/right response reviewed; jump/audio/FPS unverified. Fresh /root/supertux_registration implements durable local-only registry/manifest/recovery recipe with pureJS tests; no runtime or public release.
+  Next: Local registration4bd8cb22e merged/pushed; root registry and all787original/CRT/786manifest mapping tests PASS. Worker preparing fresh integration fixture and bounded registered route, no runtime grant while Outlaws owns lane. Earlier direct-route firstlevel movement reviewed; jump/audio/FPS remain unverified.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
