@@ -912,6 +912,9 @@
   (region.declare $BSEARCH_CONTEXTS (size 0x00010000) (align 0x00000010)
     (owner "09a6-handlers-crt.wat:$bsearch_frame_at"))
 
+  (region.declare $CRT_CALLBACK_CONTEXTS (size 0x00010000) (align 0x00000010)
+    (owner "09a6-handlers-crt.wat:$crt_callback_frame_at"))
+
   ;; SPANS — address-range LIMITS, not storage.
   ;;
   ;; A span names a boundary somebody's arithmetic tests against. It owns no

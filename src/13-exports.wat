@@ -1564,8 +1564,10 @@
   (func (export "test_crt_atexit_count") (result i32)
     (global.get $atexit_count))
   (func (export "test_crt_exit_begin") (param $code i32)
-    (global.set $atexit_exit_code (local.get $code))
-    (call $crt_atexit_run_next))
+    ;; Historical probe starts after the API return word was consumed.
+    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))
+    (call $crt_callback_begin (i32.const 1) (i32.const 0) (i32.const 0) (local.get $code)))
 
   ;; Exercise the exact cooperative retry transition: the first call parks on
   ;; another owner, the owner releases while the import frame remains live,

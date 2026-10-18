@@ -2488,20 +2488,13 @@
     {
       "file": "src/09a-handlers2-runtime.wat",
       "name": "$handle__initterm",
-      "writes": 2,
-      "boundaryCalls": [],
-      "exports": [],
-      "targets": [
-        [
-          "local.get",
-          "$fn"
-        ],
-        [
-          "global.get",
-          "$initterm_ret"
-        ]
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_begin"
       ],
-      "sha256": "6cc63530c0249097cf6e859b696e73d88ac3742cfd44ee8ccf2b395ffd39d808",
+      "exports": [],
+      "targets": [],
+      "sha256": "7985b685275791e7d89ce621c431f14715db6bd341858499d0d3666cd1cb494c",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
@@ -3471,27 +3464,6 @@
       "sha256": "06a5c9043e53adb2636c2e136175b0f5fa863560b92574c95a0d629ea2dbb756",
       "kind": "callback",
       "reason": "Retained bsearch comparator ownership: expected child, parent, root and return ESP; family-specific conformance is documented separately. Other families remain pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/09a6-handlers-crt.wat",
-      "name": "$crt_atexit_run_next",
-      "writes": 2,
-      "boundaryCalls": [],
-      "exports": [],
-      "targets": [
-        [
-          "local.get",
-          "$fn"
-        ],
-        [
-          "i32.const",
-          "0"
-        ]
-      ],
-      "sha256": "b223a7e97a23cc076286db48502bd93d2194a494ce9ff186083d93b4f2a22f8f",
-      "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
     },
     {
@@ -4725,8 +4697,12 @@
     {
       "file": "src/09b-dispatch.wat",
       "name": "$win32_dispatch_inner",
-      "writes": 63,
-      "boundaryCalls": [],
+      "writes": 61,
+      "boundaryCalls": [
+        "$crt_callback_continue",
+        "$crt_callback_continue",
+        "$crt_callback_continue"
+      ],
       "exports": [],
       "targets": [
         [
@@ -5063,14 +5039,6 @@
           "$modal_ret_addr"
         ],
         [
-          "local.get",
-          "$arg0"
-        ],
-        [
-          "global.get",
-          "$initterm_ret"
-        ],
-        [
           "call",
           "$gl32",
           [
@@ -5190,7 +5158,7 @@
           ]
         ]
       ],
-      "sha256": "bf5695cc598bc8e2efb66f399de5f842dac6d59d93c4c25ba848da85e6ce02ce",
+      "sha256": "d3032a2b67f89e2014e369a58facec99556f8bb0776a916184365a97e0ed9d8b",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
@@ -8442,13 +8410,13 @@
       "name": "export:test_crt_exit_begin",
       "writes": 0,
       "boundaryCalls": [
-        "$crt_atexit_run_next"
+        "$crt_callback_begin"
       ],
       "exports": [
         "test_crt_exit_begin"
       ],
       "targets": [],
-      "sha256": "991335d55f06d03d73118353c18a4ad3806f57ef85b0cbfb95586729cd2438fb",
+      "sha256": "fdffb9307a1c5831604d279dcef84ebfc456b69d2f7758c064f941de79ec3216",
       "kind": "test-entry",
       "reason": "Exported test entry can reach an EIP write or nested execution; no ownership exemption.",
       "ownership": "pending"
@@ -8766,6 +8734,149 @@
       "sha256": "39fcd4795a4926f870c59d5e92afba235bdb378f4c387bd95d90c29603675e01",
       "kind": "host-entry",
       "reason": "External execution/context entry or wrapper; callback lifetime cannot be inferred from run depth.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a-handlers2-runtime.wat",
+      "name": "$handle__cexit",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_begin"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "d8dab5438fde345c6bc6cae35776238d0ce51e9d93fe957083c0b2ac46400403",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a-handlers2-runtime.wat",
+      "name": "$handle_exit",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_begin"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "8287ea7ed0498d439ecfa8c78af6eb1f7cd05a1030cb242f55506c9c686fd7d8",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_slot",
+        "$crt_callback_complete",
+        "$invocation_ensure",
+        "$invocation_current",
+        "$invocation_enter",
+        "$crt_callback_frame_at",
+        "$crt_callback_launch"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$crt_callback_owner",
+        "$crt_callback_depth"
+      ],
+      "sha256": "7baaf093b5b083071c81209f78e3ba4557e3b151a49b684668a2d8e5a60b03a9",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_complete",
+      "writes": 1,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [
+        [
+          "i32.const",
+          "0"
+        ]
+      ],
+      "sha256": "e26b5f544d39517841c417394e631acd4da095959025d4b88bf7cd539c05cb73",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_continue",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_frame",
+        "$invocation_leave",
+        "$invocation_current",
+        "$crt_callback_slot",
+        "$invocation_enter",
+        "$crt_callback_launch",
+        "$crt_callback_complete"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$crt_callback_depth"
+      ],
+      "sha256": "0262fb6f400ac2e1fb00891eebf3353726348934b301f4abf472ed25ef898a5d",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_frame",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate",
+        "$crt_callback_frame_at"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "17fa3bb3fe0b82700cd6398018784b5870d26751d31fe8eb56bc67f8f4dccfaf",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_frame_at",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "91c2a6afb73b2bb89483b715e636d5be79ce93bd998545f43299041e9595ad4b",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_launch",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "326bf3853e114a6023f5168546c75f63e5657078fec69009e998848d9fdf3f69",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_slot",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "5d07c74336b32a1073bb14e2f83ac2681179f29de74a3f8a1935f4031b16f536",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
       "ownership": "pending"
     }
   ]
