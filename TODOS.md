@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws mappinglease prerequisite merged/pushedca29cb087 with independentreview, canonicalbuild and native tests PASS. Fresh /root/outlaws_qt_gateway source implementation. FIFA browser blocked until4GiB free; source telemetry controller in preparation, no identical retry. Runtime released; serialize grants.
+  Next: Outlaws gateway source implementation active /root/outlaws_qt_gateway, canonical/native pending. FIFA telemetry29tests complete, browser blocked4GiB; /root/new_game_ready_refill selecting an unqualified original local demo with permitted source-only work, not yet counted as active game. Serialize runtime grants.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: blocked (browser admission needs4GiB; telemetry source work active)
-  owner: /root/fifa_player_control
+  status: blocked (browser admission needs4GiB; telemetry source preparation complete)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Source audit20261018-fifa98-resource-admission-audit preserves unknown cause of653746176B disk fall. Current2.416GB insufficient for4GiB admission/3GiB earlystop. Worker prepares fresh bounded ownedPID/profile/fd allocation telemetry+tests without runtime/deletion. Match/ArrowUp evidence remains inconclusive, no playercontrol/audio/FPS claim.
+  Next: Fresh controller20261018-fifa98-allocation-telemetry-prep completed29pureJS tests, root independently passed8allocation tests. Browser remains blocked4GiB admission/3GiBearlystop (current2.33GB); oldce2cb0af module pin must failclosed against changed root8694d56d until explicit asset choice. Preserve180priorartifacts; no playercontrol/audio/FPS qualification.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
