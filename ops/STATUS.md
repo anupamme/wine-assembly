@@ -1,3 +1,5 @@
+Current 2026-10-18: Qsort9589eaec and bounded BW2 observerdcc67fee integrated locally; root normal build PASS718297bd and seven observer tests PASS. Circus retained bsearch and Mad Bomber real alertable Beep continuation source work active. Beep prerequisite reviewed/pure audio test PASS; API still unavailable. Live BW2 provenance and new gameplay screenshots remain pending. Telegram95 delivered1470; no public deploy.
+
 Current 2026-10-18: MadBomber rewindlookup passes nextBeepNULL, rootpostflightPASS; Beepsourceaudit active. Qsort solecompiledvalidation, BW2observer sourceimplementation thirdlane. GL27 exacthistoricalmembership and oldBW2rawtrace remainmissing; staleIWaudit mustnot trigger mergedfixes. Telegram95 answered photo1470. No publicdeploy.
 
 Current 2026-10-18: Rewind reviewed/compiledPASS including rootnormalbuild+rewind exactc3ae99a8; next MadBomber originalretry packet. Qsort sourceclear tests queued. Separate source-only GLD3D27/crash-sweep reconciliation active. No publicdeploy.

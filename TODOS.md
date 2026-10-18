@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Beep audit; qsort validation)
+  status: active (Beep continuation; retained callback families)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: MadBomber resolvesrewind then originalMSVCR70 BeepGPA247NULL; root3207pins140original/sharedCRT/groupemptyPASS no window. Beep realAPI audit assigned, qsort solecompiledgrant; BW2observer parallel source-only.
+  Next: Mad Bomber real Beep prerequisite8497462d reviewed with pure audio test PASS; alertable continuation/APC tests active. Circus qsort9589eaec validated; next retained bsearch family source work. Root integration build PASS718297bd; no new gameplay screenshot.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1680,9 +1680,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Black & White 2 draw-layout provenance follow-up
   id: BW2-DRAW-LAYOUT-PROVENANCE-20261018
-  status: active (bounded layout observer implementation)
+  status: active (live provenance harness pending)
   owner: /root/bw2_layout_observer
-  Next: Prior sourceaudit merged, raw scratch/runs/20261009T0335Z-black-white2-staging-fix missing. Implement opt-in bounded provenance observer and pure tests before live capture; no speculative rendererfix. Trace actual producer when runtime available.
+  Next: Bounded observerdcc67fee reviewed and seven pure tests PASS; merged in integration. Metadata detached, observation errors disqualify pairing. Live harness/module/thread/broker correlation and current original draw evidence remain unverified; old Oct9 raw trace missing.
   Done: Identify actual producer with current evidence, then justified fix and meaningful regression; retain accepted camera controls.
 
 - [ ] Qualify FIFA98 touch usability, audio and logical gameplay FPS
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (retained qsort compiled validation)
+  status: active (retained bsearch source implementation)
   owner: /root/crt_jump_ownership
-  Next: Sourceclearf82157f3e pluscross-thread/capacity tests1ba5b7a0 syncedrewind; sole normalbuild/actualx86 nested/yield/noop/stale/trap/token regressions granted strictguards. Fullcallback/jump handlers pending.
+  Next: Qsort9589eaec independently reviewed, normal build and dual-mode actual x86 tests/regressions PASS. Next bsearch retained ownership and meaningful guest tests; jump APIs remain disabled pending remaining callback coverage.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (Beep dynamic lookup source audit)
+  status: active (real alertable Beep continuation)
   owner: /root/crt_fdopen_prerequisite
-  Next: Original20261018-madbomber-rewind-retry resolves_fdopen/rewind withoutinvocation then BeepGPA247NULL originalMSVCR70 caller007b85a9. Root3207pins140original/sharedCRT/c3ae99a8/groupemptyPASS. Audit realAPI availability/resolution no stub; no autoretry.
+  Next: Original rewind retry stops at Beep NULL. Host lifetime prerequisite8497462d independently reviewed; pure audio test PASS, compiled broker pending. Implement alertable continuation preserving BOOL through APC and cancellation before enabling API.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
