@@ -1513,7 +1513,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Aliens versus Predator 2 single-player demo
   id: NEW-GAME-AVP2-DEMO-20261010
-  status: blocked (original launcher registration prepared; current runtime validation awaits saved-box resume)
+  status: ready (TG90 local runtime authorized; original launcher and child menu verified)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: none
   candidate: test/binaries/win98-games-a-d/alien vs predator 2-sp demo-D3D.exe
@@ -1607,7 +1607,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Improve and validate original .kkrieger control responsiveness
   id: KKRIEGER-CONTROL-LATENCY-20261015
-  status: blocked (diagnostics merged; saved runtime requires owner resume)
+  status: ready (TG90 local runtime authorized; serialized live measurement pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Read-only CS wait/main EIP/cooperative-owner samples merged0b95d3233,10focused testsPASS. Retained run118738 suggests audio critical-section/main-loop delay but owner/duration attribution unproved. Reuse bounded W/release route only after saved bx_9ef2wdsw resume and serialized admission; no scheduler fix or FPS claim.
   Evidence: docs/kkrieger-position-capture-20261015.md; scratch/runs/20261015-kkrieger-position-capture
