@@ -181,3 +181,26 @@ production dynamic resolution once enabled after review. Duration above 60000
 ms returns ERROR_NOT_SUPPORTED, invalid frequency/zero duration returns
 ERROR_INVALID_PARAMETER, and absent/suspended/insufficient-rate output fails
 explicitly. No unavailable-output or recorder-only success is introduced.
+
+### Additional authored validation (not executed)
+
+The compiled broker fixture now routes all seven lifecycle/output imports
+through the synchronous broker. An actual Node Worker instantiates the compiled
+module and issues a start that main deliberately holds until the owner is
+retired and replaced. The stale request must fail without touching the new
+tone. Production GuestThreadHost/WorkerLink stop then fences output before
+awaiting native Worker termination. Audio remains a controlled WebAudio graph;
+this does not establish hardware playback or broad scheduling stress coverage.
+
+The continuation fixture additionally calls production LoadLibraryA and
+GetProcAddress for synthetic KERNEL32.DLL/Beep, then executes that thunk in a
+nested guest APC using the existing test-only handler substitution. Production
+handler remains unimplemented. The ordinal/catalog thunk is also exercised;
+neither fixture is an original PE static-import installation test.
+
+Resolution audit qualification: API9 exists even while its handler is a crash
+stub. Generic name lookup does not filter crash stubs. GetProcAddress on an
+actual loaded DLL resolves that image's export table and may return NULL
+without catalog fallback. The original MadBomber missing lookup therefore
+still needs module/export provenance; implementing the handler alone has not
+been demonstrated to repair that original lookup. No game retry was performed.

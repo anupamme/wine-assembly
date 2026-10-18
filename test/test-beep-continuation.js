@@ -8,6 +8,14 @@ const fs=require('node:fs'),path=require('node:path');
 const {ThreadManager}=require('../lib/thread-manager');
 const STACK=0x700000, CALLBACK=0x402000, COUNT=0x403000;
 const extraWat=`
+ (func (export "beep_test_library") (param i32) (result i32)
+  (i32.store offset=16 (global.get $reg_base) (i32.const ${STACK}))
+  (call $handle_LoadLibraryA (local.get 0) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+  (i32.load (global.get $reg_base)))
+ (func (export "beep_test_lookup") (param i32 i32) (result i32)
+  (i32.store offset=16 (global.get $reg_base) (i32.const ${STACK}))
+  (call $handle_GetProcAddress (local.get 0) (local.get 1) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0))
+  (i32.load (global.get $reg_base)))
  (func (export "beep_test_init")
   (global.set $image_base (i32.const 0x400000))
   (global.set $thunk_guest_base (i32.add (global.get $image_base) (i32.sub (global.get $THUNK_BASE) (global.get $GUEST_BASE))))
@@ -87,7 +95,7 @@ const extraWat=`
  // helper. This is not evidence of shipping dynamic export availability.
  const source=fs.readFileSync(path.join(__dirname,'../src/09a0b-handlers-base-late.wat'),'utf8');
  const stub='(func $handle_Beep (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)\n    (call $crash_unimplemented (local.get $name_ptr))\n  )';
- assert(source.includes(stub),'public API intentionally remains unavailable');
+ assert(source.includes(stub),'public handler intentionally remains unimplemented');
  const wasm=compileSrcWasm((file,s)=>file==='13-exports.wat'?s+extraWat:file==='09a0b-handlers-base-late.wat'?s.replace(stub,stub.replace('(call $crash_unimplemented (local.get $name_ptr))','(call $beep_begin (local.get $arg0) (local.get $arg1))')):s);
  const nested=new WebAssembly.Instance(new WebAssembly.Module(wasm),{host:h.host,gdi:h.gdi}).exports;
  nested.beep_test_init();h.hostCtx.exports=nested;
@@ -102,6 +110,21 @@ const extraWat=`
  ac.currentTime+=0.081;nested.run(1000);assert.equal(nested.get_eip(),0);
  assert.equal(nested.get_eax(),1);assert.equal(nested.get_esp(),STACK+12);
  assert.equal(nested.beep_test_depth(),0);assert.equal(nested.beep_test_get_error(),789);
+ // Production dynamic resolver, with only the same reviewed handler shim.
+ // This is the synthetic KERNEL32 route, not the original game's loaded DLL.
+ for(const [address,text] of [[COUNT+32,'KERNEL32.DLL'],[COUNT+64,'Beep']])
+  Buffer.from(text+'\0').forEach((b,i)=>nested.guest_write8(address+i,b));
+ const library=nested.beep_test_library(COUNT+32);assert(library!==0);
+ const dynamic=nested.beep_test_lookup(library,COUNT+64);assert(dynamic!==0);
+ const dynamicBody=[0x68,...imm(20),0x68,...imm(900),0xb8,...imm(dynamic),0xff,0xd0,0xa3,...imm(COUNT+4),0xc2,4,0];
+ dynamicBody.forEach((b,i)=>nested.guest_write8(CALLBACK+i,b));
+ nested.beep_test_error(789);nested.beep_test_queue(CALLBACK);nested.beep_test_begin(750,100);
+ nested.run(1000);assert.equal(nested.beep_test_depth(),2);
+ ac.currentTime+=0.021;nested.run(1000);assert.equal(nested.guest_read32(COUNT+4),1);
+ assert.equal(nested.beep_test_depth(),1);
+ ac.currentTime+=0.081;nested.run(1000);assert.equal(nested.get_eip(),0);
+ assert.equal(nested.get_eax(),1);assert.equal(nested.get_esp(),STACK+12);
+ assert.equal(nested.beep_test_get_error(),789);
  // Forced Worker-style retirement must cancel both nested output tokens
  // without calling the dead instance's private continuation/cleanup exports.
  nested.init_thread(1);nested.beep_test_init();
