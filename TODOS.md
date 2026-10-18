@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws gameplay; replacement selection after SuperTux completion)
+  status: active (Outlaws input investigation; LBreakout2 acquisition)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: SuperTux core registered gameplay qualified with reviewed movement/jump. Outlaws sole ordinary gameplay observation; fresh new_game_refill_after_supertux source-only screens existing unqualified nonpublic candidates for second lane, no download/build/runtime. Disk2.88GB, strict2GiB floor.
+  Next: SuperTux core complete. Outlaws ordinary menu input boundary under source audit. LBreakout2 2.5.1 original official3.3MB ZIP acquisition/closure authorized <=50MB retained; freshworker new_game_refill_after_supertux owns second lane, no runtime yet. Disk strict2GiB floor, one runtime.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (ordinary Main Game gameplay observation)
+  status: active (menu input-delivery investigation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Sole180s/210hard direct original interaction granted after SuperTux clean release. Source/menu docs566c9b300 main. Localregistrationa5f356dd7 root pureJS registry/original30mount29mapping testsPASS; merge queued until runtimepins released. No gameplay claim before reviewed level/input evidence.
+  Next: MainGame observation exits0/root3118pins/originals/groupemptyPASS; click movescursor but Enter/Down do not activate; exact guestdelivery unproved because late traces suppressed. Worker source-audits input path before next run. Localregistration5334e4d3d and boundarydocs56f0e99ed pushed; integration30files29mappings verified. Dashboard direct-route evidence publication assigned registration worker.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1697,3 +1697,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/supertux_registration
   Next: Registered realticks run20261018-supertux-registered-gameplay verifies same-life left/right and Options-confirmed Space jump/landing; root reviewed right and jump sequence,3119pins/originals/groupemptyPASS, both exits0. Docs aea0ceb44 main. Audio/FPS/browser/device/fullgame remain unqualified. Refill worker new_game_refill_after_supertux selects next actionable nonpublic title.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
+
+- [~] New-game lane: LBreakout2 2.5.1 original Windows release
+  id: NEW-GAME-LBREAKOUT2-20261018
+  status: active (official original acquisition and dependency closure)
+  owner: /root/new_game_refill_after_supertux
+  Next: Acquire official LGames SourceForge lbreakout2-2.5.1-win32.zip (~3.3MB), hash/list/license/PE dependency audit within50MB retained. No local payload or recorded prior public/qualified alias found; exact executable/data paths unknown until extraction. No runtime granted.
+  Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
