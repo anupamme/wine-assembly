@@ -1095,7 +1095,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: FIFA automatic-lock fix merged/pushed12d9d9751; reviewed original match and Escape pause, player control/audio/FPS still unqualified. Fresh /root/fifa_player_control prepares bounded follow-up; /root/outlaws_stack_lease implements safe QT memory lease source-only. Runtime currently free; serialize grants, preserve >2GiB.
+  Next: FIFA player-control preparation21tests passed; /root/fifa_player_control granted sole300s ordinary-input browser run with strict2GiB+16MiB reserve. /root/outlaws_stack_lease remains source-only implementing mapping lifetime guards. FIFA menu fix12d9d9751 already merged; no duplicate screenshots of already accepted menu behavior.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1660,7 +1660,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Main12d9d9751 fixes stale automatic pointer lock. Reviewed run20261018-fifa98-auto-pointerlock-fixed-reserve shows absolute Play at608,393, match progression and Esc Pause; exits0 and pins unchanged. Fresh worker prepares causal player-control check. No audio/FPS/fullmatch qualification; prior diskguard run preserved.
+  Next: Main12d9d9751 fixes stale automatic lock; match and Escape pause reviewed, player control/audio/FPS not qualified. Follow-up21test controller granted one300s run to inspect original control configuration and compare selected-player idle/direction/reverse evidence. Keep exact source2ff28b92/modulece2cb0af pins and independent cleanup.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
