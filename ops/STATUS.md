@@ -1,3 +1,5 @@
+Current 2026-10-18 correction: Mad Bomber Beep NULL lookup is unresolved independently of the stub. Catalog API9 exists; loaded-DLL GetProcAddress can fail through export-directory lookup. Reviewed Beep continuation/retirement and extended Worker/broker fixtures await validation; no claim this resolves original lookup. Circus synchronous callback retention source work active.
+
 Current 2026-10-18: CRT init/exit ec55f099e reviewed and worker full regression suite PASS; root integration build PASS exact859e7e86. Circus synchronous callback retention fresh source worker active. Beep retirement source review clear; lifecycle broker/actualWorker/routing fixture preparation pending compiled grant. Main gameplay remains unqualified for these two titles; no public deploy.
 
 Current 2026-10-18: Bsearche263d0ae3 reviewed/dualguest+qsort+token+lifecycle PASS, root integration build PASS exactdb326070. Fresh Circus init/exit ownership worker active; Mad Bomber Beep forced-thread/process retirement source active. BW2 capture main e6fd3b86f tested12JS; live Worker placement/correlation and stopped runtime box remain blockers. No new screenshot/public deploy.

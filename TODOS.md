@@ -1737,5 +1737,5 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-MADBOMBER-20261018
   status: active (real alertable Beep continuation)
   owner: /root/crt_fdopen_prerequisite
-  Next: Original rewind retry stops at Beep NULL. Host lifetime prerequisite8497462d independently reviewed; root normal build9176e819, pure audio and compiled sibling broker PASS. Implement alertable continuation preserving BOOL through APC and cancellation before enabling API.
+  Next: Original rewind retry stops at Beep GetProcAddress NULL. Cause not yet established: catalog has API9 even for stub, but loaded DLL lookup uses its actual export directory. Beep handler remains unimplemented on main; reviewed alertable/retirement candidate and actualWorker/broker fixtures pending compiled validation. Synthetic routing cannot establish original MSVCR70 lookup resolution; no original retry yet.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
