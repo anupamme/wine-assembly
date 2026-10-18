@@ -80,7 +80,7 @@ async function child() {
     assert.equal(await c.call(direct, [], 0), marker, 'actual x86 JMP executes native handler');
     assert(c.logged.includes('GetLastError'), 'dispatcher decodes complete native export name');
     assert.equal(await c.api('GetProcAddress', [h, d.names.callback]), 0);
-    assert.equal(await c.api('GetProcAddress', [h, d.names.qt]), 0);
+    assert.notEqual(await c.api('GetProcAddress', [h, d.names.qt]), 0);
     for (const ordinal of [35, 36, 37]) assert.equal(await c.api('GetProcAddress', [h, ordinal]), 0);
     const callback = await c.api('GetProcAddress', [BASE, d.names.callback]);
     assert.equal(await c.call(callback, [], 0), 0x12345678);

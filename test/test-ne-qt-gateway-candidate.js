@@ -29,7 +29,9 @@ async function main(){
     findDllSync:()=>f.ne,neInvokeOptions:{maxBlocks:4096,sliceBlocks:64}});}
   function untilQt(){
     for(let i=0;i<100;i++){
-      e.run(1000);assert.equal(e.get_yield_reason(),18);
+      e.run(1000);
+      if(!e.get_yield_reason()) {assert(e.get_eip(),'PE exited before QT request '+JSON.stringify({i,eax:e.get_eax()>>>0,esp:e.get_esp()>>>0,qt:read(f.qtSlot),handle:read(0x402700),target:read(0x402704)}));continue;}
+      assert.equal(e.get_yield_reason(),18,'unexpected yield at '+(e.get_eip()>>>0).toString(16));
       const token=e.win16_guest_request_token();
       if(e.win16_guest_request_field(token,0)===4)return token;
       assert(service());

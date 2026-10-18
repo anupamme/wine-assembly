@@ -139,7 +139,7 @@ Object.assign(mock, {
   }
   for (const ordinal of [0, 38, 1025, 65535])
     assert.equal(call('handle_GetProcAddress', h, ordinal), 0);
-  for (const name of ['QT_Thunk', 'MessageBoxA', '_acmdln', 'FixtureExeCallback'])
+  for (const name of ['MessageBoxA', '_acmdln', 'FixtureExeCallback'])
     assert.equal(call('handle_GetProcAddress', h, put(0x27000, name)), 0, name);
   // A separate synthetic EXE exports its own callback at ordinal 1. KERNEL32
   // must never expose it, even when the executable really has that export.
