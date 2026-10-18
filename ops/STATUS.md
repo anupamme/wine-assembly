@@ -1,4 +1,4 @@
-Current 2026-10-18: LMarbles localregistrationd8557a6a6 tested/pushed and fixtureverified; sole ordinarygameplay grant active. Outlaws positivepump advances but keyhandlers untouched; source messagefilter/threadownership audit active. Finished LMarblesregistration WT sparsified clean/pushed preservingfixture, ~200MB recovered. No public deployment.
+Current 2026-10-18: Outlaws Peek/Get messagepriority mismatch under fresh isolatedAPI conformance investigation, sole90s prebuiltgrant no productionfix yet. LMarbles Tutorial board reached but selection/movement unverified; cleanexit/rootpins passed and coordinate/input sourceaudit active. No public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
