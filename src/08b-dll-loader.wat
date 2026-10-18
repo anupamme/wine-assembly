@@ -929,6 +929,12 @@
     ;; TIME_ZONE_ID_* classification (0 unknown, 1 standard, 2 daylight).
     (if (call $dll_name_match (local.get $dll_name_ga) "KERNEL32.dll")
       (then
+        (if (i32.eq (local.get $ordinal) (i32.const 35))
+          (then (return (call $lookup_api_id "LoadLibrary16"))))
+        (if (i32.eq (local.get $ordinal) (i32.const 36))
+          (then (return (call $lookup_api_id "FreeLibrary16"))))
+        (if (i32.eq (local.get $ordinal) (i32.const 37))
+          (then (return (call $lookup_api_id "GetProcAddress16"))))
         (if (i32.eq (local.get $ordinal) (i32.const 99))
           (then (return (call $lookup_api_id "KERNEL32_Ordinal99"))))
       ))

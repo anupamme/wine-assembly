@@ -95,6 +95,10 @@ async function main() {
   thread.state='exited';assert.throws(()=>e.get_eip(),/retired/);
   e=mainExports;
 
+  const imported=neGuestCaller(0x400000,{ordinalImports:true});boot(imported);run();
+  assert.equal(read(imported.result),read(imported.result+4));assert(read(imported.result+8));
+  assert.equal(read(imported.result+8),read(imported.result+12));assert.equal(finished,1);
+
   const invalid=neGuestCaller(0x400000,{calls:[[37,[0,2]],[36,[0]],[37,[handle,2]],[36,[handle]]]});
   boot(invalid);run();
   for(let i=0;i<4;i++)assert.equal(read(invalid.result+i*4),0,'invalid/stale aliases never resolve or fabricate success');

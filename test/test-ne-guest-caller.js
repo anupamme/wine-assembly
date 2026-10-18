@@ -9,4 +9,7 @@ for(const base of [0x400000,0x10000000])for(const dll of [false,true]) {
   assert(f.bytes.includes(Buffer.from([0x8b,0x04,0x86])),'guest EAT indexed read');
   assert.equal(f.bytes.includes(Buffer.from([0xc2,12,0])),dll);
 }
+const ordinal=neGuestCaller(0x400000,{ordinalImports:true});
+assert.equal(ordinal.bytes.readUInt32LE(0xb1c),0x80000023);
+assert.equal(ordinal.bytes.readUInt32LE(0xb24),0x80000025);
 console.log('PASS deterministic PE EAT lifecycle caller generation (no guest execution)');

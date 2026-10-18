@@ -2,10 +2,12 @@
 const {makeFixture} = require('../../tools/kernel32-native-fixture');
 // A real PE caller imports GetModuleHandleA, walks KERNEL32's guest EAT, then
 // executes the resulting JMP stubs. No host-injected API address is involved.
-function neGuestCaller(base=0x400000,{dll=false,path='C:\\Outlaws\\DEMO.DLL',calls}={}) {
+function neGuestCaller(base=0x400000,{dll=false,ordinalImports=false,path='C:\\Outlaws\\DEMO.DLL',calls}={}) {
   const bytes=makeFixture(),raw=rva=>rva-0x1000+0x200,optional=0x80+24;
   bytes.writeUInt32LE(base,optional+28);
   if(dll)bytes.writeUInt16LE(0x210e,0x80+22);
+  if(ordinalImports)for(const ordinal of [35,36,37])
+    bytes.writeUInt32LE(0x80000000+ordinal,raw(0x191c+(ordinal-35)*4));
   const result=base+0x2700,entry=base+0x2000,slots=base+0x2600;
   bytes.write('kernel32.dll\0',raw(0x2800));bytes.write(path+'\0',raw(0x2840));bytes.write('VALUE\0',raw(0x2980));
   const code=[],emit=(...b)=>code.push(...b),u32=n=>[n&255,(n>>>8)&255,(n>>>16)&255,n>>>24];
@@ -24,7 +26,7 @@ function neGuestCaller(base=0x400000,{dll=false,path='C:\\Outlaws\\DEMO.DLL',cal
       if(typeof arg==='object')emit(0xff,0x35,...u32(result+arg.result*4));
       else emit(0x68,...u32(arg));
     }
-    emit(0xff,0x15,...u32(slots+(ordinal-35)*4),0xa3,...u32(result+index*4));
+    emit(0xff,0x15,...u32((ordinalImports?base+0x191c:slots)+(ordinal-35)*4),0xa3,...u32(result+index*4));
   });
   emit(0xb8,1,0,0,0,...(dll?[0xc2,12,0]:[0xc3]));
   if(code.length>0x600)throw new Error('NE caller code overflow');
