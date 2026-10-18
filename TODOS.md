@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (FIFA match control follow-up; Outlaws stack lifetime prerequisite)
+  status: active (Outlaws QT gateway; FIFA storage telemetry preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws source8c944b42 pushed; sole canonical/native slot granted after FIFA independent cleanup. FIFA match/ArrowUp evidence inconclusive; reserve guard observed actual floor breach1,837,821,952B, cause unknown. Source-only admission audit before further browser; no identical retry.
+  Next: Outlaws mappinglease prerequisite merged/pushedca29cb087 with independentreview, canonicalbuild and native tests PASS. Fresh /root/outlaws_qt_gateway source implementation. FIFA browser blocked until4GiB free; source telemetry controller in preparation, no identical retry. Runtime released; serialize grants.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (QT caller-stack mapping lifetime prerequisite)
+  status: active (QT gateway implementation after validated lifetime prerequisite)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_stack_lease
-  Next: Mapping lifetime candidate8c944b42 pushed/refverified with pureJS tests and root source review; prerequisite includes atomic range guards and retired stack retention. Sole180s canonicalbuild then90s native/allocator validation granted after FIFA cleanup, estimated64MiB disk cost, admission2GiB+80MiB. QT remains absent, no gameplay claim.
+  worker: /root/outlaws_qt_gateway
+  Next: Mainca29cb087 native mappinglease/targetpin prerequisite reviewed and validated, mergedmodule8694d56d matches candidate. Fresh worker implements real PE->NE QT gateway with aligned leased stack alias, exact frame/return cleanup and failure conformance; source-only until runtime grant. Original game not yet validated.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1655,12 +1655,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - title: USER ASK - add a FIFA game to the corpus (user linked FIFA Street; that is console-only, so a Win9x FIFA demo instead)
   id: USER-FIFA-DEMO-20261012
-  status: active (menu input fix merged; match reached, player control pending)
+  status: blocked (browser admission needs4GiB; telemetry source work active)
   owner: /root/fifa_player_control
   prev-owner: claude:65967384-f1a3-4c67-9257-ecc5f4c71983 (stopped w4)
   created: 2026-10-12T00:15:00.000Z
   created-by: user via Telegram #48/#49 (x.com/exquizitely post about FIFA Street, "Another cool addition to corpus")
-  Next: Run20261018-fifa98-player-control-prep reached match and ArrowUp, but idle kickoff/camera state differs and opposite direction absent: control inconclusive. Guard observed actual below-floor1,837,821,952B and killed owned browser; browserSIGKILL/controller1, outerexitunknown. Independent3PIDs absent/portclosed/allpins unchanged, free2.47GB. Worker source-only peak/admission audit before another browser.
+  Next: Source audit20261018-fifa98-resource-admission-audit preserves unknown cause of653746176B disk fall. Current2.416GB insufficient for4GiB admission/3GiB earlystop. Worker prepares fresh bounded ownedPID/profile/fd allocation telemetry+tests without runtime/deletion. Match/ArrowUp evidence remains inconclusive, no playercontrol/audio/FPS claim.
   Done: a FIFA demo registered with reviewed match gameplay + touch layout; commit.
 
 - [x] Implement documented explicitly enabled DX7 color-key blending
