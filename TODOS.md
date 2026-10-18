@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (sole registered live-turn validation granted)
+  status: active (registered route verified; source clock audit)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Forward success/death-contaminated turn evidence integrated2afba88ff. Root independently cleared LMarbles runtime. Registered-turn PLAN now sole grant180/185/210s exactfd1613e2 fresh3149pins: ordinary MainGameGOOD then freshalive Left before forward; inspect death contamination/release idle. No retry/build/browser/publicdeploy.
+  Next: Registeredturn run20261018-outlaws-registered-turn-observation reached originaltown, but immediateLeft-before alreadydead despite earlieralive capture; live turning still unverified. Root3149pins31original/groupemptyPASS bothexit0. Source audit default200ms-per-batch versus realticks before another replay; no runtime/build/browser grant. Prior forwardcontrol remains reviewed.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (source audit of missing positive control)
+  status: active (corrected positive-control diagnostic granted)
   owner: /root/new_game_refill_after_lbreakout
-  Next: Selection diagnostic20261018-lmarbles-selection-observation reached TutorialMoves18 but positivepoll4035c9 zero twice despitearming. Stopped before boardinput; no lostdelivery claim. Both exit0 root3279pins86original/groupemptyPASS. Evidence integrated7eb6eff3b; worker audits counter coverage/currentexecution source-only before next diagnostic. No coordinatehack or runtime grant.
+  Next: Sourceaudit84014864f explains4035c9 interiorCALL cannot count as blockentry. Sole correctedrun grant:415230 SDLpoll +4035ce gameplayreturn positives, validmotion/buttonUP/selectioncounts, read-onlystate, reviewed emptytile-to-marble/mode1/selection beforearrow. Freshpins samefd1613e2 realticks180/185/210s2GiBmargins8MiBlog; no build/browser/retry.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
