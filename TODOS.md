@@ -1735,7 +1735,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (real alertable Beep continuation)
+  status: active (Beep handler/export enable preparation)
   owner: /root/crt_fdopen_prerequisite
-  Next: Original rewind retry stops at Beep GetProcAddress NULL. Cause not yet established: catalog has API9 even for stub, but loaded DLL lookup uses its actual export directory. Beep handler remains unimplemented on main; reviewed alertable/retirement candidate and actualWorker/broker fixtures pending compiled validation. Synthetic routing cannot establish original MSVCR70 lookup resolution; no original retry yet.
+  Next: Beep continuation/retirement b1aada2aa reviewed; dualdispatch nestedAPC, all7brokerimports, actualOSWorker delayedrequest/termination and lifecycle tests PASS. Root integration buildPASS exact440c4f4e; publicstub unchanged. Next explicit handler+KERNEL32 namedexport and production positive/failure routing tests. Generated manifest omits Beep; original MSVCR70 hModule provenance still unverified, no original retry.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
