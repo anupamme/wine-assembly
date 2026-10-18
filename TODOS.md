@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Barrage direct-range; fresh Outlaws replacement screening)
+  status: active (Barrage timer audit; Circus Linux original acquisition)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Outlaws corequalified rootreviewed originalforward+registeredturn; fresh /root/new_game_refill_after_outlaws source-screening. Barrage sole registereddirectrange aim/fire test. One runtime strict2GiBfloor no publicdeploy.
+  Next: Outlaws corequalified. Fresh /root/new_game_refill_after_outlaws acquires officialCircusLinux1.0.0Win32ZIP cap24MiB for hash/license/PEclosure/passiveplan. Barrage sourcecountdown/HUD audit. Runtimeidle pendingreadyplan, one runtime strict2GiBfloor no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1721,7 +1721,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames Barrage 1.0.5 original Windows release
   id: NEW-GAME-BARRAGE-20261018
-  status: active (sole registered direct-range aim/fire granted)
+  status: active (source audit of countdown and complete HUD capture)
   owner: /root/new_game_refill_after_ltris
-  Next: Freshdirectrangeplan b2ce29d67 granted180/185/210s afterOutlawsrelease/rootpostflight. Exactregisteredroute/freshpinsfd; reviewedaim2points actual36baseline->single250msleft30idle. Diskrestored~82MB cleanpushedinactiveQTgateway sparsification free2.359GB. Strictguards no retry/build/browser.
+  Next: Directrange reached scene but timeupbeforeaim; no shot/aimqualification. Root3243pins45original/groupemptyPASS exits0. Sourceaudit timerarithmetic/SDLclock and fullclient/backbuffer capture to avoidclippedammo; no identicalruntime retry.
+  Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
+
+- [~] New-game lane: Circus Linux! 1.0.0 original Windows release
+  id: NEW-GAME-CIRCUS-LINUX-20261018
+  status: active (original acquisition and import closure)
+  owner: /root/new_game_refill_after_outlaws
+  Next: OfficialNewBreed linkedWindowsZIP2107742B; no local/public/qualified match. Acquire under24MiB retained strict2GiB+64MiBstop, hash/license/PE32 recursiveDLL-data closure/passiveplan. No runtime/build/browser grant.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
