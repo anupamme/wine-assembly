@@ -32,3 +32,16 @@ preparation, pure guard checks and fresh pin creation are adjacent under
 unregistered blocked diagnostic, not a successful game result. No registry
 `result.json` was created. Reproduction requires a new exclusive runtime grant
 and fresh canonical pins; the existing output directory cannot be reused.
+
+## Reconciled module-handle provenance
+
+Reading the retained log establishes the named DLL for the failed lookup:
+API 159, `LoadLibraryA("KERNEL32.DLL")`, called from `0x007b8594`, returns
+`0x00db7e54` (log lines 777–778). API 247 then requests `Beep` using that
+same handle and returns zero (lines 1745–1746). Earlier API 103 and 129
+loads of KERNEL32 also return that handle. Thus the original caller's DLL
+name is established by the original run, rather than inferred from the
+synthetic fixture. This does not establish which internal export-lookup
+branch ran or prove the new export fixes the original game. The explicit
+KERNEL32 export candidate still requires production-route validation and
+a fresh original retry. No new game execution was used for this finding.
