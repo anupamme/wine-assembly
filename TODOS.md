@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus stdio prerequisite; Mad Bomber original launch preparation)
+  status: active (Circus setbuf compiled validation; Mad Bomber zlib attach audit)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Circus _iob build and four compiled tests pass; root integration validation. Real setbuf NULL-mode source work underway, unsupported buffers remain fail-fast. Mad Bomber original140-file closure verified; guarded passive launch preparation. One runtime, no public deploy.
+  Next: Circus bounded real NULL setbuf b62952fb1 independently reviewed; sole compiled validation granted. Mad Bomber original passive launch failed zlib attach; root3146pins140original/groupemptyPASS. Source audit active, no automatic retry. One runtime, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (real setbuf NULL-mode source implementation)
+  status: active (setbuf compiled conformance validation)
   owner: /root/new_game_refill_after_outlaws
-  Next: Static CRTDLL _iob independently reviewed; normal build and iob/stdio/acmdln/setvbuf tests pass including distinct-process isolation/native export precedence. Root integration validating. Next real NULL-mode setbuf for owned FILEs, fail-fast unsupported states; original retry not yet authorized.
+  Next: Bounded real setbuf NULL for owned consistent FILEs b62952fb1 pushed, tests authored not run. Independent source review clear; sole gated build and compiled tests granted including individual rejection cases. Custom buffers and inconsistent/copied FILEs remain fail-fast; no game retry.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (guarded passive original launch preparation)
+  status: active (original zlib initializer source audit)
   owner: /root/refill_after_barrage
-  Next: Publisher ZIP f21ab591 verified;140 originals byte-match archive,8 PE modules, original bundled DLLs retained. Source-only guarded passive60/65/85s preparation; dynamic imports/MSVCRT_iob unverified. No runtime until fresh grant.
+  Next: ONE passive run20261018-madbomber-passive-startup exits1 zlib DllMain c6fb80 returnsFALSE; no window or input. Root3146pins140original/module unchanged groupempty. Shared auto MSVCRT lacked prerun hash, explicit limitation; add futurepin. Original initializer source audit, no automatic retry.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.

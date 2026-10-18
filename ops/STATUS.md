@@ -1,3 +1,5 @@
+Current 2026-10-18: Mad Bomber original launch stops at zlib DLL_PROCESS_ATTACH FALSE; no window/gameplay, source audit active. Root original/source pins and process cleanup passed; auto-loaded MSVCRT lacked pre-run hash (limitation retained). Circus bounded setbuf source fix independently reviewed; sole compiled validation granted. No public deploy.
+
 Current 2026-10-18: Circus CRTDLL _iob normal build and four compiled regressions passed; root integration validation. Real setbuf source work remains before game retry. Mad Bomber original Windows140-file closure verified; passive launch preparation fills second lane. One runtime, >2GiB floor, no public deploy.
 
 Current 2026-10-18: Barrage original registered aiming/fire/released-idle qualified with reviewed screenshots (20261018-barrage-reviewed-gameplay), no audio/FPS/fullgame claim. Circus _iob source review clear; sole compiled validation active. Fresh /root/refill_after_barrage source-screens replacement. One runtime, >2GiB floor, no public deploy.
