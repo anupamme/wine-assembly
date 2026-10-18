@@ -1090,7 +1090,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (rewind compiled validation; qsort source review)
+  status: active (Mad Bomber retry preparation; qsort test preparation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (retained qsort independent review)
+  status: active (reviewed qsort test preparation)
   owner: /root/crt_jump_ownership
-  Next: Instrument qsort only with perthread retained frames and distinct comparatorchild IDs, expectedtoken/returnESP before continuationmutation, nestedqsort preservation. Source f82157f3e pushed, actualx86 nested/yield/rejection tests authored notrun; independentreview active. bsearch/initterm/othercallbacks and realjump handlers pending.
+  Next: Instrument qsort only with perthread retained frames and distinct comparatorchild IDs, expectedtoken/returnESP before continuationmutation, nestedqsort preservation. Source f82157f3e pushed, actualx86 nested/yield/rejection tests authored notrun; independentreview clear, compiledtests queued behind originalretry. bsearch/initterm/othercallbacks and realjump handlers pending.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (rewind compiled conformance validation)
+  status: active (tested rewind original retry preparation)
   owner: /root/crt_fdopen_prerequisite
-  Next: ONE20261018-madbomber-fdopen-retry proves_fdopen resolves07504880 atAPI110 thenrewind NULL atAPI122 zlibret00c6fcc5. No_fdopeninvocation/window/PNG. Root3204pins140original/sharedCRT/aafa600a/groupemptyPASS. Realrewind c6f955b1 independently clear; sole normalbuild/compiledIO-broker-dynamic and stdio/fdopen regression grant. No game retry.
+  Next: ONE20261018-madbomber-fdopen-retry proves_fdopen resolves07504880 atAPI110 thenrewind NULL atAPI122 zlibret00c6fcc5. No_fdopeninvocation/window/PNG. Root3204pins140original/sharedCRT/aafa600a/groupemptyPASS. Rewind reviewed/worker normalbuild+3testsPASS and rootnormalbuild/rewindPASS exactc3ae99a8. Next ONE original10/15/25 retry with freshpins, no automaticrepeat.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
