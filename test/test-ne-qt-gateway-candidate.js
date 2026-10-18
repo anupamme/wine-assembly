@@ -36,7 +36,7 @@ async function main(){
       secondary.exports.init_thread(1,e.get_image_base(),e.get_code_start(),e.get_code_end(),e.get_thunk_base(),e.get_thunk_end(),e.get_num_thunks(),0);
       e=manager.cooperativeCallbackExports(thread);
     }
-    e.set_esp(stack);e.set_eip(f.entry);write(stack,0);
+    e.clear_yield();e.set_esp(stack);e.set_eip(f.entry);write(stack,0);
   }
   function service(){return serviceNeGuestYieldSync({exports:e,memoryBuffer:memory.buffer,
     findDllSync:()=>f.ne,neInvokeOptions:{maxBlocks:4096,sliceBlocks:64}});}
@@ -73,6 +73,9 @@ async function main(){
   }
   for(const options of [{cleanup:0},{cleanup:2}]) {
     boot(options);untilQt();const s=e.get_esp()>>>0;assert(service());assert.equal(e.get_esp()>>>0,s+4+options.cleanup,'actual under-cleanup retained');
+    // These deliberately stop before the wrapper's FreeLibrary16. Retire the
+    // image normally before reusing its arena for a different machine body.
+    createNeLifecycle(e,memory,[]).releaseGuest(read(0x402700));
   }
   boot();let request=untilQt(),s=e.get_esp()>>>0,ret=read(s);
   if(!manager) {
