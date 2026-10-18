@@ -362,6 +362,28 @@
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))  ;; stdcall, 1 arg
   )
 
+  ;; IsDBCSLeadByteEx(CodePage, BYTE TestChar). Classification only: no trail
+  ;; byte or character conversion. Reuse the same ranges as the MBCS helpers.
+  (func $handle_IsDBCSLeadByteEx (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    (local $cp i32)
+    (local.set $cp (call $resolve_code_page (local.get $arg0)))
+    ;; CP_MACCP uses the default US Macintosh page (10000) in this runtime.
+    (if (i32.eq (local.get $cp) (i32.const 2))
+      (then (local.set $cp (i32.const 10000))))
+    (if (i32.or
+          (call $is_supported_code_page (local.get $cp))
+          (i32.or (i32.eq (local.get $cp) (i32.const 10000))
+            (i32.or (i32.eq (local.get $cp) (i32.const 65000))
+                    (i32.eq (local.get $cp) (i32.const 65001)))))
+      (then
+        (i32.store offset=0 (global.get $reg_base)
+          (call $is_dbcs_lead_byte_for_cp (local.get $cp) (local.get $arg1))))
+      (else
+        (global.set $last_error (i32.const 87)) ;; unsupported/invalid code page
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0))))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12)))
+  )
+
   ;; 353: GetTempPathW — STUB: unimplemented
   (func $handle_GetTempPathW (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
     ;; GetTempPathW(nBufferLength, lpBuffer) — 2 args
