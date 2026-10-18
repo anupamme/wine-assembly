@@ -30,7 +30,7 @@ function scanWat(src, file) {
     walk(form, node => {
       if (head(node) === 'global.set' && node[2] === '$eip') writes.push(node);
       if (head(node) === 'global.set' && (String(node[2]).startsWith('$invocation_') ||
-          ['$qsort_owner', '$qsort_depth'].includes(node[2]))) ownershipWrites.push(node[2]);
+          ['$qsort_owner', '$qsort_depth', '$bsearch_owner', '$bsearch_depth'].includes(node[2]))) ownershipWrites.push(node[2]);
       if (head(node) === 'call') calls.push(node[2]);
       if (head(node) === 'export') exports.push(JSON.parse(node[2]));
     });
@@ -39,7 +39,7 @@ function scanWat(src, file) {
     if (!writes.length && !boundaryCalls.length && !ownershipWrites.length &&
         !['$sync_depth_enter', '$sync_depth_leave'].includes(form[2]) &&
         !(head(form) === 'func' && (String(form[2]).startsWith('$invocation_') ||
-          form[2] === '$qsort_frame_at'))) continue;
+          ['$qsort_frame_at', '$bsearch_frame_at'].includes(form[2])))) continue;
     // Includes macro bodies and top-level forms: moving a write out of a func
     // does not remove it from this inventory.
     const name = typeof form[2] === 'string' && form[2].startsWith('$')

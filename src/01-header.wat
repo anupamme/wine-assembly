@@ -2899,14 +2899,6 @@
   (global $atexit_exit_code (mut i32) (i32.const 0))
   (global $atexit_ret_thunk (mut i32) (i32.const 0))
   ;; bsearch trampoline state (CACA000C continuation drives the search)
-  (global $bsearch_key     (mut i32) (i32.const 0))  ;; guest ptr to key
-  (global $bsearch_base    (mut i32) (i32.const 0))  ;; guest ptr to array base
-  (global $bsearch_size    (mut i32) (i32.const 0))  ;; element size in bytes
-  (global $bsearch_compar  (mut i32) (i32.const 0))  ;; guest fn ptr (cdecl comparator)
-  (global $bsearch_low     (mut i32) (i32.const 0))  ;; inclusive lower bound
-  (global $bsearch_high    (mut i32) (i32.const 0))  ;; exclusive upper bound
-  (global $bsearch_mid     (mut i32) (i32.const 0))  ;; current probe index
-  (global $bsearch_ret     (mut i32) (i32.const 0))  ;; caller return address
   (global $bsearch_thunk   (mut i32) (i32.const 0))  ;; guest addr of CACA000C thunk
   ;; qsort trampoline state. Adjacent comparisons make the continuation small
   ;; and let swaps use sparse-safe guest byte accesses (CACA002D).

@@ -1359,20 +1359,7 @@
     ;; eax==0 → hit; eax<0 → narrow to [low, mid); eax>0 → narrow to [mid+1, high).
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA000C))
       (then
-        ;; compar's ret popped the thunk addr; our 2 pushed args remain.
-        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
-        (if (i32.eqz (i32.load offset=0 (global.get $reg_base)))
-          (then
-            (i32.store offset=0 (global.get $reg_base) (i32.add (global.get $bsearch_base)
-              (i32.mul (global.get $bsearch_mid) (global.get $bsearch_size))))
-            (global.set $eip (global.get $bsearch_ret))
-            (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-            (return)))
-        (if (i32.lt_s (i32.load offset=0 (global.get $reg_base)) (i32.const 0))
-          (then (global.set $bsearch_high (global.get $bsearch_mid)))
-          (else (global.set $bsearch_low
-            (i32.add (global.get $bsearch_mid) (i32.const 1)))))
-        (call $bsearch_probe)
+        (call $bsearch_continue)
         (return)))
 
     ;; qsort comparator returned; swap if needed and schedule the next pair.
