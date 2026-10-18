@@ -115,3 +115,5 @@ image lifecycle regressions plus the new real dispatcher/lifetime cases.
 Rebuild with bash tools/build.sh; run native fixture with explicit
 WA_TEST_WASM=build/wine-assembly.wasm node test/test-win32-ne-lifecycle-candidate.js.
 Always obtain a fresh root slot before repeating build/native/original runs.
+
+Original validation after root integration410eb2d7b: run20261018-outlaws-original-builtins-observation canonical9bf60517 no longer fails GDI resolution. WDIR62 LibEntry calls KERNEL95 LoadLibrary and hits intentional live-bridge-frame rejection (win16_kernel wasm9983:174504, src09e:6938-6943). TOOLHELP80 not reached. Child2189050/controller2189042 naturalexit1~205ms, no watchdog; root3113pins/originals unchanged/no survivors/free3,793,481,728B. No screenshot before termination/input. Preserve guard; next implement actual owned nested lifecycle rather than legacy bypass.

@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Outlaws ordinal dependency repair; next-title selection)
+  status: active (Outlaws nested load; SuperTux original startup)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: FIFA core registered/reviewedkeyboardgameplay/touchlayout complete7ea9cce4c; touchdevice/audioFPS followup separate. /root/new_game_refill_oct18 selecting next nonqualified original candidate beyond prior18excluded. Outlaws native ordinaldependency validation underway; reviewer namedimport ownership gap requires explicitunsupported rejection before merge.
+  Next: FIFA corecomplete7ea9cce4c, separatedevice/audioFPS task. Outlaws ordinalbuiltins merged410eb2d7b; originalnextKERNEL95 nestedload guard in WDIR62LibEntry. /root/outlaws_nested_ne_load sourceimplementation; SuperTux official787filesverified /root/new_game_refill_oct18 sole60s/85shard passive startupgranted.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (WDIR62 built-in dependency resolution)
+  status: active (owned nested Win16 LoadLibrary design/implementation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/outlaws_wdir62_load
-  Next: Diagnosis4bf423608 independently replayed in integration: authenticWDIR62 parses, then gdi.dll missing producesNeLoadError2. Worker repairing both ne-sources and ne-lifecycle fixedbuiltins/dynamicTOOLHELP identity with references/rollback; ordinal80 remains unsupported until called/properlyimplemented. No runtime yet for repair.
+  worker: /root/outlaws_nested_ne_load
+  Next: Original20261018-outlaws-original-builtins-observation module9bf60517 reaches WDIR62LibEntry then KERNEL95 LoadLibrary livebridgeframe guard, NOT TOOLHELP80. Child2189050/controller2189042 naturalexit1~205ms; root3113pins/originals unchanged/survivorsempty/free3.79GB. Preserve guard until real nestedownership/refcount/rollback/cancellation supported. Fresh worker source-only whileSuperTux runtime.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1690,3 +1690,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   status: blocked (browser admission below4GiB; device/audio/FPS evidence missing)
   owner: unowned
   Next: Core keyboardgameplay accepted and touchlayout7ea9cce4c merged. Validate touchgeometry/simultaneousinput on device, audio listening/reference and logicalFPS separately. Existing captures do not establish these. Preserve originals; no publicdeployment.
+
+- [~] New-game lane: SuperTux 0.1.3 original Windows release
+  id: NEW-GAME-SUPERTUX013-20261018
+  status: active (verified original passive startup)
+  owner: /root/new_game_refill_oct18
+  Next: Official GitHub original7,623,968B installer SHA256bc4893dbb84a02beb8958dab1c922a7f715aa08ed463d2a0efa6bc58d79c9a9b extracted without execution;787files/dependencyclosure/hashes verified, no missingpayload. Packet docs/supertux-013-launch.json; rootgranted60s/85shard passive startup exact9bf60517 after sourcepins, noinput/licenceresponses. Gameplay untested.
+  Done: Working original launch, ordinary player gameplay and reviewed screenshot; register separately without publicdeploy.
