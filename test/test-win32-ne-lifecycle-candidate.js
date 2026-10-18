@@ -224,6 +224,13 @@ async function main() {
   ]);
   const builtins=createNeLifecycle(e,memory,builtinImages,{maxBlocks:10000,sliceBlocks:256});
   const foreignBuiltins=createNeLifecycle(foreign,memory,builtinImages,{maxBlocks:10000,sliceBlocks:256});
+  const claimName=name=>{const b=Buffer.alloc(16);b[0]=name.length;b.write(name,1,'ascii');return e.win16_bridge_module_claim(b.readBigUInt64LE(0),b.readBigUInt64LE(8));};
+  const publishFrame=e.win16_bridge_frame_begin();assert(publishFrame);
+  assert.equal(e.win16_bridge_scope_begin(publishFrame),1);
+  const rejectedId=claimName('UNSUPPORTED');assert(rejectedId>0);
+  assert.equal(e.win16_bridge_module_publish_emulated(rejectedId),0,'unknown names cannot fabricate ready identities');
+  assert.equal(e.win16_bridge_module_rollback(rejectedId),1);
+  assert.equal(e.win16_bridge_frame_end(publishFrame),1);clean();onlyModule(0,0);
   const namedSlot=name=>{
     for(let id=13;id<37;id++) {
       const at=e.win16_dynamic_module_slot(id-13),n=bytes[at];
