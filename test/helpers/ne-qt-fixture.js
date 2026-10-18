@@ -39,6 +39,14 @@ function neQtFixture({base=0x400000,words=[1000,0],cleanup=words.length*2,
   pe.bytes.set(code,raw(0x2000)+prefix);
   const ne=neLifecycleImage(),body=[],push=(...b)=>body.push(...b);
   ne.writeUInt16LE(0x40,0x80+0x60+6); // VALUE ordinal 2, independently of name
+  // Before establishing a private callee frame, mutate the incoming BP's
+  // original PE scratch. This distinguishes aliasing from a copied BP frame.
+  push(0x36,0x66,0xc7,0x46,0xfc,...u32(0xfacebeef));
+  scratch[15]=0xfacebeef;
+  push(0x36,0x89,0x76,0xf4,0x36,0x89,0x7e,0xf8); // save incoming SI/DI in caller scratch
+  for(const modrm of [0xc0,0xd8,0xe0,0xe8]) // ES,DS,FS,GS must be zero
+    push(0x8c,modrm,0x85,0xc0,0x74,1,0xcc);
+  push(0x8c,0xd0,0x39,0xd0,0x74,1,0xcc); // DX is the alias SS
   push(0x55,0x89,0xe5);
   const branches=[];
   for(let i=0;i<words.length;i++) {
