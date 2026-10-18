@@ -1,5 +1,14 @@
 # Candidate recovery status
 
+October 18 metadata refresh: **136 candidates, 122 package recipes, 13 manual
+preparations and one shared fixture**, with 19 output inventories and zero
+malformed references. Manifest SHA256:
+`f8a225650cd1f115a20c2eb89390a28545187bcd9601ac4872892712a6f3200f`.
+The 13 manual IDs below are unchanged. Local summary receipt:
+`scratch/recovery-audit-20261018.json`. This audit ran no downloads, installation
+or game validation; inventory presence is not a fresh recovery receipt. The
+following October 15 counts are historical, not the current total.
+
 Snapshot including AVP2 and BG2 original-payload recovery, 2026-10-15. Refresh with `node tools/audit-candidate-recovery.js`; JSON identifies the manifest SHA256 and reports malformed package references.
 
 135 candidates:121 package recipes,13 manual preparations,1 shared fixture (generally-track-editor uses generally). These counts describe metadata, not successful installed-game reconstruction or current source availability. They do not cover every registry entry or the separate DOS corpus. An output inventory file is not a fresh recovery receipt. All 18 current output inventories follow the candidate-ID filename convention so the audit can discover them, including the four GOG DOS packages. Audit reports zero malformed references; manifest SHA256 is `6570ac6636b1f40cc3b616347370caa432241fd3dc09326c7dfebfc964342496`.

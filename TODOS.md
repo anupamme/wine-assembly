@@ -1101,14 +1101,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Inventory every game and complete gameplay screenshot/FPS coverage
   id: OPS-ALL-GAMEPLAY-COVERAGE
-  status: active
+  status: blocked (saved runtime box stopped; owner resume required)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   created: 2026-10-03T08:30:54.631Z
   created-by: user via Telegram
   accepted: 2026-10-03T08:30:54.631Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Separate-box runtime access is restored; historical evidence gaps remain (57 paths in scratch/recovery-gl27-20261014/local-audit.json). Recover before repeating captures. Darkstone and AoW2 source-prepared validation routes are in docs/gl-d3d-next-validations-20261015.md; await one runtime slot and live owning-backend attestation. Historical coverage counts are not fresh qualification.
+  Next: Disk reserve restored; saved bx_9ef2wdsw still stopped and scoped resume403. Await owner resume for serialized scene-qualified capture/FPS validation, after independent source/evidence checks. Darkstone matching-landmark movement reviewed and trace mergedcffd439e2; no new FPS/backend correctness claim. Existing per-game evidence gaps remain explicit.
   Done: Each game has a reviewed actual-gameplay screenshot and valid scene-qualified FPS evidence, or an explicit per-game blocker with exact missing paths; menus, intros and raw Flip event rates are not gameplay FPS.
   Evidence: ops/handoffs/migration-core-ready-20261003.md
 
