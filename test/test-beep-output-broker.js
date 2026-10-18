@@ -7,11 +7,12 @@ const RPC=require('../lib/guest-rpc');
 const {sigs}=require('../lib/host-import-sigs.generated.json');
 (async()=>{
  const extraWat=`
- (func (export "tone_start") (param i32 i32) (result i32) (call $host_beep_start (local.get 0) (local.get 1)))
+ (func (export "tone_start") (param i32 i32) (result i32) (call $host_beep_start (local.get 0) (local.get 1) (i32.const 1) (i32.const 2) (i32.const 0)))
  (func (export "tone_status") (param i32 i32) (result i32) (call $host_beep_status (local.get 0) (local.get 1)))
  (func (export "tone_cancel") (param i32) (result i32) (call $host_beep_cancel (local.get 0)))`;
  const h=await bootRenderHarness({extraWat,fonts:'none'}),ac=audioContext();
  h.hostCtx._voices._ensureCtx=()=>ac;
+ h.host.beep_process_begin(1,0);h.host.beep_thread_begin(1,2,0,1,0);
  const broker=RPC.createMainBroker(h.memory,h.host,sigs,{});
  const remote=RPC.createWorkerImports(h.memory,sigs,msg=>broker.serveRpc(msg.slot),{slot:3});
  const host={...h.host};for(const n of ['beep_start','beep_status','beep_cancel'])host[n]=remote.imports.host[n];

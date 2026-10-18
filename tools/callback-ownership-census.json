@@ -62,7 +62,7 @@
         "$invocation_root",
         "$invocation_depth"
       ],
-      "sha256": "27f329e6c9a1dbdf881b666bf18b036bded428f7a219bfbda5dda19f3f2ffd97",
+      "sha256": "673e066a9178adcf94daac2bc49de5342622268499281a1359ffb7a2f10fb5c0",
       "kind": "lifecycle",
       "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
       "ownership": "pending"
@@ -108,7 +108,7 @@
       ],
       "exports": [],
       "targets": [],
-      "sha256": "650d0d3eefdc6321cf2365b370ece4508a46beee135771752cd95e0c9b02c4dc",
+      "sha256": "a5df35bdb3863b07d1516104a8b81acb4061d8f0dca427fc22aa4cfafe304a3c",
       "kind": "lifecycle",
       "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
       "ownership": "pending"
@@ -154,7 +154,7 @@
       ],
       "exports": [],
       "targets": [],
-      "sha256": "9d3a796b84f7ae6be4c562bed8980f986384922ac3e421c711e43b572ae4d007",
+      "sha256": "714bf87a9c2dcc63df044c35d3f5708b4950fd17a126b35f09e8ff227e584320",
       "kind": "lifecycle",
       "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
       "ownership": "pending"
@@ -258,7 +258,7 @@
     {
       "file": "lib/guest-thread-host.js",
       "name": "host-file",
-      "sha256": "79e22f846d3aef10239ce190ca1af99997d0dd982a7fbbb8b684a5c2091be628",
+      "sha256": "c466efb44b2163f9608004e1f695a1babf1f437676b34a03ee0718f7f7416af9",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"
@@ -274,7 +274,7 @@
     {
       "file": "lib/host-audio.js",
       "name": "host-file",
-      "sha256": "acf140a1bff58d6a20e803df4468369d5d18de51c9fd2154be849be471f1be47",
+      "sha256": "1e64908e03b89046b554eb2d3f63b638f6caa9401eb6cd794114d72978b1e324",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"
@@ -282,7 +282,7 @@
     {
       "file": "lib/host-imports.js",
       "name": "host-file",
-      "sha256": "4f31fee71e264cbcee1d2c0b3e886a85ae48eac40230ad95ccf906ed548f67a3",
+      "sha256": "4f68f07adb807c63768225c9acf78385347901b7adb5623655b3de1803283349",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"
@@ -346,7 +346,7 @@
     {
       "file": "lib/thread-manager.js",
       "name": "host-file",
-      "sha256": "25463dca07cbbf4723c901ee111dfc50b589a5430b50658b5080919173b6c27c",
+      "sha256": "ecdc6d250809679ea6111a59d37d65c76992aabfc63aecf9970d31d2661db441",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"
@@ -2873,7 +2873,7 @@
           "0"
         ]
       ],
-      "sha256": "35245a1d55f44e4cabc013e9487d19e145095f30de6070bff09f52623bc6bed7",
+      "sha256": "825171f83421817619a1d65851452d008b09a4acc5371c638f2cc510458e9bc8",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
@@ -8688,12 +8688,12 @@
       "name": "$beep_begin",
       "writes": 0,
       "boundaryCalls": [
-        "$invocation_enter",
-        "$invocation_leave"
+        "$invocation_validate",
+        "$invocation_enter"
       ],
       "exports": [],
       "targets": [],
-      "sha256": "5831bb3a12570c46e056708c7515484f19d9ca2b00d46ad5d18a2423c7305d34",
+      "sha256": "b75dba2a047200357b168947e9bea8e7e47c6069cc8a443023c6460334cb5a42",
       "kind": "continuation",
       "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
       "ownership": "pending"
@@ -8709,7 +8709,7 @@
         "beep_cleanup"
       ],
       "targets": [],
-      "sha256": "eb114fe38e90c670101368d535eec08b30d321a20dabc791576ebb99729b0e2b",
+      "sha256": "7dd4e8ca261959026c091635550e3e1d6582a22ed21376f11964dc84cacbf352",
       "kind": "continuation",
       "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
       "ownership": "pending"
@@ -8728,7 +8728,7 @@
           "$beep_cont_thunk"
         ]
       ],
-      "sha256": "fedb5ff8632e6b8236a723992fe92e9c23b57c0b5111752417604a48af7b76c8",
+      "sha256": "bc5cf2ff8351a2ca2daa9c4e37e14323a25608d569a60e5ce8877e7ca9be1e74",
       "kind": "continuation",
       "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
       "ownership": "pending"
@@ -8751,7 +8751,7 @@
           ]
         ]
       ],
-      "sha256": "80ad1d774e76fdde4a0ac5a30b4738682680be88dd5ce0db6dc5ebe0a4e9c504",
+      "sha256": "94361344e818cf4d9ef4ec8c2ce82fdaaae459d3979a94ccd047e99b13ec0dfb",
       "kind": "continuation",
       "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
       "ownership": "pending"

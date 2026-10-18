@@ -136,3 +136,48 @@ wired to those paths. Nonlocal-unwind support is still disabled repository-wide.
 Tests must also establish production dynamic resolution, genuine scheduler
 alertable wake behavior, Worker teardown, and audible browser output. The
 bounded output prerequisites do not yet constitute an enabled Beep API.
+
+## Retirement and generation integration (source-only)
+
+The latest slice supersedes the heap-frame limitation above. Continuations use
+`BEEP_CONTEXTS`: sixteen disjoint partitions of 64 records, 32 bytes each.
+The existing invocation root identifies a partition lifetime; a new root resets
+its private depth/head and private continuation thunk. Forced retirement needs
+no foreign-instance heap free or invocation-stack manipulation. The existing
+Worker termination barrier still controls slot reuse.
+
+Host lifetime setup now receives the callback allocator's monotonic 64-bit
+process epoch and thread root as explicit low/high DWORD pairs. Process begin
+retires all prior tokens before accepting a newer epoch. Thread begin accepts
+only the current process epoch and a newer thread root (or the same active
+root); it cannot reopen a retired root. Start carries thread ID and root, so a
+delayed broker start from a retired or replaced lifetime returns -995. Token
+IDs remain monotonic across process resets in the same host state. Status and
+cancel on released old tokens return -6 and cannot affect newer tokens; delayed
+ended callbacks retain only the detached old tone object.
+
+Normal ExitThread and ThreadManager's first exit transition cancel output using
+the old root before its slot can be reused. The latter calls a main-instance
+export that only reads the shared root and retires host audio; it never executes
+the dead Worker's continuation. Duplicate exit notifications skip retirement.
+The host exit callback, stopAudio, and GuestThreadHost.stop fence all new output
+and release tokens before asynchronous Worker shutdown awaits completion. A
+new process epoch is required to reopen output after shutdown.
+
+Authored lifecycle coverage extends the compiled continuation fixture with
+actual nested guest APC waits, production ThreadManager forced retirement,
+new init_thread root/slot reuse, stale start/retire requests, and process reset.
+`test-beep-retirement.js` covers exact 64-bit identities, late ended events,
+stale process/thread begin, and the production backend stop ordering while its
+Worker retirement promise is pending. This controlled promise is not an OS
+Worker scheduling test. The tests remain unrun in this source-only slice. The continuation fixture also
+uses the actual ThreadManager alert hook to clear a pending sleep deadline and
+an actual guest SetLastError call inside its APC before checking final restoration.
+
+Public Beep still remains disabled pending independent review and the normal
+build plus runtime suite. Required remaining validation includes the alertable
+continuation itself, scheduler wake timing, actual OS Worker retirement, and
+production dynamic resolution once enabled after review. Duration above 60000
+ms returns ERROR_NOT_SUPPORTED, invalid frequency/zero duration returns
+ERROR_INVALID_PARAMETER, and absent/suspended/insufficient-rate output fails
+explicitly. No unavailable-output or recorder-only success is introduced.
