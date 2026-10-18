@@ -1614,10 +1614,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Outlaws original Windows single-player demo
   id: NEW-GAME-OUTLAWS-DEMO-20261015
-  status: active (Peek/Get selection conformance reproduction)
+  status: active (reproduced Peek/Get defect; fix build and review)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/outlaws_original_qt_prepare
-  Next: Source PeekNCbeforeinput vs GetinputbeforeNC can bypass originalpreGet keyboardhandling, causalityunproved. Fresh /root/peek_get_consistency owns isolatedAPI reproduction NCbits1/4 x keydown/up pluscontrols; sole90s prebuiltgrant, no build/original/browser yet. Fixonlyif demonstrated then separatebuildreview. Audit9ab1ec744 main.
+  Next: Prebuiltcanonicala4a4bc6a minimalAPI test reproduces4/4 NC1/4 x keydown/up mismatch Peek85 vs Get100; controls/exactoncePASS. Proposedphaseorder11cc9f158 pushed sourcegatesPASS; worker sole120sbuild90sfocusedtest grant, independentreview_peek_get_ordering active. OriginalOutlaws causality unproved until testedintegration/replay.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identities.
 
 - [~] New-game lane: Army Men original 1998 Windows demo
@@ -1707,7 +1707,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames LMarbles 1.0.8 original Windows release
   id: NEW-GAME-LMARBLES-20261018
-  status: active (Tutorial board reviewed; selection coordinate audit)
+  status: active (source-backed motion/selection diagnostic preparation)
   owner: /root/new_game_refill_after_lbreakout
-  Next: RegisteredNewGameStart TutorialMoves18 reviewed byworker, mouse/Right no visiblemovement orselectionarrow; no controlqualification. Both exit0 root3279pins86originalgroupemptyPASS, docs07e8957a0 main. Source-only windowclient/SDLcoordinate/selection audit before next runtime, no blindrepeat.
+  Next: Coordinateconversion correct minusclient23,43. OriginalSDLmotion classifiesmarble; buttonUP selects onlycursormode1; arrowKEYUP requiresselection. Samepointmotionsuppression hypothesis unproven. Audit852b2b147 main; sourceprep deliberateemptytile->marblemove/click with passivepositivepoll/state snapshots; no runtime until PeekGet release.
   Done: Working original launch, ordinary player gameplay and reviewed screenshot with exact source/run identity.
