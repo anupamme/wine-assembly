@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus nonlocal dispatch design; Mad Bomber fdopen implementation)
+  status: active (fdopen adoption; callback token implementation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Mad Bomber trace proves CRTDLL_fdopen GPA NULL drives original zlib FALSE; root3146pins140original/sharedCRT/groupemptyPASS. Real fdopen source implementation assigned. Circus setjmp audit requires dispatcher register restore exception and robust callback/thread lifetime guards; expanded source design underway. No runtime currently, no public deploy.
+  Next: Descriptor prerequisite passed worker normalbuild/compiledIO/broker/dup/stdio/lazy tests; root normalbuild/compiledIO PASS exact2f73127d. Worker continues real binary fdopen adoption source-only. Callback token primitives/hooks source implementation active, still no jump handlers. One runtime, no public deploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1728,14 +1728,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (nonlocal jump callback ownership design)
-  owner: /root/new_game_refill_after_outlaws
-  Next: Audit a24732740: old32B jmpbuf ABI; existing_setjmp3 zero stub unusable, normal dispatch epilogue overwrites restored registers. Enumerate sync/deferred callback lifetime tokens and safe same-thread invocation guard before bounded real handlers/tests. Unsupported unwind must failfast. Source-only.
+  status: active (private invocation token implementation)
+  owner: /root/crt_jump_ownership
+  Next: Sourcecensus c32fce97e pushed; rootcensus/mutationPASS, no ownership tokens yet. Continue actual per-thread/process invocation primitives+lifetime reset+sync hooks/tests source-only. Census stays offmain until useful instrumentation, dynamicJS/deferred coverage explicit, jump APIs disabled.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (real CRT fdopen source implementation)
-  owner: /root/refill_after_barrage
-  Next: 20261018-madbomber-import-diagnostic confirms CRTDLL_fdopen GPA NULL atoriginalzlibRVA12cc5 causingFALSE, no window. Root3146pins140original/sharedCRT67aaa6df/groupemptyPASS exits1. Implement real descriptor-to-FILE ownership/mode/shared-position/close semantics with conformance, source review before runtime.
+  status: active (binary fdopen adoption source implementation)
+  owner: /root/crt_fdopen_prerequisite
+  Next: Prerequisite1e8515342+baa7ecacd reviewed and workercompiledtestsPASS; root normalbuild/compiledIO PASS exact2f73127d. Next real binary fdopen adoption with access/mode checks, samefd/cursor ownership and atomic/revalidated publication; actual close/dup/failure tests. Unsupported text explicit; no OSWorker/concurrentadoption claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
