@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Circus Linux startup; Barrage calendar diagnostic preparation)
+  status: active (Barrage calendar diagnostic; Circus _fpreset source implementation)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: CircusLinux verifiedoriginal solepassive startup grant; Barrage sourcecalendar/tick mismatch found and fullHUD read-onlydiagnostic preparing. One runtime strict2GiBfloor no publicdeploy.
+  Next: Barrage soleboundedrealcalendar/fullHUD diagnostic; Circus concrete_fpreset failfast blocker under realAPI sourceimplementation/testing preparation. One runtime strict2GiBfloor no publicdeploy.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1721,14 +1721,14 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: LGames Barrage 1.0.5 original Windows release
   id: NEW-GAME-BARRAGE-20261018
-  status: active (real-calendar and full-HUD diagnostic preparation)
+  status: active (sole real-calendar full-HUD diagnostic granted)
   owner: /root/new_game_refill_after_ltris
-  Next: Originaltime(NULL)+180 countdown; pinnedwallcalendar advancesbatchclock despite realticks, purechecks180calendarsec/10hostsec. Existingdump-backcanvas scheduledcmdPNG givesfullHUD. Prepare real-calendar withoutwallpin read-only4clock/deadline/ammo snapshots60/65/85 nofiring; runtimependingCircusrelease. No productiondefectclaimyet.
+  Next: Circus released/rootpostflightPASS. Sole60/65/85s realcalendar/realticksUTC no wallpin afterpurechecks/freshfdpins:4readonlyclock/deadline/ammo/fullbackcanvas samples scheduledcmdPNG nofiring. Strictdisk/logguards no retry/build/browser.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (sole original passive startup granted)
+  status: active (real CRTDLL _fpreset implementation preparation)
   owner: /root/new_game_refill_after_outlaws
-  Next: OfficialZIP29983cc7 verified150originals123assets4PE32/3DLL seeds; CRTDLLsystemname known8exactAPI names unverified. Sole60/65/85s originalnoargs150mount noinput grant afterguardchecks/currentfdpins; strict2GiBmargins8MiBlog no substitutions/stubs/retry/build/browser.
+  Next: Originalstartup failsfast_fpreset463f60 return40115b after3SDLinitializers, no window. Root3144pins150original/groupemptyPASS bothexit1. Workerisolated sourceimplementation realFPUreset semantics+meaningfuldirty-stateconformance tests; no silentstub/CRTsubstitution. Build/nativependingBarrage release/coordinatorgrant.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
