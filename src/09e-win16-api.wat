@@ -5724,6 +5724,84 @@
     (call $process_code_cache_invalidate (local.get $base)
       (i32.mul (local.get $count) (i32.const 0x10000))))
 
+  ;; KERNEL.184/185: conventional guest memory, not a high-arena allocation
+  ;; disguised as a real-mode segment. 0x10000 excludes DOS/BIOS low data;
+  ;; 0xA0000 is the conventional-memory/VGA boundary. These are guest ABI
+  ;; limits, never Wasm backing addresses. The sparse allocator owns backing.
+  ;; Reserve whole pages (paragraph aligned), but expose paragraph-sized
+  ;; descriptors. Keep DOS heads separate from ordinary global arena heads.
+  (global $WIN16_SEG_DOS i32 (i32.const 0x80000))
+
+  (func $win16_dos_alloc (param $bytes i32) (result i32)
+    (local $size i32) (local $mapped i32) (local $base i32) (local $edge i32)
+    (local $head i32) (local $count i32) (local $k i32) (local $left i32)
+    ;; Zero has no useful DOS buffer; overflow/oversize must not wrap small.
+    (if (i32.or (i32.eqz (local.get $bytes))
+          (i32.gt_u (local.get $bytes) (i32.const 0x90000)))
+      (then (return (i32.const 0))))
+    (local.set $size (i32.and (i32.add (local.get $bytes) (i32.const 15)) (i32.const -16)))
+    (local.set $mapped (i32.and (i32.add (local.get $size) (i32.const 4095)) (i32.const -4096)))
+    (call $lock_acquire (global.get $LOCK_VIRTUAL_MAP))
+    (block $fail
+      (br_if $fail (i32.or (i32.load offset=20 (global.get $VIRTUAL_MAP_STATE))
+        (i32.ge_u (i32.load offset=16 (global.get $VIRTUAL_MAP_STATE)) (global.get $MAX_VIRTUAL_RESERVES))))
+      (local.set $base (i32.const 0x10000))
+      (block $found (loop $search
+        (br_if $fail (i32.gt_u (i32.add (local.get $base) (local.get $mapped)) (i32.const 0xA0000)))
+        (local.set $edge (call $virtual_range_edge_locked (local.get $base) (local.get $mapped) (i32.const 1)))
+        (br_if $found (i32.eqz (local.get $edge)))
+        (local.set $base (i32.and (i32.add (local.get $edge) (i32.const 4095)) (i32.const -4096)))
+        (br $search)))
+      (local.set $count (call $win16_gseg_count (local.get $size)))
+      (local.set $head (call $win16_arena_take (local.get $count)))
+      (br_if $fail (i32.eqz (local.get $head)))
+      (call $virtual_reserve_record (local.get $base) (local.get $mapped) (i32.const 4))
+      (if (i32.eqz (call $virtual_map_commit_locked (local.get $base) (local.get $mapped) (i32.const 4) (i32.const 0)))
+        (then
+          (call $virtual_reserve_forget_locked (local.get $base))
+          (call $win16_arena_give (local.get $head) (local.get $count))
+          (br $fail)))
+      (local.set $left (local.get $size))
+      (loop $segments
+        (call $win16_seg_set (i32.add (local.get $head) (local.get $k))
+          (i32.add (local.get $base) (i32.shl (local.get $k) (i32.const 16)))
+          (select (local.get $left) (i32.const 65536) (i32.lt_u (local.get $left) (i32.const 65536)))
+          (select (global.get $WIN16_SEG_DOS) (i32.const 0) (i32.eqz (local.get $k)))
+          (select (local.get $size) (i32.const 0) (i32.eqz (local.get $k))))
+        (local.set $left (i32.sub (local.get $left) (i32.const 65536)))
+        (local.set $k (i32.add (local.get $k) (i32.const 1)))
+        (br_if $segments (i32.lt_u (local.get $k) (local.get $count))))
+      (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
+      (return (i32.or (i32.shl (i32.shr_u (local.get $base) (i32.const 4)) (i32.const 16))
+        (call $win16_index_to_sel (local.get $head)))))
+    (call $lock_release (global.get $LOCK_VIRTUAL_MAP))
+    (i32.const 0))
+
+  (func $win16_dos_free (param $sel i32) (result i32)
+    (local $index i32) (local $count i32)
+    (local.set $index (call $win16_sel_to_index (local.get $sel)))
+    (if (i32.ge_u (local.get $index) (global.get $WIN16_SEG_MAX))
+      (then (return (local.get $sel))))
+    (if (i32.or (i32.ne (local.get $sel) (call $win16_index_to_sel (local.get $index)))
+          (i32.ne (call $win16_gseg_field (local.get $index) (i32.const 8)) (global.get $WIN16_SEG_DOS)))
+      (then (return (local.get $sel))))
+    (local.set $count (call $win16_gseg_count (call $win16_gseg_field (local.get $index) (i32.const 12))))
+    (if (i32.eqz (call $virtual_map_release (call $win16_seg_base (local.get $index))))
+      (then (return (local.get $sel))))
+    (call $win16_arena_give (local.get $index) (local.get $count))
+    (i32.const 0))
+
+  (func $win16_GlobalDOSAlloc
+    (local $r i32)
+    (local.set $r (call $win16_dos_alloc (call $win16_arg32 (i32.const 0))))
+    (i32.store offset=0 (global.get $reg_base) (i32.and (local.get $r) (i32.const 65535)))
+    (i32.store offset=8 (global.get $reg_base) (i32.shr_u (local.get $r) (i32.const 16)))
+    (call $win16_api_return (i32.const 4)))
+
+  (func $win16_GlobalDOSFree
+    (i32.store offset=0 (global.get $reg_base) (call $win16_dos_free (call $win16_arg16 (i32.const 0))))
+    (call $win16_api_return (i32.const 2)))
+
   (func $win16_GlobalAlloc
     (local $bytes i32)
     (local.set $bytes (call $win16_arg32 (i32.const 0)))
@@ -5733,6 +5811,8 @@
   (func $win16_global_free (param $h i32)
     (local $index i32)
     (local.set $index (call $win16_sel_to_index (local.get $h)))
+    (if (i32.eq (call $win16_gseg_field (local.get $index) (i32.const 8)) (global.get $WIN16_SEG_DOS))
+      (then (drop (call $win16_dos_free (local.get $h))) (return)))
     (if (i32.ne (call $win16_seg_base (local.get $index)) (i32.const 0))
       (then
         (if (i32.and (call $win16_gseg_field (local.get $index) (i32.const 8))
@@ -5742,6 +5822,9 @@
                           (global.get $WIN16_SEG_GFREE))))))))
 
   (func $win16_GlobalFree
+    (if (i32.eq (call $win16_gseg_field
+          (call $win16_sel_to_index (call $win16_arg16 (i32.const 0))) (i32.const 8)) (global.get $WIN16_SEG_DOS))
+      (then (call $win16_GlobalDOSFree) (return)))
     (call $win16_global_free (call $win16_arg16 (i32.const 0)))
     ;; GlobalFree answers with NULL on success.
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
@@ -5817,6 +5900,10 @@
     (local.set $h (call $win16_arg16 (i32.const 3)))
     (local.set $bytes (call $win16_gsize (call $win16_arg32 (i32.const 1))))
     (local.set $index (call $win16_sel_to_index (local.get $h)))
+    ;; DOS realloc needs its own low-memory resize contract. Never let the
+    ;; arena grow/copy path turn a real-mode buffer into high memory.
+    (if (i32.eq (call $win16_gseg_field (local.get $index) (i32.const 8)) (global.get $WIN16_SEG_DOS))
+      (then (call $host_log_i32 (i32.const 0xCA161184)) (unreachable)))
     (local.set $old (call $win16_gseg_field (local.get $index) (i32.const 12)))
     ;; A pooled block owns only its own run, so it resizes in place up to that
     ;; run's length and moves past it; the slot rules below do not apply.
@@ -6658,6 +6745,10 @@
       (then (call $win16_local_identity (i32.const 2) (i32.const 0)) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 177))
       (then (call $win16_PrestoChangoSelector) (return (i32.const 1))))
+    (if (i32.eq (local.get $ordinal) (i32.const 184))
+      (then (call $win16_GlobalDOSAlloc) (return (i32.const 1))))
+    (if (i32.eq (local.get $ordinal) (i32.const 185))
+      (then (call $win16_GlobalDOSFree) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 15))
       (then (call $win16_GlobalAlloc) (return (i32.const 1))))
     (if (i32.eq (local.get $ordinal) (i32.const 16))
