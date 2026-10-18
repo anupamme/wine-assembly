@@ -1,4 +1,4 @@
-Current 2026-10-18: Outlaws real-time registered capture already dead at first settled town; no keyboard sent, root3149pins/originals/groupempty pass. Source death/clock audit active without repeated runtime. LMarbles qualified; fresh LTris1.2.8 original Win32 acquisition/closure lane active under50MB. Runtime idle pending ready plan. No public deployment.
+Current 2026-10-18: LTris original40files/importclosure verified, sole bounded passive launch granted after freshpins/guard checks. Outlaws source audit locates death before humanreview; early-transition captures/read-only clock diagnostic preparing, health semantics unknown. One runtime, strict2GiB floor, no public deployment.
 
 Current 2026-10-18 TG93: User-authorized disk cleanup reclaimed~2.05GB; free4.342GB verified, all643 duplicate links rehashed, five clean merged worktrees sparsified. Originals, ignored builds/evidence and WIP retained. Outlawscee09f851 fresh compiledvalidation granted, one runtime. FIFA browser requires fresh4GiB admission after lane release. No deployment or licence decisions.
 
