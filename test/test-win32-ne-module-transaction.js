@@ -26,7 +26,8 @@ const helpers = ['memcpy','win16_patch_dll_prologues','ascii_upper','win16_dll_e
   'win16_sel_to_index','win16_index_to_sel','win16_seg_is_big','win16_set_sreg','esp_arch',
   'win16_call32_begin','win16_call32_arg','win16_call32_end','win16_call32_waited',
   'lock_owner_id','lock_acquire','lock_release','zero_memory','win16_process_arena_release',
-  'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16'];
+  'sync_depth_enter','sync_depth_leave','thread_spill_can_recycle','win16_push16','th_retf16',
+  'virtual_map_lease_page_owned','virtual_map_lease_record'];
 helpers.push('win16_apply_relocs','win16_module_name','win16_module_id','win16_system_module_id',
  'win16_pstr_eq','win16_dynamic_module_id','win16_import_constant','win16_thunk_for',
  'win16_thunk_count_get','win16_thunk_count_set');
@@ -49,10 +50,12 @@ for (const name of new Set([...form('win16_kernel').matchAll(/\(call \$([^\s)]+)
 code=code.replaceAll('(region.addr $WIN16_PROCESS_ARENA 0)','(i32.const 4096)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 4)','(i32.const 4100)')
  .replaceAll('(region.addr $WIN16_PROCESS_ARENA 8)','(i32.const 4104)')
- .replaceAll('(region.addr $WIN16_PROCESS_ARENA 104)','(i32.const 4200)');
+ .replaceAll('(region.addr $WIN16_PROCESS_ARENA 104)','(i32.const 4200)')
+ .replaceAll('(region.end $GUEST_STACK)','(i32.add (global.get $GUEST_STACK) (global.get $GUEST_STACK_SIZE))');
 const fixture={WIN16_SEG_TABLE:0x20000,WIN16_SEG_TABLE_SIZE:0x20000,WIN16_THUNK_TABLE:0x50000,
  reg_base:0x60000,fpu_base:0x61000,mmx_base:0x62000,xmm_base:0x63000,GUEST_STACK:0x80000,GUEST_STACK_SIZE:65536,
- DLL_LOAD_LOCK:0x1100,current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
+ DLL_LOAD_LOCK:0x1100,LOCK_VIRTUAL_MAP:0x1104,VIRTUAL_MAP_STATE:0x1120,VIRTUAL_MAP_TABLE:0x1200,
+ current_thread_id:1,WIN16_APP_DLL_STAGING:0x90000,WIN16_APP_DLL_STAGING_SIZE:65536,
  WIN16_NAME_KERNEL:0x70000};
 const globalNames=[...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s)]+)/g)].map(m=>m[1]))];
 const declared=new Set([...code.matchAll(/\(global \$([^\s)]+)/g)].map(m=>m[1]));
@@ -86,6 +89,7 @@ const source=`
 (func $cs_pop (nop))
 (func $gs16 (param $p i32) (param $v i32) (i32.store16 (call $g2w (local.get $p)) (local.get $v)))
 (func $gl16 (param $p i32) (result i32) (i32.load16_u (call $g2w (local.get $p))))
+(func $gl32 (param $p i32) (result i32) (i32.load (call $g2w (local.get $p))))
 (func $gl8 (param $p i32) (result i32) (i32.load8_u (call $g2w (local.get $p))))
 (func $win16_dispatch (param $off i32) (param $ret i32)
   (if (i32.ne (local.get $off) (global.get $WIN16_BRIDGE_RETURN)) (then (unreachable)))

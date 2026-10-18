@@ -17,7 +17,7 @@ function neFixedLifecycleImage({loads=2, result=1, name='WIN87EM'}={}) {
   b.fill(0,0x200,0x400);b.set([0xeb,0x3e],0x200);
   b.set([0xb8,1,0,0xca,2,0],0x220);
   b.write(name+'\0',0x520,'ascii');
-  b.write('GETVERSION\0',0x540,'ascii');
+  b.write('GETMODULEHANDLE\0',0x540,'ascii');
   const reloc=[];
   const emit=(start,ops)=>{let p=0x200+start;for(const op of ops) {
     if(Array.isArray(op)) {b.set(op,p);p+=op.length;}

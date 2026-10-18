@@ -268,7 +268,7 @@ async function main() {
   fixed.release(fixedA);assert.equal(e.win16_bridge_fixed_usage(12),1);
   fixedOther.release(fixedB);assert.equal(e.win16_bridge_fixed_usage(12),0);clean();
   assert.equal(fixed.call(queryId,7),0,'final alias retired');fixed.release(queryId);
-  const kernelId=fixed.load('FIXEDKERNEL');assert(fixed.call(kernelId,8),'known named KERNEL.GetVersion resolves');
+  const kernelId=fixed.load('FIXEDKERNEL');assert(fixed.call(kernelId,8),'known named KERNEL.GetModuleHandle resolves');
   fixed.call(kernelId,4);fixed.release(kernelId);clean();
   const fixedWep=fixed.load('FIXEDWEP');
   assert.throws(()=>fixed.release(fixedWep),/termination retained/);
