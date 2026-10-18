@@ -2,220 +2,6 @@
   "version": 1,
   "entries": [
     {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_current",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_validate"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "d2a0a91623be865925d12f89443d9f592dc9c256c182045be041258ebc7deb54",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_ensure",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_thread_begin",
-        "$invocation_validate"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "f9a4a6e1b5a539159c40fba8ed9430c3a2c1059843f9b4fbfa8be6d0b992b698",
-      "kind": "lifecycle",
-      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_enter",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_validate",
-        "$invocation_new_id"
-      ],
-      "exports": [],
-      "targets": [],
-      "ownershipWrites": [
-        "$invocation_depth"
-      ],
-      "sha256": "027ee0baff59f5434034ce0b7f0626b8c10c7120f2c190ab6029a6feab3b87d2",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_install",
-      "writes": 0,
-      "boundaryCalls": [],
-      "exports": [],
-      "targets": [],
-      "ownershipWrites": [
-        "$invocation_slot",
-        "$invocation_tid",
-        "$invocation_epoch",
-        "$invocation_root",
-        "$invocation_depth"
-      ],
-      "sha256": "27f329e6c9a1dbdf881b666bf18b036bded428f7a219bfbda5dda19f3f2ffd97",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_leave",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_validate",
-        "$invocation_current"
-      ],
-      "exports": [],
-      "targets": [],
-      "ownershipWrites": [
-        "$invocation_depth"
-      ],
-      "sha256": "58c1609f984e6ec065fc06c5b08f1a893aa3446b62552abcda222f82047cc863",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_new_id",
-      "writes": 0,
-      "boundaryCalls": [],
-      "exports": [],
-      "targets": [],
-      "sha256": "ddae069127cb28e677356aba9e2c7497f0bc881ba5ffb30a51738fa4114dca7b",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_process_begin",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_new_id",
-        "$invocation_new_id",
-        "$invocation_install"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "650d0d3eefdc6321cf2365b370ece4508a46beee135771752cd95e0c9b02c4dc",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_sync_enter",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_ensure",
-        "$invocation_enter"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "a33425c6754ad432b4aa33ceb4c69bed776e4ff0993ab7130702ee52b893858c",
-      "kind": "lifecycle",
-      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_sync_leave",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_leave",
-        "$invocation_current"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "61cf8132a635d62829372e089f8d0193c5d6c24de8d251b059b7f988adc4437e",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_thread_begin",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_new_id",
-        "$invocation_new_id",
-        "$invocation_install"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "9d3a796b84f7ae6be4c562bed8980f986384922ac3e421c711e43b572ae4d007",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$invocation_validate",
-      "writes": 0,
-      "boundaryCalls": [],
-      "exports": [],
-      "targets": [],
-      "sha256": "ab6b36abe34c59581993eb19a6dace9644b240cc995c5bedc20435569a3dd4cd",
-      "kind": "lifecycle",
-      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/13-exports.wat",
-      "name": "export:init_thread",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_thread_begin"
-      ],
-      "exports": [
-        "init_thread"
-      ],
-      "targets": [],
-      "sha256": "020669d9f521d367848da241c1e8edf488b09bdac1deab9148fd2306c3094240",
-      "kind": "lifecycle",
-      "reason": "Starts a fresh private thread root after selecting its thread ID; existing process epoch retained.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$sync_depth_enter",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_sync_enter"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "1639aee6c93155615ffa7f07ce61a5bb7ce448f094f7b587ebe5f3fde44e7395",
-      "kind": "callback",
-      "reason": "Synchronous nesting helper; depth alone is not identity. Ownership instrumentation remains pending.",
-      "ownership": "pending"
-    },
-    {
-      "file": "src/04-cache.wat",
-      "name": "$sync_depth_leave",
-      "writes": 0,
-      "boundaryCalls": [
-        "$invocation_sync_leave"
-      ],
-      "exports": [],
-      "targets": [],
-      "sha256": "da25096900cd1ea46099854989793f3ddb545f4c7f60f66f580a66c7bad9a96a",
-      "kind": "callback",
-      "reason": "Synchronous nesting helper; depth alone is not identity. Ownership instrumentation remains pending.",
-      "ownership": "pending"
-    },
-    {
       "file": "host.js",
       "name": "host-file",
       "sha256": "acd404664dc74829d9c1df0d22237bc3bd07f7e31511d586b33e37ef9ec6a1dd",
@@ -390,6 +176,204 @@
       "sha256": "0ca321b5b66af8321f50fde8afb2b0bee72b9bd45b1db5cf61060071315f9626",
       "kind": "context-restore",
       "reason": "Restores saved EIP; caller continuation ownership must be validated before nonlocal restore.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_current",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "d2a0a91623be865925d12f89443d9f592dc9c256c182045be041258ebc7deb54",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_ensure",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_thread_begin",
+        "$invocation_validate"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "f9a4a6e1b5a539159c40fba8ed9430c3a2c1059843f9b4fbfa8be6d0b992b698",
+      "kind": "lifecycle",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_enter",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate",
+        "$invocation_new_id"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$invocation_depth"
+      ],
+      "sha256": "027ee0baff59f5434034ce0b7f0626b8c10c7120f2c190ab6029a6feab3b87d2",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_install",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$invocation_slot",
+        "$invocation_tid",
+        "$invocation_epoch",
+        "$invocation_root",
+        "$invocation_depth"
+      ],
+      "sha256": "27f329e6c9a1dbdf881b666bf18b036bded428f7a219bfbda5dda19f3f2ffd97",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_leave",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate",
+        "$invocation_current"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$invocation_depth"
+      ],
+      "sha256": "58c1609f984e6ec065fc06c5b08f1a893aa3446b62552abcda222f82047cc863",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_new_id",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "ddae069127cb28e677356aba9e2c7497f0bc881ba5ffb30a51738fa4114dca7b",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_process_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_new_id",
+        "$invocation_new_id",
+        "$invocation_install"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "650d0d3eefdc6321cf2365b370ece4508a46beee135771752cd95e0c9b02c4dc",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_sync_enter",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_ensure",
+        "$invocation_enter"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "a33425c6754ad432b4aa33ceb4c69bed776e4ff0993ab7130702ee52b893858c",
+      "kind": "lifecycle",
+      "reason": "Retained qsort comparator ownership: expected child, parent, root and return ESP; qsort-specific conformance is documented separately. Other families remain pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_sync_leave",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_leave",
+        "$invocation_current"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "61cf8132a635d62829372e089f8d0193c5d6c24de8d251b059b7f988adc4437e",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_thread_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_new_id",
+        "$invocation_new_id",
+        "$invocation_install"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "9d3a796b84f7ae6be4c562bed8980f986384922ac3e421c711e43b572ae4d007",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$invocation_validate",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "ab6b36abe34c59581993eb19a6dace9644b240cc995c5bedc20435569a3dd4cd",
+      "kind": "lifecycle",
+      "reason": "Private invocation identity primitive; sync-family instrumentation only, all other callback ownership pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$sync_depth_enter",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_sync_enter"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "1639aee6c93155615ffa7f07ce61a5bb7ce448f094f7b587ebe5f3fde44e7395",
+      "kind": "callback",
+      "reason": "Synchronous nesting helper; depth alone is not identity. Ownership instrumentation remains pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/04-cache.wat",
+      "name": "$sync_depth_leave",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_sync_leave"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "da25096900cd1ea46099854989793f3ddb545f4c7f60f66f580a66c7bad9a96a",
+      "kind": "callback",
+      "reason": "Synchronous nesting helper; depth alone is not identity. Ownership instrumentation remains pending.",
       "ownership": "pending"
     },
     {
@@ -2470,6 +2454,20 @@
     },
     {
       "file": "src/09a-handlers2-runtime.wat",
+      "name": "$handle__cexit",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_begin"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "d8dab5438fde345c6bc6cae35776238d0ce51e9d93fe957083c0b2ac46400403",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a-handlers2-runtime.wat",
       "name": "$handle__exit",
       "writes": 1,
       "boundaryCalls": [],
@@ -2488,20 +2486,13 @@
     {
       "file": "src/09a-handlers2-runtime.wat",
       "name": "$handle__initterm",
-      "writes": 2,
-      "boundaryCalls": [],
-      "exports": [],
-      "targets": [
-        [
-          "local.get",
-          "$fn"
-        ],
-        [
-          "global.get",
-          "$initterm_ret"
-        ]
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_begin"
       ],
-      "sha256": "6cc63530c0249097cf6e859b696e73d88ac3742cfd44ee8ccf2b395ffd39d808",
+      "exports": [],
+      "targets": [],
+      "sha256": "7985b685275791e7d89ce621c431f14715db6bd341858499d0d3666cd1cb494c",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
@@ -2521,6 +2512,20 @@
       "sha256": "0b56d422f2512a63f0ce8c65df0ce310c5600a65097ae20214bb2544e4f56777",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a-handlers2-runtime.wat",
+      "name": "$handle_exit",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_begin"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "8287ea7ed0498d439ecfa8c78af6eb1f7cd05a1030cb242f55506c9c686fd7d8",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
       "ownership": "pending"
     },
     {
@@ -3475,23 +3480,117 @@
     },
     {
       "file": "src/09a6-handlers-crt.wat",
-      "name": "$crt_atexit_run_next",
-      "writes": 2,
+      "name": "$crt_callback_begin",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_slot",
+        "$crt_callback_complete",
+        "$invocation_ensure",
+        "$invocation_current",
+        "$invocation_enter",
+        "$crt_callback_frame_at",
+        "$crt_callback_launch"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$crt_callback_owner",
+        "$crt_callback_depth"
+      ],
+      "sha256": "7baaf093b5b083071c81209f78e3ba4557e3b151a49b684668a2d8e5a60b03a9",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_complete",
+      "writes": 1,
       "boundaryCalls": [],
       "exports": [],
       "targets": [
-        [
-          "local.get",
-          "$fn"
-        ],
         [
           "i32.const",
           "0"
         ]
       ],
-      "sha256": "b223a7e97a23cc076286db48502bd93d2194a494ce9ff186083d93b4f2a22f8f",
-      "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
+      "sha256": "e26b5f544d39517841c417394e631acd4da095959025d4b88bf7cd539c05cb73",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_continue",
+      "writes": 0,
+      "boundaryCalls": [
+        "$crt_callback_frame",
+        "$invocation_leave",
+        "$invocation_current",
+        "$crt_callback_slot",
+        "$invocation_enter",
+        "$crt_callback_launch",
+        "$crt_callback_complete"
+      ],
+      "exports": [],
+      "targets": [],
+      "ownershipWrites": [
+        "$crt_callback_depth"
+      ],
+      "sha256": "0262fb6f400ac2e1fb00891eebf3353726348934b301f4abf472ed25ef898a5d",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_frame",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_validate",
+        "$crt_callback_frame_at"
+      ],
+      "exports": [],
+      "targets": [],
+      "sha256": "17fa3bb3fe0b82700cd6398018784b5870d26751d31fe8eb56bc67f8f4dccfaf",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_frame_at",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "91c2a6afb73b2bb89483b715e636d5be79ce93bd998545f43299041e9595ad4b",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_launch",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "326bf3853e114a6023f5168546c75f63e5657078fec69009e998848d9fdf3f69",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/09a6-handlers-crt.wat",
+      "name": "$crt_callback_slot",
+      "writes": 0,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [],
+      "sha256": "5d07c74336b32a1073bb14e2f83ac2681179f29de74a3f8a1935f4031b16f536",
+      "kind": "callback",
+      "reason": "Retained CRT init/exit callback ownership and mode/ESP validation; remaining producers and nonlocal jumps pending.",
       "ownership": "pending"
     },
     {
@@ -4725,8 +4824,12 @@
     {
       "file": "src/09b-dispatch.wat",
       "name": "$win32_dispatch_inner",
-      "writes": 63,
-      "boundaryCalls": [],
+      "writes": 61,
+      "boundaryCalls": [
+        "$crt_callback_continue",
+        "$crt_callback_continue",
+        "$crt_callback_continue"
+      ],
       "exports": [],
       "targets": [
         [
@@ -5063,14 +5166,6 @@
           "$modal_ret_addr"
         ],
         [
-          "local.get",
-          "$arg0"
-        ],
-        [
-          "global.get",
-          "$initterm_ret"
-        ],
-        [
           "call",
           "$gl32",
           [
@@ -5190,7 +5285,7 @@
           ]
         ]
       ],
-      "sha256": "bf5695cc598bc8e2efb66f399de5f842dac6d59d93c4c25ba848da85e6ce02ce",
+      "sha256": "d3032a2b67f89e2014e369a58facec99556f8bb0776a916184365a97e0ed9d8b",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"
@@ -7945,6 +8040,22 @@
     },
     {
       "file": "src/13-exports.wat",
+      "name": "export:init_thread",
+      "writes": 0,
+      "boundaryCalls": [
+        "$invocation_thread_begin"
+      ],
+      "exports": [
+        "init_thread"
+      ],
+      "targets": [],
+      "sha256": "020669d9f521d367848da241c1e8edf488b09bdac1deab9148fd2306c3094240",
+      "kind": "lifecycle",
+      "reason": "Starts a fresh private thread root after selecting its thread ID; existing process epoch retained.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/13-exports.wat",
       "name": "export:menu_try_edit_command",
       "writes": 0,
       "boundaryCalls": [
@@ -8442,13 +8553,13 @@
       "name": "export:test_crt_exit_begin",
       "writes": 0,
       "boundaryCalls": [
-        "$crt_atexit_run_next"
+        "$crt_callback_begin"
       ],
       "exports": [
         "test_crt_exit_begin"
       ],
       "targets": [],
-      "sha256": "991335d55f06d03d73118353c18a4ad3806f57ef85b0cbfb95586729cd2438fb",
+      "sha256": "fdffb9307a1c5831604d279dcef84ebfc456b69d2f7758c064f941de79ec3216",
       "kind": "test-entry",
       "reason": "Exported test entry can reach an EIP write or nested execution; no ownership exemption.",
       "ownership": "pending"

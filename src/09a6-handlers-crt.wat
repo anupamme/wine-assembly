@@ -3775,47 +3775,138 @@
       (return (local.get $fn))))
     (i32.const 0))
 
-  ;; Continue a normal exit() sequence. Callbacks are cdecl void(void), so the
-  ;; only stack word pushed here is their continuation return address.
-  (func $crt_atexit_run_next
-    (local $fn i32)
-    (local.set $fn (call $crt_atexit_pop))
-    (if (local.get $fn) (then
-      (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-      (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $atexit_ret_thunk))
-      (global.set $eip (local.get $fn))
-      (global.set $steps (i32.const 0))
-      (return)))
-    (call $crt_stream_close_all)
-    (call $host_exit (global.get $atexit_exit_code))
-    (global.set $eip (i32.const 0))
-    (global.set $yield_flag (i32.const 1))
-    (global.set $yield_reason (i32.const 2))
-    (global.set $steps (i32.const 0))
-  )
-
+  ;; Retained init/exit frames: mode 0=_initterm, 1=exit, 2=_cexit.
+  ;; 0 ret, 4 cursor, 8 end, 12 mode, 16 exit code, 20 expected ESP;
+  ;; 32 parent, 40 expected child, 48 root. Sixteen independent partitions.
+  (global $CRT_CALLBACK_CONTEXTS i32 (region.addr $CRT_CALLBACK_CONTEXTS 0))
+  (global $CRT_CALLBACK_CONTEXTS_SIZE i32 (region.size $CRT_CALLBACK_CONTEXTS))
+  (global $crt_callback_owner (mut i64) (i64.const 0))
+  (global $crt_callback_depth (mut i32) (i32.const 0))
   (global $crt_cexit_thunk (mut i32) (i32.const 0))
 
-  ;; The original _cexit return address stays on the guest stack throughout
-  ;; cleanup. A nested _cexit therefore has its own return frame automatically;
-  ;; no singleton saved EIP can be overwritten by a guest callback.
-  (func $crt_cexit_run_next
-    (local $fn i32) (local $sp i32) (local $ret i32)
-    (local.set $fn (call $crt_atexit_pop))
-    (local.set $sp (i32.load offset=16 (global.get $reg_base)))
-    (if (local.get $fn)
+  (func $crt_callback_frame_at (param $index i32) (result i32)
+    (i32.add (region.addr $CRT_CALLBACK_CONTEXTS 0)
+      (i32.add (i32.shl (i32.sub (global.get $invocation_tid) (i32.const 1)) (i32.const 12))
+        (i32.shl (local.get $index) (i32.const 6)))))
+
+  (func $crt_callback_frame (result i32)
+    (local $frame i32)
+    (call $invocation_validate)
+    (if (i64.ne (global.get $crt_callback_owner) (global.get $invocation_root)) (then (unreachable)))
+    (if (i32.eqz (global.get $crt_callback_depth)) (then (unreachable)))
+    (if (i32.gt_u (global.get $crt_callback_depth) (i32.const 64)) (then (unreachable)))
+    (local.set $frame (call $crt_callback_frame_at (i32.sub (global.get $crt_callback_depth) (i32.const 1))))
+    (if (i64.ne (i64.load offset=48 (local.get $frame)) (global.get $invocation_root)) (then (unreachable)))
+    (local.get $frame))
+
+  ;; Locate a non-null slot without consuming registry/table state. Entry can
+  ;; then reserve its child identity before committing any callback state.
+  (func $crt_callback_slot (param $mode i32) (param $ptr i32) (param $end i32) (result i32)
+    (local $n i32)
+    (if (i32.eqz (local.get $mode))
       (then
-        (if (i32.eqz (global.get $crt_cexit_thunk))
-          (then (global.set $crt_cexit_thunk (call $com_cont_thunk (i32.const 0xCACA0038)))))
-        (local.set $sp (i32.sub (local.get $sp) (i32.const 4)))
-        (call $gs32 (local.get $sp) (global.get $crt_cexit_thunk))
-        (i32.store offset=16 (global.get $reg_base) (local.get $sp))
-        (call $com_jump (local.get $fn)))
+        (block $done (loop $scan
+          (br_if $done (i32.ge_u (local.get $ptr) (local.get $end)))
+          (if (call $gl32 (local.get $ptr)) (then (return (local.get $ptr))))
+          (local.set $ptr (i32.add (local.get $ptr) (i32.const 4)))
+          (br $scan))))
       (else
-        (call $crt_stream_close_all)
-        (local.set $ret (call $gl32 (local.get $sp)))
-        (i32.store offset=16 (global.get $reg_base) (i32.add (local.get $sp) (i32.const 4)))
-        (call $com_jump (local.get $ret)))))
+        (local.set $n (global.get $atexit_count))
+        (block $done (loop $scan
+          (br_if $done (i32.eqz (local.get $n)))
+          (local.set $n (i32.sub (local.get $n) (i32.const 1)))
+          (local.set $ptr (i32.add (global.get $atexit_table) (i32.shl (local.get $n) (i32.const 2))))
+          (if (call $gl32 (local.get $ptr)) (then (return (local.get $ptr))))
+          (br $scan)))))
+    (i32.const 0))
+
+  (func $crt_callback_complete (param $mode i32) (param $ret i32) (param $sp i32) (param $code i32)
+    (if (local.get $mode)
+      (then
+        (global.set $atexit_count (i32.const 0))
+        (call $crt_stream_close_all)))
+    (i32.store offset=16 (global.get $reg_base) (local.get $sp))
+    (if (i32.eq (local.get $mode) (i32.const 1))
+      (then
+        (call $host_exit (local.get $code))
+        (global.set $eip (i32.const 0))
+        (global.set $yield_flag (i32.const 1))
+        (global.set $yield_reason (i32.const 2))
+        (global.set $steps (i32.const 0)))
+      (else (call $com_jump (local.get $ret)))))
+
+  (func $crt_callback_launch (param $frame i32) (param $slot i32)
+    (local $thunk i32) (local $fn i32) (local $sp i32)
+    (local.set $fn (call $gl32 (local.get $slot)))
+    (if (i32.eqz (i32.load offset=12 (local.get $frame)))
+      (then
+        (i32.store offset=4 (local.get $frame) (i32.add (local.get $slot) (i32.const 4)))
+        (local.set $thunk (global.get $initterm_thunk)))
+      (else
+        ;; Pop before entering guest code: nested cleanup cannot repeat this callback.
+        (global.set $atexit_count (i32.shr_u (i32.sub (local.get $slot) (global.get $atexit_table)) (i32.const 2)))
+        (local.set $thunk (global.get $atexit_ret_thunk))
+        (if (i32.eq (i32.load offset=12 (local.get $frame)) (i32.const 2))
+          (then
+            (if (i32.eqz (global.get $crt_cexit_thunk))
+              (then (global.set $crt_cexit_thunk (call $com_cont_thunk (i32.const 0xCACA0038)))))
+            (local.set $thunk (global.get $crt_cexit_thunk))))))
+    (local.set $sp (i32.sub (i32.load offset=20 (local.get $frame)) (i32.const 4)))
+    (call $gs32 (local.get $sp) (local.get $thunk))
+    (i32.store offset=16 (global.get $reg_base) (local.get $sp))
+    (call $com_jump (local.get $fn)))
+
+  (func $crt_callback_begin (param $mode i32) (param $ptr i32) (param $end i32) (param $code i32)
+    (local $slot i32) (local $sp i32) (local $ret i32) (local $depth i32) (local $frame i32)
+    (local $parent i64) (local $child i64)
+    (local.set $sp (i32.load offset=16 (global.get $reg_base)))
+    (local.set $ret (call $gl32 (local.get $sp)))
+    (local.set $sp (i32.add (local.get $sp) (i32.const 4)))
+    (local.set $slot (call $crt_callback_slot (local.get $mode) (local.get $ptr) (local.get $end)))
+    (if (i32.eqz (local.get $slot))
+      (then (call $crt_callback_complete (local.get $mode) (local.get $ret) (local.get $sp) (local.get $code)) (return)))
+    (call $invocation_ensure)
+    (local.set $depth (select (global.get $crt_callback_depth) (i32.const 0)
+      (i64.eq (global.get $crt_callback_owner) (global.get $invocation_root))))
+    (if (i32.ge_u (local.get $depth) (i32.const 64)) (then (unreachable)))
+    (local.set $parent (call $invocation_current))
+    (local.set $child (call $invocation_enter))
+    (local.set $frame (call $crt_callback_frame_at (local.get $depth)))
+    (global.set $crt_callback_owner (global.get $invocation_root))
+    (global.set $crt_callback_depth (i32.add (local.get $depth) (i32.const 1)))
+    (i32.store (local.get $frame) (local.get $ret))
+    (i32.store offset=4 (local.get $frame) (local.get $ptr))
+    (i32.store offset=8 (local.get $frame) (local.get $end))
+    (i32.store offset=12 (local.get $frame) (local.get $mode))
+    (i32.store offset=16 (local.get $frame) (local.get $code))
+    (i32.store offset=20 (local.get $frame) (local.get $sp))
+    (i64.store offset=32 (local.get $frame) (local.get $parent))
+    (i64.store offset=40 (local.get $frame) (local.get $child))
+    (i64.store offset=48 (local.get $frame) (global.get $invocation_root))
+    (call $crt_callback_launch (local.get $frame) (local.get $slot)))
+
+  (func $crt_callback_continue (param $mode i32)
+    (local $frame i32) (local $slot i32)
+    (local.set $frame (call $crt_callback_frame))
+    (if (i32.ne (local.get $mode) (i32.load offset=12 (local.get $frame))) (then (unreachable)))
+    (if (i32.ne (i32.load offset=16 (global.get $reg_base)) (i32.load offset=20 (local.get $frame))) (then (unreachable)))
+    (if (i32.eqz (global.get $invocation_depth)) (then (unreachable)))
+    (if (i64.ne (i64.load offset=32 (local.get $frame))
+          (i64.load (i32.add (global.get $invocation_slot)
+            (i32.add (i32.const 16) (i32.shl (i32.sub (global.get $invocation_depth) (i32.const 1)) (i32.const 3))))))
+      (then (unreachable)))
+    (call $invocation_leave (i64.load offset=40 (local.get $frame)))
+    (i64.store offset=40 (local.get $frame) (i64.const 0))
+    (if (i64.ne (call $invocation_current) (i64.load offset=32 (local.get $frame))) (then (unreachable)))
+    (local.set $slot (call $crt_callback_slot (local.get $mode) (i32.load offset=4 (local.get $frame)) (i32.load offset=8 (local.get $frame))))
+    (if (local.get $slot)
+      (then
+        (i64.store offset=40 (local.get $frame) (call $invocation_enter))
+        (call $crt_callback_launch (local.get $frame) (local.get $slot)))
+      (else
+        (global.set $crt_callback_depth (i32.sub (global.get $crt_callback_depth) (i32.const 1)))
+        (call $crt_callback_complete (local.get $mode) (i32.load (local.get $frame))
+          (i32.load offset=20 (local.get $frame)) (i32.load offset=16 (local.get $frame))))))
 
   ;; atexit(fn) — cdecl, so the caller retains the argument word.
   (func $handle_atexit (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
