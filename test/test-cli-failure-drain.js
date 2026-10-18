@@ -91,7 +91,11 @@ async function main() {
     assert.strictEqual((stdout.match(/\[win16\] KERNEL\.65535 \(no exported name\)  ret=0x[0-9a-f]{8}/g) || []).length,
       1, `missing or duplicate decoded import diagnostic:\n${output}`);
     assert.match(stderr, /RuntimeError: unreachable/, output);
-    if (asyncDll) assert.match(stderr, /handleLoadLibraryYield/, output);
+    if (asyncDll) {
+      assert.match(stderr, /DLL initializer did not return/, output);
+      assert.match(stderr, /fault: RuntimeError: unreachable/, output);
+      assert.match(stderr, /handleLoadLibraryYield/, output);
+    }
     console.log('PASS CLI QT fail-fast drains decoded import once and exits 1 with stdin open');
   } finally {
     if (child) {
