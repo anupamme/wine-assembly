@@ -19,6 +19,7 @@
     (if (i32.ne (i32.load (local.get $pe_off)) (i32.const 0x00004550)) (then (return (i32.const -2))))
     (if (i32.eqz (call $win16_process_arena_release)) (then (return (i32.const -4))))
     (call $win16_guest_request_cancel)
+    (call $invocation_process_begin)
     ;; A new process must not inherit the retired NE host request park.
     (if (i32.eq (global.get $yield_reason) (i32.const 18))
       (then

@@ -1785,6 +1785,7 @@
     (global.set $heap_sparse_end (i32.const 0))
     (global.set $virtual_alloc_top (global.get $VIRTUAL_ALLOC_TOP_INIT))
     (global.set $current_thread_id (i32.add (local.get $tid) (i32.const 1)))
+    (call $invocation_thread_begin (local.get $tid))
     (call $getmessage_hook_reset (global.get $current_thread_id))
     (call $getmessage_hook_open_owner (global.get $current_thread_id))
     (call $shared_post_queue_reset_tid (global.get $current_thread_id))
