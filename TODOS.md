@@ -1090,12 +1090,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active
+  status: blocked (two prepared lanes await saved-box owner resume)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: FIFA98 and Outlaws remain the two original-demo lanes. FIFA keyboard assignment is verified; prepared ordinary ready-click capture awaits restored disk reserve and sole runtime admission. Outlaws reconciles selector/lifecycle candidate with current main on its task branch; native validation still required. Darkstone paired movement review merged baeb16c20; bounded draw capture source work follows. No runtime is live; review holds unchanged.
+  Next: FIFA98 ready-click route and reviewed Outlaws9ee92c0 native candidate prepared. Disk reserve restored3.7GB; sole saved box bx_9ef2wdsw is stopped and root resume returns403 api_key_action_forbidden. Laptop owner requested to resume; run FIFA then Outlaws with independent cleanup between. No worker/runtime currently active; no alternate-key/newbox workaround.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,13 +1158,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: active (renderer fixes merged; scoped transport and gameplay coverage pending)
+  status: blocked (saved runtime box stopped; scoped key cannot resume)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/darkstone_compare_oct17 (retained screenshot/source review)
+  worker: none (source/review work complete; next evidence requires runtime)
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Retained matching-landmark software/WebGL review merged baeb16c20: larger WebGL black foreground triangle, smaller software wedge. Worker now prepares bounded identical-draw capture/replay infrastructure without renderer changes or new runtime. Correctness, root cause, audio/FPS/touch and original27 membership remain unproved.
+  Next: Opt-in bounded non-replayable D3DIM draw trace mergedcffd439e2 with dispatcher/shared-worker tests; matching-landmark mismatch review retained. Await owner resume of bx_9ef2wdsw, then serialized live capture. Exact original27 list missing; correctness/audio/FPS/touch remain unqualified.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
