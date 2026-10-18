@@ -379,3 +379,23 @@ changing UI handle interpretation. Tiny regressions exercise an occupied UI
 slot equal to DGROUP, fresh/reused reserved slots and all module IDs. These
 rules apply to newly initialized processes; no live old-module migration is
 performed.
+
+### Focused native validation, 2026-10-18
+
+Source `a62466211ea61f4d199f7057622a4e2ce98e82b7` passed the canonical build
+and full-interpreter lifecycle fixture, including the new relocated
+GetModuleUsage queries (1/2/1 and final WEP) and the unchanged original PMPRO62.
+Original initialization, all 61 named/ordinal lookup pairs, duplicate load,
+reference decrement and final unload completed with the PE caller restored.
+The module is SHA-256
+`3b5655d5d7e6046bfaa21c90d39abe34a279eff8957700f284282cd6b0fe98e3`.
+Evidence, original bytes, region map, bounded recovery controller, logs and
+process receipts are retained in `scratch/runs/20261018-outlaws-module-usage/`.
+Both owned process groups exited zero without survivors; independent postflight
+passed and free space remained above 2 GiB. Synthetic malformed-WEP traps in
+the log are expected rejection/retry cases, not original failures.
+
+This is focused validation, not the twelve-arm suite or original Outlaws
+gameplay/QT_Thunk. The controller production pin still names the earlier
+named-import fix. Root review and pin advancement precede the next full-suite
+run, including the four arms skipped after the previous original failure.
