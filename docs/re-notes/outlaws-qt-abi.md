@@ -46,16 +46,16 @@ BP or unchanged incoming DS is the Windows callee-entry contract.
 
 ## Implementation decision still required
 
-A bounded scalar-call compatibility mode can use the demonstrated stack-copy
-and return-cleanup rules without claiming exact Windows stack aliasing. Before
-exposing it, choose and document its callee-entry BP/segment/register contract.
+The coordinator selected a Windows-compatible stack alias rather than a
+private copied-stack BP. Before exposing it, finish the callee-entry
+BP/segment/register contract.
 Do not silently manufacture register values from incomplete pseudocode. General
 EBP-relative scratch access, pointers into the original stack, reverse thunks,
 and asynchronous callbacks need an explicit supported design or diagnostic
 boundary. Worker remains unsupported.
 
 The existing LibEntry/WEP runner must retain strict stackWords cleanup. A new
-mode needs private raw bytes and byte count, argument-start SP and actual final
+mode needs an owned stack alias, argument-start SP and actual final
 SP, independent EAX/EDX/ECX, plus an atomic executable-selector-to-live-module
 pin. Validate source pages individually (including sparse stacks), wrapping,
 alignment, return selector, over-cleanup, owner and generation before settlement.
@@ -79,3 +79,31 @@ are prepared inputs, not tests of an implemented gateway. Pure generation and
 NE image validation pass; no canonical build or guest was run. Runtime still
 needs main/cooperative, direct/sparse, nested-owner/pin, full-context restoration,
 stale settlement/cancellation and original-payload checks after a root grant.
+
+## Alias and lifetime preparation checkpoint
+
+`lib/ne-qt-stack.js` is a read-only planner, not selector publication. Current
+segmented handlers require 64KiB-aligned bases, so the supported initial alias
+window is the aligned 64KiB containing ESP. EBP, the return slot and documented
+scratch must fit within it. Both ends of every guest page must translate into
+one contiguous physical window; holes, split backing, wrap and odd pointers are
+rejected. This admits qualifying direct and sparse mappings without pretending
+that all sparse stacks qualify. A BP-relative scratch write then reaches the
+actual PE stack. Pure tests establish those address identities only.
+
+**Mapping lifetime is not established by translation.** The planner cannot pin
+VirtualAlloc backing, and the existing virtual-map release path has no apparent
+span pin. Before entering aliased sparse memory, add an owned mapping lease or
+explicitly reject it. Holding DLL_LOAD_LOCK while executing is not a substitute:
+the lock does not protect virtual-map lifetime and would deadlock callbacks.
+Thread retirement/process reset must revoke the alias before freeing backing.
+An actual gateway must save/restore the original DWORD at S, which its far
+continuation overwrites. Scratch modifications by the NE callee remain visible.
+
+The source candidate adds `win16_bridge_invoke_target`: under the frame's owned
+scope and DLL mutex it resolves a live executable selector to a ready module
+and pins it atomically. A pinned frame cannot change its module or entry target;
+existing frame teardown releases the pin. This does not expose QT or change
+LibEntry/WEP stack cleanup. `test-ne-qt-ownership-candidate.js` prepares native
+checks for invalid/data/unloaded addresses, duplicate binding, target changes,
+final-free exclusion and stale-frame teardown. Native checks are **not run**.

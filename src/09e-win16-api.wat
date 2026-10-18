@@ -786,6 +786,7 @@
     (param $token i64) (param $id i32) (result i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
     (if (i32.load offset=24 (i32.wrap_i64 (local.get $token))) (then (return (i32.const 0))))
+    (if (i32.load offset=312 (i32.wrap_i64 (local.get $token))) (then (return (i32.const 0))))
     (if (i32.eqz (call $win16_dll_path_id_valid (local.get $id))) (then (return (i32.const 0))))
     (i32.store offset=308 (i32.wrap_i64 (local.get $token)) (local.get $id))
     (i32.const 1))
@@ -798,6 +799,8 @@
   ;; conformance invocation, not a guest module call.
   (func $win16_bridge_call_pin (param $frame i32) (result i32)
     (local $id i32) (local $rec i32) (local $state i32)
+    ;; An executable-address binding already pinned under this same frame.
+    (if (i32.load offset=312 (local.get $frame)) (then (return (i32.const 1))))
     (local.set $id (i32.load offset=308 (local.get $frame)))
     (if (i32.eqz (local.get $id)) (then (return (i32.const 1))))
     (local.set $rec (call $win16_bridge_call_record (local.get $id)))
@@ -811,6 +814,45 @@
     (i32.store offset=24 (local.get $rec) (i32.add (i32.load offset=24 (local.get $rec)) (i32.const 1)))
     (i32.store offset=312 (local.get $frame) (i32.const 1))
     (i32.const 1))
+
+  ;; Bind and pin an arbitrary executable address, not merely a named export.
+  ;; A far pointer returned by GPA grants no lifetime by itself. The owner
+  ;; scope prevents another instance's NE work; the mutex makes the ready
+  ;; state, segment ownership and active-call increment one transaction.
+  ;; +348 holds the exact pinned target so invoke_begin cannot switch modules.
+  (func (export "win16_bridge_invoke_target") (param $token i64) (param $target i32) (result i32)
+    (local $frame i32) (local $index i32) (local $id i32) (local $rec i32) (local $first i32)
+    (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
+    (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.or (i32.load offset=24 (local.get $frame))
+      (i32.or (i32.load offset=312 (local.get $frame)) (i32.eqz (i32.load offset=268 (local.get $frame)))))
+      (then (return (i32.const 0))))
+    (call $lock_acquire (global.get $DLL_LOAD_LOCK))
+    (block $reject
+      (br_if $reject (i32.eqz (call $win16_bridge_selector_valid
+        (i32.shr_u (local.get $target) (i32.const 16)) (i32.const 0))))
+      (local.set $index (call $win16_sel_to_index (i32.shr_u (local.get $target) (i32.const 16))))
+      (br_if $reject (i32.ge_u (i32.and (local.get $target) (i32.const 0xFFFF))
+        (call $win16_seg_limit (local.get $index))))
+      (local.set $id (global.get $WIN16_DYNAMIC_BASE))
+      (loop $modules
+        (br_if $reject (i32.ge_u (local.get $id)
+          (i32.add (global.get $WIN16_DYNAMIC_BASE) (global.get $WIN16_DYNAMIC_MODULES))))
+        (local.set $rec (call $win16_dll_rec (local.get $id)))
+        (local.set $first (i32.add (i32.load offset=4 (local.get $rec)) (i32.const 1)))
+        (if (i32.and (i32.ge_u (local.get $index) (local.get $first))
+          (i32.lt_u (local.get $index) (i32.add (local.get $first) (i32.load offset=12 (local.get $rec)))))
+          (then
+            (br_if $reject (i32.ne (i32.load (call $win16_bridge_call_record (local.get $id))) (i32.const 3)))
+            (i32.store offset=308 (local.get $frame) (local.get $id))
+            (br_if $reject (i32.eqz (call $win16_bridge_call_pin (local.get $frame))))
+            (i32.store offset=348 (local.get $frame) (local.get $target))
+            (call $lock_release (global.get $DLL_LOAD_LOCK))
+            (return (local.get $id))))
+        (local.set $id (i32.add (local.get $id) (i32.const 1)))
+        (br $modules)))
+    (call $lock_release (global.get $DLL_LOAD_LOCK))
+    (i32.const 0))
 
   ;; Stack words are listed nearest-return first. The bounded argument vector
   ;; belongs to this prepared frame, never to the suspended caller's stack.
@@ -833,6 +875,9 @@
     (local $frame i32) (local $owner i32) (local $argc i32)
     (if (i32.eqz (call $win16_bridge_frame_valid (local.get $token))) (then (return (i32.const 0))))
     (local.set $frame (i32.wrap_i64 (local.get $token)))
+    (if (i32.load offset=312 (local.get $frame))
+      (then (if (i32.ne (i32.load offset=348 (local.get $frame)) (local.get $target))
+        (then (return (i32.const 0))))))
     (if (i32.or (i32.load offset=24 (local.get $frame))
                 (i32.ge_u (global.get $sync_msg_depth) (i32.const 31)))
       (then (return (i32.const 0))))
