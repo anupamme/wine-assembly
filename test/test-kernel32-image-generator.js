@@ -19,8 +19,8 @@ try {
   const run = (...args) => spawnSync(process.execPath,
     [path.join(dir, 'tools/gen-kernel32-image.js'), ...args], { encoding: 'utf8' });
   assert.equal(run('--check').status, 0);
-  for (const ordinal of [35, 36, 37])
-    assert(!manifest.exports.some(e => e.ordinal === ordinal), 'unimplemented ordinal remains absent');
+  for (const [ordinal,api] of [[35,'LoadLibrary16'],[36,'FreeLibrary16'],[37,'GetProcAddress16']])
+    assert(manifest.exports.some(e => e.ordinal === ordinal && e.api === api && !e.name), 'implemented legacy ordinal');
   assert(!manifest.exports.some(e => e.name === 'QT_Thunk'));
   // Reindexing current API data must regenerate thunk IDs, not reuse history.
   const changed = apis.map(a => ({ ...a, id: a.id + 10000 }));
@@ -40,7 +40,7 @@ try {
     ['duplicate ordinal', m => { m.exports[1].ordinal = m.exports[0].ordinal; }],
     ['unknown API', m => { m.exports[0].api = 'MissingKernelAPI'; }],
     ['invalid ordinal', m => { m.exports[0].ordinal = 1025; }],
-    ['duplicate name', m => { m.exports[1].name = m.exports[0].name; }],
+    ['duplicate name', m => { const named=m.exports.filter(e=>e.name); named[1].name = named[0].name; }],
     ['code overflow', m => { while (m.exports.length <= 512) m.exports.push({ ...m.exports[0] }); }],
   ]) {
     const mutated = structuredClone(manifest); mutate(mutated);

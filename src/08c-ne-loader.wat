@@ -2241,3 +2241,51 @@
     (param $id i32) (result i32)
     (call $win16_bridge_module_readable (local.get $id) (i32.const 4)))
   ;; END WIN32 NE MODULE TRANSACTIONS
+
+  ;; Guest-facing aliases use the existing selector-disjoint handle map.
+  ;; Like Win16 handles generally, an alias may be reused after final unload;
+  ;; generation tokens protect host requests, not stale guest HMODULE values.
+  (func (export "win16_bridge_module_alias") (param $id i32) (result i32)
+    (if (i32.eqz (call $win16_bridge_module_readable (local.get $id) (i32.const 3)))
+      (then (return (i32.const 0))))
+    (call $win16_h16 (i32.or (i32.const 0x00D10000) (local.get $id))))
+
+  (func (export "win16_bridge_module_resolve") (param $handle i32) (result i32)
+    (local $id i32) (local $mapped i32) (local $slot i32)
+    (local.set $handle (i32.and (local.get $handle) (i32.const 0xFFFF)))
+    (if (i32.or (i32.eqz (local.get $handle)) (i32.eq (local.get $handle) (i32.const 0xFFFF)))
+      (then (return (i32.const 0))))
+    (if (i32.gt_u (local.get $handle) (global.get $WIN16_HANDLE_BASE))
+      (then
+        (local.set $slot (i32.sub (local.get $handle) (global.get $WIN16_HANDLE_BASE)))
+        (if (i32.le_u (local.get $slot) (call $win16_handle_next_get))
+          (then (local.set $mapped (i32.load (i32.add (call $win16_handle_table)
+            (i32.shl (local.get $slot) (i32.const 2)))))))))
+    (local.set $id (global.get $WIN16_DYNAMIC_BASE))
+    (block $missing (loop $scan
+      (br_if $missing (i32.ge_u (local.get $id)
+        (i32.add (global.get $WIN16_DYNAMIC_BASE) (global.get $WIN16_DYNAMIC_MODULES))))
+      (if (i32.or (call $win16_bridge_module_readable (local.get $id) (i32.const 3))
+                  (call $win16_bridge_module_readable (local.get $id) (i32.const 4)))
+        (then
+          (if (i32.or
+                (i32.eq (local.get $mapped) (i32.or (i32.const 0x00D10000) (local.get $id)))
+                (i32.and (i32.eq (i32.and (local.get $handle) (i32.const 7)) (i32.const 7))
+                  (i32.eq (local.get $handle) (call $win16_dll_data_sel (local.get $id)))))
+            (then (return (local.get $id))))))
+      (local.set $id (i32.add (local.get $id) (i32.const 1))) (br $scan)))
+    (i32.const 0))
+
+  (func (export "win16_bridge_module_retain_name") (param $lo i64) (param $hi i64) (result i32)
+    (local $id i32)
+    (local.set $id (global.get $WIN16_DYNAMIC_BASE))
+    (block $missing (loop $scan
+      (br_if $missing (i32.ge_u (local.get $id)
+        (i32.add (global.get $WIN16_DYNAMIC_BASE) (global.get $WIN16_DYNAMIC_MODULES))))
+      (if (call $win16_bridge_module_readable (local.get $id) (i32.const 3))
+        (then (if (call $win16_bridge_name_matches
+          (call $win16_dynamic_module_slot (i32.sub (local.get $id) (global.get $WIN16_DYNAMIC_BASE)))
+          (local.get $lo) (local.get $hi))
+          (then (return (i32.sub (i32.const 0) (call $win16_bridge_module_claim (local.get $lo) (local.get $hi))))))))
+      (local.set $id (i32.add (local.get $id) (i32.const 1))) (br $scan)))
+    (i32.const 0))

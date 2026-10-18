@@ -203,6 +203,8 @@
       ;; its broker token only after the host has observed actual completion.
       (if (i32.eq (global.get $yield_reason) (i32.const 16))
         (then (global.set $last_run_halt (i32.const 4)) (br $halt)))
+      (if (i32.eq (global.get $yield_reason) (i32.const 18))
+        (then (global.set $last_run_halt (i32.const 4)) (br $halt)))
       (if (i32.or
         (i32.eq (global.get $yield_reason) (i32.const 1))
         (i32.or

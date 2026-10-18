@@ -10621,6 +10621,10 @@ async function main() {
       }
     }
 
+    if (instance.exports.get_yield_reason() === 18) {
+      serviceLoadLibraryYieldSync({ exports: instance.exports, memoryBuffer: memory.buffer,
+        resourceHost: ctx, findDllSync: findRuntimeDllBytes });
+    }
     // Handle LoadLibraryA yield (yield_reason=5)
     if (instance.exports.get_yield_reason() === 5) {
       if (TRACE_YIELD) {

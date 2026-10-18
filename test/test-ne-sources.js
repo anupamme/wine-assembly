@@ -32,7 +32,7 @@ const ioFailure = Error('VFS unavailable');
 assert.throws(() => prepareNeSources('io', () => { throw ioFailure; }), e => e === ioFailure);
 const missingImport = neLifecycleImage({importEntry: {module: 'HELPER', symbol: 'ABSENT'}});
 assert.throws(() => prepareNeSources('demo', file => file === 'demo.dll' ? missingImport : neLifecycleImage()),
-  e => e instanceof NeLoadError && e.guestCode === 21);
+  e => e instanceof NeLoadError && e.guestCode === null);
 assert.throws(() => prepareNeSources('demo', () => neLifecycleImage({dependencies: ['DEMO']})), /recursive/);
 const unsupported = neLifecycleImage(); unsupported.writeUInt16LE(0x400, 0x80 + 0x3e);
 assert.throws(() => prepareNeSources('demo', () => unsupported), e => !(e instanceof NeLoadError) && /not implemented/.test(e.message));
