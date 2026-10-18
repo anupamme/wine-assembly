@@ -14,7 +14,7 @@ const hash = file => sha(fs.readFileSync(file));
 const git = (...args) => cp.execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).trim();
 assert.equal(git('rev-parse', 'HEAD'), commit);
 assert.equal(git('diff', '--name-only', 'd5b940c8b104b2e4d7b7e29506ad6e2fd6aea17c', commit, '--', 'src', 'lib'), '', 'reviewed lifecycle ownership and recovery production bytes');
-const preserved = [
+const remotePreserved = [
   ['/home/user/wa-ne-invoke-native/build/wine-assembly.wasm', 'd6187fedf42d597311446e527d586b74a06db4f7f5eaaa6b51e483c5cc06603b'],
   ['/home/user/wa-darkstone-paired/build/wine-assembly.wasm', '9b57583c1ca8887f7195a268c94312ca6352eb646f4071c740c5a75aff1eb69e'],
   ['/home/user/wa-ne-context-native/build/wine-assembly.wasm', '9b57583c1ca8887f7195a268c94312ca6352eb646f4071c740c5a75aff1eb69e'],
@@ -25,6 +25,13 @@ const preserved = [
   ['/home/user/wa-iw-combined-native/build/wine-assembly.wasm', '04ede400070b3acbdcc2ad5f3c033bcf051e3d2da9a4d28a449324d23ab0ba17'],
   ['/home/user/lords2-getparent-d56/build/wine-assembly.wasm', 'e26a751567f63a0bb6abbea8a69111842d41e8705158ccf425394d4ac591745d'],
 ];
+const localAdmission = require('./ne-local-admission');
+const mode = process.env.WA_NE_MODE || 'remote';
+assert(['remote', 'local-prepare', 'local-run'].includes(mode), 'unknown WA_NE_MODE');
+const local = mode !== 'remote';
+assert(local || !process.env.WA_NE_LOCAL_CONFIG, 'local config requires explicit local mode');
+const config = local ? localAdmission.validateConfig(JSON.parse(fs.readFileSync(process.env.WA_NE_LOCAL_CONFIG)), remotePreserved.map(([, hash]) => hash)) : null;
+const preserved = local ? config.donors.map(item => [item.path, item.sha256]) : remotePreserved;
 const original = process.env.WA_NE_ORIGINAL;
 assert(original && path.isAbsolute(original) && !original.startsWith(root + '/'));
 const originalSha256='7e2b17e61e7e4808a50478ddcac06f65fcf9f3ffd741d747c8cb75e20cb05db9';
@@ -35,7 +42,7 @@ const save = (name, data) => fs.writeFileSync(path.join(out, name + '.json'), JS
 save('original-provenance',{path:original,sha256:originalSha256,size:fs.statSync(original).size,source:'Outlaws OEM archive extraction: original-loader-fixtures/pmpro62.dll; unaltered extracted input'});
 const wasm = path.join(root, 'build/wine-assembly.wasm'), statuses = [];
 let moduleSha256 = null, passed = false;
-const deps = '/home/user/jedi-knight-checkout/node_modules', dependencies = [], seen = new Set();
+const deps = local ? fs.realpathSync(config.dependencies) : '/home/user/jedi-knight-checkout/node_modules', dependencies = [], seen = new Set();
 assert.equal(fs.realpathSync(path.join(root, 'node_modules')), deps);
 function dependencyTree(file) {
   const real = fs.realpathSync(file);
@@ -44,15 +51,32 @@ function dependencyTree(file) {
   if (fs.statSync(real).isDirectory()) for (const name of fs.readdirSync(real)) dependencyTree(path.join(real, name));
   else dependencies.push({ path: real, sha256: hash(real) });
 }
-dependencyTree(deps); assert.equal(dependencies.length, 52); save('dependencies', dependencies);
+if (local) {
+  dependencies.push(...localAdmission.inventory(deps));
+  // Resolution must succeed before a build or guest can start. No dependency stubs.
+  for (const name of ['pngjs', 'wabt']) {
+    const resolved = require.resolve(name, { paths: [root] });
+    assert(fs.realpathSync(resolved).startsWith(deps + '/'), name + ' outside supplied dependencies');
+  }
+  save('local-config', config);
+} else { dependencyTree(deps); assert.equal(dependencies.length, 52); }
+save('dependencies', dependencies);
 function inspect(label) {
   assert.equal(git('rev-parse', 'HEAD'), commit);
-  const ps = cp.execFileSync('ps', ['-eo', 'pid,ppid,pgid,comm'], { encoding: 'utf8' });
+  const disk = fs.statfsSync(root); assert(disk.bavail * disk.bsize > 2 * 1024 ** 3, 'more than 2 GiB free required');
+  const ps = cp.execFileSync('ps', ['-eo', local ? 'pid,ppid,pgid,comm,args' : 'pid,ppid,pgid,comm'], { encoding: 'utf8' });
   const active = ps.trim().split('\n').filter(line => {
     const m = line.trim().match(/^(\d+)\s+(\d+)\s+(\d+)\s+(\S+)$/);
     return m && +m[1] !== process.pid && /^(node|MainThread|chrome|chromium|firefox|wat2wasm)$/.test(m[4]);
   });
-  assert.deepEqual(active, [], 'sole runtime lane');
+  if (local) {
+    const rows = ps.trim().split('\n').slice(1).map(line => {
+      const m = line.trim().match(/^(\d+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(.*)$/);
+      assert(m, 'invalid ps row'); return { pid: +m[1], comm: m[4], command: m[5] };
+    });
+    localAdmission.admit(rows, config.infrastructure, process.pid);
+    assert.deepEqual(localAdmission.inventory(deps), dependencies, 'dependency inventory changed');
+  } else assert.deepEqual(active, [], 'sole runtime lane');
   assert(fs.lstatSync(original).isFile());assert.equal(hash(original),originalSha256);
   for (const [file, expected] of preserved) assert.equal(hash(file), expected, file);
   for (const item of dependencies) assert.equal(hash(item.path), item.sha256, item.path);
@@ -91,6 +115,9 @@ async function main() {
  try {
   const disk = fs.statfsSync(root); assert(disk.bavail * disk.bsize > 2 * 1024 ** 3, 'more than 2 GiB free required');
   inspect('preflight');
+  if (mode === 'local-prepare') {
+    save('preparation', { ready: true, runtimeExecuted: false });
+  } else {
   await run('normal-build', 600, ['bash', 'tools/build.sh']);
   moduleSha256 = hash(wasm); save('module', { sha256: moduleSha256, regionMapSha256: hash(path.join(root, 'lib/region-map.generated.js')) });
   await run('host-driver', 30, [process.execPath, 'test/test-ne-invoke-driver.js']);
@@ -105,13 +132,14 @@ async function main() {
   await run('pure-ne-bounds', 30, [process.execPath, 'test/test-win16-arena-bounds.js']);
   await run('pure-ne-loader', 60, [process.execPath, 'test/test-ne-additive-far.js', wasm]);
   passed = true;
+  }
 } catch (error) {
   failure = error; passed = false;
 } finally {
   try { inspect('postflight'); } catch (error) { postflightFailure = error; passed = false; }
-  save('summary', { passed, commit, moduleSha256, statuses,
+  save('summary', { passed, mode, preparationOnly: mode === 'local-prepare', commit, moduleSha256, statuses,
     failure: failure?.stack, postflightFailure: postflightFailure?.stack,
-    originalGameRun: false, browserRun: false, syntheticNeEntryExecution: true, moduleLifecycle: true, qtThunk: false, originalNeDll: {path:original,sha256:originalSha256} });
+    originalGameRun: false, browserRun: false, syntheticNeEntryExecution: statuses.some(s => s.label === 'native-invocation'), moduleLifecycle: statuses.some(s => s.label === 'native-lifecycle'), qtThunk: false, originalNeDll: {path:original,sha256:originalSha256} });
 }
  if (failure && postflightFailure) throw new AggregateError([failure, postflightFailure], 'Validation and postflight failed');
  if (failure || postflightFailure) throw failure || postflightFailure;
