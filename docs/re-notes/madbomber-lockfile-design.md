@@ -89,3 +89,18 @@ no duplicate remains. FlushFileBuffers validates the retained opened entry,
 so rename no longer makes a valid writable handle fail. Focused regressions
 cover both final-owner and surviving-duplicate rejection, renamed flush, and
 closed renamed handles. No native execution was added for these corrections.
+
+## Current-main RTC reconciliation (2026-10-19)
+
+Merged verified origin/main 462f44b2f into this isolated task branch. The clean
+text merge retained a stale generated import count of 282: the complete current
+include closure has 283 with both file locking and CMOS RTC. Regenerated the
+mirror using tools/gen-host-import-sigs.js and verified --check.
+
+Focused file-byte-lock ownership/range/lifecycle/I/O tests passed; VFS 46/0,
+VFS adoption and CMOS host/broker/browser-import source contracts passed.
+Initial checks encountered absent sparse-checkout tools and the RTC test's dib
+module dependency; expanded tracked lib/src closure and reran successfully.
+These are JavaScript checks, not native, OS Worker, browser or actual Mad Bomber
+validation. Native handler and original-game qualification remain pending under
+the one-runtime scheduler. No canonical module or original binary was changed.
