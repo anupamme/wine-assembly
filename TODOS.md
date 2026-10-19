@@ -1399,7 +1399,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-DUNGEON-SIEGE-DEMO-20261008
   status: active (snapshot trap cleared; original demo.ds read error)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/dungeon_siege_thread_snapshot (source diagnosis of file-read error)
+  worker: /root/dungeon_siege_thread_snapshot (bounded read-only CRC buffer capture preparation)
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
   Next: Original retry on validated7c1 accepted genuine EULA, passed prior snapshot boundary, then critical error reading C:\demo.ds with last error0x17. Normal quit exit0, guards none/all source-original pins unchanged/processes absent. Diagnose mount/provider/read semantics from source before discriminating retry. Evidence scratch/runs/20261019-dungeon-siege-snapshot-original-1; no gameplay.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
@@ -1630,7 +1630,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
   status: active (RTC seconds port blocks original CPU calibration)
   owner: /root/army_men_authorized_recovery
-  Next: White-window v3 EIP0111cda1 maps to original CPUINF32 calibration loop, OUT70 index0 then IN71 waits for seconds to change; current emulator returns fixed0xff. Worker preparing real CMOS/RTC semantics using existing guest clock, with conformance tests; no game-specific bypass or new runtime yet. Original game/installed files remain unchanged; no gameplay.
+  Next: White-window v3 EIP0111cda1 maps to original CPUINF32 calibration loop, OUT70 index0 then IN71 waits for seconds to change; current emulator returns fixed0xff. Real CMOS/RTC candidate ebc222252 passed full precompile gates; sole remote native conformance validation now granted, actual original game retry still pending. Original game/installed files remain unchanged; no gameplay.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=true: ordinary Yes observed in scratch/runs/20261019-army-men-authorized-child/acceptance.json; Setup Complete separately verified in 20261019-army-men-authorized-install-buffer. Authorization receipt remains unchanged.
