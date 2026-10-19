@@ -258,3 +258,19 @@ production host.exit regression asserts release and rejected late opens before
 onExit observes the VFS, while preserving the child's independent lifetime.
 This is a source-only correction; fresh pins and another grant are required
 before any new build or native attempt. The original failed bundle is intact.
+
+## Full-path main reconciliation before the second allocation
+
+Merged main 42aeaa128c4d44f1769764aaf8f3320e12350be3. Its production delta
+touches only getFullPathName and fs_get_full_path_name, disjoint from byte-lock
+ownership and I/O checks. The pending Army _resolvePath candidate was not
+included. Full-path A/W regression, file-byte-locks including production exit
+handoff, VFS 46/0, callback census 396 and controller source guards all pass.
+The two reviewed teardown census records remain unchanged.
+
+After asserting that build was a real empty directory, preserved it by rename
+to `scratch/runs/20261019-lockfile-build-preserved/empty-build`; the adjacent
+preservation.json records the operation. No failed evidence was changed or
+deleted. A new build destination is absent, as required by the unchanged
+controller. A fresh source manifest and unique output directory are prepared
+for review; no new build/native execution is authorized by this source step.
