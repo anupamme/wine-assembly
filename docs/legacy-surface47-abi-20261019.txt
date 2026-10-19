@@ -226,3 +226,14 @@ wrong in BOTH new production QI and candidate. Correct UUID is
 0B2B8630-AD35-11D0-8EA6-00609797EA5B. This requires source correction, independent
 identity assertions and a fresh compiled hash before further runtime validation.
 Reference: https://raw.githubusercontent.com/wine-mirror/wine/master/include/ddraw.h
+
+Canonical identity correction — source only
+Corrected candidate DirectDraw4 to9c59509a-39bd-11d1-8c4a-00c04fd930c5.
+Corrected production and candidate Surface4 to0b2b8630-ad35-11d0-8ea6-00609797ea5b.
+Other independently checked DirectDraw1/7 and Surface1/2/3/7 identities match.
+New tools/check-surface47-identities.js converts independently recorded canonical
+UUID strings to Windows little-endian memory words, checks candidate guest bytes
+and full production GUID comparisons. Eight identities PASS. All normal build
+gates before concat/compile PASS, plus callback396 and JS syntax. No compiled
+retry: source change invalidates old runtime hash equivalence; subsequent runtime
+allocation needs a new build/hash and the full intended control set as reviewed.

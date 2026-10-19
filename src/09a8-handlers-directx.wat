@@ -4919,7 +4919,7 @@
       (then (local.set $vtbl (global.get $DX_VTBL_DDSURF2))))
     (if (call $guid_words_equal (local.get $iid_wa) (i32.const 0xda044e00) (i32.const 0x11d069b2) (i32.const 0xaa00d5a1) (i32.const 0xbbdfb800))
       (then (local.set $vtbl (global.get $DX_VTBL_DDSURF3))))
-    (if (call $guid_words_equal (local.get $iid_wa) (i32.const 0x0b2b8630) (i32.const 0x11d0ad35) (i32.const 0xc000a68e) (i32.const 0xf197d729))
+    (if (call $guid_words_equal (local.get $iid_wa) (i32.const 0x0b2b8630) (i32.const 0x11d0ad35) (i32.const 0x6000a68e) (i32.const 0x5bea9797))
       (then (local.set $vtbl (global.get $DX_VTBL_DDSURF4))))
     (if (call $guid_words_equal (local.get $iid_wa) (i32.const 0x06675a80) (i32.const 0x11d23b9b) (i32.const 0x60002fb9) (i32.const 0x5bea9797))
       (then (local.set $vtbl (global.get $DX_VTBL_DDSURF7))))
