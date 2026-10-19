@@ -1628,9 +1628,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (licence accepted; original installation next)
+  status: active (original Setup Complete observed; installed-file verification and launch next)
   owner: /root/army_men_authorized_recovery
-  Next: Original child accepted normal Yes at batch2606714 and reached Choose Destination Location; root visually reviewed licence/after PNGs and input receipt, process absence verified. Evidence20261019-army-men-authorized-child/root-review.json. Acceptance observed; persistence after restart unproven. Prepare ordinary installer continuation, no installation/gameplay claim.
+  Next: Corrected-buffer original installer reached Setup Complete through normal licence/destination/program-folder inputs; root reviewed completion.png and process absence, exit0 no guards min2407358464. Finish not clicked, no game launch. Worker verifies exported installed paths/hashes and prepares normal launch. Evidence20261019-army-men-authorized-install-buffer/root-review.json.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.

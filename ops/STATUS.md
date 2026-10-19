@@ -1,3 +1,5 @@
+Current 2026-10-19: Army Men original installer reached reviewed Setup Complete, normal inputs, clean exit and exported files/registry; Finish/gameplay pending. Installed-file verification underway. Dungeon snapshot double-close fix source active; Surface4/7 ABI reviewed with display-mode coverage, runtime tests pending.
+
 Current 2026-10-19: Army Men normal Yes acceptance independently reviewed, now Choose Destination Location; installation/gameplay pending and persisted acceptance unproven. Runtime released cleanly. Dungeon Siege thread snapshot source corrections and native Surface4/7 ABI continue.
 
 Current 2026-10-19: Army Men original bootstrap verified independently; child installer sole runtime granted for authorized visible licence acceptance, not yet observed. Dungeon Siege snapshot integration held for systemwide completeness and real Worker race validation; source corrections assigned. Surface4/7 ABI source continues. All seven licence decisions authorized including Conan; independent blockers retained.
