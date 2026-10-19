@@ -274,3 +274,46 @@ preservation.json records the operation. No failed evidence was changed or
 deleted. A new build destination is absent, as required by the unchanged
 controller. A fresh source manifest and unique output directory are prepared
 for review; no new build/native execution is authorized by this source step.
+
+## Second allocation: normal build passed, native admission refused
+
+Root ran the reviewed v2 controller as sole runtime, session 42448. Normal
+build passed all gates and compilation in 22.601 seconds, exit 0, process
+group 2907251 absent. Minimum sampled free space was 2361241600 bytes, above
+the stop floor; no guard fired. The next job's fresh disk admission refused
+before spawning a native test. That failed admission sample was not recorded;
+root's later 2960699392-byte observation is distinct and does not explain it.
+All four planned native tests remain not run.
+
+The retained production modules are:
+
+- tail: 97c67d7abbff795cab66c547fd637b6e7f2081a5513dc9cd860738b6bea33985
+- compat: b3a9e9513d56932ee7217154789774d92c289f50adc78ef1dbdfa15c8a164fb1
+
+All 9913 original pins and both modules reverified unchanged; group and lease
+absent. Isolated `scratch/runs/20261019-lockfile-native-v2/` has six sealed
+artifacts totaling 1723573 bytes plus artifact-seal.json (SHA-256
+c31153b885307bc6574d8f380e2366782da1eaa08374c4af9851877b16161e89).
+Build outputs remain in place, unmodified.
+
+`tools/run-lockfile-continuation.js` prepares six serial jobs without a normal
+rebuild: the original four instrumented handler/Worker tests, then two 30-second
+exact-production-module smoke tests. Instrumented handler tests compile the
+same source with test-only exports; Worker tests compile production import
+declarations. Neither is described as executing the retained production
+modules. New `test/test-lockfile-public-binary.js` verifies and directly
+instantiates each exact retained binary, resolves both exports by name and
+ordinal through actual imported APIs, executes their public thunks, and checks
+64-bit contention/unlock/error/ESP. Missing unrelated host dependencies throw
+if reached; no file operation or transport is replaced. All six are authored
+and syntax checked, not run.
+
+The continuation pins both modules and permits source differences from built
+commit b130b9445 only in qualification tools/tests and these notes. Its limits,
+per-job admission, stop floor and global lease are unchanged. The 32 MiB
+aggregate now includes both previous run directories, current continuation
+evidence and retained build outputs. Original manifests and seals are pinned.
+New main 509b620ef's disjoint _resolvePath slash-classification fix and its test
+are deliberately not merged into this already-built candidate; no claim is
+made for that combined source. Original Mad Bomber replay and gameplay remain
+separate future work after conformance, not a consequence of a passing build.

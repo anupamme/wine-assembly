@@ -50,6 +50,8 @@ const jobs = [
   { name: 'worker-tail', command: process.execPath, args: ['test/test-lockfile-worker.js'], seconds: 45 },
   { name: 'worker-compat', command: process.execPath, args: ['test/test-lockfile-worker.js', '--compat'], seconds: 45 },
 ];
+const aggregateBytes = (manifest, out) => [out, path.join(ROOT, 'build'), ...(manifest.outputRoots || [])]
+  .reduce((sum, dir) => sum + outputBytes(dir), 0);
 let activeKill = null, interrupted = null;
 function groupAbsent(pid) {
   try { process.kill(-pid, 0); return false; }
@@ -61,7 +63,7 @@ async function runJob(job, manifest, out) {
   verifyPins(manifest.pins);
   assert.equal(git(ROOT, 'rev-parse', 'HEAD'), manifest.commit);
   assert.equal(git(ROOT, 'status', '--porcelain'), '', 'candidate source/index must remain clean');
-  assert(outputBytes(out) + outputBytes(path.join(ROOT, 'build')) < TOTAL, 'aggregate output admission');
+  assert(aggregateBytes(manifest, out) < TOTAL, 'aggregate output admission');
   const fd = fs.openSync(path.join(out, job.name + '.log'), 'wx');
   let child, reason = null, logged = 0, minFree = free(ROOT), settled = false;
   const started = Date.now();
@@ -86,7 +88,7 @@ async function runJob(job, manifest, out) {
       try {
         minFree = Math.min(minFree, free(ROOT));
         if (minFree <= FLOOR) kill('disk floor');
-        if (outputBytes(out) + outputBytes(path.join(ROOT, 'build')) > TOTAL) kill('aggregate output cap');
+        if (aggregateBytes(manifest, out) > TOTAL) kill('aggregate output cap');
       } catch (e) { kill('monitor failure: ' + e.message); }
     }, 200);
     try {
@@ -189,7 +191,9 @@ async function main() {
     fs.unlinkSync(path.join(lease, 'owner.json')); fs.rmdirSync(lease);
   }
 }
-module.exports = { ADMIT, FLOOR, LOG, TOTAL, jobs, sourcePins, verifyPins, outputBytes, groupAbsent };
+module.exports = { ADMIT, FLOOR, LOG, TOTAL, jobs, sourceName, sourcePins, verifyPins,
+  outputBytes, aggregateBytes, groupAbsent, runJob,
+  interrupt: signal => { interrupted = signal; activeKill?.('controller received ' + signal); } };
 if (require.main === module) {
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
     interrupted = signal; activeKill?.('controller received ' + signal);
