@@ -2,6 +2,8 @@
 'use strict';
 // Independent canonical UUID spellings from Wine's include/ddraw.h:
 // https://raw.githubusercontent.com/wine-mirror/wine/master/include/ddraw.h
+// Texture2: https://raw.githubusercontent.com/wine-mirror/wine/master/include/d3d.h
+// IUnknown: https://raw.githubusercontent.com/wine-mirror/wine/master/include/unknwn.idl
 // Do not derive these expectations from the emulator's word constants.
 const assert = require('assert');
 const fs = require('fs');
@@ -10,6 +12,8 @@ const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'src/09a8-handlers-directx.wat'), 'utf8');
 const candidate = fs.readFileSync(path.join(root, 'test/test-directdraw-surface47-abi-candidate.js'), 'utf8');
 const identities = {
+  iidUnknown: '00000000-0000-0000-c000-000000000046',
+  iidTexture2: '93281502-8cf8-11d0-89ab-00a0c9054129',
   iid1: '6c14db80-a733-11ce-a521-0020af0be560',
   iid4: '9c59509a-39bd-11d1-8c4a-00c04fd930c5',
   iid7: '15e65ec0-3b9c-11d2-b92f-00609797ea5b',
@@ -35,6 +39,12 @@ for (const [name, uuid] of Object.entries(identities)) {
   const declaration = candidate.match(new RegExp(`const ${name} = guid\\(\\[([^\\]]+)\\]\\)`));
   assert(declaration, name);
   assert.deepStrictEqual(declaration[1].split(',').map(Number), expected, `${name} guest GUID bytes`);
-  assert(comparisons.some(actual => actual.every((word, i) => word === expected[i])), `${name} production complete GUID comparison`);
+  if (name === 'iidTexture2') {
+    // Inherited legacy route tests only Data1. Validate the exact candidate
+    // UUID without pretending that this route rejects malformed GUID tails.
+    assert.match(source, /\(if \(i32.eq \(local.get \$iid0\) \(i32.const 0x93281502\)\) \(then\s*\(local.set \$vtbl \(global.get \$DX_VTBL_D3DTEX2\)\)\)\)/);
+  } else {
+    assert(comparisons.some(actual => actual.every((word, i) => word === expected[i])), `${name} production complete GUID comparison`);
+  }
 }
-console.log('Surface ABI identities: eight independent canonical UUIDs match guest bytes and complete production comparisons');
+console.log('Surface ABI identities: ten independent canonical UUIDs match guest bytes; nine complete production comparisons, inherited Texture2 Data1 route');

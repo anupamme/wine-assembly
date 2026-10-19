@@ -215,7 +215,7 @@ Local c14b allocation — 2026-10-19
 Fresh admission2877104128>2852126720. Normal build passed20.046s, runtime SHA
 281707fd500865549bc9a73d589ef36a950cf36d929c757225ce92a89fd349b5 exactly matched
 remote c28c. Candidate tail failed2.878s at QI DirectDraw4, E_NOINTERFACE80004002,
-after guest DirectDrawCreateEx and SetDisplayMode succeeded. Stopped immediately;
+after guest DirectDrawCreateEx and SetCooperativeLevel succeeded. Stopped immediately;
 no other candidate/control invocation. Both groups2789087/2789671 absent, guards
 none, all root/candidate source/helper and root canonical pins unchanged. Minimum
 2851975168 bytes, outputs25069459 bytes. Full controller/pins/logs/result retained
@@ -237,3 +237,24 @@ and full production GUID comparisons. Eight identities PASS. All normal build
 gates before concat/compile PASS, plus callback396 and JS syntax. No compiled
 retry: source change invalidates old runtime hash equivalence; subsequent runtime
 allocation needs a new build/hash and the full intended control set as reviewed.
+
+Bounded remaining identity/route audit — source only
+Independently verified Texture2 UUID93281502-8cf8-11d0-89ab-00a0c9054129 against
+Wine include/d3d.h and IUnknown00000000-0000-0000-c000-000000000046 against
+include/unknwn.idl. Both candidate encodings were already correct. Extended the
+source checker to ten canonical candidate UUIDs; nine have complete production
+comparisons. Texture2 deliberately reports its inherited Data1-only Surface QI
+route rather than falsely claiming full GUID rejection. Texture1/Gamma/device
+legacy branches likewise remain outside this prerequisite's full-IID guarantee.
+The texture-to-Surface4 candidate route delegates through d3dim_qi family5 to the
+surface handler, saving/restoring dispatcher ESP/EAX around its HRESULT; the
+Surface4 full-IID comparison and tracked wrapper reference path therefore apply.
+Reviewed candidate COM slot/argument counts, callback argument order, owned-ref
+releases, retained-view balances and descriptor valid-mask expectations against
+the implementation and interface declarations. No additional definite defect
+found in this bounded review. No assertions weakened and no emulator changes.
+The extended source checker passes; this does not substitute for queued full
+fresh native validation. RTC retains the sole runtime lane.
+Additional references:
+https://raw.githubusercontent.com/wine-mirror/wine/master/include/d3d.h
+https://raw.githubusercontent.com/wine-mirror/wine/master/include/unknwn.idl
