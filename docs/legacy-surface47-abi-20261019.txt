@@ -173,3 +173,25 @@ callback census396, region allocation shakes, API generation, layout checks and
 20,000 deterministic ToyVM decoder source-check cases (0 mismatches).
 This is not a successful native build: no WATX compilation or guest retry ran.
 Source-gate transcript is retained with the recovered first-failure artifacts.
+
+Reviewed c28c remote allocation — 2026-10-19 00:51 UTC
+Boat cmd_ali5e2rnkgvf/controller50294 fetched exact c28c73c6 and passed clean-tree
+and fail-fast mapping checks. Normal build passed20.162s. Mip-chain, complex
+surface release, and explicit GetAttachedSurface passed in both dispatch modes.
+EnumSurfaces tail failed at line117: callback SURFACE pointer133373952 differed
+from expected132255760; thunk1426063360/context305441741 matched. This is not a
+descriptor-pointer assertion. Controller stopped; EnumSurfaces compat did not run.
+All8 job groups absent, no guards, source/helper and Dungeon canonical pins
+unchanged; minimum49152786432 bytes, aggregate24953006 bytes. Controller exit1.
+Recovered full logs/pins/run/result through Boat cmd_zssdgembroee into
+scratch/runs/20261019-surface47-remote-validation-c28c; build hashes through
+cmd_8wtalxke0xew:
+  wasm1873796 281707fd500865549bc9a73d589ef36a950cf36d929c757225ce92a89fd349b5
+  compat1876369 9f42b4e40a2903cf0a89c55fdcca2f6e93f040013508617f8f88c897459007be
+  combined20631494 ec6c5b699d33b77986e998673a148069715dcc5408da327bf0d1abb550436208
+Source diagnosis: unchanged control creates surfaces with fabricated vtable
+0x54000100 and DirectDraw with0x54000000, without initializing vtable globals.
+Version-aware enumeration requests the legacy DDSURF2 vtable (zero in this
+fixture), so dx_surface_view returns an auxiliary wrapper. Descriptor-content
+assertions were not reached. Correct fixture initialization/allocation is needed;
+no expected-address relaxation or emulator change is justified by this failure.
