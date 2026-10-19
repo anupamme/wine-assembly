@@ -293,3 +293,15 @@ and direct the output to a new recovery path, then verify the hash above.
 Free space rose2835611648 ->2852880384 bytes. This is only753664 bytes above
 32MiB admission, so it does not authorize or guarantee the next allocation.
 No build/native runtime ran; corrected-GUID normal build will regenerate combined.
+
+Local d514 admission refusal — 2026-10-19
+Verified only documentation differs from validated source1b6c. Root's current
+canonical modules are RTC7fd02a77/a72bbc38; its compressed current combined source
+was selected for preservation pins. Proposed28MiB aggregate cap is justified by
+prior remote25507693 bytes, leaving3852435 bytes for additional candidate logs;
+512MiB transient reserve and2GiB128 baseline unchanged, admission2847932416.
+Initial observation2856673280 bytes fell to2221264896 at fresh admission (~635MB
+unattributed loss during preparation). Controller refused BEFORE any child,
+build or native test. No PID/group or runtime minimum exists; no retry.
+Controller and estimate retained in scratch/runs/20261019-surface47-local-d514.
+Lane released to coordinator for disk investigation; no cleanup performed.
