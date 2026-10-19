@@ -167,3 +167,60 @@ qualification, requiring a fresh coordinator runtime grant:
 
 No build, native fixture, Worker, browser or original executable was run for
 this reconciliation. No claim of gameplay or merge readiness follows.
+
+## Source-ready public export and Worker qualification
+
+The pending test gaps above now have authored fixtures, still **not executed**:
+
+- `test/test-lockfile-handlers.js` loads the existing deterministic KERNEL32 PE
+  fixture, calls its actual GetModuleHandleA/GetProcAddress imports, resolves
+  both case-sensitive names and emulator ordinals 591/592, then executes the
+  returned thunks through the interpreter. It checks five-argument stack
+  cleanup, both 64-bit halves, contention, wrong-owner unlock and invalid
+  handles. Its prior direct-handler/CRT duplicate checks remain.
+- `test/test-lockfile-worker.js` compiles the production header declarations
+  and exports their actual imported functions. Two OS Workers use the real
+  guest-rpc shared-memory transport and filesystem broker. Assertions exercise
+  the sixth unlock argument, high range halves, the fifth duplicate argument,
+  failed CLOSE_SOURCE with a surviving duplicate, and final-owner cleanup.
+  Both fixtures support --compat. Neither adds replacement file operations or
+  a mock RPC transport.
+
+Microsoft's [LockFile contract](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfile)
+documents exclusive nonblocking locks, second-open denial, beyond-EOF ranges
+and mapping exemption; it does not specify zero-length overlap behavior.
+Wine's [Windows conformance test, test_LockFile](https://github.com/wine-mirror/wine/blob/master/dlls/kernel32/tests/file.c#L2218)
+is the explicit zero-length oracle consulted on 2026-10-19. Its unconditional
+checks cover successful zero-length lock/exact unlock and a left-adjacent
+nonzero range. Interior/right overlap denial is conditional on the detected
+limited_LockFile behavior of older Windows. The native fixture therefore
+asserts only that unconditional subset. The JavaScript regression's stronger
+point-overlap policy remains the candidate's chosen behavior, not a universal
+Win98 compatibility claim. No local native-Windows comparison has occurred.
+
+`tools/run-lockfile-native.js` supersedes the earlier prose-only gate sequence:
+normal build (120 seconds), handler/public-export tail and compat (60 seconds
+each), then real Worker tail and compat (45 seconds each), serially. Every job
+requires free space strictly above 2852126720 bytes; monitoring stops at or
+below 2214592512 bytes. Logs cap at 2 MiB each, aggregate evidence plus isolated
+build outputs at 32 MiB, checked every 200 ms. Detached job groups are killed on
+deadline/cap/interruption and checked absent. A failed job stops the sequence.
+Explicit coordinator grant, reviewed manifest SHA-256, exact task commit and
+the `/tmp/wine-assembly-local-runtime.lock` exclusive lease are required.
+
+Preparation pins present tracked source inputs in the task, shared host and
+recovery worktrees, both existing recovery canonical modules (shared-host
+module absence is also pinned), the complete pngjs dependency, and all 140
+original Mad Bomber files. Newly built modules are pinned across later jobs.
+Source-only guard tests check content changes/deletion/unexpected appearance,
+caps/job bounds and name/ordinal/API-ID agreement. Syntax, 2026-test membership,
+and 283-import freshness pass; compiled tests remain pending.
+
+Only needed missing tracked paths were expanded after runtime release:
+.gitignore, index.html, package metadata, fonts/Terminal.fon,
+fonts/substitutions.json and the two committed toyVM browser bundles. The
+bundles account for most of the approximately 44 MiB expansion; the other
+roughly 124 MiB of omitted tracked data was not copied. pngjs is resolved from
+the recovery worktree's pinned node_modules. No Army path-handling functions
+or canonical modules were edited. This controller never launches Mad Bomber;
+original replay remains a separate grant after native qualification.
