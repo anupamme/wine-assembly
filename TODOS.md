@@ -1799,3 +1799,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   Previous checkpoint (licence-decision hold superseded): Publisher Nov1999 CD index matches Archive gsscda1999/1999-11/GS1199.iso; remote-only download pins SHA1f985ca1349af958f886957aa662e87956a7db22d. Native1959files verified; originalSetup unpacked authenticengine, welcome->actual German licence screen reviewed in2221Z. No acceptance or installation; allPIDs absent22:23:28.352. Await user decision; Silver sourcepreflight replaces active lane.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/input/build identity; refill on exact blocker.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
+- [~] Include all supported games in Wine Ops, including Outlaws
+  id: TG98-OPS-SUPPORTED-GAMES-20261019
+  status: active (registry/inventory reconciliation)
+  owner: /root/tg98_ops_supported_games
+  Next: Live8098 serves40fe91b98/wasm02b41f09 and old shared manifest; 344 candidates omitOutlaws despite currentmain registry. Reconcile supported inventory without falsely enabling launches against old live runtime. Preserve dashboard/data; no public emulator deploy.
+  Done: Supported registry coverage tested, Outlaws visible with accurate launch/readiness, scoped rollout verified.
