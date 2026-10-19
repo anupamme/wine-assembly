@@ -1,3 +1,5 @@
+Current 2026-10-19: Army Men normal Yes acceptance independently reviewed, now Choose Destination Location; installation/gameplay pending and persisted acceptance unproven. Runtime released cleanly. Dungeon Siege thread snapshot source corrections and native Surface4/7 ABI continue.
+
 Current 2026-10-19: Army Men original bootstrap verified independently; child installer sole runtime granted for authorized visible licence acceptance, not yet observed. Dungeon Siege snapshot integration held for systemwide completeness and real Worker race validation; source corrections assigned. Surface4/7 ABI source continues. All seven licence decisions authorized including Conan; independent blockers retained.
 
 Current 2026-10-19: Wine Ops live351entries/all347registered IDs includingOutlaws verified, pinned emulator unchanged. DBCS integrated/tested root93818216, original MadBomber nextLockFile import. Active new-game workers DungeonSiege thread snapshots after actualEULAaccept and ArmyMen original bootstrap after verified recovery; Surface4/7 ABI source worker advances GL/D3D.

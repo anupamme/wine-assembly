@@ -1628,9 +1628,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (original bootstrap verified; authorized child installer next)
+  status: active (licence accepted; original installation next)
   owner: /root/army_men_authorized_recovery
-  Next: Bootstrap d372587d6 produced authentic child48141f38 and246-file handoff; root independently verified247 capture entries including receipt and old process absence. Sole bounded child runtime granted for ordinary visible Next/Yes; actual acceptance still false until observed. Evidence20261019-army-men-authorized-bootstrap/root-review.json.
+  Next: Original child accepted normal Yes at batch2606714 and reached Choose Destination Location; root visually reviewed licence/after PNGs and input receipt, process absence verified. Evidence20261019-army-men-authorized-child/root-review.json. Acceptance observed; persistence after restart unproven. Prepare ordinary installer continuation, no installation/gameplay claim.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1751,8 +1751,8 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Legacy texture cube API conformance
   id: D3D-LEGACY-TEXTURE-CAPS-AUDIT-20261013
-  status: active (cube surface contract fixture preparation)
-  owner: /root/legacy_cube_api_fixture
+  status: active (native Surface4/7 ABI prerequisite; cube conformance pending)
+  owner: /root/legacy_surface7_abi
   Next: Audit46ccf573 identifies dwCaps2 discarded at creation/retrieval. Actual guest COM fixture next; independent face storage/lifetime before renderer qualification. Prior palette fixes remain merged.
   Done: Correct advertised API and software/GPU behavior with versioned contract and tests.
 
