@@ -417,3 +417,30 @@ qualifies the bounded native version-aware ABI prerequisite, not full cube API:
 cube storage, face groups and software/GPU sampling remain unimplemented/rejected.
 Inherited prefix-only legacy Texture/Gamma/device QI and callback descriptor
 lifetime limitations remain as documented; no game/browser qualification claimed.
+
+RTC-main integration candidate — source only
+Separate branch task/legacy-surface47-rtc-integrated-oct19 merges reviewed remote
+main b7d48037298001a14cb94a98b14bd9228d7919b0 into the qualified Surface branch.
+Previous task branch75e1799ab and all evidence are preserved. No root/shared HEAD
+or index was changed. No held Dungeon app capability copied: lib/apps has no
+integration delta against origin/main. Main's4581 API rows remain byte-for-byte
+identical; Surface tail adds only4581..4589. Thread IDs4579/4580 remain unchanged.
+Generated dispatch/hash/kernel image, host signatures282, region mirror262 and
+callback census396 all PASS; RTC host/worker census pins merge with the five
+Surface callback pins. TOOLHELP32 stays intact; only Surface registry growth is
+introduced beyond main's regions. Independent10UUID/78callsite/failfast checks
+PASS; full normal preconcat/precompile gates PASS. No WATX build or native run.
+
+Required combined-source runtime plan (coordinator grant still required):
+1. Fresh disk/pin admission, normal tools/build.sh, record NEW wasm/compat hashes.
+   Do not assert38fa4a07: that identifies the pre-RTC Surface source only.
+2. Full Surface candidate both modes and the eight listed controls both modes,
+   same known local originals, exact ESP/buffer/reference assertions retained.
+3. RTC source consumer control on EACH new module:
+   WINE_ASSEMBLY_WASM=build/wine-assembly.wasm node test/test-cmos-rtc-native.js --worker
+   WINE_ASSEMBLY_WASM=build/wine-assembly.compat.wasm node test/test-cmos-rtc-native.js --worker
+   Add test/test-cmos-rtc.js and test/test-cmos-rtc-worker.js as focused host/RPC checks.
+One process group at a time,180s/job4MiBlog, fresh reserve/floor admission, strict
+aggregate cap based on measured outputs, stop first failure and preserve pins.
+Combined qualification is pending; earlier38fa/11b results are not that evidence.
+No original-game/browser/deployment or full cube implementation is in this merge.
