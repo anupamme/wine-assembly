@@ -12,6 +12,8 @@
     { "name": "CreateToolhelp32Snapshot", "api": "CreateToolhelp32Snapshot", "ordinal": 588 },
     { "name": "Thread32First", "api": "Thread32First", "ordinal": 589 },
     { "name": "Thread32Next", "api": "Thread32Next", "ordinal": 590 },
+    { "name": "LockFile", "api": "LockFile", "ordinal": 591 },
+    { "name": "UnlockFile", "api": "UnlockFile", "ordinal": 592 },
     {
       "name": "_hread",
       "api": "_hread",
