@@ -9,6 +9,14 @@ const path = require('path');
 const { bootRenderHarness } = require('./render-helper');
 const regions = require('../lib/region-map.generated');
 const apiTable = require('../src/api_table.json');
+// Legacy D3DIM api_table nargs=5 describes its generic dispatch entry, not
+// the COM prototype. Independent IUnknown signatures from Wine d3d.h/unknwn.idl
+// agree with d3dim-methods.js and the handlers' 16/8/8-byte stdcall epilogues.
+const COM_ABI_ARITY = {
+  IDirect3DTexture2_QueryInterface: 3,
+  IDirect3DTexture2_AddRef: 1,
+  IDirect3DTexture2_Release: 1,
+};
 const C = { texture: 0x1000, complex: 8, system: 0x800, mip: 0x400000,
   flip: 0x10, back: 4, cube: 0x200, all: 0xfc00 };
 const faceBits = [0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000];
@@ -68,7 +76,8 @@ const tailCalls = !process.argv.includes('--compat');
         `${label}: COM thunk marker`);
       const method = apiTable[thunkView.getUint32(targetWa + 4, true)];
       assert(method, `${label}: published API identity`);
-      assert.strictEqual(args.length, method.nargs, `${method.name}: argument count including this`);
+      assert.strictEqual(args.length, COM_ABI_ARITY[method.name] ?? method.nargs,
+        `${method.name}: COM argument count including this`);
       code.push(0xb8); word(object); // mov eax,this
       code.push(0x8b, 0x00, 0xff, 0x90); word(slot * 4); // call [vtable+slot]
     } else { code.push(0xb8); word(target); code.push(0xff, 0xd0); }

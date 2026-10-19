@@ -342,3 +342,12 @@ tools/d3dim-methods.js and actual Texture2 QueryInterface handler declare3 COM
 arguments and pop16 bytes (return+3args). Production metadata must not be changed
 to satisfy this candidate check. A separately specified COM ABI count is needed
 for these legacy methods; exact post-call ESP assertions remain authoritative.
+
+COM precheck correction — source only
+For Texture2 QueryInterface/AddRef/Release, the candidate now uses explicit COM
+arity3/1/1 from IUnknown/interface headers, rather than generic api_table nargs5.
+The shared d3dim-methods spec agrees; QI/Release handlers pop16/8 bytes and AddRef
+aliases the existing one-argument helper. Published thunk marker/method identity
+checks and exact post-call ESP assertions remain. No production nargs, handler,
+thunk, API ID or module changed. Source syntax, UUID/fail-fast checks and manual
+spec/epilogue assertions PASS; runtime still38fa4a07. No corrected guest retry.
