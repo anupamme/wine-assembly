@@ -317,3 +317,20 @@ New main 509b620ef's disjoint _resolvePath slash-classification fix and its test
 are deliberately not merged into this already-built candidate; no claim is
 made for that combined source. Original Mad Bomber replay and gameplay remain
 separate future work after conformance, not a consequence of a passing build.
+
+## Native continuation passed (2026-10-19)
+
+Root ran the exact reviewed continuation in session 96429, terminal 0. All six
+jobs passed: instrumented handler/public tail 2.915s and compat 2.762s; real
+Worker RPC tail 0.060s and compat 0.057s; exact production binary public API
+tail 0.064s and compat 0.067s. The production smoke logs identify the retained
+97c67d7a/b3a9e951 hashes. No guard fired, all six process groups are absent,
+lease removed, and all 9930 pins reverified unchanged. Minimum sampled free
+space was 2948763648 bytes.
+
+`scratch/runs/20261019-lockfile-continuation/` contains 15 sealed artifacts,
+1725166 bytes plus artifact-seal.json SHA-256
+9d0330e39b27c466e416f5da5ec5b557cd97685d11542a42eb283945f064b951.
+This establishes the bounded fixture contracts, not original-game behavior.
+The next original Mad Bomber consumer requires its own prepared matching
+runtime, original 140-file manifest, retained module pins and separate grant.
