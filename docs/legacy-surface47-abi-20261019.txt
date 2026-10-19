@@ -258,3 +258,24 @@ fresh native validation. RTC retains the sole runtime lane.
 Additional references:
 https://raw.githubusercontent.com/wine-mirror/wine/master/include/d3d.h
 https://raw.githubusercontent.com/wine-mirror/wine/master/include/unknwn.idl
+
+Remote 1b6c validation — 2026-10-19 01:07 UTC
+Fresh HTTPS Git checkout exact1b6c57fa6fcfa9183b0e4dff549136224dda737f in
+/home/user/surface47-validation-1b6c on bx_rtue4bvt; RTC directory preserved.
+Controller25377 started01:07:24.857, exited0. Normal build passed22.480s.
+All four original-independent controls passed in BOTH tail/compat modes:
+  directdraw-mip-chain, ddraw-complex-surface-release,
+  directdraw-get-attached-explicit, corrected directdraw-enum-surfaces.
+All9 job groups absent; no guard fired; candidate and RTC tracked source/helper
+pins and RTC three modules unchanged. Minimum free48770756608 bytes; observed
+aggregate25507693 bytes within128MiB budget. Deadline01:22 not approached.
+Full run.js/pins/logs/job+aggregate JSON/controller status and build hashes
+recovered through authorized Boat exec cmd_eg5hxfp5tue2 to local
+scratch/runs/20261019-surface47-remote-1b6c. No SSH/original transfer.
+Fresh exact runtime:
+  wasm1873796 38fa4a07ee8c6a4939f7205bb625df1f7cf07ed05e0f8dc317fbf2a2ab57c04d
+  compat1876369 11b30b401c013690dc9bff0b1b9304b83e3e0a2a4921e868ce7e8ab1f6f25a25
+  combined20631494 74b154594e02afecb7e9f5006393148aeeb2796ed5c7c8c0fae699021d4f9c84
+Scope remains partial: Surface4/7 actual guest candidate and interface-refcounts,
+surface3-desc, vbdd-directdraw34 and vbdd-image-interface remain pending local
+known-original fixtures. No full ABI/cube qualification; runtime lane released.
