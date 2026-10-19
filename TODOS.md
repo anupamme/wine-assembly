@@ -1628,9 +1628,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (authorized original installer recovery complete; bootstrap next)
+  status: active (original bootstrap verified; authorized child installer next)
   owner: /root/army_men_authorized_recovery
-  Next: Fresh original archive18373265bytes and187payload files43721065bytes allhistorical hashes PASS. Normal SETUP bootstrap must regenerate child then actualauthorized Yes. No acceptance yet; serialized runtime pending prepared route.
+  Next: Bootstrap d372587d6 produced authentic child48141f38 and246-file handoff; root independently verified247 capture entries including receipt and old process absence. Sole bounded child runtime granted for ordinary visible Next/Yes; actual acceptance still false until observed. Evidence20261019-army-men-authorized-bootstrap/root-review.json.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
