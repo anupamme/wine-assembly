@@ -1,5 +1,15 @@
 # Silent-handler inventory history
 
+2026-10-19: No inventory change. `ImmGetProperty` shares the existing
+two-argument no-IME result/cleanup and reports zero capabilities/version
+because no IME is installed, consistent with `GetKeyboardLayout/List` exposing
+only plain en-US and `ImmIsIME` returning false. This is the absence of an IME,
+not success for unimplemented composition work. Unknown HKLs cannot name an
+installed IME either. The compiled regression resolves the actual dynamic thunk
+and dispatches all seven property indices plus invalid selectors, checking the
+two-argument stdcall ABI. An installed IME implementation must update these
+queries together. API contract: https://learn.microsoft.com/en-us/windows/win32/api/imm/nf-imm-immgetproperty.
+
 2026-10-10: D3D8 `SetPixelShader` now resolves a live device-owned handle and
 binds the shared shader object, instead of returning an error for every
 nonzero handle. This removes exactly one quiet handler, with none added:

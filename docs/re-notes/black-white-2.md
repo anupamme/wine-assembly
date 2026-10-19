@@ -1,5 +1,19 @@
 # Black & White 2 demo
 
+## Plain-keyboard IME property query (2026-10-19)
+
+User's Safari 26.4 report on build `02b41f090dacdb461ea0b59a77260d6c17432e9d3993d4cc8878cb76a865a33d`
+traps at missing `ImmGetProperty`, EIP `0x00b52fb4`, return `0x00af355a`,
+stack arguments HKL `0x04090409`, index `4` (`IGP_PROPERTY`). This export was
+absent from the API table. The machine has no installed IME, so the query
+returns zero capabilities/version through the existing no-IME result path.
+See [Microsoft's contract](https://learn.microsoft.com/en-us/windows/win32/api/imm/nf-imm-immgetproperty).
+`test/test-imm-get-property.js` exercises dynamic lookup and actual thunk
+dispatch for all seven query indices, invalid indices and unknown HKLs,
+checking the two-argument stdcall cleanup and consistency with the keyboard
+layout and `ImmIsIME`. This verifies the reported API boundary; it does not
+requalify Safari or gameplay on the full demo.
+
 ## Plain-keyboard IME description query (2026-10-13)
 
 User's Safari 26.4 Boat run trapped at `ImmGetDescriptionA`, EIP `0x00b52fc0`,

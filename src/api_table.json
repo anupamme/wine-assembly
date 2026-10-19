@@ -39037,5 +39037,12 @@
     "nargs": 3,
     "convention": "stdcall",
     "hash": 4210561482
+  },
+  {
+    "id": 4592,
+    "name": "ImmGetProperty",
+    "nargs": 2,
+    "convention": "stdcall",
+    "hash": 2742787595
   }
 ]

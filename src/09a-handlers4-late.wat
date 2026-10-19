@@ -1816,6 +1816,20 @@ SetColorAdjustment — validate and copy complete per-DC state.
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
   )
 
+  ;; ImmGetProperty(hKL, dwIndex) queries the IME associated with a layout.
+  ;; Only the plain en-US layout is installed (GetKeyboardLayout/List and
+  ;; ImmIsIME above). No HKL therefore has IME properties, capabilities or an
+  ;; IME version: return zero, including for unknown HKLs/indices. Do not
+  ;; advertise IMEVER_0400 merely because the emulated OS is Win98.
+  ;; https://learn.microsoft.com/en-us/windows/win32/api/imm/nf-imm-immgetproperty
+  (func $handle_ImmGetProperty (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
+    ;; Share the two-argument no-IME result and stack cleanup. Neither query
+    ;; nor attempted opening can create an IME in this machine configuration.
+    (call $handle_ImmSetOpenStatus
+      (local.get $arg0) (local.get $arg1) (local.get $arg2)
+      (local.get $arg3) (local.get $arg4) (local.get $name_ptr))
+  )
+
   ;; ImmReleaseContext(hWnd, hIMC) balances a successful ImmGetContext call.
   ;; This no-IME machine never issues a HIMC, so neither NULL nor a fabricated
   ;; numeric value can name acquired context state to release.

@@ -176,6 +176,7 @@ const extra = [
   { name: 'ImmNotifyIME', nargs: 4 },
   { name: 'ImmGetContext', nargs: 1 },
   { name: 'ImmIsIME', nargs: 1 },
+  { name: 'ImmGetProperty', nargs: 2 },
   { name: 'ImmReleaseContext', nargs: 2 },
   { name: 'OpenThreadToken', nargs: 4 },
   { name: 'OpenProcessToken', nargs: 3 },
