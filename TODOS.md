@@ -1397,11 +1397,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Dungeon Siege demo
   id: NEW-GAME-DUNGEON-SIEGE-DEMO-20261008
-  status: active (licence accepted; thread snapshot API blocker)
-  owner: /root/dungeon_siege_thread_snapshot
-  worker: /root/dungeon_siege_thread_snapshot
+  status: queued (licence accepted; tested snapshot fix integrated, original retry pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: none (snapshot worker completed; original retry queued)
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: Snapshot source f53075787 independently reviewed after first compiled test found double-close fallback bug. Real handle identities corrected; both dispatch production/OS-Worker and controls granted on fresh bx_z8xgsuxz, no passing runtime claim yet. Original actual EULA accepted; next game retry follows validated integration.
+  Next: Thread snapshot fix integrated main13bbe1266 after all eight remote native checks passed. Local canonical module remains old93818216; rebuild before serialized original-game retry. Actual EULA acceptance observed, persistence after crash unproved; no gameplay qualification.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
@@ -1628,12 +1628,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (installed originals verified; remote launch preparation)
+  status: active (installed originals verified; local launch closure repair)
   owner: /root/army_men_authorized_recovery
-  Next: Root independently verified166 installed files including165 exact originals; shortcut and registry agree on normal EXE/cwd/empty args. Preparing bx_z8xgsuxz launch bundle behind Dungeon tests. Setup Complete reviewed; Finish not clicked and gameplay unproved.
+  Next: Setup Complete and 166 installed files independently verified. First launch stopped before guest execution: missing runner-experiment-report.js in staged runtime. Worker preparing a new immutable complete closure and source preflight; retry requires serialized runtime allocation. Finish not clicked; gameplay unproved.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
-  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=true: ordinary Yes observed in scratch/runs/20261019-army-men-authorized-child/acceptance.json; Setup Complete separately verified in 20261019-army-men-authorized-install-buffer. Authorization receipt remains unchanged.
 
 
 - [ ] Retain Worker ownership until retirement and termination complete
@@ -1760,7 +1760,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-AOE3-DEMO-20261010
   status: queued (licence acceptance authorized; runtime/recovery preflight pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/authorized_installer_queue (preparation; runtime serialized)
+  worker: none (prepared queue; awaiting serialized runtime allocation)
   candidate: test/binaries/win98-games-a-d/Age-of-empire-3trial-Win98-SW.exe
   Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
   Previous checkpoint (licence-decision hold superseded): Original reaches EULA with InterlockedExchangeAdd candidate, XP profile, native MSXML4 and its resource DLL. Screenshot991 sent; no button answered. Evidence scratch/runs/20261010T0430Z-aoe3-eula. Await user review before gameplay; pipeline refilled Beyond Good and Evil.
@@ -1772,7 +1772,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-CONAN-DEMO-20261010
   status: queued (licence acceptance authorized; runtime/recovery preflight pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/authorized_installer_queue (preparation; runtime serialized)
+  worker: none (prepared queue; awaiting serialized runtime allocation)
   candidate: test/binaries/win98-games-a-d/Conan cauldron-DX9-D3D/ConanPC-Demo.exe
   Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
   Previous checkpoint (licence-decision hold superseded): Original staged and SHA verified on bx_hx8msa33. Ordinary language/welcome/destination inputs reach EULA with I Reject selected, run20261010T0803Z-conan-destination. Do not answer acceptance. No installer process running; extracted game not yet available. Refill actionable new-game slot while this remains held.
