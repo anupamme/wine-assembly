@@ -9,14 +9,7 @@ const path = require('path');
 const { bootRenderHarness } = require('./render-helper');
 const regions = require('../lib/region-map.generated');
 const apiTable = require('../src/api_table.json');
-// Legacy D3DIM api_table nargs=5 describes its generic dispatch entry, not
-// the COM prototype. Independent IUnknown signatures from Wine d3d.h/unknwn.idl
-// agree with d3dim-methods.js and the handlers' 16/8/8-byte stdcall epilogues.
-const COM_ABI_ARITY = {
-  IDirect3DTexture2_QueryInterface: 3,
-  IDirect3DTexture2_AddRef: 1,
-  IDirect3DTexture2_Release: 1,
-};
+const { methodArity } = require('./surface47-abi-contract');
 const C = { texture: 0x1000, complex: 8, system: 0x800, mip: 0x400000,
   flip: 0x10, back: 4, cube: 0x200, all: 0xfc00 };
 const faceBits = [0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000];
@@ -56,6 +49,7 @@ const tailCalls = !process.argv.includes('--compat');
   const iidSurface2 = guid([0x57805885, 0x11cf6eec, 0x23a84194, 0x270ec103]);
   const iidSurface3 = guid([0xda044e00, 0x11d069b2, 0xaa00d5a1, 0xbbdfb800]);
   const stack = alloc(8192) + 4096;
+  const directDrawVersions = new Map(); // Published vtable -> independently acquired IID version.
 
   // Each operation executes PUSH arguments + indirect CALL from x86. No
   // handler/helper exports, seeded vtables, or synthetic surface records.
@@ -68,7 +62,7 @@ const tailCalls = !process.argv.includes('--compat');
     if (object) {
       vtable = read(object); target = read(vtable + slot * 4);
       assert(vtable && target, `${label}: published vtable/slot`);
-      // Check the actual published COM thunk signature before executing it.
+      // Check the published method against an independent COM ABI contract.
       // A wrong slot must not consume a different number of guest arguments.
       const targetWa = (target - e.get_image_base() + e.get_guest_base()) >>> 0;
       const thunkView = new DataView(memory.buffer);
@@ -76,7 +70,7 @@ const tailCalls = !process.argv.includes('--compat');
         `${label}: COM thunk marker`);
       const method = apiTable[thunkView.getUint32(targetWa + 4, true)];
       assert(method, `${label}: published API identity`);
-      assert.strictEqual(args.length, COM_ABI_ARITY[method.name] ?? method.nargs,
+      assert.strictEqual(args.length, methodArity(method.name, directDrawVersions.get(vtable)),
         `${method.name}: COM argument count including this`);
       code.push(0xb8); word(object); // mov eax,this
       code.push(0x8b, 0x00, 0xff, 0x90); word(slot * 4); // call [vtable+slot]
@@ -115,6 +109,7 @@ const tailCalls = !process.argv.includes('--compat');
   ok(api('DirectDrawCreateEx', 0, out.p, iid7, 0), 'factory');
   out.check();
   const dd = read(out.p); assert(dd && dd !== POISON);
+  directDrawVersions.set(read(dd), 7);
   ok(com(dd, 20, 0, 8), 'DDSCL_NORMAL cooperative level');
 
   function desc(caps, caps2 = 0, mipCount = 0, backCount = 0) {
@@ -208,6 +203,7 @@ const tailCalls = !process.argv.includes('--compat');
   }
   ok(com(dd, 0, iid4, out.p), 'QI DirectDraw4');
   const dd4 = read(out.p);
+  directDrawVersions.set(read(dd4), 4);
   const initialMode = displayMode(dd, 124);
   assert.deepStrictEqual(displayMode(dd4, 124), initialMode, 'DD4 and DD7 report the same mode');
   ok(com(dd4, 6, desc(C.texture | C.system), out.p, 0), 'DirectDraw4 CreateSurface');
@@ -215,7 +211,9 @@ const tailCalls = !process.argv.includes('--compat');
   ok(com(made4, 0, iidSurface4, out.p), 'created Surface4 identity');
   assert.strictEqual(read(out.p), made4); com(made4, 2); com(made4, 2); com(dd4, 2);
   ok(com(dd, 0, iid1, out.p), 'QI DirectDraw1 control');
-  const dd1 = read(out.p), legacyDesc = guard(108), template = desc(C.texture | C.system);
+  const dd1 = read(out.p);
+  directDrawVersions.set(read(dd1), 1);
+  const legacyDesc = guard(108), template = desc(C.texture | C.system);
   assert.deepStrictEqual(displayMode(dd1, 108), initialMode, 'legacy descriptor reports the same mode');
   for (let k = 0; k < 108; k += 4) write(legacyDesc.p + k, read(template + k));
   write(legacyDesc.p, 108);

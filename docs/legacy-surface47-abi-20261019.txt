@@ -363,3 +363,18 @@ minimum3107192832, outputs25093466; stopped1/10jobs and did not retry.
 Evidence: scratch/runs/20261019-surface47-local-8739. Before another allocation,
 review every candidate COM call against interface-specific prototypes and cleanup;
 metadata-only prechecks are insufficient for shared/versioned dispatch handlers.
+
+Complete candidate COM call-site audit — source only
+Replaced metadata-based argument prechecks with test/surface47-abi-contract.js,
+an independent header-derived map for every invoked method. DirectDraw versions
+are recorded from factory/IID acquisition by returned vtable; SetDisplayMode
+selects4 or6 COM arguments from that version, never from the supplied count.
+No production metadata or cleanup changed; exact post-call ESP remains required.
+New tools/check-surface47-call-sites.js inventories all78 textual COM call sites,
+checks receiver family/slot/prototype argument counts, resolves actual dispatch
+aliases and verifies corresponding production stack-pop epilogues. It separately
+checks shared SetDisplayMode versions1/2/4/7. Generated review matrix and manual
+callback/lifetime route notes: docs/legacy-surface47-call-sites-20261019.txt.
+All78 PASS source check; JS syntax, tenUUID, fail-fast, dispatch freshness and
+complete test manifest PASS. Candidate assertions/outcomes remain intact. No
+runtime retry; source ABI implementation and expected38fa4a07/11b30b40 unchanged.
