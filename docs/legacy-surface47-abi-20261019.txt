@@ -444,3 +444,16 @@ One process group at a time,180s/job4MiBlog, fresh reserve/floor admission, stri
 aggregate cap based on measured outputs, stop first failure and preserve pins.
 Combined qualification is pending; earlier38fa/11b results are not that evidence.
 No original-game/browser/deployment or full cube implementation is in this merge.
+
+Combined745 admission refused before runtime — 2026-10-19
+Preserved prior38fa/11b modules and74b15459 combined source as three gzip archives,
+4749285 bytes total, each fully decompressed and SHA256 matched before proceeding.
+Original build files remain unchanged. Archives, original hashes and recovery
+recipes retained in scratch/runs/20261019-surface47-rtc-combined/prior-artifacts.json.
+Fresh free2410000384 <2852126720 admission. No build, native test or controller
+child launched; no retry. The archive allocation alone does not explain the
+large disk reduction since the previous3.099GB observation; cause unattributed.
+Prepared23-job controller (syntax checked only) covers normalbuild, candidate2,
+controls16, RTCnativeworker2 and host/RPC2. It records/pins new combined hashes
+after building and preserves current root source/host/modules plus old archives.
+Admission-refused JSON records launchedJobs0; source integration remains unbuilt.
