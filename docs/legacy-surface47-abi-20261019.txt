@@ -328,3 +328,17 @@ wrong-slot/argument mismatch fails before guest writes or stack damage. Existing
 post-call ESP checks remain unchanged. No emulator/generated source change;
 38fa4a07 runtime remains the expected build. JS syntax, tenUUID/fail-fast and
 dispatch freshness checks PASS. Corrected candidate has not been rerun.
+
+Local 4bad validation — 2026-10-19
+Existing38fa4a07/11b30b40 modules verified, production source unchanged; no rebuild.
+Fresh3135574016>2852126720. Candidate tail stopped2.873s BEFORE Texture2 QI guest
+execution: pre-call check compared3 supplied ABI arguments to generic nargs5.
+Initialize23 had passed expected DDERR_ALREADYINITIALIZED and exact ESP. Root and
+candidate/original/module pins unchanged; group2836131 absent, no guards, minimum
+3134652416, aggregate25081593. Only1/10jobs ran; no retry. Full evidence retained
+scratch/runs/20261019-surface47-local-4bad.
+D3DIM generator explicitly stores nargs5 for generic dispatcher signatures;
+tools/d3dim-methods.js and actual Texture2 QueryInterface handler declare3 COM
+arguments and pop16 bytes (return+3args). Production metadata must not be changed
+to satisfy this candidate check. A separately specified COM ABI count is needed
+for these legacy methods; exact post-call ESP assertions remain authoritative.
