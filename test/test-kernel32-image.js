@@ -33,6 +33,7 @@ const selected = [
   'dll_synthetic_reference', 'freelib_mark_loaded',
   'guest_name_tail_is_dll', 'guest_name_has_dll_ext',
   'guest_name_is_static_system_dll', 'static_sys_dll_name_at', 'static_sys_dll_from_handle',
+  'static_sys_dll_file_name',
   'emit_path_part', 'store_char', 'resolve_image_export',
   'dll_name_match', 'thunk_reserve', 'thunk_publish', 'update_thunk_end',
   'dll_load_lock_begin', 'lock_acquire', 'lock_release',
@@ -59,8 +60,9 @@ const regionBases = Object.fromEntries(regions.map((n, i) => [n, 0x10000 + i * 0
 const fixture = { image_base: 0x40000, GUEST_BASE: 0x40000, THUNK_BASE: 0x30000,
   reg_base: 0x20000, DLL_TABLE: 0x22000, DLL_SHARED: 0x23000,
   DLL_SYNTHETIC_REFS: 0x24000, STATIC_SYS_DLL_NAMES: 0x25000,
-  STATIC_SYS_DLL_HANDLE_BASE: 0x5d110000, exe_name_wa: 0x26000,
+  STATIC_SYS_DLL_IMAGES: 0x2a000, exe_name_wa: 0x26000,
   STATIC_SYS_DIR: regionBases.RESERVED_PAGE_STRINGS + 0x25c,
+  STATIC_SYS_DLL_EXT: regionBases.RESERVED_PAGE_STRINGS + 0x274,
   THUNK_NEXT_SHARED: 0x29000, thunk_guest_base: 0x30000 };
 const globals = [...new Set([...code.matchAll(/\(global\.(?:get|set) \$([^\s()]+)/g)].map(m => m[1]))];
 const exportsWat = selected.filter(n => n.startsWith('handle_')).map(n => `(export "${n}" (func $${n}))`).join('\n');
@@ -83,14 +85,14 @@ const dv = new Proxy(rawView, { get(target, key) {
 } });
 const string = p => { p = wa(p); let s = ''; while (bytes[p]) s += String.fromCharCode(bytes[p++]); return s; };
 const put = (p, s) => { bytes.set(Buffer.from(s + '\0'), wa(p)); return p; };
-let heap = sparse ? 0x30080000 : 0x80000, loaded = -1, allocations = 0;
+let heap = sparse ? 0x30080000 : 0x80000, loaded = -1, allocations = 0, failAllocation = false;
 const api = new Map(require('../src/api_table.json').map(a => [a.name, a.id]));
 const mock = Object.fromEntries(external.map(n => [n, () => { throw new Error('Unexpected dependency: ' + n); }]));
 Object.assign(mock, {
   memory, g2w: wa, gl8: p => dv.getUint8(p), gl16: p => dv.getUint16(p, true), gl32: p => dv.getUint32(p, true),
   gs8: (p, v) => dv.setUint8(p, v), gs16: (p, v) => dv.setUint16(p, v, true), gs32: (p, v) => dv.setUint32(p, v, true),
   tolower: c => c >= 65 && c <= 90 ? c + 32 : c,
-  heap_alloc: size => { allocations++; const p = heap; heap += size; return p; },
+  heap_alloc: size => { allocations++; if (failAllocation) return 0; const p = heap; heap += size; return p; },
   lookup_api_id: p => api.get(string(p)) ?? -1,
   str_eq: (a, b) => +(string(a) === string(b)),
   lock_owner_id: () => 1,
@@ -103,6 +105,8 @@ Object.assign(mock, {
   const e = (await WebAssembly.instantiate(module, { mock })).exports;
   put(regionBases.RESERVED_PAGE_STRINGS + 0x30, 'KERNEL32.dll');
   put(fixture.STATIC_SYS_DIR, 'C:\\WINDOWS\\SYSTEM\\');
+  put(fixture.STATIC_SYS_DLL_EXT, '.dll');
+  put(fixture.STATIC_SYS_DLL_NAMES, 'ole32\0user32\0comctl32\0gdi32\0dplayx\0ddraw\0dsound\0d3drm\0glide2x\0glide3x\0');
   put(fixture.exe_name_wa, 'fixture.exe');
   dv.setUint32(fixture.THUNK_NEXT_SHARED, 3, true);
   bytes.fill(0xab, fixture.THUNK_BASE, fixture.THUNK_BASE + 24);
@@ -170,6 +174,31 @@ Object.assign(mock, {
   assert.equal(string(0x28000), 'C:\\WINDOWS\\SYSTEM\\KERNEL32.dll');
   call('handle_GetModuleFileNameW_locked', h, 0x28000, 260);
   assert.equal(Buffer.from(bytes.slice(0x28000, 0x28000 + 60)).toString('utf16le'), 'C:\\WINDOWS\\SYSTEM\\KERNEL32.dll');
+  const native = call('handle_GetModuleHandleA', put(0x27000, 'USER32'));
+  assert(native && native !== h && native !== fixture.image_base);
+  assert.equal(dv.getUint16(native, true), 0x5a4d);
+  const nativePe = native + dv.getUint32(native + 60, true);
+  assert.equal(dv.getUint32(nativePe, true), 0x4550);
+  assert.equal(dv.getUint16(nativePe + 24, true), 0x10b);
+  assert.equal(dv.getUint32(nativePe + 52, true), native);
+  assert.equal(dv.getUint32(nativePe + 80, true), 4096);
+  assert.equal(dv.getUint32(nativePe + 40, true), 0, 'native module has no guest entrypoint');
+  assert.equal(dv.getUint32(nativePe + 128, true), 0, 'native module has no guest imports');
+  assert.equal(second.release_synthetic_dll_reference(native), 0);
+  const nativeAllocations = allocations;
+  second.handle_GetModuleHandleA(put(0x27000, 'user32.dll'), 0, 0, 0, 0, 0);
+  assert.equal(dv.getUint32(fixture.reg_base, true), native, 'second instance shares native identity');
+  assert.equal(allocations, nativeAllocations);
+  assert.equal(call('handle_LoadLibraryA', put(0x27000, 'user32')), native);
+  assert.equal(second.release_synthetic_dll_reference(native), 1);
+  assert.equal(second.release_synthetic_dll_reference(native), 0);
+  call('handle_GetModuleFileNameA_locked', native, 0x28000, 260);
+  assert.equal(string(0x28000), 'C:\\WINDOWS\\SYSTEM\\user32.dll');
+  failAllocation = true;
+  assert.equal(call('handle_GetModuleHandleA', put(0x27000, 'gdi32')), 0, 'allocation failure publishes no handle');
+  failAllocation = false;
+  const gdi = call('handle_GetModuleHandleA', put(0x27000, 'gdi32'));
+  assert(gdi && gdi !== native && gdi !== h, 'retry creates distinct valid image');
   loaded = 0; dv.setUint32(fixture.DLL_TABLE, 0x60000, true);
   assert.equal(call('handle_GetModuleHandleA', put(0x27000, 'kernel32.dll')), 0x60000);
   assert.equal(call('handle_LoadLibraryA', put(0x27000, 'kernel32.dll')), 0x60000);

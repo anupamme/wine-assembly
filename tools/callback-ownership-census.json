@@ -2310,7 +2310,7 @@
           "$entry_point"
         ]
       ],
-      "sha256": "3f6fc26b91aeb5803084d2869e9392cf66adf17395a7efffacd318ecdf94460f",
+      "sha256": "24c8dc98ed86af670ffa353003e5746c13bcc0dc3f2ba4832dd163d3dafa42aa",
       "kind": "lifecycle",
       "reason": "Process or task entry; must establish a fresh lifetime before nonlocal contexts can be registered.",
       "ownership": "pending"
@@ -2809,7 +2809,7 @@
           ]
         ]
       ],
-      "sha256": "077bd44eacbcc5f2ff5c76ff3f63725118ac7df0711a611e840623c70d46de5a",
+      "sha256": "2006f9b704bcdf0578b58f007fcc7d56d9d1082d47de2649b4273229b5676c9c",
       "kind": "mixed-dispatch",
       "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review.",
       "ownership": "pending"

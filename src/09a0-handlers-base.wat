@@ -41,7 +41,7 @@
       (i32.add (local.get $name) (i32.sub (local.get $len) (i32.const 4))))
   )
 
-  ;; Statically dispatched system DLLs do not have a mapped PE image or DLL
+  ;; Statically dispatched system DLLs have native identity headers but no DLL
   ;; table entry, so a name lookup is the only way to recognize them. Callers
   ;; use the handle with GetProcAddress, which already resolves non-mapped
   ;; modules through the API table, but they also use its mere existence as
@@ -129,16 +129,18 @@
         (i32.add (global.get $STATIC_SYS_DLL_FIRST_DX)
           (global.get $STATIC_SYS_DLL_DX_COUNT)))))
 
-  ;; A pseudo module handle back to its 1-based list position, or 0.
+  ;; A native image base back to its 1-based list position, or 0. The image
+  ;; table is process-shared and entries publish only after header creation.
   (func $static_sys_dll_from_handle (param $h i32) (result i32)
     (local $idx i32)
-    (if (i32.lt_u (local.get $h) (global.get $STATIC_SYS_DLL_HANDLE_BASE))
-      (then (return (i32.const 0))))
-    (local.set $idx (i32.sub (local.get $h) (global.get $STATIC_SYS_DLL_HANDLE_BASE)))
-    ;; Past the end of the list the entry is the terminating empty string.
-    (if (i32.eqz (i32.load8_u (call $static_sys_dll_name_at (local.get $idx))))
-      (then (return (i32.const 0))))
-    (i32.add (local.get $idx) (i32.const 1)))
+    (if (i32.eqz (local.get $h)) (then (return (i32.const 0))))
+    (loop $scan
+      (if (i32.eq (local.get $h) (i32.atomic.load
+          (i32.add (global.get $STATIC_SYS_DLL_IMAGES) (i32.shl (local.get $idx) (i32.const 2)))))
+        (then (return (i32.add (local.get $idx) (i32.const 1)))))
+      (local.set $idx (i32.add (local.get $idx) (i32.const 1)))
+      (br_if $scan (i32.lt_u (local.get $idx) (i32.const 64))))
+    (i32.const 0))
 
   ;; Copy a NUL-terminated linear-memory string into a guest buffer at
   ;; character offset $at, stopping at $limit characters. Returns the cursor.
@@ -203,7 +205,7 @@
               (else
                 (local.set $idx (call $guest_name_is_static_system_dll (local.get $arg0)))
                 (if (local.get $idx)
-                  (then (local.set $result (i32.add (global.get $STATIC_SYS_DLL_HANDLE_BASE)
+                  (then (local.set $result (call $static_sys_dll_ensure_locked
                           (i32.sub (local.get $idx) (i32.const 1)))))
                   (else (local.set $result (i32.const 0))))))))))
     (i32.store offset=0 (global.get $reg_base) (local.get $result))
@@ -1845,7 +1847,13 @@
         (global.set $last_error (i32.const 126))
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
         (return)))
-    (i32.store offset=0 (global.get $reg_base) (select (i32.add (global.get $STATIC_SYS_DLL_HANDLE_BASE) (i32.sub (local.get $tmp) (i32.const 1))) (global.get $image_base) (i32.ne (local.get $tmp) (i32.const 0))))
+    (i32.store (global.get $reg_base) (global.get $image_base))
+    (if (local.get $tmp)
+      (then
+        (call $dll_load_lock_begin)
+        (i32.store (global.get $reg_base) (call $static_sys_dll_ensure_locked
+          (i32.sub (local.get $tmp) (i32.const 1))))
+        (call $lock_release (global.get $DLL_LOAD_LOCK))))
     ;; Only after real-file lookup and full-path admission. A missing private
     ;; path named kernel32.dll must not acquire the system module identity.
     (if (call $dll_name_match (local.get $arg0) (region.addr $RESERVED_PAGE_STRINGS 0x30))

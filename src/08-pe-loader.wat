@@ -35,6 +35,7 @@
     ;; A new process replaces the heap behind the native system image.
     ;; Its published identity and explicit references cannot survive reuse.
     (call $zero_memory (global.get $KERNEL32_MODULE) (global.get $KERNEL32_MODULE_SIZE))
+    (call $zero_memory (global.get $STATIC_SYS_DLL_IMAGES) (global.get $STATIC_SYS_DLL_IMAGES_SIZE))
     ;; Compute guest-space thunk zone bounds
     (global.set $thunk_guest_base (i32.add (i32.sub (global.get $THUNK_BASE) (global.get $GUEST_BASE)) (global.get $image_base)))
     (global.set $thunk_guest_end  (i32.add (i32.sub (global.get $THUNK_END)  (global.get $GUEST_BASE)) (global.get $image_base)))
@@ -663,32 +664,57 @@
     (call $update_thunk_end)
     (local.get $cursor))
 
-  (func $kernel32_ensure_locked (result i32)
-    (local $base i32) (local $i i32)
-    (local.set $base (call $kernel32_module))
-    (if (local.get $base) (then (return (local.get $base))))
-    (local.set $base (call $heap_alloc (i32.const 65536)))
-    (if (i32.eqz (local.get $base))
-      (then (global.set $last_error (i32.const 8)) (return (i32.const 0))))
+  ;; Native modules still have an HMODULE that identifies readable PE headers.
+  ;; Header-only modules have no guest imports, entry point or guest sections;
+  ;; their APIs retain the native name/ordinal dispatch path.
+  (func $native_module_headers (param $base i32) (param $size i32)
+    (local $i i32)
     ;; Clear through the guest translator: a heap allocation can be sparse.
     (loop $clear
       (call $gs32 (i32.add (local.get $base) (local.get $i)) (i32.const 0))
       (local.set $i (i32.add (local.get $i) (i32.const 4)))
-      (br_if $clear (i32.lt_u (local.get $i) (i32.const 65536))))
+      (br_if $clear (i32.lt_u (local.get $i) (local.get $size))))
     (call $gs16 (local.get $base) (i32.const 23117)) ;; MZ
     (call $gs32 (i32.add (local.get $base) (i32.const 60)) (i32.const 128))
     (call $gs32 (i32.add (local.get $base) (i32.const 128)) (i32.const 17744)) ;; PE
     (call $gs16 (i32.add (local.get $base) (i32.const 132)) (i32.const 332)) ;; i386
-    (call $gs16 (i32.add (local.get $base) (i32.const 134)) (i32.const 1))
     (call $gs16 (i32.add (local.get $base) (i32.const 148)) (i32.const 224))
     (call $gs16 (i32.add (local.get $base) (i32.const 150)) (i32.const 8450))
     (call $gs16 (i32.add (local.get $base) (i32.const 152)) (i32.const 267)) ;; PE32
     (call $gs32 (i32.add (local.get $base) (i32.const 180)) (local.get $base))
     (call $gs32 (i32.add (local.get $base) (i32.const 184)) (i32.const 4096))
     (call $gs32 (i32.add (local.get $base) (i32.const 188)) (i32.const 512))
-    (call $gs32 (i32.add (local.get $base) (i32.const 208)) (i32.const 65536))
+    (call $gs32 (i32.add (local.get $base) (i32.const 208)) (local.get $size))
     (call $gs32 (i32.add (local.get $base) (i32.const 212)) (i32.const 4096))
-    (call $gs32 (i32.add (local.get $base) (i32.const 244)) (i32.const 16))
+    (call $gs32 (i32.add (local.get $base) (i32.const 244)) (i32.const 16)))
+
+  ;; Called under DLL_LOAD_LOCK. Publish after the image is entirely written;
+  ;; workers share the same identities and a failed allocation publishes none.
+  (func $static_sys_dll_ensure_locked (param $index i32) (result i32)
+    (local $cell i32) (local $base i32)
+    (if (i32.ge_u (local.get $index) (i32.const 64)) (then (return (i32.const 0))))
+    (if (i32.eqz (i32.load8_u (call $static_sys_dll_name_at (local.get $index))))
+      (then (return (i32.const 0))))
+    (local.set $cell (i32.add (global.get $STATIC_SYS_DLL_IMAGES)
+      (i32.shl (local.get $index) (i32.const 2))))
+    (local.set $base (i32.atomic.load (local.get $cell)))
+    (if (local.get $base) (then (return (local.get $base))))
+    (local.set $base (call $heap_alloc (i32.const 4096)))
+    (if (i32.eqz (local.get $base))
+      (then (global.set $last_error (i32.const 8)) (return (i32.const 0))))
+    (call $native_module_headers (local.get $base) (i32.const 4096))
+    (i32.atomic.store (local.get $cell) (local.get $base))
+    (local.get $base))
+
+  (func $kernel32_ensure_locked (result i32)
+    (local $base i32)
+    (local.set $base (call $kernel32_module))
+    (if (local.get $base) (then (return (local.get $base))))
+    (local.set $base (call $heap_alloc (i32.const 65536)))
+    (if (i32.eqz (local.get $base))
+      (then (global.set $last_error (i32.const 8)) (return (i32.const 0))))
+    (call $native_module_headers (local.get $base) (i32.const 65536))
+    (call $gs16 (i32.add (local.get $base) (i32.const 134)) (i32.const 1))
     (call $gs32 (i32.add (local.get $base) (i32.const 248)) (i32.const 16384))
     (call $gs32 (i32.add (local.get $base) (i32.const 252)) (i32.const 4096))
     (call $gs32 (i32.add (local.get $base) (i32.const 376)) (i32.const 0x7865742e)) ;; .tex

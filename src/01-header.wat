@@ -827,13 +827,13 @@
   ;; its diagnostic/API name separate from GetTimeZoneInformation: the native
   ;; ordinal takes a BOOL refresh flag, not an output-structure pointer.
   (data (region.addr $RESERVED_PAGE_STRINGS 0x30) "KERNEL32.dll\00KERNEL32_Ordinal99\00")
-  ;; Modules whose exports we dispatch statically: they have no mapped PE
-  ;; image and no DLL-table entry, so GetModuleHandle has to recognize them by
+  ;; Modules whose exports we dispatch statically: they have native PE identity
+  ;; headers and no DLL-table entry, so GetModuleHandle recognizes them by
   ;; name. Lower case and without the ".dll" suffix; the matcher accepts
   ;; either form. See $guest_name_is_static_system_dll in 09a-handlers.wat.
   ;; ORDER MATTERS: the DirectX range starts at $STATIC_SYS_DLL_FIRST_DX and
   ;; contains $STATIC_SYS_DLL_DX_COUNT entries. Append other module names so
-  ;; existing pseudo handles remain stable.
+  ;; shared image and reference slots remain stable.
   ;; GDI32 is here because Win9x maps it into every process: InstallShield 3's
   ;; engine registers GDI32, KERNEL32 and USER32 by GetModuleHandle at startup,
   ;; stops at the first NULL, and then silently drops every script call into
@@ -2420,13 +2420,10 @@
   (global $VIRTUAL_ALLOC_MIN i32 (i32.const 0x10000000))
   ;; The band the sparse arena steps over. It is deliberately coarser than what
   ;; is in it -- the DIB guest arena at 0x50000000..0x53F00000 and the static
-  ;; system-DLL pseudo handles at 0x5D110000 -- because one span costs one test
-  ;; on the reserve path and a set of exact holes would cost a walk, and because
-  ;; a handle is compared against a base address rather than translated: a real
-  ;; mapping landing on $STATIC_SYS_DLL_HANDLE_BASE would make a guest that
-  ;; reads through a GetModuleHandle result find plausible bytes instead of
-  ;; nothing. 256MB of slack in a 2GB address space is the cheap side of that
-  ;; trade.
+  ;; legacy system-DLL handle band at 0x5D110000. Native module identities now
+  ;; have allocated readable images, but changing this allocator boundary is
+  ;; independent of their representation. One excluded span costs one test
+  ;; on the reserve path instead of a walk over exact holes.
   (global $VIRTUAL_ALLOC_BAND_BASE i32 (i32.const 0x50000000))
   (global $VIRTUAL_ALLOC_BAND_END i32 (i32.const 0x60000000))
   ;; Process-wide heap state, in memory rather than in globals so every instance
@@ -2933,6 +2930,8 @@
   (global $DLL_SYNTHETIC_REFS i32 (region.addr $DLL_SYNTHETIC_REFS 0))
   (global $KERNEL32_MODULE i32 (region.addr $KERNEL32_MODULE 0))
   (global $KERNEL32_MODULE_SIZE i32 (region.size $KERNEL32_MODULE))
+  (global $STATIC_SYS_DLL_IMAGES i32 (region.addr $STATIC_SYS_DLL_IMAGES 0))
+  (global $STATIC_SYS_DLL_IMAGES_SIZE i32 (region.size $STATIC_SYS_DLL_IMAGES))
   (global $DLL_SYNTHETIC_REFS_SIZE i32 (region.size $DLL_SYNTHETIC_REFS))
   (global $DLL_LIFECYCLE_TABLE i32 (region.addr $DLL_LIFECYCLE_TABLE 0))
   (global $DLL_LIFECYCLE_TABLE_SIZE i32 (region.size $DLL_LIFECYCLE_TABLE))
@@ -4131,10 +4130,8 @@
   (global $STATIC_SYS_DLL_NAMES i32 (region.addr $RESERVED_PAGE_STRINGS 0x00000280))
   (global $STATIC_SYS_DIR i32 (region.addr $RESERVED_PAGE_STRINGS 0x0000025C))
   (global $STATIC_SYS_DLL_EXT i32 (region.addr $RESERVED_PAGE_STRINGS 0x00000274))
-  ;; Pseudo module handles for those names. They are deliberately outside
-  ;; every mapped image so nothing mistakes one for a real base address; the
-  ;; only operations defined on them are GetProcAddress (which resolves
-  ;; through the API table and ignores the handle) and GetModuleFileName.
+  ;; Legacy pseudo-handle band remains reserved from VirtualAlloc. Native
+  ;; module handles now identify shared readable PE headers instead.
   (global $STATIC_SYS_DLL_HANDLE_BASE i32 (i32.const 0x5D110000))
   ;; First index in the name list that belongs to DirectX.
   (global $STATIC_SYS_DLL_FIRST_DX i32 (i32.const 4))
