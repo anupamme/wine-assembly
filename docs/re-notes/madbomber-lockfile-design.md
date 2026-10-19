@@ -104,3 +104,66 @@ module dependency; expanded tracked lib/src closure and reran successfully.
 These are JavaScript checks, not native, OS Worker, browser or actual Mad Bomber
 validation. Native handler and original-game qualification remain pending under
 the one-runtime scheduler. No canonical module or original binary was changed.
+
+## Surface4/7 main reconciliation and bounded qualification plan (2026-10-19)
+
+Merged main 0ace954f93b5d7107fd1de1d61601a54609e4e5e, then the narrow
+debugger-arm main update 6cfc0d936b2d44b4e6de69002f0aa8f9f203f61c in the
+isolated task/lockfile-rebased-oct19 worktree. Regenerated dispatch, API hashes,
+KERNEL32 image and import mirror; regeneration introduced no additional diff.
+All 4590 main API rows remain identical, including the nine appended Surface
+rows. LockFile/UnlockFile keep API IDs 453/711 and export ordinals 591/592;
+the combined mirror remains 283 imports.
+
+Source-only checks passed: file-byte-lock regression, VFS 46/0, adoption,
+filtered lazy VFS 47/0 (same four compiled/Worker/browser exclusions above),
+CMOS host/broker/browser-import contracts, API append-only and all four
+generator freshness gates, hash lookup, 127 fragment balances, handler ESP,
+logical-and normalization, Surface 78 call sites/UUID identities/fail-fast,
+and 2025-test manifest membership. Review retained the existing owner-token,
+entry-identity, failed-close-source and renamed-flush corrections. Pending
+scatter reads rewind to their original position before parking, so the wrapper
+reserves the full request again on retry. No new production defect was found
+in this bounded review. Native zero-byte and duplicate semantics remain an
+explicit conformance gap, not a result inferred from these tests.
+
+Also verified all 140 retained original fixture file lengths and SHA-256 hashes
+against launch-manifest.json, and the main debugger-arm source regression
+(`node tools/test-debugger-watch-arm.js /tmp/wa-lockfile-rebased-oct19`).
+
+The handler fixture now accepts --compat and omits fonts because it exercises
+only file ABI. Syntax checked; neither mode has been executed. Proposed serial
+qualification, requiring a fresh coordinator runtime grant:
+
+1. Pin this task HEAD, all source inputs, existing canonical modules and the
+   original fixture manifest before building. Use isolated outputs only; admit
+   each job with enough reserve to keep at least 2 GiB free, stop on floor/log
+   cap breach, and verify source/original pins and absent process groups after
+   each job. No broad cleanup or canonical module replacement.
+2. Run normal build gates and build in the isolated worktree (120-second hard
+   bound). Then run `node test/test-lockfile-handlers.js` and the same command
+   with `--compat`, separately (60 seconds each, 2 MiB logs). These test direct
+   handlers/ESP/error values, not public name resolution or OS Workers.
+3. Run the existing lazy fixture with
+   `--filter=^two real Workers preserve I/O ownership` (90 seconds, 2 MiB log)
+   against the combined source. This exercises real Worker adapters but does
+   not yet assert LockFile RPC itself; a dedicated six-argument fs_lock_file
+   Worker contention/unlock and five-argument duplicate fixture is still needed
+   before claiming Worker lock qualification. Public GetProcAddress execution
+   also remains a required check.
+4. Only after those gates, replay original Mad Bomber using the complete argv
+   and 140-file manifest retained in
+   `/home/user/wine-assembly/scratch/runs/20261019-madbomber-dbcs-retry/`.
+   Original root is `scratch/runs/20261018-madbomber-source/original/madbomber-0.2.5/`;
+   preserve all DLL seeds, data mounts, guest C:\\MADBOMBER path and original
+   bytes. Archive SHA-256 is
+   f21ab59154fd434f0952daf84848af47bf50262b7317f2ca1dbf7f43cb213164.
+   Reverify manifest hashes; replace only worktree/module/output destinations
+   and add LockFile/UnlockFile to the bounded API trace. Retain the prior
+   10-second guest, 15-second normal quit, 25-second hard stop, 2 MiB log limits
+   and 2214592512-byte stop floor. Write a new run directory and result last.
+   Success requires observing name resolution and progress beyond the former
+   missing-LockFile stop; menu/gameplay/browser evidence remains separate.
+
+No build, native fixture, Worker, browser or original executable was run for
+this reconciliation. No claim of gameplay or merge readiness follows.

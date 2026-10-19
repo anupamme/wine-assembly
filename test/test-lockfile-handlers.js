@@ -36,7 +36,8 @@ const extraWat = `
     (i32.load (global.get $reg_base)))
 `;
 (async () => {
-  const { exports: wat, hostCtx } = await bootRenderHarness({ extraWat });
+  const tailCalls = !process.argv.includes('--compat');
+  const { exports: wat, hostCtx } = await bootRenderHarness({ extraWat, tailCalls, fonts: 'none' });
   const vfs = hostCtx.vfs;
   const a = vfs.createFile('c:\\lock-abi.bin', 0xc0000000, 2);
   const b = vfs.createFile('c:\\lock-abi.bin', 0xc0000000, 3);
@@ -58,5 +59,5 @@ const extraWat = `
   assert.equal(wat.test_lock(a, 7, 0, 1, 0, 1), 0);
   assert.equal(wat.test_lock_error(), 158);
   vfs.closeAllDiskHandles();
-  console.log('LockFile handlers: PASS');
+  console.log(`LockFile handlers: PASS (${tailCalls ? 'tail' : 'compat'})`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
