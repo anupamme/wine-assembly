@@ -154,6 +154,32 @@ function fixture() {
 }
 
 (async () => {
+  // Production process-exit import must release ownership before host handoff.
+  // This is a JS host contract, with no guest, Worker or compiled module.
+  {
+    const { vfs, a, lock } = fixture();
+    const child = new VirtualFS();
+    child.adoptFrom(vfs);
+    const childHandle = child.createFile(path, 0xc0000000, 3);
+    assert.equal(lock(a, 0, 4), 0);
+    assert.equal(child.readFile(childHandle, new Uint8Array(4), 4).error, 33);
+    let handedOff = false;
+    const { createHostImports } = require('../lib/host-imports');
+    const host = createHostImports({ vfs, getMemory: () => new ArrayBuffer(65536),
+      onExit(code) {
+        assert.equal(code, 7);
+        assert.equal(vfs.getOpenFile(a), null);
+        assert.equal(vfs.createFileResult(path, 0xc0000000, 3).error, 6);
+        assert.equal(child.readFile(childHandle, new Uint8Array(4), 4).bytesRead, 4);
+        handedOff = true;
+      },
+    }).host;
+    host.exit(7);
+    assert(handedOff);
+    vfs.closeAllDiskHandles(); // idempotent browser stop after process exit
+    assert(child.getOpenFile(childHandle), 'child owns its independent lifetime');
+    child.closeAllDiskHandles();
+  }
   const { vfs, a, b, lock } = fixture();
   let reads = 0;
   // Install a provider before opening handles: existing opens retain identity.

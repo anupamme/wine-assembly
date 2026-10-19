@@ -218,9 +218,9 @@
     {
       "file": "host.js",
       "name": "host-file",
-      "sha256": "81b455d6c7a184419136bcb1619360c5bc37ab52a2af7b118a09da998550b4fc",
+      "sha256": "1857924d7df9fde2d949ddff3b0d71a596022cdc8006e263368d169d0dfb22df",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
+      "reason": "Conservative whole-file host boundary inventory. LockFile review: stop marks this host stopped, synchronously retires VFS disk handles before asynchronous guest-runtime retirement, and rejects late opens; final duplicate close releases owner locks and pending read reservations. closeAllDiskHandles/closeHandle invoke no guest callback or context restoration. Other callback ownership remains pending.",
       "ownership": "pending"
     },
     {
@@ -282,9 +282,9 @@
     {
       "file": "lib/host-imports.js",
       "name": "host-file",
-      "sha256": "e433e849cbefe3ca8cc44eb66297da097fb72f1e9ec40e90704b852718dfbb5b",
+      "sha256": "52fd314b95866a5a45557f37e06e9a2ae448abe3bd22b730fd904004b912e42f",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
+      "reason": "Conservative whole-file host boundary inventory. LockFile review: process exit synchronously closes disk handles before beep shutdown and ctx.onExit/snapshot handoff; this releases final-owner locks and pending read reservations, rejecting late opens without invoking guest callbacks. Adopted live-parent handles remain separately owned until that parent exits. Existing onExit callback and other invocation ownership remain pending.",
       "ownership": "pending"
     },
     {

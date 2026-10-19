@@ -224,3 +224,37 @@ roughly 124 MiB of omitted tracked data was not copied. pngjs is resolved from
 the recovery worktree's pinned node_modules. No Army path-handling functions
 or canonical modules were edited. This controller never launches Mad Bomber;
 original replay remains a separate grant after native qualification.
+
+## First native allocation: build gate rejection, no native execution
+
+The granted exact five-job controller (SHA-256
+583adce4cc2a16992ff138ca132a86439ca470fadb3dc0fc708a821a9d030c6c)
+ran session 89820 with prepared manifest f4054a9e. Normal build stopped at the
+callback ownership census after 1.954 seconds, exit 1: host.js and
+lib/host-imports.js whole-file hashes still described main before the LockFile
+teardown additions. No WAT compilation or native fixture was reached. There
+was no guard breach; process group 2893836 is absent, lease removed, all 9912
+pins unchanged, and the isolated build directory is empty and retained.
+Minimum sampled free space was 2996908032 bytes; a subsequent observation was
+2832879616, below admission. No retry occurred.
+
+Evidence is retained in isolated
+`scratch/runs/20261019-lockfile-native/`: five artifacts total 1717969 bytes,
+plus artifact-seal.json SHA-256
+d1401b04563ee64ca2b76bd6b89d121dbcc6cdfecca92744b78b2f5b9905dfcf.
+The seal includes original manifest, 374-byte build log, build status, failure
+result and postflight (changed [], group/lease absent, four jobs not run).
+
+Source review of the two changed producers found exactly one added operation
+each: synchronous closeAllDiskHandles before stop's asynchronous runtime
+retirement, and before exit's host callback/snapshot handoff. The VFS marks
+retirement first, rejects subsequent opens, and closes each live disk record;
+closeHandle removes read reservations and releases locks at final duplicate
+close. Neither cleanup method calls guest code or restores an invocation.
+Adoption retains separate open ownership and does not retire a live parent.
+The two census records now describe these reviewed cleanup boundaries and
+retain ownership=pending for the existing unrelated callback families. The
+production host.exit regression asserts release and rejected late opens before
+onExit observes the VFS, while preserving the child's independent lifetime.
+This is a source-only correction; fresh pins and another grant are required
+before any new build or native attempt. The original failed bundle is intact.
