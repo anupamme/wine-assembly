@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { compileSrcWasm } = require('./compile-src');
+const { fixtureId, buildLaunchArgs } = require('../lib/candidate-cli');
 
 const ROOT = path.join(__dirname, '..');
 const RUN = path.join(__dirname, 'run.js');
@@ -25,10 +26,6 @@ function usage(message) {
   if (message) console.error(message);
   console.error('usage: node test/test-cli-candidate-corpus.js [--id=a,b] [--list] [--dry-run] [--strict]');
   process.exit(2);
-}
-
-function fixtureId(candidate) {
-  return candidate.fixture || candidate.id;
 }
 
 function walkFiles(directory, output = []) {
@@ -95,41 +92,14 @@ function classify(output, status, signal, error) {
 
 function runCandidate(candidate, executable, wasmPath) {
   const cli = candidate.cli || {};
-  const args = [
-    RUN,
-    `--exe=${executable}`,
-    `--wasm=${wasmPath}`,
-    '--no-build',
-    '--no-close',
-    '--quiet-api',
-    '--quiet-blocks',
-    '--stuck-after=50',
-    `--max-batches=${cli.maxBatches || 80}`,
-    `--batch-size=${cli.batchSize || 10000}`,
-  ];
-  if (cli.args) args.push(`--args=${cli.args}`);
-  if (cli.cue) {
-    const cue = path.join(ASSET_ROOT, fixtureId(candidate), cli.cue);
-    if (!fs.existsSync(cue)) throw new Error(`${candidate.id}.cli.cue is missing: ${cue}`);
-    args.push(`--cue=${cue}`);
-  }
-  if (cli.dlls !== undefined) {
-    if (!Array.isArray(cli.dlls) || !cli.dlls.length ||
-        cli.dlls.some(filename => typeof filename !== 'string' || !filename.trim())) {
-      throw new Error(`${candidate.id}.cli.dlls must be a non-empty string array`);
-    }
-    for (const filename of cli.dlls) {
-      const dll = path.join(ASSET_ROOT, fixtureId(candidate), filename);
-      if (!fs.existsSync(dll)) throw new Error(`${candidate.id}.cli.dlls is missing: ${dll}`);
-      args.push(`--dll-seed=${dll}`);
-    }
-  }
-  if (cli.vfsInclude !== undefined) {
-    if (!Array.isArray(cli.vfsInclude) || !cli.vfsInclude.length ||
-        cli.vfsInclude.some(pattern => typeof pattern !== 'string' || !pattern.trim())) {
-      throw new Error(`${candidate.id}.cli.vfsInclude must be a non-empty string array`);
-    }
-    for (const pattern of cli.vfsInclude) args.push(`--vfs-include=${pattern}`);
+  let args;
+  try {
+    args = buildLaunchArgs(candidate, {
+      runPath: RUN, executable, wasmPath,
+      fixtureRoot: path.join(ASSET_ROOT, fixtureId(candidate)),
+    });
+  } catch (error) {
+    return { status: error.media ? 'BLOCKED' : 'HARNESS', reason: error.message };
   }
   const result = spawnSync('node', args, {
     cwd: ROOT,
@@ -252,7 +222,9 @@ async function main() {
   return harness || (strict && blocked) ? 1 : 0;
 }
 
-main().then(code => process.exit(code)).catch(error => {
+if (require.main === module) main().then(code => process.exit(code)).catch(error => {
   console.error(error.stack || error.message);
   process.exit(1);
 });
+
+module.exports = { runCandidate };
