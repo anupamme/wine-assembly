@@ -98,3 +98,30 @@ superseded by licence permission.
 
 Evidence: `scratch/runs/20261019-authorized-installer-preparation/` contains the
 fresh Dungeon Siege full-file audit and read-only readiness script/receipts.
+
+## First authorized runtime allocation
+
+Root granted current canonical `/tmp/wa-recovery-20261014`, HEAD
+`a53f43dba7a884a7a53a4c86172d3226aa69f5c3`, wasm
+`da72a16f9551cb2cd8bc2f0ee636eb966ec9c7cde9a56931201bb6d1fb11a2c7`.
+The registered fixture was absent there. A hard-link preparation failed with
+EXDEV before any guest started; explicit fixture-file symlinks then resolved
+the same 37 verified original files and two manifests without duplication.
+
+The single original CLI allocation reached and visibly rendered its genuine
+English EULA. Initial loading consumed most of the 60-second guest budget.
+The reviewed settled screenshot shows Accept at center `(163,432)` in 640x480.
+The normal mouse click request reached a closed HTTP control endpoint after
+the guest's time bound: ECONNREFUSED. **No input was delivered and no licence
+was accepted.** No automatic retry was made. Future input must still verify
+the fresh screen; this is not permission to click blindly at startup.
+
+Guest exit0, no signal, owned process group absent; all original files and
+canonical wasm unchanged. The full physical source comparison found only
+root-owned `TODOS.md` changed during the run; runtime sources were unchanged.
+Minimum observed free space was 2,585,423,872 bytes. The 17,785-byte log,
+original EULA.RTF, reviewed before/final frames, input failure receipt,
+separate acceptance.json and final guest state remain in
+`scratch/runs/20261019-dungeon-siege-authorized-acceptance/`.
+The full output preserves a missing native ole32.dll warning; the observed
+EULA does not establish later game compatibility.
