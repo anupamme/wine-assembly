@@ -218,7 +218,7 @@
     {
       "file": "host.js",
       "name": "host-file",
-      "sha256": "7d25ccd418230c9bef05bc3c9fc91eb018a8e61cb5ef652945d565a3046248d0",
+      "sha256": "723fada14cb3a070adfdc0d524eb833870b6f762da114e4db632f8f46e58b760",
       "kind": "host-entry",
       "reason": "Conservative whole-file host boundary inventory. LockFile review: stop marks this host stopped, synchronously retires VFS disk handles before asynchronous guest-runtime retirement, and rejects late opens; final duplicate close releases owner locks and pending read reservations. closeAllDiskHandles/closeHandle invoke no guest callback or context restoration. Other callback ownership remains pending. SetLocalTime review: synchronous process calendar offset state is shared through host context construction; no guest callbacks, suspended invocation or context restoration added.",
       "ownership": "pending"
@@ -234,7 +234,7 @@
     {
       "file": "lib/apps.js",
       "name": "host-file",
-      "sha256": "b2316dadc1567b74a82dfebdf514523c8c8756cd6d17fa4c84940e0e8dc6010d",
+      "sha256": "2b5909b7368516f7fbd2ef4c1569c6bec54aa5eec3f8f18a4e08a4bf32a1db1d",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"

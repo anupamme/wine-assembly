@@ -263,6 +263,7 @@ test('launch links pin the served wasm; a changed module or missing files refuse
 test('private launch anchor matches the real shipped entry page', async()=>{
  const original=await fs.readFile(path.join(__dirname,'../index.html'));
  const result=privateIndex(original).toString('utf8');
+ assert.match(result,/window\.WINE_HTTP_RANGES = true/);
  assert(result.includes('const LOCAL_DESKTOP = true; // Authenticated private emulator only.'));
  assert.equal(result.includes(LOCAL_DESKTOP),false);
  assert.equal(original.toString('utf8').split(LOCAL_DESKTOP).length,2);

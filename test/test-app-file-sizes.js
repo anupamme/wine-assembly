@@ -6,7 +6,7 @@
 // ones -- since 8bcc3055 an unsized entry always stays eager, and the
 // hand-written entries had no sizes. Pinned here: a recorded string entry
 // becomes {url, size}, a recorded object gains size and keeps every other
-// field, an entry that already declares how it loads is left as written, an
+// field, an entry with a size is left as written, an
 // unrecorded entry is untouched, and the generated map only holds files at
 // least SMALL_FILE_BYTES (smaller ones change no decision). Caesar III's
 // archives are the worked example: they stream once sized.
@@ -49,7 +49,7 @@ for (const [id, app] of Object.entries(raw)) {
     }
     if (typeof item === 'string') {
       assert.deepStrictEqual(out, { url: item, size }, `${id}: ${item} becomes {url, size}`); stringsStamped++;
-    } else if (Number.isSafeInteger(item.size) || item.loadMode !== undefined || item.httpRange !== undefined) {
+    } else if (Number.isSafeInteger(item.size)) {
       assert.deepStrictEqual(out, item, `${id}: a declared entry is left as written`); declaredKept++;
     } else {
       assert.deepStrictEqual(out, { ...item, size }, `${id}: an object gains size only`); objectsStamped++;

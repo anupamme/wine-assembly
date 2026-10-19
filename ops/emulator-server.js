@@ -182,7 +182,7 @@ async function getBuildIdentity(root) {
 function privateIndex(bytes) {
   const source = bytes.toString('utf8');
   if (source.split(LOCAL_DESKTOP).length !== 2) throw Error('Private emulator entry anchor changed');
-  return Buffer.from(source.replace(LOCAL_DESKTOP, '    const LOCAL_DESKTOP = true; // Authenticated private emulator only.'));
+  return Buffer.from(source.replace(LOCAL_DESKTOP, '    const LOCAL_DESKTOP = true; // Authenticated private emulator only.\n    window.WINE_HTTP_RANGES = true; // This server serves uncompressed byte ranges.'));
 }
 function rangeFor(header, size) {
   if (!header) return null;

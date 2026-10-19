@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {createRequire}=require('node:module');
 const {VirtualFS}=require('../lib/filesystem'),byteProvider=require('../lib/byte-provider');
 const source=fs.readFileSync(path.join(__dirname,'../host.js'),'utf8');
-function fixture(fetch){const context={console,URL,URLSearchParams,Uint8Array,AbortController,setTimeout,clearTimeout,fetch};vm.runInNewContext(source+'\n;globalThis.WineAssembly=WineAssembly;',context);context.window={byteProvider};const wine=Object.create(context.WineAssembly.prototype);wine._helpCtx={vfs:new VirtualFS()};return{wine,vfs:wine._helpCtx.vfs};}
+function fixture(fetch, ranges=false){const context={console,URL,URLSearchParams,Uint8Array,AbortController,setTimeout,clearTimeout,fetch};vm.runInNewContext(source+'\n;globalThis.WineAssembly=WineAssembly;',context);context.window={byteProvider,WINE_HTTP_RANGES:ranges};const wine=Object.create(context.WineAssembly.prototype);wine._helpCtx={vfs:new VirtualFS()};return{wine,vfs:wine._helpCtx.vfs};}
 function response(size=200000){return async(_url,init={})=>{assert(!init.headers?.Range,'no HTTP Range');assert(!init.method,'no HEAD');return{status:200,arrayBuffer:async()=>Uint8Array.from({length:size},(_,i)=>i%251).buffer};};}
 
 test('6000 known-size files mount with zero requests; actual VFS read downloads the touched file',async()=>{
@@ -51,4 +51,17 @@ test('reload after stop has a new background lifetime; old providers retain abor
  await wine.loadFiles([{url:'new',size:5000000,loadMode:'background'}]);await wine.startBackgroundAssets();assert.equal(signals.length,2);assert.notEqual(signals[0],signals[1]);assert.equal(old.provider._downloadOptions.signal.aborted,true);assert.equal(signals[1].aborted,false);
  // A chunk the background prefix did not cover (1MB chunks: past the first).
  await old.fill(2000000,1);assert.equal(signals.length,2,'resident whole bytes need no request after abort');assert.equal(wine.backgroundAssets.completed,1);
+});
+
+test('Wine Ops capability mounts without fetch and reads only one archive section through real VFS',async()=>{
+ const size=64*1024*1024,calls=[];
+ const{wine,vfs}=fixture(async(u,init)=>{
+  const range=init.headers.Range;calls.push(range);const[,a,b]=/^bytes=(\d+)-(\d+)$/.exec(range);
+  return{status:206,headers:new Headers({'Content-Range':`bytes ${a}-${b}/${size}`}),arrayBuffer:async()=>new Uint8Array(Number(b)-Number(a)+1).fill(42).buffer};
+ },true);
+ await wine.loadFiles([{url:'large.stuff',size,httpRange:true,vfsPath:'c:\\large.stuff'}]);assert.equal(calls.length,0);
+ const h=vfs.createFile('c:\\large.stuff',0x80000000,3),buf=new Uint8Array(4);
+ const pending=vfs.readFile(h,buf,4);assert(pending.pending);await vfs.fillPendingRead(pending.pending);
+ assert.equal(vfs.readFile(h,buf,4).bytesRead,4);assert.deepEqual([...buf],[42,42,42,42]);
+ assert.deepEqual(calls,['bytes=0-1048575']);
 });

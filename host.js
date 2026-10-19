@@ -4104,14 +4104,16 @@ class WineAssembly {
                 // A stat-verified manifest already knows the length. Mount it
                 // synchronously without a HEAD for every asset in the tree.
                 // Sized entries stay lazy, including split assets. The provider
-                // fetches complete decoded files/parts and retains them across
-                // chunk-cache evictions; no HEAD or HTTP Range is needed.
+                // uses bounded byte ranges on capable hosts (Wine Ops); static
+                // deployments retain whole decoded files/parts without HEAD.
                 const sizedHttpRange = !sizedRange && item && item.httpRange === true &&
                   Number.isSafeInteger(item.size) && item.size >= 0;
+                const HttpProvider = window.WINE_HTTP_RANGES === true
+                  ? window.byteProvider.HttpByteRangeProvider : window.byteProvider.HttpRangeProvider;
                 const provider = sizedRange
-                  ? new window.byteProvider.HttpRangeProvider(url, item.size, rangeOptions)
+                  ? new HttpProvider(url, item.size, rangeOptions)
                   : sizedHttpRange
-                    ? new window.byteProvider.HttpRangeProvider(url, item.size, rangeOptions)
+                    ? new HttpProvider(url, item.size, rangeOptions)
                     : await WineAssembly._openRangeProvider(url, rangeOptions);
                 checkCancelled();
                 // One cache shape for every streamed file: 1MB chunks, and
