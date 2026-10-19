@@ -457,3 +457,21 @@ Prepared23-job controller (syntax checked only) covers normalbuild, candidate2,
 controls16, RTCnativeworker2 and host/RPC2. It records/pins new combined hashes
 after building and preserves current root source/host/modules plus old archives.
 Admission-refused JSON records launchedJobs0; source integration remains unbuilt.
+
+Combined745 partial native qualification — 2026-10-19
+Root executed reviewed controller3d3bdd058bdb9d8d15c575aed298cc35f8ffca60a6938121fae18c4245485279
+at source705fef6c7. Fresh free3090284544 admitted normalbuild, PASS20.033s, then
+candidate-tail PASS3.497s. Candidate-compat refused per-job admission;21jobs remain.
+Observed minimum2627620864 stayed above2214592512 floor. No guard fired; both
+process groups are absent and all captured pins reverified unchanged at sealing.
+This reproduces transient free-space reduction under root execution; cause remains
+unattributed. No compatibility/control/RTC result is implied by these two passes.
+New combined SHA256 pins:
+ primary a74ccff4da260477721ba26f148e708b51930d57355f631a6d7a963836654111
+ compat c01924239506ef1a21d3eb705fd62515d6c524e05cb51c7bf01927fddfa30d71
+ combined af64bbb800c462f9a60760c47095b76c17324fa42b5519b1e5b7c0956401917c
+Evidence: scratch/runs/20261019-surface47-rtc-combined/terminal-manifest.json,
+sealed-partial-result.json, complete job logs/receipts and prior recovery archives.
+Continuation must retain these source/module pins and run only21unrun jobs:
+candidate-compat,8controls both dispatches, RTCnativeworker both, host and RPC.
+No build/tail-candidate repeat. Full cube storage/rendering remains unimplemented.
