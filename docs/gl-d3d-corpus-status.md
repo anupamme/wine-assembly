@@ -232,7 +232,7 @@ no original 27-app membership or full-corpus completion follows from this update
 
 ### October 19 reconciliation, without a new corpus sweep
 
-Surface4/7 ABI support is on main `73433fabe`. The combined RTC/Surface build passed both ABI candidates, eight DirectDraw controls in both dispatch modes, and RTC native Worker/host/RPC checks. This qualifies the tested API behavior, not original-game rendering or both-backend coverage. Cube independent-face storage remains unsupported.
+Surface4/7 ABI support is on main `73433fabe`. The combined RTC/Surface build passed both ABI candidates, eight DirectDraw controls in both dispatch modes, and RTC native Worker/host/RPC checks. This qualifies the tested API behavior, not original-game rendering or both-backend coverage. Legacy DirectDraw Surface4/7 cube-face storage remains unsupported: CreateSurface rejects extended DDSCAPS2/3/4 with E_NOTIMPL. This is distinct from the existing Direct3D8/9 cube-resource and shader paths; those already have implementations and must not be re-created as part of the legacy follow-up. Their presence does not establish original-game or both-backend qualification.
 
 The original September 22 report names 27 measured apps without listing all IDs. The later table below has 26 rows expanding to 37 registry IDs; it must not be relabeled as the original 27-app manifest. Recover the contemporaneous census output to establish membership. The broader goal remains every registered GL/D3D app on both backends.
 
