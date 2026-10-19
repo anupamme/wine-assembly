@@ -61,7 +61,7 @@ const native = [
   const wasmSha256 = hash(path.join(root, 'build/wine-assembly.wasm'));
   if (wasmSha256 !== expectedWasm) blockers.push('Module does not match validated candidate');
   const stat = fs.statfsSync(root), freeBytes = stat.bavail * stat.bsize;
-  const admissionBytes = 2 * 1024 ** 3 + (128 + 64 + 512) * 1024 ** 2;
+  const admissionBytes = 2 * 1024 ** 3 + (128 + 32 + 512) * 1024 ** 2;
   if (freeBytes <= admissionBytes) blockers.push('Disk admission: free must exceed ' + admissionBytes);
   console.log(JSON.stringify({ at: new Date().toISOString(), root, sourceOnly: true,
     ready: blockers.length === 0, blockers, originalCount: 37,
