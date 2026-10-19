@@ -378,3 +378,21 @@ callback/lifetime route notes: docs/legacy-surface47-call-sites-20261019.txt.
 All78 PASS source check; JS syntax, tenUUID, fail-fast, dispatch freshness and
 complete test manifest PASS. Candidate assertions/outcomes remain intact. No
 runtime retry; source ABI implementation and expected38fa4a07/11b30b40 unchanged.
+
+Local dbec candidate PASS both dispatch modes — 2026-10-19
+Exact38fa4a07/11b30b40 modules and known original hashes verified; production src/lib
+unchanged versus1b6c, no rebuild. Fresh3101761536>2852126720 admission.
+Full actual guest Surface4/7 candidate PASS tail2.780s and compatibility3.527s.
+This exercises factories, DD4/7+legacy descriptors/modes/caps, QI/version/identity,
+Lock/shared storage, callbacks, texture return, references, wrapper exhaustion,
+legacy/mip/flip controls, valid-mask garbage and explicit cube rejection.
+Before the first remaining control, available disk dropped below per-job admission;
+controller stopped without launching directdraw-interface-refcounts or successors.
+Minimum during jobs2557366272 bytes, aggregate25143126. Both process groups
+2850740/2851177 absent; no runtime guards fired; all current root/candidate source,
+module and original pins unchanged. No retry. Four remaining controls still pending.
+Evidence sealed in scratch/runs/20261019-surface47-local-dbec: controller, admission,
+full logs, per-job JSON, original pin list, controller error, sealed-result and
+SHA manifest. The controller exception is recorded as incomplete qualification,
+not hidden behind the two candidate passes. Full cube storage/rendering remains
+unimplemented and deliberately rejected; this is the native ABI prerequisite.
