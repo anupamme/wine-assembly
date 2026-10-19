@@ -1628,9 +1628,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  status: active (authorized original installer recovery complete; bootstrap next)
+  owner: /root/army_men_authorized_recovery
+  Next: Fresh original archive18373265bytes and187payload files43721065bytes allhistorical hashes PASS. Normal SETUP bootstrap must regenerate child then actualauthorized Yes. No acceptance yet; serialized runtime pending prepared route.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1744,9 +1744,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (original Beep lookup fixed; IsDBCSLeadByteEx next)
-  owner: /root/madbomber_dbcs_export
-  Next: Original20261019-madbomber-beep-retry resolves Beep then API288 IsDBCSLeadByteEx NULL; no invocation/gameplay. Root3221pins140original/sharedCRT/processabsence PASS. Fresh worker implements real codepage semantics/export conformance source-only; Circus owns native validation.
+  status: queued (DBCS import fixed; LockFile prerequisite next)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: ReviewedDBCSb2273466a dualproduction and codepage tests PASS, rootbuild93818216. Original20261019-madbomber-dbcs-retry resolvesDBCS thenLockFile302NULL; no APIinvocation/window/gameplay. Root3224runtime140original/sharedCRT/processabsencePASS. RealLockFile semantics/export queued.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] Legacy texture cube API conformance
@@ -1802,7 +1802,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Include all supported games in Wine Ops, including Outlaws
   id: TG98-OPS-SUPPORTED-GAMES-20261019
-  status: active (registry/inventory reconciliation)
-  owner: /root/tg98_ops_supported_games
-  Next: Live8098 serves40fe91b98/wasm02b41f09 and old shared manifest; 344 candidates omitOutlaws despite currentmain registry. Reconcile supported inventory without falsely enabling launches against old live runtime. Preserve dashboard/data; no public emulator deploy.
+  status: done (live private Ops coverage verified)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Integrated602be17c 21focused tests/root PASS. PrivateOps-only restart2722049 preserves emulator40fe91b98/module02b41f09 and data root; live351entries/all347registered IDs covered includingOutlaws. No false launch on old emulator. Receipt20261019-ops-supported-rollout; Telegram1481.
   Done: Supported registry coverage tested, Outlaws visible with accurate launch/readiness, scoped rollout verified.
