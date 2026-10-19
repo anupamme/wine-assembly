@@ -6986,33 +6986,9 @@
     (i32.store offset=0 (global.get $reg_base) (i32.const 0))
     (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 12))))
 
-  ;; Native Surface4/7 tail: real slots, deliberately fail-fast until implemented.
-  (func $handle_IDirectDrawSurface4_SetPrivateData (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface4_GetPrivateData (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface4_FreePrivateData (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface4_GetUniquenessValue (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface4_ChangeUniquenessValue (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface7_SetPriority (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface7_GetPriority (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface7_SetLOD (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
-
-  (func $handle_IDirectDrawSurface7_GetLOD (param $arg0 i32) (param $arg1 i32) (param $arg2 i32) (param $arg3 i32) (param $arg4 i32) (param $name_ptr i32)
-    (call $crash_unimplemented (local.get $name_ptr)))
+  ;; Native Surface4/7 tail slots alias the existing shared fail-fast handler
+  ;; in api_table.json. Dispatch retains each original API name_ptr and guest
+  ;; frame; no stack pop, fabricated return or duplicated handler body.
 
   ;; IDirectDrawSurface3 extension — slot 39. SDL 1.2 allocates its own
   ;; framebuffer, then attaches it to the DirectDraw surface through this

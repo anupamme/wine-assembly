@@ -156,3 +156,20 @@ interface-refcounts, surface3-desc, vbdd-directdraw34 and vbdd-image-interface
 are blocked there. Local admission still refused; no full qualification claim.
 Next source correction must satisfy the duplicate gate without silencing named
 fail-fast behavior, followed by source checks and a fresh runtime grant.
+
+Duplicate-gate correction — source only
+All nine Surface4/7 tail API rows now alias the existing six-argument
+handle_ftm_unimplemented body. Its historical FTM name is retained to avoid an
+unrelated metadata/spec rename; its only action is crash_unimplemented(name_ptr).
+The generated dispatch supplies the original Surface API name pointer, not an
+FTM name. No arguments, return value, guest registers or stack are changed before
+the terminal host diagnostic. IDs4581..4589, nargs and vtable slots are unchanged.
+The nine copied handlers are removed. No duplicate baseline exemption was added.
+Run node tools/check-surface47-failfast.js for the nine mappings/prototypes,
+generated dispatch name_ptr forwarding and terminal helper body assertions.
+All normal build gates BEFORE concat/compile passed locally using the exact
+prefix of tools/build.sh, including duplicate113/115 groups451/459 members,
+callback census396, region allocation shakes, API generation, layout checks and
+20,000 deterministic ToyVM decoder source-check cases (0 mismatches).
+This is not a successful native build: no WATX compilation or guest retry ran.
+Source-gate transcript is retained with the recovered first-failure artifacts.
