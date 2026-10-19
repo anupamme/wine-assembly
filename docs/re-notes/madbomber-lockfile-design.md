@@ -334,3 +334,31 @@ space was 2948763648 bytes.
 This establishes the bounded fixture contracts, not original-game behavior.
 The next original Mad Bomber consumer requires its own prepared matching
 runtime, original 140-file manifest, retained module pins and separate grant.
+
+## Original consumer preparation
+
+`tools/run-madbomber-lockfile-consumer.js` reuses the prior original launch
+argv: all 140 mounts, original DLL seeds, guest C:\\MADBOMBER path and 10-second
+cooperative CLI observation. It changes only the candidate worktree/module,
+new output destination, adds LockFile/UnlockFile tracing, and explicitly seeds
+the same shared MSVCRT dependency formerly found in the recovery tree's default
+DLL directory. That file remains at its original physical path, 278581 bytes,
+SHA-256 887eb5ce93edb7192ca3e9220f07f9ca0f94db02af5862ebcbdfcb852db99fd1.
+No original executable, asset, DLL or guest input is modified.
+
+All tracked font assets needed by CLI startup were expanded (about 8.5 MiB),
+and their bytes must match committed Git blobs. stdole2.tlb is already present.
+Source-only plan checks validate exact original mount/seed preservation,
+timeouts/paths, no --input injection, all bitmap/substitute fonts and system
+data dependencies. The source delta from built b130b9445 permits only the
+qualification tools/tests and these notes; production runtime remains unchanged.
+
+The prepared consumer retains the 2852126720-byte fresh admission,
+2214592512-byte stop floor, 2 MiB log cap and 32 MiB aggregate including all
+three prior run directories plus build/current output. Guest bound is 10s,
+normal quit at 15s and hard process-group kill at 25s. Passive PNG/snapshot
+requests occur at 5s and 9s. A separate grant and global lease are mandatory.
+The original archive, 140 files, shared CRT, source and modules are all pinned.
+Mad Bomber is still unregistered in candidate-corpus: resulting metadata is
+investigation evidence kept in these notes, not a dashboard gameplay claim.
+This consumer has not been launched.
