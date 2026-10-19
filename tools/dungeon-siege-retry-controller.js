@@ -39,10 +39,12 @@ console.log(JSON.stringify({ out, pid: child.pid }));
 let bytes = 0, reason = null, minFree = free();
 const kill = () => { try { process.kill(-child.pid, 'SIGKILL'); } catch (e) { if (e.code !== 'ESRCH') throw e; } };
 const quit = why => {
-  if (reason) return;
-  reason = why; save('stop.json', { at: new Date().toISOString(), reason });
-  if (!child.stdin.destroyed) child.stdin.write('{"action":"quit"}\n');
+  if (!reason) {
+    reason = why; save('stop.json', { at: new Date().toISOString(), reason });
+    if (!child.stdin.destroyed) child.stdin.write('{"action":"quit"}\n');
+  }
   // A stalled guest main event loop cannot postpone this outer group kill.
+  // Hard limits still apply after a soft quit request has already been sent.
   if (why !== 'soft-deadline') kill();
 };
 child.stdin.on('error', () => {});
