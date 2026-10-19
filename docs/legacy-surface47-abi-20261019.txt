@@ -475,3 +475,21 @@ sealed-partial-result.json, complete job logs/receipts and prior recovery archiv
 Continuation must retain these source/module pins and run only21unrun jobs:
 candidate-compat,8controls both dispatches, RTCnativeworker both, host and RPC.
 No build/tail-candidate repeat. Full cube storage/rendering remains unimplemented.
+
+Combined continuation partial qualification — 2026-10-19
+Reviewed controller f9bb6ff29ad985f42cbcf40c5831dc666eb8702ad55a8439f6fce122b99c43b0
+ran at f7d427e9d, existing a74c/c019 modules, without build/tail-candidate repeat.
+15/21 jobs PASS: candidate-compat and seven controls both modes (mip-chain,
+complex-release, get-attached-explicit, enum-surfaces, interface-refcounts,
+surface3-desc, vbdd-directdraw34). Minimum2460561408 remained above2214592512.
+Exactly one30s capacity settle after an absent prior group recovered admission
+before get-attached-explicit-compat (free3084734464 >required2822202314).
+A later admission refused vbdd-image-interface-tail: free2592763904 <=2822191626.
+The single settle was exhausted, so controller exited1 without retry/new child.
+All15 completed groups and controller group absent; no guards;4129pins unchanged.
+Final job aggregate output29934402 bytes <32MiB. Preserved37artifacts plus manifest
+at scratch/runs/20261019-surface47-rtc-continuation/terminal-manifest.json.
+Six jobs remain: vbdd-image-interface both modes, RTCnativeworker both, RTC host,
+and RTC RPC worker. Combined qualification remains partial; no runtime claim for
+these six. Candidate both modes now PASS combined source. Inherited Texture2
+Data1-only QI matching and unsupported cube storage/rendering limitations remain.
