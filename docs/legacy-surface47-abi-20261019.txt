@@ -351,3 +351,15 @@ aliases the existing one-argument helper. Published thunk marker/method identity
 checks and exact post-call ESP assertions remain. No production nargs, handler,
 thunk, API ID or module changed. Source syntax, UUID/fail-fast checks and manual
 spec/epilogue assertions PASS; runtime still38fa4a07. No corrected guest retry.
+
+Local8739 first failure — 2026-10-19
+Fresh3107893248>2852126720, exact modules38fa4a07/11b30b40 and originals verified;
+no rebuild. Candidate tail stopped2.802s before DD7 SetDisplayMode execution:
+precheck used shared IDirectDraw metadata4 while DD7 ABI has6 arguments. Actual
+source dx_set_display_mode_pop already selects28 bytes forDD2/4/7 versus20 forDD1.
+Texture2 QI, reference balance, retained views and mip operations had progressed.
+No production failure established. Group2839404 absent, guardsnone, pinsunchanged,
+minimum3107192832, outputs25093466; stopped1/10jobs and did not retry.
+Evidence: scratch/runs/20261019-surface47-local-8739. Before another allocation,
+review every candidate COM call against interface-specific prototypes and cleanup;
+metadata-only prechecks are insufficient for shared/versioned dispatch handlers.
