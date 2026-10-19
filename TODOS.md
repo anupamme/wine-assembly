@@ -1397,13 +1397,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Dungeon Siege demo
   id: NEW-GAME-DUNGEON-SIEGE-DEMO-20261008
-  status: blocked
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: none; browser56868 exited0, bx_f8a9afpr stopped2026-10-09T01:31:52Z
+  worker: /root/authorized_installer_queue (preparation; runtime serialized)
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
 
 - [x] Restore registered local candidates missing from the launch picker
   id: OPS-PICKER-MISSING-CANDIDATES-20261008
@@ -1600,10 +1603,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Jedi Knight Dark Forces II original demo
   id: NEW-GAME-JEDI-KNIGHT-DEMO-20261015
-  status: blocked (original installer licence requires user decision)
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Originalchild141587 reaches actual Software License Agreement; leftunanswered peruserinstruction and stoppedclean. Rootarchive+14recoveredartifact hashes/actualscreen reviewed; Telegramphoto1404 delivered. Full matching text evidence/demo-license.txt preserved. No acceptance/bypass/install/gameplay; lane refilled while awaiting decision.
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Originalchild141587 reaches actual Software License Agreement; leftunanswered peruserinstruction and stoppedclean. Rootarchive+14recoveredartifact hashes/actualscreen reviewed; Telegramphoto1404 delivered. Full matching text evidence/demo-license.txt preserved. No acceptance/bypass/install/gameplay; lane refilled while awaiting decision.
   Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
 
 - [ ] Improve and validate original .kkrieger control responsiveness
   id: KKRIEGER-CONTROL-LATENCY-20261015
@@ -1622,10 +1628,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: blocked (original licence requires user decision)
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
 
 - [ ] Retain Worker ownership until retirement and termination complete
   id: IW-RETIREMENT-SLOT-OWNERSHIP-20261015
@@ -1728,16 +1737,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: active (remaining callback ownership prerequisites)
-  owner: /root/circus_remaining_callbacks
-  Next: Syncwindow cb4fdc918 independently reviewed; dualguest and window/token/lifecycle regressions PASS. Root normalbuild exact2abd71d3 PASS. Fresh worker selects next retained callback family; jump APIs remain disabled, no gameplay claim.
+  status: queued (property-page ownership merged; remaining jump prerequisites)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: Propertypage1c917280a dualguest arguments/ownership and seven regressions PASS; root buildda72a16f PASS. Jump APIs remain disabled pending remaining callback/JS/concurrency/SEH work. Runtime slot rotates to user-authorized original installer acceptance; no active Circus worker or gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (validated Beep integrated; original retry next)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: PublicBeep1247a3d2c reviewed production static/dynamic calls and continuation bothdispatch plus Worker retirement PASS. Root normalbuild203163dd PASS. Original log identifies KERNEL32 handle; next fresh pinned original retry to establish actual progress. No gameplay or audible hardware proof.
+  status: active (original Beep lookup fixed; IsDBCSLeadByteEx next)
+  owner: /root/madbomber_dbcs_export
+  Next: Original20261019-madbomber-beep-retry resolves Beep then API288 IsDBCSLeadByteEx NULL; no invocation/gameplay. Root3221pins140original/sharedCRT/processabsence PASS. Fresh worker implements real codepage semantics/export conformance source-only; Circus owns native validation.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] Legacy texture cube API conformance
@@ -1746,3 +1755,47 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/legacy_cube_api_fixture
   Next: Audit46ccf573 identifies dwCaps2 discarded at creation/retrieval. Actual guest COM fixture next; independent face storage/lifetime before renderer qualification. Prior palette fixes remain merged.
   Done: Correct advertised API and software/GPU behavior with versioned contract and tests.
+
+- [ ] Authorized original installer acceptance
+  id: NEW-GAME-AOE3-DEMO-20261010
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/authorized_installer_queue (preparation; runtime serialized)
+  candidate: test/binaries/win98-games-a-d/Age-of-empire-3trial-Win98-SW.exe
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Original reaches EULA with InterlockedExchangeAdd candidate, XP profile, native MSXML4 and its resource DLL. Screenshot991 sent; no button answered. Evidence scratch/runs/20261010T0430Z-aoe3-eula. Await user review before gameplay; pipeline refilled Beyond Good and Evil.
+  Done: Ordinary original launch reaches player-controlled gameplay with reviewed screenshot and run/build identity; tested fixes on main.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
+
+- [ ] Authorized original installer acceptance
+  id: NEW-GAME-CONAN-DEMO-20261010
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/authorized_installer_queue (preparation; runtime serialized)
+  candidate: test/binaries/win98-games-a-d/Conan cauldron-DX9-D3D/ConanPC-Demo.exe
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Original staged and SHA verified on bx_hx8msa33. Ordinary language/welcome/destination inputs reach EULA with I Reject selected, run20261010T0803Z-conan-destination. Do not answer acceptance. No installer process running; extracted game not yet available. Refill actionable new-game slot while this remains held.
+  Done: Original launch, player-controlled gameplay, reviewed screenshot and tested fixes on main; no public deployment.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
+
+- [ ] Authorized original installer acceptance
+  id: NEW-GAME-ARANNA-DEMO-20261010
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  candidate: test/binaries/win98-games-a-d/DungeonSiegelegendsofaranna_demo-D3D.exe
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Generic RTF fix cedee9b54 now shows readable original EULA; before1504Z/after1523Z browser evidence reviewed. No acceptance provided and no input sent. Payload /home/user/aranna-game-20261010 remains on bx_hx8msa33; no gameplay/FPS/audio qualification. Active slot refilled Invisible War.
+  Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/build identity; fixes committed on main.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+
+
+- [ ] Authorized original installer acceptance
+  id: NEW-GAME-SHADOW-MAN-DEMO-20261013
+  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Previous checkpoint (licence-decision hold superseded): Publisher Nov1999 CD index matches Archive gsscda1999/1999-11/GS1199.iso; remote-only download pins SHA1f985ca1349af958f886957aa662e87956a7db22d. Native1959files verified; originalSetup unpacked authenticengine, welcome->actual German licence screen reviewed in2221Z. No acceptance or installation; allPIDs absent22:23:28.352. Await user decision; Silver sourcepreflight replaces active lane.
+  Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/input/build identity; refill on exact blocker.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.

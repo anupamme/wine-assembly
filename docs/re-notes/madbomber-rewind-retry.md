@@ -45,3 +45,22 @@ synthetic fixture. This does not establish which internal export-lookup
 branch ran or prove the new export fixes the original game. The explicit
 KERNEL32 export candidate still requires production-route validation and
 a fresh original retry. No new game execution was used for this finding.
+
+## Original retry after public Beep export
+
+Run `20261019-madbomber-beep-retry` executed on 2026-10-18 at 23:53 UTC
+with main `ea57e62deb74a3750b6b59303ebcd9edb0b32c6e` and module
+`203163dda45d61b905a53bfbe2ad0128d006092b087a73d48a776bafd330ead0`.
+API 247 now resolves Beep to `0x00db8e94`. It is not invoked. The original
+caller progresses to API 288, `IsDBCSLeadByteEx`, using the same KERNEL32
+handle; that lookup returns zero and DLL initialization fails. This is an
+observed import-resolution improvement, not gameplay or hardware audio.
+
+The single passive run exited 1 with no signal, PNG or player input. Its
+131919-byte log and minimum free space 3356229632 stayed within the unchanged
+guards. Independent postflight rechecked all 3221 physical source/runtime
+pins, 140 original files, archive and shared CRT; controller and owned
+process group were absent. The run directory retains launch/controller,
+pins, log, terminal, review and independent postflight receipts. No automatic
+retry occurred. Next work is real IsDBCSLeadByteEx implementation/export
+conformance, followed by another separately pinned original validation.
