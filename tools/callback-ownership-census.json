@@ -250,7 +250,7 @@
     {
       "file": "lib/dll-loader.js",
       "name": "host-file",
-      "sha256": "237b31d05c44709e47925a053fe0cfe7443aaea76cf7a959410e287fd22b790e",
+      "sha256": "8dde0a569d1c8a10b4c12119ac5fde37e4aeb45629290fd1feb24fb6291a6145",
       "kind": "host-entry",
       "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
       "ownership": "pending"
