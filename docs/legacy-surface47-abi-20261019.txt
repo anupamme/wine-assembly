@@ -305,3 +305,16 @@ unattributed loss during preparation). Controller refused BEFORE any child,
 build or native test. No PID/group or runtime minimum exists; no retry.
 Controller and estimate retained in scratch/runs/20261019-surface47-local-d514.
 Lane released to coordinator for disk investigation; no cleanup performed.
+
+Renewed local b185 validation — 2026-10-19
+Fresh admission3159433216>2852126720 with original32MiB cap. Normal build passed
+20.389s and exactly matched38fa4a07. Candidate tail failed3.262s at line251:
+Initialize probe incorrectly called slot21 (GetPixelFormat) with two arguments;
+its exact stdcall check caught ESP16886356 versus16886360. Correct Initialize
+slot is23 per Wine include/ddraw.h. Earlier bounded source review missed this
+fixture defect. No emulator slot change is required. Candidate progressed through
+DD4/7/legacy buffer/QI, mode, callback and Surface4 SetSurfaceDesc checks first.
+Both groups2830922/2831608 absent, no guards, root/candidate pins unchanged.
+Minimum2685845504 bytes, aggregate25086485; during candidate available disk fell
+~452MB for an unattributed reason. Stopped after2/11jobs; all remaining jobs unrun.
+Evidence: scratch/runs/20261019-surface47-local-b185. No retry.
