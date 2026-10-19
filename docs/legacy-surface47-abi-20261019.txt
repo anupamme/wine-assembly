@@ -124,3 +124,17 @@ use this separate-process compiler-option override (no source/module mutation):
 Run one process at a time. A failure ends the allocation; source changes require
 new source checks and a new reviewed runtime grant, not an automatic original-game
 retry. Current status remains source gates passed, guest assertions authored only.
+
+Local runtime admission attempt — 2026-10-19
+Root granted normal build then candidate2 modes and8 controls2 modes, serial,
+180s/job,4MiB/log,32MiB aggregate outputs,512MiB transient reserve,2GiB128
+baseline and2214592512-byte hard stop. Known local calc/notepad were linked only
+inside the isolated checkout; denied remote original transfer was not rerouted.
+The controller's fresh disk check failed BEFORE spawning the first job:
+2663514112 bytes available <=2852126720 required. The preceding observation was
+2910720000; the intervening change is unattributed. No build, guest, process group
+or retry occurred, and no runtime minimum/passing test is claimed. Root canonical
+WASM7c1a12e8, compat0c8bafc4 and combinedc6515919 were reread unchanged afterwards.
+Lane released. Receipts and the JS controller remain in isolated
+scratch/runs/20261019-surface47-validation; source candidate86a923d remains unrun.
+Any new allocation requires fresh admission and coordinator scheduling.
