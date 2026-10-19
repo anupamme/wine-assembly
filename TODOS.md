@@ -1397,15 +1397,15 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Dungeon Siege demo
   id: NEW-GAME-DUNGEON-SIEGE-DEMO-20261008
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/authorized_installer_queue (preparation; runtime serialized)
+  status: active (licence accepted; thread snapshot API blocker)
+  owner: /root/dungeon_siege_thread_snapshot
+  worker: /root/dungeon_siege_thread_snapshot
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Next: Normal Accept delivered and observed20261019-dungeon-siege-authorized-acceptance-2; root3artifact hashes/processabsence and worker3222runtime37original pins PASS. Original game advances to CreateToolhelp32Snapshot(flags4,pid0) failfast; real thread enumeration source active. Crash prevented persistent accepted-state export; no gameplay.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
-  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
+  Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=true observed in acceptance-2/acceptance.json; historical authorization receipt remains unchanged.
 
 
 - [x] Restore registered local candidates missing from the launch picker
