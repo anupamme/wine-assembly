@@ -318,3 +318,13 @@ Both groups2830922/2831608 absent, no guards, root/candidate pins unchanged.
 Minimum2685845504 bytes, aggregate25086485; during candidate available disk fell
 ~452MB for an unattributed reason. Stopped after2/11jobs; all remaining jobs unrun.
 Evidence: scratch/runs/20261019-surface47-local-b185. No retry.
+
+Initialize probe correction — source only
+Candidate now uses independently checked Surface Initialize slot23 and asserts
+that its published thunk names IDirectDrawSurface_Initialize before invoking it.
+Every guest COM invocation also verifies the COM marker and compares supplied
+argument count (including this) with the published API signature, so another
+wrong-slot/argument mismatch fails before guest writes or stack damage. Existing
+post-call ESP checks remain unchanged. No emulator/generated source change;
+38fa4a07 runtime remains the expected build. JS syntax, tenUUID/fail-fast and
+dispatch freshness checks PASS. Corrected candidate has not been rerun.

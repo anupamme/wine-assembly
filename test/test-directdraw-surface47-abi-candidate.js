@@ -60,6 +60,15 @@ const tailCalls = !process.argv.includes('--compat');
     if (object) {
       vtable = read(object); target = read(vtable + slot * 4);
       assert(vtable && target, `${label}: published vtable/slot`);
+      // Check the actual published COM thunk signature before executing it.
+      // A wrong slot must not consume a different number of guest arguments.
+      const targetWa = (target - e.get_image_base() + e.get_guest_base()) >>> 0;
+      const thunkView = new DataView(memory.buffer);
+      assert.strictEqual(thunkView.getUint32(targetWa, true), 0xcaca0010,
+        `${label}: COM thunk marker`);
+      const method = apiTable[thunkView.getUint32(targetWa + 4, true)];
+      assert(method, `${label}: published API identity`);
+      assert.strictEqual(args.length, method.nargs, `${method.name}: argument count including this`);
       code.push(0xb8); word(object); // mov eax,this
       code.push(0x8b, 0x00, 0xff, 0x90); word(slot * 4); // call [vtable+slot]
     } else { code.push(0xb8); word(target); code.push(0xff, 0xd0); }
@@ -248,7 +257,13 @@ const tailCalls = !process.argv.includes('--compat');
   write(replacement + 4, 8); write(replacement + 16, 16);
   ok(com(surface4, 39, replacement, 0), 'Surface4 SetSurfaceDesc accepts DDSURFACEDESC2');
   assert.strictEqual(read(describe(surface4) + 16), 16);
-  assert.strictEqual(com(surface4, 21, dd, replacement), 0x88760005, 'already initialized');
+  // Wine include/ddraw.h: Surface4 Initialize follows GetSurfaceDesc (22).
+  const initializeSlot = 23;
+  const initializeThunk = read(read(surface4) + initializeSlot * 4);
+  const initializeWa = (initializeThunk - e.get_image_base() + e.get_guest_base()) >>> 0;
+  assert.strictEqual(apiTable[dv.getUint32(initializeWa + 4, true)].name,
+    'IDirectDrawSurface_Initialize', 'Initialize probe uses its published method');
+  assert.strictEqual(com(surface4, initializeSlot, dd, replacement), 0x88760005, 'already initialized');
   ok(com(plain, 0, iidTexture2, out.p), 'surface to texture');
   const texture = read(out.p);
   ok(com(texture, 0, iidSurface4, out.p), 'texture to native Surface4');
