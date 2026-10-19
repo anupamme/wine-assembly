@@ -77,13 +77,50 @@ descriptor. Callback targets and continuation families are unchanged.
 EnumAttachedSurfaces preserves the existing one-shot heap-descriptor lifecycle;
 this change does not claim to fix that existing allocation lifetime or establish
 nonlocal/retained callback ownership. Census ownership stays pending.
-DS checkpoint4d92020ef was absorbed before updating only these five pins.
+The initial review used DS checkpoint4d92020ef. The reconciled branch replays
+only the three Surface commits onto origin/main d77be8b5f; it does not merge the
+old DS task ancestry. Corrected main TOOLHELP_HEAPS size32 and API4579/4580 are
+preserved. Region mirror was regenerated after its expected cherry-pick conflict;
+only the native vtable registry grows8 bytes versus this main baseline. Current
+host callback pins remain intact; the five DirectDraw changes still pass census.
 
 Recovery / next serialized runtime lane
-Checkout task/legacy-surface47-abi-oct19, expand only the reviewed dependency
+Checkout task/legacy-surface47-abi-rebased-oct19, expand only the reviewed dependency
 closure, keep >2GiB free plus build reserve, reuse existing dependencies without
 installation. Run the normal build, then this candidate in both dispatch modes;
 preserve first failing route/ESP/HRESULT. Follow with the existing surface3-desc,
 interface-refcounts, mip-chain, complex-surface-release, get-attached-explicit,
 enum-surfaces and VB descriptor controls. No ignored binaries/run evidence were
 created here. Root owns TODO/STATUS and runtime scheduling.
+
+Concrete serialized validation commands (NOT EXECUTED)
+First verify the checkout HEAD equals the pushed remote ref. Preflight the exact
+tracked dependency closure and existing Node dependencies; no dependency install.
+Preserve canonical WASM/combined hashes before any normal build. Obtain the root
+runtime grant; keep at least2GiB plus128MiB outputs plus512MiB transient reserve
+and measured closure bytes at admission. Use the coordinator's process-group,
+disk/output and180s per-job guards, stop at first failure, retain bounded logs in
+a unique scratch/runs folder and record candidate/module hashes and actual mode.
+No browser/Worker/hardware/full-cube qualification is implied by these jobs.
+
+  bash tools/build.sh
+  node test/test-directdraw-surface47-abi-candidate.js
+  node test/test-directdraw-surface47-abi-candidate.js --compat
+
+The candidate now passes tailCalls:false explicitly for --compat and labels the
+JSON trace mode. Run these existing controls separately in default tail mode:
+  node test/test-directdraw-mip-chain.js
+  node test/test-ddraw-complex-surface-release.js
+  node test/test-directdraw-get-attached-explicit.js
+  node test/test-directdraw-interface-refcounts.js
+  node test/test-directdraw-surface3-desc.js
+  node test/test-directdraw-enum-surfaces.js
+  node test/test-vbdd-directdraw34.js
+  node test/test-vbdd-image-interface.js
+
+For the same control in compatibility mode, set TEST_FILE to its path above and
+use this separate-process compiler-option override (no source/module mutation):
+  node -e 'const c=require("./test/compile-src"); const original=c.compileSrcWasm; c.compileSrcWasm=(transform,options={})=>original(transform,{...options,tailCalls:false}); require("./"+process.argv[1]);' "$TEST_FILE"
+Run one process at a time. A failure ends the allocation; source changes require
+new source checks and a new reviewed runtime grant, not an automatic original-game
+retry. Current status remains source gates passed, guest assertions authored only.

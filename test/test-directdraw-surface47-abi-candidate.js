@@ -16,9 +16,10 @@ const faceNames = ['+X', '-X', '+Y', '-Y', '+Z', '-Z'];
 const colors = [0xff1020, 0x20ff30, 0x3040ff, 0xffe050, 0x60ffee, 0xee70ff];
 const POISON = 0xa5a5a5a5;
 const trace = [];
+const tailCalls = !process.argv.includes('--compat');
 
 (async () => {
-  const { exports: e, memory } = await bootRenderHarness({ fonts: 'none' });
+  const { exports: e, memory } = await bootRenderHarness({ fonts: 'none', tailCalls });
   const pe = fs.readFileSync(path.join(__dirname, 'binaries/calc.exe'));
   new Uint8Array(memory.buffer).set(pe, e.get_staging());
   assert(e.load_pe(pe.length), 'PE initializes normal API and continuation thunks');
@@ -377,4 +378,5 @@ const trace = [];
   com(dd, 2);
   console.log('PASS native Surface4/7 ABI candidate (cube unsupported)');
 })().catch(error => { console.error(error.stack || error); process.exitCode = 1; })
-  .finally(() => console.log(JSON.stringify({ route: 'guest-x86 COM/catalog factory', trace }, null, 2)));
+  .finally(() => console.log(JSON.stringify({ route: 'guest-x86 COM/catalog factory',
+    dispatch: tailCalls ? 'tail-calls' : 'compat', trace }, null, 2)));
