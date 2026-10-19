@@ -1401,7 +1401,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: /root/dungeon_siege_thread_snapshot
   worker: /root/dungeon_siege_thread_snapshot
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: Normal Accept delivered and observed20261019-dungeon-siege-authorized-acceptance-2; root3artifact hashes/processabsence and worker3222runtime37original pins PASS. Original game advances to CreateToolhelp32Snapshot(flags4,pid0) failfast; real thread enumeration source active. Crash prevented persistent accepted-state export; no gameplay.
+  Next: Snapshot source f53075787 independently reviewed after first compiled test found double-close fallback bug. Real handle identities corrected; both dispatch production/OS-Worker and controls granted on fresh bx_z8xgsuxz, no passing runtime claim yet. Original actual EULA accepted; next game retry follows validated integration.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
@@ -1628,9 +1628,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (original Setup Complete observed; installed-file verification and launch next)
+  status: active (installed originals verified; remote launch preparation)
   owner: /root/army_men_authorized_recovery
-  Next: Corrected-buffer original installer reached Setup Complete through normal licence/destination/program-folder inputs; root reviewed completion.png and process absence, exit0 no guards min2407358464. Finish not clicked, no game launch. Worker verifies exported installed paths/hashes and prepares normal launch. Evidence20261019-army-men-authorized-install-buffer/root-review.json.
+  Next: Root independently verified166 installed files including165 exact originals; shortcut and registry agree on normal EXE/cwd/empty args. Preparing bx_z8xgsuxz launch bundle behind Dungeon tests. Setup Complete reviewed; Finish not clicked and gameplay unproved.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1744,16 +1744,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: queued (DBCS import fixed; LockFile prerequisite next)
-  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: ReviewedDBCSb2273466a dualproduction and codepage tests PASS, rootbuild93818216. Original20261019-madbomber-dbcs-retry resolvesDBCS thenLockFile302NULL; no APIinvocation/window/gameplay. Root3224runtime140original/sharedCRT/processabsencePASS. RealLockFile semantics/export queued.
+  status: active (real LockFile and filesystem lifecycle prerequisite)
+  owner: /root/madbomber_lockfile
+  Next: Original DBCS retry resolves imported DBCS then LockFile NULL. Source worker implements real byte-range locking, stable opened-file identity, duplicate/close/exit cleanup and conformance coverage; no export of incomplete semantics, runtime not granted.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] Legacy texture cube API conformance
   id: D3D-LEGACY-TEXTURE-CAPS-AUDIT-20261013
-  status: active (native Surface4/7 ABI prerequisite; cube conformance pending)
+  status: queued (native Surface4/7 source reviewed; runtime validation pending)
   owner: /root/legacy_surface7_abi
-  Next: Audit46ccf573 identifies dwCaps2 discarded at creation/retrieval. Actual guest COM fixture next; independent face storage/lifetime before renderer qualification. Prior palette fixes remain merged.
+  Next: Source537d18+a3976ab reviewed;3437366 adds native/legacy GetDisplayMode controls. Guest ABI/refcount/exhaustion/callback and existing surface controls await serialized runtime after DS IDs. Cube independent face storage and software/GPU qualification remain unimplemented.
   Done: Correct advertised API and software/GPU behavior with versioned contract and tests.
 
 - [ ] Authorized original installer acceptance

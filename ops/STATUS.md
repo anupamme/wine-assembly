@@ -1,3 +1,5 @@
+Current 2026-10-19: Fresh remote bx_z8xgsuxz49GB owns serialized validation: Dungeon corrected snapshots first, Army verified installed-game launch next. Mad Bomber real LockFile/lifecycle source worker active. Surface4/7 source reviewed, native tests queued; cube storage/render still open. Telegram99 latest installer screenshot delivered1486.
+
 Current 2026-10-19: Army Men original installer reached reviewed Setup Complete, normal inputs, clean exit and exported files/registry; Finish/gameplay pending. Installed-file verification underway. Dungeon snapshot double-close fix source active; Surface4/7 ABI reviewed with display-mode coverage, runtime tests pending.
 
 Current 2026-10-19: Army Men normal Yes acceptance independently reviewed, now Choose Destination Location; installation/gameplay pending and persisted acceptance unproven. Runtime released cleanly. Dungeon Siege thread snapshot source corrections and native Surface4/7 ABI continue.
