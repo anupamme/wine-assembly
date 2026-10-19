@@ -13,6 +13,12 @@ const builtCommit = 'b130b94452212a0854fe764440128f42fe9395d5';
 const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const git = (...args) => cp.execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).trim();
 const free = () => { const s = fs.statfsSync(root); return s.bavail * s.bsize; };
+function admit(readFree = free) {
+  const sample = { at: new Date().toISOString(), cwd: process.cwd(), root,
+    freeBytes: readFree(), exclusiveThreshold: guard.ADMIT };
+  assert(sample.freeBytes > sample.exclusiveThreshold, 'fresh admission refused: ' + JSON.stringify(sample));
+  return sample;
+}
 const save = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', { flag: 'wx' });
 const option = name => process.argv.find(a => a.startsWith('--' + name + '='))?.slice(name.length + 3);
 function argv(out) {
@@ -68,7 +74,7 @@ async function main() {
   assert.deepEqual(m.sourceDelta, sourceDelta()); assert.deepEqual(m.argv, argv('OUTPUT'));
   assert.deepEqual([m.guestSeconds, m.quitSeconds, m.hardSeconds], [10, 15, 25]);
   assert.equal(sha(path.join(root, 'build/wine-assembly.wasm')), moduleHash);
-  guard.verifyPins(m.pins); assert(free() > guard.ADMIT, 'fresh admission refused');
+  guard.verifyPins(m.pins); const admission = admit();
   const out = option('out'); assert(out && path.isAbsolute(out) && !fs.existsSync(out));
   assert(guard.aggregateBytes(m, out) < guard.TOTAL);
   const lease = '/tmp/wine-assembly-local-runtime.lock'; fs.mkdirSync(lease);
@@ -82,7 +88,7 @@ async function main() {
   try {
     save(path.join(lease, 'owner.json'), { pid: process.pid, root, manifest: file });
     fs.mkdirSync(out); fs.copyFileSync(file, path.join(out, 'manifest.json'));
-    save(path.join(out, 'launch.json'), { cwd: root, args: argv(out), inputs: [], startedAt });
+    save(path.join(out, 'launch.json'), { cwd: root, args: argv(out), inputs: [], startedAt, admission });
     fd = fs.openSync(path.join(out, 'output.log'), 'wx');
     const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^(WA_|WINE_|NODE_OPTIONS$|NODE_PATH$)/.test(k)));
     env.NODE_PATH = m.nodePath;
@@ -130,5 +136,5 @@ async function main() {
     fs.unlinkSync(path.join(lease, 'owner.json')); fs.rmdirSync(lease);
   }
 }
-module.exports = { argv, sourceDelta };
+module.exports = { argv, sourceDelta, admit };
 if (require.main === module) main().catch(error => { console.error(error); process.exitCode = 1; });

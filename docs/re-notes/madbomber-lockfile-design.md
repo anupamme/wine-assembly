@@ -362,3 +362,23 @@ The original archive, 140 files, shared CRT, source and modules are all pinned.
 Mad Bomber is still unregistered in candidate-corpus: resulting metadata is
 investigation evidence kept in these notes, not a dashboard gameplay claim.
 This consumer has not been launched.
+
+### Initial original allocation refused before spawn
+
+Root's exact consumer command returned 1 at the initial fresh admission check,
+before creating an output directory or spawning a guest. The failed numerical
+sample was not recorded. A distinct joint statfs observation at
+2026-10-19T02:32:17.775Z reported 2928340992 bytes for both worktree and shared
+root; it is not evidence of the failed sample or its cause. The refusal is
+preserved at `scratch/runs/20261019-madbomber-lockfile-admission-refused/refusal.json`.
+The original ef81a891 manifest is unchanged; controller bytes can be recovered
+from be58482fe. No original execution or automatic retry occurred.
+
+The controller now captures free space exactly once for pre-spawn admission,
+including timestamp, cwd, root and the unchanged exclusive 2852126720-byte
+threshold in any assertion error. Successful admission records the same sample
+in launch.json. Source regression checks confirm one read for each decision,
+refusal at/below the boundary and acceptance one byte above it. Other guards,
+argv and runtime remain unchanged; a fresh manifest refreshes only this
+reviewed controller pin, with a unique original-v2 output proposed for a new
+allocation.
