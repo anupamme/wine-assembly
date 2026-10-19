@@ -723,3 +723,9 @@ tool against today's registry is not equivalent; scanning old registry paths
 against changed/missing binaries is also insufficient without identity checks.
 No historical census was rerun here and no membership or backend qualification
 is inferred from the counts.
+
+### Current registry availability audit, October 19
+
+[Machine-readable inventory](gfx-corpus-current-inventory-20261019.json) pins main `4b0c7d8b3` and the matching scanner hash. All 347 registry entries were considered against files available on this coordinator. Static names/imports/IIDs identify 201 graphics candidates, 135 with a family beyond DirectDraw; these are potential routes, not runtime coverage or gameplay passes. IID-only matches can be false positives.
+
+Thirteen entries lack one or more directly declared executable/DLL paths, and eleven also lack their local file manifests. The inventory records exact missing paths per app. A missing manifest prevents discovery of its companion modules, so an empty family set is not proof of no 3D use. Recovery is needed for those entries; it does not block validation of other available originals. This is the current registry snapshot, not a reconstruction of the missing September 22 historical 27-ID set. Software/WebGL runtime evidence and reviewed gameplay remain separate requirements.
