@@ -396,3 +396,24 @@ full logs, per-job JSON, original pin list, controller error, sealed-result and
 SHA manifest. The controller exception is recorded as incomplete qualification,
 not hidden behind the two candidate passes. Full cube storage/rendering remains
 unimplemented and deliberately rejected; this is the native ABI prerequisite.
+
+Remaining controls PASS both modes — 2026-10-19
+Exact38fa4a07/11b30b40 artifacts verified, no rebuild or candidate repetition.
+Source e33b50c1 differs from passing candidate dbec only in documentation. Fresh
+3100053504>2852126720 admission. All8 jobs passed: interface-refcounts,
+surface3-desc, vbdd-directdraw34 and vbdd-image-interface, each tail and compat.
+All8 process groups absent, no guards, all4108 current root/candidate/module/
+original pins unchanged. Minimum3099131904 bytes, aggregate25072271 within32MiB.
+Evidence sealed in scratch/runs/20261019-surface47-controls-e33 with full logs,
+controller/admission, each job and aggregate results, pins, seal and SHA manifest.
+
+Native ABI prerequisite validation complete for this source/runtime slice:
+- Full guest Surface4/7 candidate PASS both modes at dbec on38fa4a07/11b30b40.
+- Four original-independent controls PASS both modes remotely at1b6c (same hashes).
+- Four original-dependent controls PASS both modes locally at e33 (same hashes).
+All corrected test/setup changes are included in this branch; no production code
+changed after the verified GUID correction. Root owns integration/review. This
+qualifies the bounded native version-aware ABI prerequisite, not full cube API:
+cube storage, face groups and software/GPU sampling remain unimplemented/rejected.
+Inherited prefix-only legacy Texture/Gamma/device QI and callback descriptor
+lifetime limitations remain as documented; no game/browser qualification claimed.
