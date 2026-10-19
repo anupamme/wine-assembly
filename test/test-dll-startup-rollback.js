@@ -7,7 +7,7 @@ const {createHostImports}=require('../lib/host-imports');
 const loader=require('../lib/dll-loader');
 const {X86,pe,u32,BASE,DATA}=require('./test-dll-lifecycle-real-pe');
 const {graphDll}=require('./test-dll-import-graph-lifecycle');
-async function exercise(module){
+async function exercise(module,detachFails=false){
  const memory=new WebAssembly.Memory({initial:8192,maximum:8192,shared:true});
  const ctx={getMemory:()=>memory.buffer,resourceJson:{menus:{},dialogs:{},strings:{},bitmaps:{}},onExit(){}};
  const imports=createHostImports(ctx);imports.host.memory=memory;
@@ -24,6 +24,24 @@ async function exercise(module){
  // FALSE for process attach, ordinary FALSE return for process detach too.
  // The latter return value must be ignored while unwinding this rollback.
  new X86().emit(0x8b,0x44,0x24,8,0xff,0x04,0x85,u32(DATA),0x31,0xc0,0xc2,12,0).finish().copy(a,0x200);
+ if(detachFails){
+  // Attach returns FALSE; detach jumps to NULL instead of returning. The
+  // startup error must survive the secondary failure, and no image retires.
+  new X86().emit(0x83,0x7c,0x24,8,0).branch([0x0f,0x84],'detach')
+   .emit(0x31,0xc0,0xc2,12,0).label('detach').emit(0x31,0xc0,0xff,0xe0).finish().copy(a,0x200);
+  let failure;
+  try{loader.loadDlls(e,memory.buffer,exe,[{name:'graph-b.dll',bytes:b},{name:'graph-a.dll',bytes:a}],null);}catch(error){failure=error;}
+  assert.ok(failure instanceof AggregateError);
+  assert.match(failure.message,/DLL_PROCESS_ATTACH returned FALSE: module=0x.*rollback also failed: DllMain did not complete/);
+  assert.equal(failure.cause,failure.errors[0]);
+  assert.equal(failure.errors[0].dllInitializationFailed,true);
+  assert.equal(failure.errors[1].outcome.completed,false);
+  assert.equal(e.guest_read32(DATA+0x70),0,'failed boot never runs EXE');
+  assert.equal(e.guest_read32(DATA+0x10),0,'failed detach does not continue unwinding dependency');
+  assert.equal(e.get_dll_index(resident.loadAddr),resident.index,'preexisting root remains mapped');
+  assert.equal(e.get_dll_count(),3,'failed detach retains all mapped images');
+  return {preservedAttachFailure:true,failedDetach:true};
+ }
  assert.throws(()=>loader.loadDlls(e,memory.buffer,exe,[{name:'graph-b.dll',bytes:b},{name:'graph-a.dll',bytes:a}],null),/DLL.*initializ|DLL_PROCESS_ATTACH|DllMain/i);
  const read=off=>e.guest_read32(DATA+off)>>>0;
  assert.equal(read(4),1);assert.equal(read(0),1,'FALSE initializer receives process detach');
@@ -41,10 +59,11 @@ async function exercise(module){
 }
 async function main(){
  const module=await WebAssembly.compile(fs.readFileSync(process.env.WA_TEST_WASM||path.join(__dirname,'../build/wine-assembly.wasm')));
- const expected=await exercise(module),worker=new Worker(__filename,{workerData:{module}});
+ const run=async()=>[await exercise(module),await exercise(module,true)];
+ const expected=await run(),worker=new Worker(__filename,{workerData:{module}});
  const guard=setTimeout(()=>worker.terminate(),20000);
  try{const result=await new Promise((resolve,reject)=>{worker.once('message',resolve);worker.once('error',reject);worker.once('exit',code=>reject(Error('worker exited before result '+code)));});assert.deepEqual(result,expected);}
  finally{clearTimeout(guard);await worker.terminate();}
- console.log('PASS real PE startup FALSE rollback preserves preexisting root and retires initialized dependency, main/Worker');
+ console.log('PASS real PE startup FALSE rollback, original/cleanup error preservation and mapping quarantine, main/Worker');
 }
-if(isMainThread)main().catch(error=>{console.error(error);process.exitCode=1;});else exercise(workerData.module).then(result=>parentPort.postMessage(result),error=>{throw error;});
+if(isMainThread)main().catch(error=>{console.error(error);process.exitCode=1;});else Promise.all([exercise(workerData.module),exercise(workerData.module,true)]).then(result=>parentPort.postMessage(result),error=>{throw error;});
