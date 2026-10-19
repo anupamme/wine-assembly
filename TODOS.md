@@ -1397,11 +1397,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Dungeon Siege demo
   id: NEW-GAME-DUNGEON-SIEGE-DEMO-20261008
-  status: queued (licence accepted; tested snapshot fix integrated, original retry pending)
+  status: active (snapshot trap cleared; original demo.ds read error)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/dungeon_siege_thread_snapshot (original retry preparation)
+  worker: /root/dungeon_siege_thread_snapshot (breakpoint routing diagnosis after capture did not fire)
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: Corrected thread snapshot fix integrated13bbe1266 and local normal build now7c1a12e8 exact remote validated candidate; all gates passed. Original37 assets reverified; required native ole32 fixture provisioning/preflight underway. Next serialized ordinary original-game observation preserves prior acceptance evidence; no gameplay qualification.
+  Next: Original retry on validated7c1 accepted genuine EULA, passed prior snapshot boundary, then critical error reading C:\demo.ds with last error0x17. Normal quit exit0, guards none/all source-original pins unchanged/processes absent. Diagnose mount/provider/read semantics from source before discriminating retry. Evidence scratch/runs/20261019-dungeon-siege-snapshot-original-1; no gameplay.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
@@ -1628,9 +1628,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Army Men original 1998 Windows demo
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
-  status: active (original game opens white window; cause under investigation)
+  status: active (RTC fixed; main menu reached, Boot Camp empty map basename)
   owner: /root/army_men_authorized_recovery
-  Next: Native dependency closure repaired with original MFC/CRT and pinned support fixtures. V3 original game initializes all five native DLLs, opens 640x480 window but remains white through bounded60s exit. No menu/input/gameplay; source mapping of repeated EIP0111cda1 next, no identical retry. All1599 pins unchanged; guards none/group absent. Evidence scratch/runs/20261019-army-men-installed-local-v3.
+  Next: Original v4 with validated RTC7fd reaches reviewed main menu; Boot Camp click opens game error ERROR: .AMM does not exist. Existing installed bootcamp.amm and BootCamp.cpn hashes match originals. Source-only campaign open/fgets/token path diagnosis and bounded trace preparation; no gameplay. Evidence scratch/runs/20261019-army-men-installed-rtc-v4, all1599 input pins unchanged.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=true: ordinary Yes observed in scratch/runs/20261019-army-men-authorized-child/acceptance.json; Setup Complete separately verified in 20261019-army-men-authorized-install-buffer. Authorization receipt remains unchanged.
