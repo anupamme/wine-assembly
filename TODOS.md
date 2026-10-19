@@ -1164,7 +1164,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Surface4/7 merged main73433fabe after combined normal build, both ABI candidates, eight controls in both modes and RTC Worker/host/RPC PASS. Cube storage and full per-app software/WebGL qualification remain incomplete. Read-only scope audit found original September22 27-ID manifest absent from cited records; later status table expands26 rows to37 IDs and is not a substitute. Recover exact historical census artifact before claiming full27 coverage.
+  Next: Surface4/7 ABI is merged. Current main inventory b276cb5a6 considers347 apps,201staticgraphics/135nonDD candidates and records exact missing paths for13entries/11manifests. Missing historical27 membership is separate and must not block available original validation. Software/WebGL gameplay coverage and legacy cube storage remain incomplete.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1401,7 +1401,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/dungeon_siege_thread_snapshot (reservedPageFaults registration and SEH control preparation)
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: Qualify disabled-by-default fault observer with normal build and six native controls before another original retry. Remote attempt stopped before compilation on missing test/run-all.sh; evidence recovered at scratch/runs/20261019-dungeon-siege-observer-controls-1. Source closure correction dd95ba6fd pushed; full dependency review/restaging active. Original reserved-page candidate remains off main after startup regression; no new module/native/gameplay qualification.
+  Next: Six native observer controls pass both dispatch modes after fixture code invalidation correction. Original remote attempt stopped before guest execution on missing stdole2.tlb. Complete runner boot-asset and app-manifest audit/staging now precedes a fresh qualified fault capture; preserve first failure and acceptance history. No original gameplay qualification.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
@@ -1630,7 +1630,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   id: NEW-GAME-ARMY-MEN-DEMO-20261015
   status: active (Boot Camp input responds; severe terrain striping after turn)
   owner: /root/army_men_authorized_recovery
-  Next: Attribute and fix terrain striping using original runtime/API evidence, then verify unobscured player movement. Remote V10 documented Numpad6 clears welcome sign and exposes Sarge with severe diagonal terrain corruption; forward was not sent. Root reviewed turn-after.png; normal exit0, original pins unchanged, no survivors. Generic path fixes on main509b620ef; historical7fd consumer identity retained. Evidence scratch/runs/20261019-army-men-sign-exit-remote-v1. Audio/FPS and release remain unqualified.
+  Next: Boot Camp responds to ordinary turn but terrain is severely striped. V13 clean observation captured zero interior-address trace hits; source confirms breakpoint checks block entries. Prove branch-entry capture with exact-module native control, then trace actual scroll-copy arguments before any renderer patch.
   Previous checkpoint (licence-decision hold superseded): Five-second observation175219 proves original8792-byte licence renders normally; earlier blank capture premature, no emulator defect. Root reviewed settled PNG and trace; Telegram1406 delivered, Yes/No untouched. Archivef2486e1, independentpostflight14:50:54 unchanged active[]. Refill worker /root/new_demo_refill selecting another actionable original demo.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=true: ordinary Yes observed in scratch/runs/20261019-army-men-authorized-child/acceptance.json; Setup Complete separately verified in 20261019-army-men-authorized-install-buffer. Authorization receipt remains unchanged.
@@ -1806,3 +1806,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Next: Integrated602be17c 21focused tests/root PASS. PrivateOps-only restart2722049 preserves emulator40fe91b98/module02b41f09 and data root; live351entries/all347registered IDs covered includingOutlaws. No false launch on old emulator. Receipt20261019-ops-supported-rollout; Telegram1481.
   Done: Supported registry coverage tested, Outlaws visible with accurate launch/readiness, scoped rollout verified.
+
+- [x] Implement SetLocalTime virtual guest calendar
+  id: SETLOCALTIME-COMPAT-20261019
+  status: done (API implementation qualified; original Mad Bomber separate)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Evidence: main d537eddbe; normal build, exact tail/compat native API and real Worker controls PASS; root host/CMOS/DST tests PASS.
+
+- [ ] Validate original Mad Bomber after SetLocalTime support
+  id: MADBOMBER-SETLOCALTIME-ORIGINAL-20261019
+  status: active (complete startup asset staging)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/setlocaltime_compat
+  Next: Run original140files/8DLLseeds on qualified b2fd module after full bootasset audit; first attempt missing stdole2.tlb ended before guest. No startup/gameplay pass claimed.
