@@ -279,3 +279,17 @@ Fresh exact runtime:
 Scope remains partial: Surface4/7 actual guest candidate and interface-refcounts,
 surface3-desc, vbdd-directdraw34 and vbdd-image-interface remain pending local
 known-original fixtures. No full ABI/cube qualification; runtime lane released.
+
+Lossless local generated-source preservation — 2026-10-19
+Before any new runtime, compressed only old build/combined.wat20631494 bytes to
+scratch/runs/20261019-surface47-old-combined-preservation/combined.wat.gz3354461
+bytes. Full decompression and a fresh original reread both matched SHA256
+ ec6c5b699d33b77986e998673a148069715dcc5408da327bf0d1abb550436208.
+Only then removed the redundant uncompressed generated combined.wat. Existing
+modules, original executables and all other evidence remain unchanged. Receipt
+includes an exclusive-create Node/zlib restore command; alternatively run
+  gzip -dc scratch/runs/20261019-surface47-old-combined-preservation/combined.wat.gz
+and direct the output to a new recovery path, then verify the hash above.
+Free space rose2835611648 ->2852880384 bytes. This is only753664 bytes above
+32MiB admission, so it does not authorize or guarantee the next allocation.
+No build/native runtime ran; corrected-GUID normal build will regenerate combined.
