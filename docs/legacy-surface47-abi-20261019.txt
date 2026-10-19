@@ -210,3 +210,19 @@ expected pointer substitution or production behavior workaround is introduced.
 JS syntax, embedded WAT parse, region embedded-WAT gate, dispatch freshness and
 fail-fast source assertions pass. No native run after this fixture correction;
 full guest factory Surface4/7 candidate and remaining controls remain required.
+
+Local c14b allocation — 2026-10-19
+Fresh admission2877104128>2852126720. Normal build passed20.046s, runtime SHA
+281707fd500865549bc9a73d589ef36a950cf36d929c757225ce92a89fd349b5 exactly matched
+remote c28c. Candidate tail failed2.878s at QI DirectDraw4, E_NOINTERFACE80004002,
+after guest DirectDrawCreateEx and SetDisplayMode succeeded. Stopped immediately;
+no other candidate/control invocation. Both groups2789087/2789671 absent, guards
+none, all root/candidate source/helper and root canonical pins unchanged. Minimum
+2851975168 bytes, outputs25069459 bytes. Full controller/pins/logs/result retained
+in scratch/runs/20261019-surface47-local-c14b. No automatic retry.
+Source audit found candidate's DirectDraw4 IID wrong; existing production IID is
+correct. Independent upstream Wine include/ddraw.h audit also found Surface4 IID
+wrong in BOTH new production QI and candidate. Correct UUID is
+0B2B8630-AD35-11D0-8EA6-00609797EA5B. This requires source correction, independent
+identity assertions and a fresh compiled hash before further runtime validation.
+Reference: https://raw.githubusercontent.com/wine-mirror/wine/master/include/ddraw.h
