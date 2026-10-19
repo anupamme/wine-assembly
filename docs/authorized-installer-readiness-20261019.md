@@ -125,3 +125,37 @@ separate acceptance.json and final guest state remain in
 `scratch/runs/20261019-dungeon-siege-authorized-acceptance/`.
 The full output preserves a missing native ole32.dll warning; the observed
 EULA does not establish later game compatibility.
+
+## Revised allocation: Dungeon Siege accepted, next API blocker
+
+Root reviewed the genuine screen and granted one revised 90/105/120-second
+allocation with fresh 256 MiB output reserve and the same disk thresholds.
+Actual HEAD was `c0b98c2dc02c668a2f4bc8e19b55a1ea08eee39b`, same canonical
+module and originals. Runtime-only physical pins numbered 3,222; changing task
+ledgers were excluded while HEAD remained recorded independently.
+
+The fresh EULA frame was inspected again. One normal click `(163,432)` was
+actually delivered at batch **1235837**; `accept-input.txt` and the guest log
+agree. The original EULA returned EAX1, disappeared, and the game created its
+`Dungeon Siege Demo` main window and game thread. **Dungeon Siege licence
+acceptance is now observed (`acceptedInGuest=true`).** The other six titles
+remain authorized but unaccepted. The earlier false receipt is preserved as
+the separate first allocation, not overwritten.
+
+The next original failure is `CreateToolhelp32Snapshot(4,0)`, at EIP
+`0x00617fc6` (`jmp [0x6f5284]`), return address `0x00425ef2`, batch1235874.
+It hits the explicit unimplemented API trap, exit1, no signal. No further
+retry, compatibility workaround or gameplay claim. Before/after frames are
+reviewed; the after frame is teal and is not evidence of gameplay.
+
+All runtime/source, original fixture and wasm pins remain unchanged; owned
+process group absent. Minimum free bytes 2,430,791,680; log 13,925 bytes;
+no guard fired. The crash occurred before normal final registry/VFS export,
+so **persistent accepted state was not exported**. The first allocation's
+pre-acceptance VFS must not be represented as accepted state.
+
+Evidence: `scratch/runs/20261019-dungeon-siege-authorized-acceptance-2/`,
+including actual input receipt, reviewed screenshots, physical pins, exact
+original EULA.RTF, acceptance.json, postflight and 14-file artifact seal.
+Terms SHA-256:
+`bd4f7b3460e8821a9ea33934f3e5ff99614911d1d0fa37494e5f2797ef15b81d`.
