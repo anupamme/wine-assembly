@@ -493,3 +493,5 @@ Six jobs remain: vbdd-image-interface both modes, RTCnativeworker both, RTC host
 and RTC RPC worker. Combined qualification remains partial; no runtime claim for
 these six. Candidate both modes now PASS combined source. Inherited Texture2
 Data1-only QI matching and unsupported cube storage/rendering limitations remain.
+
+2026-10-19 root final combined qualification: session81249 completed all six remaining jobs PASS, groups absent, prior and supplemental root pins unchanged. Combined a74ccff4da260477721ba26f148e708b51930d57355f631a6d7a963836654111 / c01924239506ef1a21d3eb705fd62515d6c524e05cb51c7bf01927fddfa30d71 now has both ABI candidates, all eight controls in both dispatch modes, RTC native real Worker in both modes, host and RPC checks PASS. Evidence scratch/runs/20261019-surface47-rtc-final-six/result.json and artifact-manifest.json. Independent source review found no new regression. No original game/browser or complete corpus qualification; inherited Texture2 GUID routing and unsupported cube storage remain.
