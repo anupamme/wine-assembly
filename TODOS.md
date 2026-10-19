@@ -1397,11 +1397,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] New-game lane: Dungeon Siege demo
   id: NEW-GAME-DUNGEON-SIEGE-DEMO-20261008
-  status: active (reserved-page loader identified; capability registration and validation pending)
+  status: blocked (automatic review rejected follow-up source/dataflow diagnostic)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/dungeon_siege_thread_snapshot (reservedPageFaults registration and SEH control preparation)
   candidate: test/binaries/win98-games-a-d/DungeonSiege-demo-D3D.exe
-  Next: Six native observer controls pass both dispatch modes after fixture code invalidation correction. Original remote attempt stopped before guest execution on missing stdole2.tlb. Complete runner boot-asset and app-manifest audit/staging now precedes a fresh qualified fault capture; preserve first failure and acceptance history. No original gameplay qualification.
+  Next: Preserve recovered fault-context-2 evidence (first API-skipped outcome at EIP004178eb/address08407705, clean bounded exit). Automatic review rejected worker follow-up source/dataflow analysis as possible cybersecurity risk; narrower operation unspecified. Do not retry, rephrase or delegate that diagnostic. Original gameplay remains unqualified; Conan refills active lane.
   Previous checkpoint (licence-decision hold superseded): Await user decision on accepting demo EULA under the instruction not to answer approvals. Generic lazy RTF fix main b493bc3b9 passes; original EULA window renders, screenshot Telegram947. Evidence scratch/runs/20261009T0125Z-dungeon-siege-eula (36 hashes). No gameplay/FPS/audio qualification.
   Evidence: Local original installer 192188416 bytes, SHA256 a501306cad88c0fc41f986d92109343d68ac79fc11aaa6611724d84be628f3f8. Experimental local registration and checked CAB extraction integrated ef51b4f59; registration is not gameplay qualification.
   Done: Normal registered launch, actual player-controlled gameplay, reviewed screenshot with original/source/build identity and tested changes pushed main. FPS/audio require separately valid measurements.
@@ -1770,9 +1770,9 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Authorized original installer acceptance
   id: NEW-GAME-CONAN-DEMO-20261010
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  status: active (original installer availability and authorized acceptance preparation)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: none (prepared queue; awaiting serialized runtime allocation)
+  worker: /root/conan_authorized_installer
   candidate: test/binaries/win98-games-a-d/Conan cauldron-DX9-D3D/ConanPC-Demo.exe
   Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
   Previous checkpoint (licence-decision hold superseded): Original staged and SHA verified on bx_hx8msa33. Ordinary language/welcome/destination inputs reach EULA with I Reject selected, run20261010T0803Z-conan-destination. Do not answer acceptance. No installer process running; extracted game not yet available. Refill actionable new-game slot while this remains held.
@@ -1813,9 +1813,16 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   Evidence: main d537eddbe; normal build, exact tail/compat native API and real Worker controls PASS; root host/CMOS/DST tests PASS.
 
-- [ ] Validate original Mad Bomber after SetLocalTime support
+- [x] Validate original Mad Bomber after SetLocalTime support
   id: MADBOMBER-SETLOCALTIME-ORIGINAL-20261019
-  status: active (complete startup asset staging)
+  status: done (original CRT initialization progressed; SDL remains blocked)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   worker: /root/setlocaltime_compat
-  Next: Run original140files/8DLLseeds on qualified b2fd module after full bootasset audit; first attempt missing stdole2.tlb ended before guest. No startup/gameplay pass claimed.
+  Result: Original run20261019-madbomber-setlocaltime-2 resolves SetLocalTime to00db9a34 and original CRT DllMain returns1. SDL DllMain returns0 after waveOutGetErrorTextA lookup returns0; separate API diagnosis follows. No gameplay. All3408pins unchanged, process groups/lease released and evidence recovered.
+
+- [ ] Resolve original Mad Bomber SDL WinMM error-text dependency
+  id: MADBOMBER-WINMM-ERROR-TEXT-20261019
+  status: active (confirm caller dependency and implement real API semantics)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  worker: /root/setlocaltime_compat
+  Next: Confirm original SDL caller at00b5a275 depends on missing waveOutGetErrorTextA; implement generic behavior with API conformance, then serialized build/native validation and original observation. No silent stub or gameplay claim.
