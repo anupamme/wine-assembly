@@ -94,9 +94,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [44]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      get(p + 32), 0xff, 0xffff, 0xf7, 1, 1];
-    // The independently owned cube fix may change texture caps, never address caps.
-    assert([0xffdf, 0xf7df].includes(expected[8]), 'base or pending cube correction');
+      0xf7df, 0xfb, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     for (const hal of [0, 1]) {
       guarded(p, 252, () => e.fill_d3d_device_desc(p, hal));
@@ -122,8 +120,8 @@ function contract(source) {
     });
     assert.equal(get(64), 0); assert.equal(get(80), 4108);
     caps(p, [48, 104]);
-    assert.equal(get(p + 40), 0x030003ff, 'line filters unchanged');
-    assert.equal(get(p + 96), 0x030003ff, 'triangle filters unchanged');
+    assert.equal(get(p + 40), 0x030003fb, 'line filters compose with MIPNEAREST correction');
+    assert.equal(get(p + 96), 0x030003fb, 'triangle filters compose with MIPNEAREST correction');
     assert.equal(get(p + 180), 0x3ff, 'texture ops unchanged');
     guarded(p, 236, () => e.d3dim_fill_device_desc7(p));
     caps(p, [48, 104]);
@@ -171,8 +169,5 @@ for (const [mask, message] of [
   assert.throws(() => contract(dx.replace(fixed,
     `(i32.const ${mask}))     ;; dwTextureAddressCaps`)), message);
 }
-// Simulate the pending cube hunk in memory without touching its branch or
-// broadening this change. The address contract must still pass after integration.
-contract(dx.replace('(i32.const 0xFFDF)', '(i32.const 0xF7DF)'));
 console.log(`PASS: ${checks} descriptor address fields; 72 software address cases; ` +
-  'GPU lowering; 6 negative controls; pending cube composition. Extracted source only.');
+  'GPU lowering; 6 negative controls; combined cube/filter masks. Extracted source only.');

@@ -20,7 +20,8 @@ const path = require('path');
 const { compile } = require('../tools/watx');
 const root = path.join(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, 'src', name), 'utf8');
-const dx = read('09a8-handlers-directx.wat');
+const dx = process.argv[2] ? fs.readFileSync(process.argv[2], 'utf8')
+  : read('09a8-handlers-directx.wat');
 const core = read('09ab-handlers-d3dim-core.wat');
 const handlers = read('09aa-handlers-d3dim.wat');
 const CUBE = 0x800, SURFACE_CUBE = 0x200, ALL_FACES = 0xfc00;
@@ -126,7 +127,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [32]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      BEFORE & ~CUBE, 0xff, 0xffff, 0xff, 1, 1];
+      BEFORE & ~CUBE, 0xfb, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     // EnumDevices' actual HW and HEL descriptor builders.
     for (const hal of [0, 1]) {
@@ -154,8 +155,8 @@ function contract(source) {
     });
     assert.equal(get(64), 0); assert.equal(get(80), 4108);
     caps(p, [36, 92]);
-    assert.equal(get(p + 40), 0x030003ff, 'D3D7 line filters retained');
-    assert.equal(get(p + 96), 0x030003ff, 'D3D7 triangle filters retained');
+    assert.equal(get(p + 40), 0x030003fb, 'D3D7 line filters compose with MIPNEAREST correction');
+    assert.equal(get(p + 96), 0x030003fb, 'D3D7 triangle filters compose with MIPNEAREST correction');
     guarded(p, 236, () => e.d3dim_fill_device_desc7(p));
     caps(p, [36, 92]); // EnumDevices7 builder
   }

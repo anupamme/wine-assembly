@@ -92,10 +92,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [36]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      get(p + 32), 0xfb, 0xffff, get(p + 44), 1, 1];
-    // The independently owned cube fix may change texture caps, never address caps.
-    assert([0xffdf, 0xf7df].includes(expected[8]), 'base or pending cube correction');
-    assert([0xff, 0xf7].includes(expected[11]), 'base or pending border correction');
+      0xf7df, 0xfb, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     for (const hal of [0, 1]) {
       guarded(p, 252, () => e.fill_d3d_device_desc(p, hal));
@@ -227,9 +224,5 @@ assert.throws(() => backendContract(core, gpu.replace('mip: 0', 'mip: 1')),
 const selection = '(i32.eq (local.get $filter) (i32.const 2))';
 assert.throws(() => backendContract(core.replaceAll(selection,
   '(i32.eq (local.get $filter) (i32.const 3))'), gpu), /software filter selection|GPU descriptor filter selection/);
-// Composition only, without applying either previously completed correction.
-contract(dx.replace('(i32.const 0xFFDF)', '(i32.const 0xF7DF)')
-  .replace('(i32.const 0xFF))     ;; dwTextureAddressCaps',
-    '(i32.const 0xF7))     ;; dwTextureAddressCaps'));
 console.log(`PASS: ${checks} descriptor filter fields; ${cases} extracted software/GPU filter cases; ` +
-  'point/bilinear footprints; 6 mutation negatives; pending cube+border composition. Source-only.');
+  'point/bilinear footprints; 6 mutation negatives; combined cube/border masks. Source-only.');
