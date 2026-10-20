@@ -53,11 +53,30 @@ absent. No other GL/D3D capability audit was performed.
 
 Evidence and standalone replay:
 `scratch/runs/20261020-legacy-mip-support/README.txt`.
-Only the filter mask and this uniquely named test/document are owned.
-Before integration the coordinator must reconcile existing exact-mask assertions
-in `test-legacy-cube-caps-contract.js`, `test-legacy-texture-remaining-caps.js`,
+The independent reconciliation of commit `795d74657` is on
+`task/legacy-mip-reconcile-oct20`, based on fetched main `ee3a71e33`.
+All four existing exact-mask suites are now reconciled in tracked files:
+`test-legacy-cube-caps-contract.js`, `test-legacy-texture-remaining-caps.js`,
 `test-legacy-texture-filter-caps.js`, and
-`test-d3d-device-enumeration-lifetime.js` from FB to F3 (including DX7).
-The evidence runs the old source suites with that expectation-only adjustment
-in isolated copies; it does not modify those shared test paths or claim a native
-enumeration pass. Main integration remains coordinator-owned.
+`test-d3d-device-enumeration-lifetime.js`. Legacy expectations are F3 and
+DX7 expectations are 030003F3. Cube/address masks and point/linear behavior
+remain unchanged. The earlier filter suite's mutation anchor now matches F3;
+its MIPNEAREST and missing-point/linear mutants change one bit each (F7/F2/F1).
+The MIPLINEAR suite retains FB as an intentional negative control.
+
+Combined source replay passes 115 cube checks, 90 address fields, 90 earlier
+filter fields, and 90 MIPLINEAR fields, plus 72 address and 36+36 filter cases
+and 23 mutation controls. The three stale source suites fail on the reviewed
+production source before expectation correction. All four corrected source
+suites reject the unchanged main baseline; the MIPLINEAR baseline first passes
+backend observations and then rejects the advertised bit.
+
+The native enumeration suite was syntax-checked only. Native COM GetCaps and
+enumeration callbacks (including nested/lifetime behavior), canonical full
+build, actual software/GPU draws and automatic mip-level selection remain
+unqualified. No game result is claimed. Remaining 0x10/0x20 bits were not
+audited. The production diff is still exactly the original FB-to-F3 line.
+Main integration remains coordinator-owned.
+
+Self-contained reviewed-source snapshot, baseline, logs, patch, hashes and
+JavaScript replay: `scratch/runs/20261020-legacy-mip-reconcile/README.txt`.
