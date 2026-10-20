@@ -4603,6 +4603,7 @@ async function main() {
   // ThreadManager setup (lazy — created after instance)
   const { ThreadManager } = require('../lib/thread-manager');
   let threadManager = null;
+  onFailure(() => threadManager?.closeNamedEventAuthority());
 
   // Wire thread/event imports to ThreadManager
   h.create_thread = (startAddr, param, stackSize, creationFlags, threadIdWa, creatorTid) =>
@@ -4652,9 +4653,11 @@ async function main() {
   // does in the browser.
   const nestedSyncMessage = () =>
     !!(ctx.exports && ctx.exports.get_sync_msg_depth && (ctx.exports.get_sync_msg_depth() | 0));
-  h.wait_single = (handle, timeout) => nestedSyncMessage()
-    ? threadManager.waitSingleCooperative(handle, timeout, win32ThreadId())
-    : threadManager.waitSingle(handle, timeout, win32ThreadId());
+  h.wait_single = (handle, timeout, entry = threadManager.captureNamedWaitEntry()) => {
+    return nestedSyncMessage()
+      ? threadManager.waitSingleCooperative(handle, timeout, win32ThreadId())
+      : threadManager.waitSingle(handle, timeout, win32ThreadId(), entry);
+  };
   h.wait_multiple = (nCount, handlesWA, bWaitAll, timeout) => nestedSyncMessage()
     ? threadManager.waitMultipleCooperative(nCount, handlesWA, bWaitAll, timeout, win32ThreadId())
     : threadManager.waitMultiple(nCount, handlesWA, bWaitAll, timeout, win32ThreadId());
@@ -5094,14 +5097,15 @@ async function main() {
     // scope. Charge a parked single wait to its actual guest thread, not main.
     // Nested real Workers reject named waits locally in guest-rpc; cooperative
     // instances still need the recursive-frame guard here.
-    wh.wait_single = (handle, timeout) => {
+    wh.wait_single = (handle, timeout, entry) => {
+      if (workerInstance) entry = threadManager.captureNamedWaitEntry();
       if (!threadManager._issuedAuthorityEvents.has((handle >>> 0) & 0x7fffffff)) {
         return h.wait_single(handle, timeout); // preserve existing local routing
       }
       const e = workerInstance && workerInstance.exports;
       return e && e.get_sync_msg_depth && e.get_sync_msg_depth()
         ? threadManager.waitSingleCooperative(handle, timeout, (tid | 0) + 1)
-        : threadManager.waitSingle(handle, timeout, (tid | 0) + 1);
+        : threadManager.waitSingle(handle, timeout, (tid | 0) + 1, entry || { error: 'EWAITPROTOCOL' });
     };
     // A console reader may live on a guest worker (telnet does). Its low-level
     // input buffer is process-scoped, so it must drain the same host event and
@@ -12520,6 +12524,7 @@ if (VERBOSE) {
 
   if (workerThreadHost) workerThreadHost.stop();
   if (closeD3DRender) await closeD3DRender();
+  threadManager?.closeNamedEventAuthority();
   // A --vlan-wire run is a forked child, and an open IPC channel keeps node
   // alive after everything else has finished: the run printed its Stats, hit
   // --max-seconds, and then sat resident forever with its 512 MiB guest until

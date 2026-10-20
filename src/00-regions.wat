@@ -898,6 +898,11 @@
     (owner "10-helpers.wat:$dib_free_wasm"))
   (region.declare-fixed $THREAD_RPC (base 0x1FF00000) (size 0x00100000) (align 0x00001000)
     (owner "13-exports.wat:$run"))
+  ;; JS control-block ABI: 64 i32 words per slot. guest-rpc.js owns words
+  ;; 53..56 (qualified Node wait version, invocation sequence, acknowledgment,
+  ;; reservation sequence) and 28..31/34..37 (SHA-256 metadata agreement).
+  ;; Timestamp/domain travel losslessly in the RPC notification, bound to those
+  ;; words and the slot/handle/timeout. No WAT consumer or region size changes.
   ;; $THREAD_RPC ends at 0x20000000, and the map ends with it. Everything above
   ;; that is the second sparse backing window -- see $virtual_backing_ext_base
   ;; in 10-helpers.wat, which is deliberately NOT a region: a region must fit
