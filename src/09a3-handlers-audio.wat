@@ -2690,14 +2690,14 @@
     (local.set $slot (local.get $arg0))
     (if (i32.or (i32.eqz (local.get $slot)) (i32.ge_u (local.get $slot) (i32.const 16)))
       (then
-        (i32.store offset=0 (global.get $reg_base) (i32.const 0x106)) ;; MCIERR_INVALID_DEVICE_ID
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x101)) ;; MCIERR_INVALID_DEVICE_ID
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
         (return)))
     (local.set $slot_addr (call $mci_slot_addr (local.get $slot)))
     (local.set $host_id (i32.load (local.get $slot_addr)))
     (if (i32.eqz (local.get $host_id))
       (then
-        (i32.store offset=0 (global.get $reg_base) (i32.const 0x106))
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x101)) ;; MCIERR_INVALID_DEVICE_ID
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
         (return)))
     (local.set $params_wa
@@ -2820,14 +2820,14 @@
     (local.set $slot (local.get $arg0))
     (if (i32.or (i32.eqz (local.get $slot)) (i32.ge_u (local.get $slot) (i32.const 16)))
       (then
-        (i32.store offset=0 (global.get $reg_base) (i32.const 0x106))
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x101)) ;; MCIERR_INVALID_DEVICE_ID
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
         (return)))
     (local.set $slot_addr (call $mci_slot_addr (local.get $slot)))
     (local.set $host_id (i32.load (local.get $slot_addr)))
     (if (i32.eqz (local.get $host_id))
       (then
-        (i32.store offset=0 (global.get $reg_base) (i32.const 0x106))
+        (i32.store offset=0 (global.get $reg_base) (i32.const 0x101)) ;; MCIERR_INVALID_DEVICE_ID
         (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)))
         (return)))
     (local.set $params_wa
