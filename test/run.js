@@ -4135,7 +4135,7 @@ async function main() {
       ...(PIPE_CHILD_ARGS.length ? [`--pipe-child-args=${PIPE_CHILD_ARGS.join(' ')}`] : []),
     ];
     const { fork } = require('child_process');
-    const child = fork(__filename, args, { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    const child = fork(__filename, args, { stdio: ['ignore', 'pipe', 'pipe', 'ipc'], env: ThreadManager.namedEventEnvironment() });
     const pid = nextChildPid();
     relayChild(child, `[child ${pid.toString(16)} ${path.win32.basename(guestExe)}]`);
     pipeChildren.push(child);
@@ -4203,7 +4203,7 @@ async function main() {
       ...PIPE_CHILD_ARGS,
     ];
     const { fork } = require('child_process');
-    const child = fork(__filename, args, { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    const child = fork(__filename, args, { stdio: ['ignore', 'pipe', 'pipe', 'ipc'], env: ThreadManager.namedEventEnvironment() });
     const tag = `[child ${ipText} ${hostExe}]`;
     for (const stream of [child.stdout, child.stderr]) {
       let pending = '';
@@ -4625,15 +4625,21 @@ async function main() {
   h.get_exit_code_thread = (handle) => threadManager.getExitCodeThread(handle);
   h.terminate_thread = (handle, exitCode) => threadManager.terminateThread(handle, exitCode);
   const win32ThreadId = () => threadManager.currentWin32ThreadId();
+  // Opt in here, keeping browser imports and standalone local managers local.
+  // The manager itself is assigned after instantiation, so enable lazily.
+  const namedEventManager = () => {
+    threadManager.enableNamedEventAuthority();
+    return threadManager;
+  };
   h.create_event = (manualReset, initialState, nameWa, wide) => {
     const name = readSyncObjectName(memory, nameWa, wide);
     return (wide & 2)
       ? threadManager.createMutex(initialState, name, win32ThreadId())
-      : threadManager.createEvent(manualReset, initialState, name);
+      : namedEventManager().createEvent(manualReset, initialState, name);
   };
   h.open_event = (nameWa, wide) => {
     const name = readSyncObjectName(memory, nameWa, wide);
-    return (wide & 2) ? threadManager.openMutex(name) : threadManager.openEvent(name);
+    return (wide & 2) ? threadManager.openMutex(name) : namedEventManager().openEvent(name);
   };
   h.set_event = (handle) => ((handle >>> 0) & 0x80000000)
     ? threadManager.releaseMutex((handle >>> 0) & 0x7fffffff, win32ThreadId())
