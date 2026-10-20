@@ -1021,9 +1021,10 @@
         (else (global.set $flag_res (i32.const 1))))))
   )
 
-  ;; Save caller-saved registers + lazy flags onto guest stack (9 dwords = 36 bytes)
+  ;; Save caller-saved registers + lazy flags onto guest stack (10 dwords = 40 bytes).
+  ;; saved_cf belongs to each frame: restored INC/DEC flags read it lazily.
   (func $save_caller_regs
-    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 36)))
+    (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 40)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base))                         (global.get $eip))
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4))  (i32.load offset=0 (global.get $reg_base)))
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))  (i32.load offset=4 (global.get $reg_base)))
@@ -1032,7 +1033,8 @@
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 20)) (global.get $flag_res))
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24)) (global.get $flag_a))
     (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28)) (global.get $flag_b))
-    (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32)) (global.get $flag_sign_shift)))
+    (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32)) (global.get $flag_sign_shift))
+    (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 36)) (global.get $saved_cf)))
 
   ;; Restore caller-saved registers + lazy flags from guest stack
   (func $restore_caller_regs
@@ -1045,4 +1047,5 @@
     (global.set $flag_a          (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 24))))
     (global.set $flag_b          (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 28))))
     (global.set $flag_sign_shift (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 32))))
-    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 36))))
+    (global.set $saved_cf        (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 36))))
+    (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 40))))

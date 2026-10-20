@@ -3370,7 +3370,7 @@
     (global.set $yield_reason (i32.const 0))
     (global.set $yield_flag (i32.const 0))
     (global.set $mm_timer_in_cb (i32.const 1))
-    ;; Save caller-saved regs + flags (36 bytes, includes EIP for restore)
+    ;; Save caller-saved regs + flags (40 bytes, includes EIP and saved_cf for restore)
     (call $save_caller_regs)
     ;; Push 5 args: dw2=0, dw1=0, dwUser, uMsg=0, uTimerID
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
