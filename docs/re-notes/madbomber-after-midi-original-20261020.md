@@ -4,7 +4,7 @@ Original Mad Bomber reaches its main menu, then the One Player playfield through
 ordinary Enter input. Ordinary mouse movement changes the bucket position.
 SDL_mixer initialization now succeeds. No new API blocker was observed in this
 bounded validation. Bomb drops, catching/scoring, sustained gameplay, audio and
-browser execution remain unqualified.
+browser execution and FPS remain unqualified.
 
 ## Identities and closure
 
@@ -16,11 +16,16 @@ Module SHA-256:
 `11aee57cb158ffd734534b97aef9c36e3152aec660c8371d609a771e4eee9a5f`.
 The existing module was reused; no build or native MIDI suite was repeated.
 
-All 6,914 candidate Git blobs except the separately updated native MIDI
-qualification fixture matched before and after execution. The fixture's actual
+All 6,915 candidate Git blobs matched before and after execution. The native MIDI
+qualification fixture was added after that candidate. The fixture's actual
 hash is recorded in `input/postflight.json`. The candidate-to-integrated-main
 delta consists only of three notes, a COM test and that MIDI fixture; production
 source is identical. Source manifest lists the exact blob identities.
+
+Independent review corrected the preflight summary's 6,914 count: its script
+subtracted one for the fixture exception, but that path is absent from the
+candidate tree and all 6,915 manifest rows were checked. Original receipts are
+preserved unchanged.
 
 The complete prior closure matched: 140 original release files, original
 support msvcrt.dll and 27 boot assets, 168 SHA-256 pins in `closure.json`.
