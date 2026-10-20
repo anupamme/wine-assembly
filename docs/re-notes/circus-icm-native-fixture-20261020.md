@@ -1,5 +1,72 @@
 # ICM callback ownership: real-x86 fixture (2026-10-20)
 
+## Executed qualification on new authorized box
+
+**Full build and all six native runs PASS**, 2026-10-20 12:03 UTC,
+on `bx_6czhvg6m` (Linux x86-64, Node v24.18.1, V8
+13.6.233.17-node.50). Runtime lease released at 12:04 UTC; box left running
+for the coordinator's queued tests, eligible expiry 15:53 UTC.
+
+Fetched main `7ddcd0572b132759c9122c80492e9f9c161a047a` plus original
+source patch `066436de903151fb03194884f63ab72e0f9071dc` and fixture
+`1bae355fcf5aa17eb275b0b19514d04efda2595a` produced initial exact source
+`037c885c4022fdb1e058ebb8f0f470ab9cfad8f2`. Final tested source is
+`8f6dcc71c7d3685e764da945e6c379ecca30fa49` on
+`task/icm-fullvm-newbox-oct20`. No integration to main.
+
+Canonical `bash tools/build.sh` passed all gates on both initial and final
+source. The shipped full module is 1,874,862 bytes, SHA-256
+`6642ceea29e035531819fafe795f949ad0d343460fa73af5d23ee3b2f2a968e2`
+for both builds. No extracted module, altered exports, compiler transform,
+or production workaround was used.
+
+Ordinary, nested, sliced, timeout, capacity, then fresh-process ordinary
+all passed through `test/run.js`. The first four exercise caller registers,
+ESP/canary, callback results and 70 subsequent sibling calls. Capacity
+observed exactly 63 DriverProc entry markers, `unreachable` at the next
+acquisition, exit 1, and no returned marker. The next ordinary process
+passed. The separate source-model suite also passed 15 cases; it is not
+the basis for this runtime result. Coverage limits below still apply,
+especially private ownership mismatch injection and in-instance recovery.
+
+One demonstrated fixture defect was corrected: the default host `log`
+sink discards `OutputDebugStringA`, so the original capacity assertion
+reported **0 rather than 63 markers** despite the expected native trap.
+The retained original run is baseline evidence. Running the same generated
+PE/DLL and exact same module with existing
+`--trace-api=OutputDebugStringA` produced 63 markers. The fixture now adds
+that flag only for capacity. All six cases then passed without changing
+the generated guest or production code. The fixture observes API arguments,
+not delivery to a debugger log sink.
+
+Evidence is self-contained under
+`scratch/runs/20261020-icm-fullvm-newbox/`: `recovered/build.log`,
+`recovered/qualification.json`, `recovered/icm-native/runtime-receipt.json`,
+all per-case generated PE/DLL/overlay files and logs,
+`recovered/original-fixture/`, `recovered/capacity-trace-control.log`,
+and source manifests. The recovered archive SHA-256 is
+`a75c9699f9b63c3da4ff08fc5d4681f564e1b198d7d7e4d07ba24a46871aaf22`;
+all 110 entries in its hash manifest were checked after retrieval.
+No full checkout, build, or module duplicate was created on the main host.
+
+Staging used exact Git blobs and verified the source manifest remotely.
+The first build lacked tracked `fonts/Terminal.fon`; the first attempted
+runner startup lacked tracked `test/binaries/tlbs/stdole2.tlb`. Both
+staging failures are retained; adding the same-revision dependencies
+resolved them without source changes. No commercial game media was needed.
+`boat push` requested SSH and was denied; authorized Boat file upload/download
+APIs and working API execution handled transfers and execution instead.
+No old box was contacted. No dependency installation was needed.
+
+Recovery: restore the final tested Git revision, include tracked fonts and
+`test/binaries/tlbs/stdole2.tlb`, run `bash tools/build.sh`, then use the
+four environment variables in `recovered/qualification.json` with paths
+adjusted to the recovery checkout. `qualify.js` records source validation,
+module hash, environment and exact invocation. Run the command documented
+below. Recompute and pin the recovered build's hash rather than assuming it.
+
+## Original source-only fixture report (historical)
+
 Target: `066436de903151fb03194884f63ab72e0f9071dc`, based on fetched
 `origin/main` `d3c332ab8f186564db28226f6484a95be8ae1674`.
 **Native suite UNEXECUTED.** This assignment permitted source-only syntax,
