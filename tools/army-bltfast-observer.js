@@ -41,6 +41,8 @@ function capture(o) {
   const hex = a => Buffer.from(a).toString('hex');
   function pixels(s,x,y,n) { return hex(raw(s.backing+y*s.pitch+x*s.bpp/8,n*s.bpp/8)); }
   function entry(r) {
+    // Even an unretained child invalidates its retained parent's pixel pairing.
+    for (const parent of active) parent.interleaved = true;
     if (records.length >= 8) return;
     const c = {invocation:r.sequence, entry:r.entry, returnAddress:r.returnAddress,
       hresult:null, state:'missing-return', source:null, destination:null,
@@ -48,7 +50,6 @@ function capture(o) {
     r.army = c; records.push(c);
     if (active.size) {
       c.interleaved = true;
-      for (const parent of active) parent.interleaved = true;
     }
     active.add(c);
     try {

@@ -125,3 +125,36 @@ Coordinator must assign an accessible authorized runtime and reviewed
 matching bundle before executing the integration form. Source deliverable
 is complete; actual capture, initial scene review and stripe attribution
 remain pending that separate assignment.
+
+## Independent integration review
+
+Reviewed `854c6b6aa4f0ca774a0dac4dbad37b9cab06a4d2` against current
+`origin/main` `4169ebe6bc1ab858719ce12127ded7d8c0b2ef64`, reading the actual
+runner, dispatch, DirectDraw layout, import and RegionMap contracts through
+Git without a build. The runner constructs `{host: h}` before instantiate;
+the preload wraps those imports before WASM captures them and binds exports
+before the runner executes guest code. Its translator is the same
+`lib/mem-utils.js:g2w` used by the runner (direct, DIB, packed sparse pages).
+The runner checks the module's region-layout stamp; the admitted bundle still
+must match. `--trace-api` keeps all dispatch hooks enabled despite the named
+trace filter and `--quiet-api`. Wrappers preserve original import calls and
+the instantiate result; closing restores the JS import object and makes
+already-captured wrappers pass through.
+
+One concrete defect was reproduced: after seven completed calls, an eighth
+retained call could overlap a ninth unretained call and still be accepted.
+Marking active parents interleaved now happens before the eight-call pixel
+quota. The focused regression fails on the submitted implementation and
+passes with this correction; all three documented JS suites pass.
+No renderer, guest behavior or runtime fixture was changed.
+
+Self-contained source-review evidence is retained at
+`scratch/runs/20261020-army-bltfast-paired-review/receipt.json`: baseline and
+corrected test logs, the failing regression, source hashes and review findings.
+The original receipt's named `/tmp/army-preload-fixture-R8s1ob/capture.json`
+existed and was copied byte-for-byte to `original-preload-capture.json` in
+that run; the original artifact and receipt were preserved. Review receipt
+artifact references are local to the review run.
+
+This makes the diagnostic source ready for a separately assigned runtime.
+No actual paired capture was obtained; terrain stripes remain unresolved.

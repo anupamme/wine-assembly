@@ -65,6 +65,15 @@ const nested=fixture();nested.enter();nested.enter(0x1100);
 nested.exit(0x1100);nested.exit();r=nested.observer.close();
 assert(!r.accepted);assert(r.records.every(c=>c.state==='rejected'&&c.interleaved));
 assert.deepEqual(r.records.map(c=>c.invocation),[1,2]);
+const capNested=fixture();
+for(let i=0;i<7;i++){capNested.enter();capNested.copy();capNested.exit();}
+capNested.enter(); // Eighth retained call overlaps a ninth, unretained call.
+capNested.enter(0x1100);capNested.copy();capNested.exit(0x1100);capNested.exit();
+r=capNested.observer.close();
+assert.equal(r.records.length,8);
+assert.equal(r.accepted,false,'nesting beyond the pixel quota must reject the retained parent');
+assert.equal(r.records[7].state,'rejected');
+assert.equal(r.records[7].interleaved,true);
 const repeated=fixture();
 // Non-target calls must not consume the selected-call quota.
 for(let i=0;i<30;i++){repeated.enter(0x1000,0x410000);repeated.exit();}
