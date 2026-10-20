@@ -123,3 +123,7 @@ a separate synthetic downward-overlap bug is fixed with source-level tests.
 Normal build and five full-VM DirectDraw suites passed on 2026-10-20, with two
 baseline-reproduced descriptor fixture corrections. The game's upward striping
 remains unexplained; actual pitch/HRESULT and pre/post pixels need a new diagnostic.
+
+The [paired-call observer](army-men-paired-observer-20261020.md) provides a
+bounded external adapter and passing independent JS fixtures. Actual capture
+and initial terrain review remain pending an authorized accessible runtime.
