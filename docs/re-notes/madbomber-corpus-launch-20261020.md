@@ -65,3 +65,28 @@ Only menu, One Player entry and bucket movement were accepted. Bomb drops,
 catches/scoring, sustained gameplay, audio, FPS and browser execution remain
 unqualified. The private browser route is an experimental way to use the
 registered closure, not a verified browser result.
+
+## Independent integration review
+
+Candidate `a65c786fbcbb8bbfe8917834eacd7d7ec3d742c4` was reviewed against
+remote main `aaf8599291b278b5cf1b9e53c654b5bb8cd5dfe6`. All 140 ordered
+file mappings and eight DLL seeds match the accepted input launch. All 141
+asset pins agree with the original recovery manifest, and every retained
+archive member was read without extraction and SHA-256 checked. The archive
+SHA-256 is `b5353b73674a1af6109cb9bf3af5f7d0383308b7ef0b47d52139813ba3ee98ef`.
+All unrelated registry exports and candidate manifest entries are unchanged.
+
+The three checks in `node --test ops/madbomber-corpus.test.js` pass.
+Separate process controls removing a mount, changing the working directory,
+and adding a public desktop entry each fail with an assertion. The actual
+sparse catalog reports 141 missing files, unavailable status and a null URL;
+no assets were fabricated. Recovery and accepted evidence links resolve.
+
+Review evidence and the JavaScript replay are retained in
+`scratch/runs/20261020-madbomber-corpus-review-integrate/` (`review.js`,
+`validation.json`, baseline and mutation logs, candidate patch and publication
+receipt). The review wrapper initially expected TAP formatting from Node's
+default reporter; that output-format assertion was corrected without changing
+the candidate tests. This review ran no runtime, browser, build or remote
+tests and adds no gameplay qualification. Remote asset availability remains
+unchecked. Registration remains private only.
