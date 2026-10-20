@@ -35,6 +35,8 @@ const mutations = {
   'stop-no-notes': ['_midiStopNotes(dev);\n        _midiDrain(dev);', '_midiDrain(dev);'],
   'paused-clock': ['s.due = (s.due + now - s.pausedAt) >>> 0;', 's.due = s.due;'],
   'pending-ownership': ['if (_midiPending.has(wa)) return 65;', '/* no pending owner */'],
+  'window-backpressure': ['if (!r.owner.post_message_q(r.callback, item.message, item.handle, item.header)) break;',
+    'r.owner.post_message_q(r.callback, item.message, item.handle, item.header);'],
   'browser-owner': ["if(!owner.tid && this.instance?.exports!==ex) return {status:'retired'};",
     '/* no VM identity check */', 'host.js'],
 };
@@ -425,6 +427,21 @@ test('oscillator fallback keeps sustain/reset and sibling ownership', () => {
   assert.equal(da.active.size, 1, 'stop preserves sustain');
   s.call('midiOutReset', a);
   assert.equal(da.active.size, 0); assert.equal(db.active.size, 1);
+});
+test('window callback backpressure preserves ordered open/done/close notifications', () => {
+  const s = setup();
+  const posted = [];
+  let full = true;
+  s.ctx.exports.post_message_q = (...args) => {
+    if (full) return 0;
+    posted.push(args); return 1;
+  };
+  const h = s.open(1, 77); s.queue(h); s.call('midiStreamStop', h); s.call('midiStreamClose', h);
+  assert.equal(posted.length, 0);
+  assert.equal(s.ctx._midiOut.windowCallbacks.length, 3);
+  full = false; s.audio.pumpWaveOutCompletions(); s.audio.pumpWaveOutCompletions();
+  assert.deepEqual(posted, [[77, 0x3c7, h, 0], [77, 0x3c9, h, 1024], [77, 0x3c8, h, 0]]);
+  assert.equal(s.ctx._midiOut.windowCallbacks.length, 0);
 });
 // Execute the actual browser owner admission method without browser/runtime
 // startup. The real WAT callback export writes the frame; JS bookkeeping is

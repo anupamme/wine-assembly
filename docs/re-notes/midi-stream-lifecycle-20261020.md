@@ -53,7 +53,7 @@ Supported callbacks:
 * NULL: flags/lifecycle without notifications.
 * Event: signal the captured event for buffer completion.
 * Window: post MOM_OPEN, MOM_DONE and MOM_CLOSE through the captured owning
-  VM's message queue.
+  VM's message queue. A full queue retains notifications for ordered retry.
 * Function in a cooperative VM: queue immutable registration/message/header
   records, admit at a slice boundary, and build the real five-argument
   MidiOutProc frame. The browser uses its existing owner/suspension/wait-poll
@@ -81,8 +81,8 @@ failfast checks. There are no accepted pending SysEx buffers to lose.
 
 ## Executed evidence
 
-`node test/test-midi-stream-lifecycle.js --mutations` runs 21 behavioral
-groups and kills 13 mutations. It compiles actual production MIDI handlers,
+`node test/test-midi-stream-lifecycle.js --mutations` runs 22 behavioral
+groups and kills 14 mutations. It compiles actual production MIDI handlers,
 imports, generated dispatch page, hash lookup/data, callback admission and
 register/wait save/restore into a small isolated Wasm module. Unrelated API
 dispatch branches are trap sentinels; Stop itself is the production handler.
