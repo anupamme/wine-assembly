@@ -1090,13 +1090,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  worker: coordinator; edit-stream-owner-oct20
+  worker: coordinator (remaining callback source assignments)
   status: active (remaining source prerequisites; gameplay qualification incomplete)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: RichEdit edit_stream_call retained ownership is assigned to edit-stream-owner-oct20. Circus ICM source066436de and native fixture1bae355 await fullVM; Mad Bomber wave API7fd352855 reviewedfe540cf2 awaits fullVM. Keep child gameplay criteria open; runtime403 blocks captures, not remaining source work.
+  Next: RichEdit edit_stream_call source3c01665c was delivered by edit-stream-owner-oct20; fullVM is pending. Remaining callback/JS/concurrency/SEH source prerequisites need coordinator assignment. Circus ICM source066436de and native fixture1bae355 await fullVM; Mad Bomber wave API7fd352855 reviewedfe540cf2 awaits fullVM. Keep child gameplay criteria open; runtime403 blocks captures, not remaining source work.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1743,10 +1743,10 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  worker: edit-stream-owner-oct20 (RichEdit prerequisite)
+  worker: none (RichEdit source delivered; remaining prerequisites coordinator-owned)
   status: active (remaining callback source prerequisites; ICM native validation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Property-page/CRT/qsort/bsearch fixes are already main. ICM ownership066436de plus real-x86 fixture1bae355 are off main pending fullVM. edit-stream-owner-oct20 owns RichEdit edit_stream_call; remaining callback/JS/concurrency/SEH prerequisites keep jump APIs disabled. Runtime403 blocks native/gameplay evidence, not source work.
+  Next: Property-page/CRT/qsort/bsearch fixes are already main. ICM ownership066436de plus real-x86 fixture1bae355 are off main pending fullVM. edit-stream-owner-oct20 delivered RichEdit edit_stream_call source3c01665c; its fullVM remains pending and remaining callback/JS/concurrency/SEH prerequisites keep jump APIs disabled. Runtime403 blocks native/gameplay evidence, not source work.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release

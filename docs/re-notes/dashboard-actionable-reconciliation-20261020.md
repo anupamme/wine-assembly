@@ -12,8 +12,8 @@ Within the requested twelve: before=12 actionable; after=4 actionable (listed be
 
 ### NEW-GAMES-PIPELINE
 
-- State: active; worker: coordinator; edit-stream-owner-oct20.
-- Next/dependencies: RichEdit edit_stream_call retained ownership is assigned to edit-stream-owner-oct20. Circus ICM source066436de and native fixture1bae355 await fullVM; Mad Bomber wave API7fd352855 reviewedfe540cf2 awaits fullVM. Keep child gameplay criteria open; runtime403 blocks captures, not remaining source work.
+- State: active; worker: coordinator (remaining callback source assignments).
+- Next/dependencies: RichEdit edit_stream_call source3c01665c was delivered by edit-stream-owner-oct20; fullVM is pending. Remaining callback/JS/concurrency/SEH source prerequisites need coordinator assignment. Circus ICM source066436de and native fixture1bae355 await fullVM; Mad Bomber wave API7fd352855 reviewedfe540cf2 awaits fullVM. Keep child gameplay criteria open; runtime403 blocks captures, not remaining source work.
 - Source work remains actionable; later runtime acceptance requires restored authorized access.
 
 ### GLD3D-CORPUS-27-20261006
@@ -66,8 +66,8 @@ Within the requested twelve: before=12 actionable; after=4 actionable (listed be
 
 ### NEW-GAME-CIRCUS-LINUX-20261018
 
-- State: active; worker: edit-stream-owner-oct20 (RichEdit prerequisite).
-- Next/dependencies: Property-page/CRT/qsort/bsearch fixes are already main. ICM ownership066436de plus real-x86 fixture1bae355 are off main pending fullVM. edit-stream-owner-oct20 owns RichEdit edit_stream_call; remaining callback/JS/concurrency/SEH prerequisites keep jump APIs disabled. Runtime403 blocks native/gameplay evidence, not source work.
+- State: active; worker: none (RichEdit source delivered; remaining prerequisites coordinator-owned).
+- Next/dependencies: Property-page/CRT/qsort/bsearch fixes are already main. ICM ownership066436de plus real-x86 fixture1bae355 are off main pending fullVM. edit-stream-owner-oct20 delivered RichEdit edit_stream_call source3c01665c; its fullVM remains pending and remaining callback/JS/concurrency/SEH prerequisites keep jump APIs disabled. Runtime403 blocks native/gameplay evidence, not source work.
 - Source work remains actionable; later runtime acceptance requires restored authorized access.
 
 ### NEW-GAME-MADBOMBER-20261018
@@ -85,7 +85,7 @@ Within the requested twelve: before=12 actionable; after=4 actionable (listed be
 
 ## Evidence provenance and limitations
 
-Board records retained in the self-contained run directory identify source reviewfe540cf2 (wave), f856627 (cube), 066436de and1bae355 (ICM), and Hype6ccd344268. Source tests are not native or game evidence. ICM private stale-owner/epoch/spill/SEH/in-instance recovery and current-thunk parking are not covered by its unexecuted native fixture. RichEdit and noncube audits are live coordinator assignments; this task neither edits their source nor integrates their branches.
+Board records retained in the self-contained run directory identify source reviewfe540cf2 (wave), f856627 (cube), 066436de and1bae355 (ICM), and Hype6ccd344268. Source tests are not native or game evidence. ICM private stale-owner/epoch/spill/SEH/in-instance recovery and current-thunk parking are not covered by its unexecuted native fixture. RichEdit source3c01665c is delivered (20 modeled cases and4 mutation negatives, no fullVM); the noncube audit remains a live coordinator assignment; this task neither edits their source nor integrates their branches.
 
 Return Fire historical gameplay scope is recorded in `docs/re-notes/alice-return-fire-reconciliation-20261018.md`; no renewed screenshot review here. Installer histories are retained in existing task checkpoints; old requests to await licence decisions are historical and superseded by authorization20261018, not by actual guest acceptance. Shadow Man media is a historical remote-only GS1199.iso lead; no exact current local installer path is established, so none is invented. Aranna `/home/user/aranna-game-20261010` is a historical remote path, not a locally verified payload. Jedi recovered archive/receipt paths are checked below; file presence alone does not establish a complete installable closure. The graphics inventory `docs/gfx-corpus-current-inventory-20261019.json` supplies exact historical missingOwnPaths; their local availability is rechecked below, without claiming all other assets remain present. Historical27 membership remains a separate unknown, not a reason to block available source work.
 
