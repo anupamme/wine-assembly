@@ -127,7 +127,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [32]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      BEFORE & ~CUBE, 0xf3, 0xffff, 0xf7, 1, 1];
+      BEFORE & ~CUBE, 0xc3, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     // EnumDevices' actual HW and HEL descriptor builders.
     for (const hal of [0, 1]) {
@@ -155,8 +155,8 @@ function contract(source) {
     });
     assert.equal(get(64), 0); assert.equal(get(80), 4108);
     caps(p, [36, 92]);
-    assert.equal(get(p + 40), 0x030003f3, 'D3D7 line filters compose with MIPNEAREST/MIPLINEAR corrections');
-    assert.equal(get(p + 96), 0x030003f3, 'D3D7 triangle filters compose with MIPNEAREST/MIPLINEAR corrections');
+    assert.equal(get(p + 40), 0x030003c3, 'D3D7 line filters compose with MIPNEAREST/MIPLINEAR corrections');
+    assert.equal(get(p + 96), 0x030003c3, 'D3D7 triangle filters compose with MIPNEAREST/MIPLINEAR corrections');
     guarded(p, 236, () => e.d3dim_fill_device_desc7(p));
     caps(p, [36, 92]); // EnumDevices7 builder
   }

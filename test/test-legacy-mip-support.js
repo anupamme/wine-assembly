@@ -87,7 +87,7 @@ function contract(source) {
       assert.equal(mask & 0x30000, 0, 'stage mip flags remain absent');
       for (const bit of [1, 2])
         assert.equal(mask & bit, bit, 'retained point/linear bit');
-      assert.equal(mask, offsets[0] === 40 ? 0x030003f3 : 0xf3, 'only MIPLINEAR changes');
+      assert.equal(mask, offsets[0] === 40 ? 0x030003c3 : 0xc3, 'only MIPLINEAR changes');
       checks++;
     }
   }
@@ -95,7 +95,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [36]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      0xf7df, 0xf3, 0xffff, 0xf7, 1, 1];
+      0xf7df, 0xc3, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     for (const hal of [0, 1]) {
       guarded(p, 252, () => e.fill_d3d_device_desc(p, hal));
@@ -229,13 +229,13 @@ function backendContract(source, gpuSource) {
 const cases = backendContract(core, gpu);
 console.log(`Backend PASS: ${cases} state cases, two explicitly bound levels; legacy MIPLINEAR produces point taps, not bilinear.`);
 const { checks } = contract(dx);
-const fixed = '(i32.const 0xF3))     ;; dwTextureFilterCaps';
+const fixed = '(i32.const 0xC3))     ;; dwTextureFilterCaps';
 assert.equal(dx.split(fixed).length, 2);
 for (const [mask, error] of [
-  ['0xFB', /unsupported MIPLINEAR advertised/],
-  ['0xF7', /MIPNEAREST remains absent/],
-  ['0xF2', /retained point\/linear bit/],
-  ['0xF1', /retained point\/linear bit/],
+  ['0xCB', /unsupported MIPLINEAR advertised/],
+  ['0xC7', /MIPNEAREST remains absent/],
+  ['0xC2', /retained point\/linear bit/],
+  ['0xC1', /retained point\/linear bit/],
   ['0x03', /only MIPLINEAR changes/],
 ]) assert.throws(() => contract(dx.replace(fixed,
   `(i32.const ${mask}))     ;; dwTextureFilterCaps`)), error);

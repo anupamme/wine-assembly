@@ -94,7 +94,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [44]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      0xf7df, 0xf3, 0xffff, 0xf7, 1, 1];
+      0xf7df, 0xc3, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     for (const hal of [0, 1]) {
       guarded(p, 252, () => e.fill_d3d_device_desc(p, hal));
@@ -120,8 +120,8 @@ function contract(source) {
     });
     assert.equal(get(64), 0); assert.equal(get(80), 4108);
     caps(p, [48, 104]);
-    assert.equal(get(p + 40), 0x030003f3, 'line filters compose with MIPNEAREST/MIPLINEAR corrections');
-    assert.equal(get(p + 96), 0x030003f3, 'triangle filters compose with MIPNEAREST/MIPLINEAR corrections');
+    assert.equal(get(p + 40), 0x030003c3, 'line filters compose with MIPNEAREST/MIPLINEAR corrections');
+    assert.equal(get(p + 96), 0x030003c3, 'triangle filters compose with MIPNEAREST/MIPLINEAR corrections');
     assert.equal(get(p + 180), 0x3ff, 'texture ops unchanged');
     guarded(p, 236, () => e.d3dim_fill_device_desc7(p));
     caps(p, [48, 104]);

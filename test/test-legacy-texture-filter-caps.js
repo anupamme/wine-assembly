@@ -84,7 +84,7 @@ function contract(source) {
       assert.equal(mask & 4, 0, 'unsupported MIPNEAREST advertised');
       for (const bit of [1, 2])
         assert.equal(mask & bit, bit, 'retained point/linear bit');
-      assert.equal(mask, offsets[0] === 40 ? 0x030003f3 : 0xf3, 'combined MIPNEAREST/MIPLINEAR corrections');
+      assert.equal(mask, offsets[0] === 40 ? 0x030003c3 : 0xc3, 'combined MIPNEAREST/MIPLINEAR corrections');
       checks++;
     }
   }
@@ -92,7 +92,7 @@ function contract(source) {
     guarded(p, 56, () => e.fill_primcaps(p));
     caps(p, [36]);
     const expected = [56, 0x3f, 0x7ff, 0xff, 0x1fff, 0x1fff, 0xff, 0x1ffff,
-      0xf7df, 0xf3, 0xffff, 0xf7, 1, 1];
+      0xf7df, 0xc3, 0xffff, 0xf7, 1, 1];
     assert.deepEqual(expected.map((_, i) => get(p + i * 4)), expected);
     for (const hal of [0, 1]) {
       guarded(p, 252, () => e.fill_d3d_device_desc(p, hal));
@@ -210,12 +210,12 @@ function backendContract(source, gpuSource) {
 
 const { checks } = contract(dx);
 const cases = backendContract(core, gpu);
-const fixed = '(i32.const 0xF3))     ;; dwTextureFilterCaps';
+const fixed = '(i32.const 0xC3))     ;; dwTextureFilterCaps';
 assert.equal(dx.split(fixed).length, 2);
 for (const [mask, error] of [
-  ['0xF7', /unsupported MIPNEAREST advertised/],
-  ['0xF2', /retained point\/linear bit/],
-  ['0xF1', /retained point\/linear bit/],
+  ['0xC7', /unsupported MIPNEAREST advertised/],
+  ['0xC2', /retained point\/linear bit/],
+  ['0xC1', /retained point\/linear bit/],
   ['0x03', /combined MIPNEAREST\/MIPLINEAR corrections/],
 ]) assert.throws(() => contract(dx.replace(fixed,
   `(i32.const ${mask}))     ;; dwTextureFilterCaps`)), error);

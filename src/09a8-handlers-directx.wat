@@ -3607,7 +3607,7 @@
     (i32.store (i32.add (local.get $wa) (i32.const 32)) (i32.const 0xF7DF))   ;; dwTextureCaps, no SQUAREONLY/CUBEMAP
     ;; MIPNEAREST (0x04) requires mip-level selection. The software path
     ;; selects point/linear on one bound image; the GPU sampler sets mip=0.
-    (i32.store (i32.add (local.get $wa) (i32.const 36)) (i32.const 0xF3))     ;; dwTextureFilterCaps, no MIPNEAREST/MIPLINEAR
+    (i32.store (i32.add (local.get $wa) (i32.const 36)) (i32.const 0xC3))     ;; dwTextureFilterCaps, no legacy mip filters (0x04..0x20)
     (i32.store (i32.add (local.get $wa) (i32.const 40)) (i32.const 0xFFFF))   ;; dwTextureBlendCaps
     ;; No BORDER (0x08): software falls back to wrap, GPU lowers to clamp;
     ;; neither implements the requested border color. Retain other address bits.
