@@ -5879,6 +5879,7 @@
     (local $dst_pitch i32) (local $src_pitch i32)
     (local $sx i32) (local $sy i32) (local $sw i32) (local $sh i32)
     (local $bps i32) (local $row i32) (local $trans i32)
+    (local $reverse i32) (local $copy_row i32)
     (call $d3dim_worker_fence)
     (local.set $dst_entry (call $dx_from_this (local.get $arg0)))
     ;; Microsoft explicitly excludes clipping from BltFast. The receiver is
@@ -5984,15 +5985,24 @@
           (load.field DxObject misc2 (local.get $src_entry))))
       (else
         ;; No color key — fast row copies
+        ;; memory.copy protects overlap within a row. When copying down within
+        ;; the same backing surface, also protect source rows not yet consumed.
+        (local.set $reverse
+          (i32.and (i32.eq (local.get $dst_dib) (local.get $src_dib))
+            (i32.and (i32.gt_u (local.get $arg2) (local.get $sy))
+              (i32.lt_u (local.get $arg2) (i32.add (local.get $sy) (local.get $sh))))))
         (local.set $row (i32.const 0))
         (block $bf_done (loop $bf_row
           (br_if $bf_done (i32.ge_u (local.get $row) (local.get $sh)))
+          (local.set $copy_row
+            (select (i32.sub (i32.sub (local.get $sh) (i32.const 1)) (local.get $row))
+              (local.get $row) (local.get $reverse)))
           (call $memcpy
             (i32.add (local.get $dst_dib)
-              (i32.add (i32.mul (i32.add (local.get $arg2) (local.get $row)) (local.get $dst_pitch))
+              (i32.add (i32.mul (i32.add (local.get $arg2) (local.get $copy_row)) (local.get $dst_pitch))
                        (i32.mul (local.get $arg1) (local.get $bps))))
             (i32.add (local.get $src_dib)
-              (i32.add (i32.mul (i32.add (local.get $sy) (local.get $row)) (local.get $src_pitch))
+              (i32.add (i32.mul (i32.add (local.get $sy) (local.get $copy_row)) (local.get $src_pitch))
                        (i32.mul (local.get $sx) (local.get $bps))))
             (i32.mul (local.get $sw) (local.get $bps)))
           (local.set $row (i32.add (local.get $row) (i32.const 1)))

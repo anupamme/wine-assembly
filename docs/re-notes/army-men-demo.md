@@ -116,3 +116,8 @@ review. Public registration/distribution/deployment requires separate review.
 Validation for this source-only change: bounded registry/history/ownership
 searches, live metadata/HEAD observations, and `git diff --check`. No runtime
 tests are represented by these source checks.
+
+Later investigation: [2026-10-20 BltFast conformance](army-men-bltfast-conformance-20261020.md)
+uses the retained original same-surface trace. Its upward geometries pass;
+a separate synthetic downward-overlap bug is fixed with source-level tests.
+Full VM validation is pending, and the game's striping remains unexplained.
