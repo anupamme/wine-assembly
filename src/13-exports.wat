@@ -3400,6 +3400,20 @@
   (func $fire_wave_out_callback_bound (export "fire_wave_out_callback_bound")
       (param $handle i32) (param $wave_hdr i32)
       (param $cb i32) (param $instance i32) (result i32)
+    (call $fire_audio_callback_bound (local.get $handle) (local.get $wave_hdr)
+      (local.get $cb) (local.get $instance) (i32.const 0x03BD)))
+
+  ;; Cooperative MIDI delivery uses the same guarded continuation and
+  ;; invocation-owned save_caller_regs frame, with an explicit MIDI message.
+  (func $fire_midi_out_callback_bound (export "fire_midi_out_callback_bound")
+      (param $handle i32) (param $hdr i32) (param $cb i32)
+      (param $instance i32) (param $message i32) (result i32)
+    (call $fire_audio_callback_bound (local.get $handle) (local.get $hdr)
+      (local.get $cb) (local.get $instance) (local.get $message)))
+
+  (func $fire_audio_callback_bound
+      (param $handle i32) (param $wave_hdr i32)
+      (param $cb i32) (param $instance i32) (param $message i32) (result i32)
     (if (i32.or (i32.eqz (local.get $cb))
           (i32.or (i32.eqz (global.get $eip))
             (i32.eqz (i32.load offset=16 (global.get $reg_base)))))
@@ -3428,7 +3442,7 @@
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $instance))            ;; dwInstance
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x03BD))               ;; WOM_DONE
+    (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $message))
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
     (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $handle))              ;; hwo
     (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
