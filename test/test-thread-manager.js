@@ -529,6 +529,11 @@ function makeRunnableThread(tid, onRun) {
   return {
     tid,
     state: 'active',
+    // These scheduling fixtures represent an already-started thread. A fresh
+    // thread spends its first quantum completing DLL_THREAD_ATTACH, even with
+    // no loaded DLLs; cold-start notification is covered by
+    // docs/reviews/thread-resume-regression-20261020.js.
+    _dllAttachNotified: true,
     sleepCount: 0,
     sleepUntil: 0,
     waitPolls: 0,
@@ -568,6 +573,32 @@ assert.strictEqual(suspendedRunTm.resumeThread(0xe1010), 1, 'resuming an instant
 assert.strictEqual(suspendedRunTm.hasActiveThreads(), true, 'the final resume makes the worker runnable');
 suspendedRunTm.runSlice(100);
 assert.strictEqual(suspendedRuns, 1, 'scheduler executes the worker after its final resume');
+
+// Self-suspend additionally parks the guest at yield 11. Releasing only one of
+// two suspend counts must not clear that yield or re-enter the guest.
+{
+  const selfTm = makeThreadManager();
+  let reason = 11;
+  let clears = 0;
+  let runs = 0;
+  const worker = makeRunnableThread(1, () => {
+    assert.strictEqual(reason, 0, 'self-suspend yield is cleared before guest re-entry');
+    runs++;
+  });
+  worker.suspendCount = 2;
+  worker.instance.exports.get_yield_reason = () => reason;
+  worker.instance.exports.clear_yield = () => { reason = 0; clears++; };
+  selfTm.threads.set(0xe1010, worker);
+  assert.strictEqual(selfTm.resumeThread(0xe1010), 2);
+  selfTm.runSlice(100);
+  assert.strictEqual(runs, 0, 'partial resume leaves self-suspended guest parked');
+  assert.strictEqual(clears, 0, 'partial resume preserves private self-suspend yield');
+  assert.strictEqual(selfTm.resumeThread(0xe1010), 1);
+  selfTm.runSlice(100);
+  assert.strictEqual(runs, 1, 'final resume re-enters self-suspended guest');
+  assert.strictEqual(clears, 1, 'final resume consumes self-suspend yield once');
+  assert.strictEqual(worker.state, 'active', 'resumed guest did not crash');
+}
 
 const vblankTm = makeThreadManager();
 let vblankYield = 13;
