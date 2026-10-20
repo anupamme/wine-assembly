@@ -1,4 +1,181 @@
-# OpenGL / Direct3D corpus status, reconciled 2026-10-17
+# OpenGL / Direct3D corpus status, reconciled 2026-10-20
+
+## October 20 historical membership and receipt matrix
+
+This is the evidence-table deliverable for **GLD3D-CORPUS-27-20261006**, on
+documentation base `4d57bb66dae7da0a488b9546ccb0b4f4f7ba2434`. It extends this
+canonical document; the dated broader tables below remain historical records.
+**The original 27-ID list is not recovered, and the goal is not complete.**
+No runtime, census execution, asset download or new build was performed.
+
+### Membership provenance and its limits
+
+The retained memory
+`/home/user/.claude/projects/-home-user-wine-assembly/memory/project_gl_d3d_corpus_goal.md`
+(modified September 26, originating session
+`bd610256-7b4f-4ed1-afa0-9c3cf3412fbb`) records the September 22 count:
+27 apps, with overlapping family totals GL7 / D3DRM10 / D3DIM9 / D3D8 7 /
+D3D9 2. Original census commit
+`2d722ab3766c288d13796ed9dad3f1ceeca8f1eb` independently records 27 among
+225 registry entries. Neither contains the complete output.
+The memory's SHA-256 is
+`edf52a63ba936a24d25b1cd3e21cd4a939e4fb6c92d45fa7a66d93e65fc4d8e4`.
+The original registry blob is `65f56177c3bbafe8f4ce0818e5369e44f235777c`;
+the original census-tool blob is `45425e4ab7eed19a9aef67bc76365f4baa0885b5`.
+These pin the recovery inputs that survive, not the missing binary inventory.
+
+Membership labels in the table below are deliberately distinct:
+
+- **S**: seven explicitly included screensavers. The original commit and
+  memory say seven `scr_*`; the [screensaver note](re-notes/plus98-dx-screensavers.md)
+  explicitly identifies all seven as members of that 27-app target.
+- **N**: `icewind_dale_demo` and `tworld`, explicitly described as two
+  census rows in the original commit, despite likely launcher noise.
+- **E**: Quake II, Half-Life and Warcraft III are original-commit examples
+  of multiple renderers. They are strong leads, but an example is not recovered
+  emitted census output.
+- **M**: named in the evolving September goal memory's progress notes.
+  Their relevance is established; membership in the September 22 output is
+  not. Later additions/fixes cannot silently establish original membership.
+
+Thus **nine IDs are explicitly tied to the historical count**, with **18
+membership slots unresolved**. E/M rows below are useful evidence mappings,
+not assignments to those slots. There are 30 distinct IDs below because the
+evolving memory names more than the original denominator; this is not a
+reconstructed 30-app or 27-app manifest. `generally`, mentioned in the memory
+only to exclude its DirectDraw route, is not added.
+
+The bounded local-history search checked 145 retained project JSONL/gzip
+files for the originating UUID and the original 27/87-of-225 census text,
+then specifically checked the four retained September histories for census
+references. It found memory copies/references, not the original stdout.
+The originating session file is absent from that project directory.
+The exact search summaries, memory hash and path checks are retained under
+`scratch/runs/20261020-gld3d-evidence-matrix/`. This is a local search result,
+not a claim that the original session no longer exists elsewhere.
+
+Missing provenance is specifically the September 22 census's enumerated
+stdout, or that originating session's tool result. A reconstruction instead
+needs the original registry/tool revision **and the contemporaneous
+executable/DLL inventory with identities and path resolution**, including
+which inputs were missing. Current `gfx-app-census.js` also scans mounted
+companion PEs and IID bytes; the original tool did not cover that same set.
+`gl-name-census.js` names static reach, not calls, and API-loader/driver
+binaries can name all GL entry points. Neither tool can turn current assets,
+API conformance tests or family counts into historical membership/gameplay.
+
+### Reading the receipt columns
+
+**H** means a retained committed report says the scene/input was reviewed;
+the original run bundle is absent locally in this audit, so there is no new
+image/backend revalidation. **L** means the stated local receipt was read;
+only Quake II's October 1 before/after PNGs were newly viewed here. **U** means
+the required evidence is unknown or not identified. A report's source is
+the tested source, not this document's base or a later fix commit.
+
+All run IDs below resolve relative to `scratch/runs/`. Exact IDs are printed
+in full; where only a date or glob survives, that is an explicit missing-ID
+dependency. The audit's `validation.json` records existence and hashes of
+available references without changing evidence. **No row is a current-main
+both-backend pass.** Software means the emulator backend, not a game's
+internal software renderer. A Node `--headless-gl` result remains a Node
+bridge result, not proof of browser WebGL. FPS is unqualified unless a
+specific metric and limitation are stated.
+Of the 25 exact distinct run directories cited here, only the October 1
+Quake II software directory is locally present; the other 24 are absent.
+All 11 linked reports exist in the pinned Git base. The shared checkout's
+Unreal-family and Black & White 2 notes are older than that base; their
+later findings in this matrix were read from the base's Git objects.
+
+Receipt groups used in the table:
+
+- **S6** — [screensaver report](re-notes/plus98-dx-screensavers.md), source
+  `80dfe68e`, CLI software D3DIM, `--tick-ms-per-batch=2`.
+  Six exact per-app IDs below are given by its pattern; their bundles are
+  absent. Jazz's original software ID is only a glob.
+- **B6** — the October 6 browser sweep described in this document:
+  `20261006T1840Z-gld3d-webgl`, source `97aae839`, browser `--gpu`,
+  legacy `?d3dim-gpu`. H, module identity not recoverable from the cited
+  summary. This does not certify hardware GPU rather than SwiftShader.
+- **P10** — `20261010T1850Z-gld3d-current-main-probes`, source `cac339517`,
+  module prefix `6a798f18`, boat llvmpipe/Xorg. Explicit software selectors
+  versus Node `--headless-gl` (legacy also `--d3dim-gpu`). H, absent bundle.
+  Unrouted probes establish only the photographed state; MCM had a routed race.
+- **U10** — `20261010T2050Z-ut-family-both-arms`. H, software D3D8/D3D9
+  versus Node headless GL. The dated table does not pin this routed run's
+  source/module; do not borrow P10's identity for it.
+- **Q8** — the [software review](../ops/handoffs/quake2-software-ordinary-20261008.md)
+  and [WebGL review](../ops/handoffs/quake2-ordinary-traversal-20261007.md)
+  pin source `096889e174488a97529b8e73076d3a1e2feb2345` and module
+  `fb1be916c309bf619a9331c8fd46c4319f9051af76b05b236d3c362bb632638f`.
+  Ordinary browser `ref_gl` forward/reverse/idle, six reviewed images each;
+  software endpoint/owning Worker proof is described explicitly. H.
+- **W8** — [software review](../ops/handoffs/warcraft3-software-20261008.md)
+  and [WebGL review](../ops/handoffs/warcraft3-campaign-world-20261008.md):
+  accepted source `f62ab3c9f1223ab47cf623470f6343d508257878`, module
+  `4dc5ac2c477c71c64a42530562e4cf51e145bd966232e15330acfc01753d54de`.
+  Browser guest OpenGL, matching host/owning endpoints, Thrall selection and
+  opposing movement reviewed. H; integrated findings `0d9515322` are not a
+  new tested build.
+
+### Per-app evidence and missing dependencies
+
+| App / membership | Emulator software receipt and tested identity | WebGL receipt and tested identity | Screenshot / input / FPS status and precise remaining dependency |
+|---|---|---|---|
+| `scr_architec` / S | H S6: `20261006T0250Z-scr_architec-w4-software`, interior renders. | H B6: `20261006T1840Z-gld3d-webgl`, renders. | Reviewed-render reports only; interactive gameplay N/A; FPS U. Recover both bundles and per-capture backend/module identities. Short white loading captures are not failures. |
+| `scr_fallingl` / S | H S6: `20261006T0250Z-scr_fallingl-w4-software`, leaves/shadows. | H B6: `20261006T1840Z-gld3d-webgl`, leaves/shadows. | Historical opaque-shadow defect; the October 10 lit-alpha correction in the screensaver note supersedes “black leaves are intended.” Its paired corrected render receipts are not here. Input N/A, FPS U. |
+| `scr_geometry` / S | H S6: `20261006T0250Z-scr_geometry-w4-software`, renders. | H B6: `20261006T1840Z-gld3d-webgl`, renders. | Recover scene captures/identities; historical distant-fill/wireframe issues cannot be judged from API tests. Input N/A, FPS U. |
+| `scr_jazz` / S | H P10: `20261010T1850Z-gld3d-current-main-probes`, renders. Earlier software ID only `20261006T02*-scr_jazz-gld3d-sw`. | H B6: `20261006T1840Z-gld3d-webgl`; later P10 is Node GL, not another browser pass. | Recover exact early ID or P10 bundle and paired frames; input N/A, FPS U. |
+| `scr_oasaver` / S | H S6: `20261006T0250Z-scr_oasaver-w4-software`, renders. | H B6: `20261006T1840Z-gld3d-webgl`, renders with stray-box caveat. | Scene/timer changes require mid-scene series. `20261011T0640Z-scr-default-clock-w4`, source `dcbdf0521`, explains tick dependence; absent here. Correctness still not revalidated; input N/A, FPS U. |
+| `scr_rockroll` / S | H S6: `20261006T0250Z-scr_rockroll-w4-software`, renders. | H B6: `20261006T1840Z-gld3d-webgl`, renders. | Recover paired scene/identity evidence; input N/A, FPS U. Exit capture can be a scene transition. |
+| `scr_scifi` / S | H S6: `20261006T0250Z-scr_scifi-w4-software`, renders. | H B6: `20261006T1840Z-gld3d-webgl`, renders. | Recover paired captures; tick dependence and later lit-alpha correction as above. Input N/A, FPS U; source fix alone is not a new render pass. |
+| `icewind_dale_demo` / N | U for a GL/D3D route. Later sweep reports DirectDraw as registered. | U for GL/D3D; no backend pass inferred from static `opengl32` text. | Original membership explicit, actual 3D use unproved. Exact traced run ID/source missing; preserve launcher-noise classification rather than inventing a rendering failure. |
+| `tworld` / N | U for a GL/D3D route; later sweep classifies tile game as non-3D. | U for GL/D3D. | Same membership-versus-use distinction. Recover runtime trace/source if resolving API scope; no 3D gameplay/FPS acceptance. |
+| `quake2_demo` / E | H Q8: `20261008T000901Z-quake2-software-ordinary`. Also L `20261001T230900Z-quake2-universal-software`: browser shared-Worker software, source label `d1ea48a9` plus documented snapshot corrections, module `e3924487eea80ca213d1e4f7865b7823d1f41ea3d5fdb484a382ee2b69f912b8`. | H Q8: `20261007T213620Z-quake2-ordinary-traversal`, browser WebGL ordinary traversal. | October 1 result/benchmark and two PNGs locally inspected: textured room/HUD and changed viewpoint, endpoint `gl/software`; keyboard movement is the original report's claim. Q8's stronger ordinary forward/reverse/idle bundles absent. October 1 **0.850 completed publications/s** is one regressed sample, not general gameplay FPS or paired acceptance. Recover historical membership and Q8 bundles. |
+| `warcraft3_demo` / E | H W8: `20261008T0400Z-warcraft3-software-runtime`. | H W8: `20261008T0156Z-warcraft3-campaign-world-runtime`. | Reports review selection/opposing movement on both OpenGL arms; FPS/audio/combat U. Recover bundles and original membership. This says nothing about D3D8 gameplay; preserve laptop Warcraft III ownership/pause. |
+| `halflife_uplink` / E | H dated table: September 22 corridor/HUD on software GL; exact run ID/source U. | H `20261006T2100Z-hl-uplink-lazy-mci`, browser GL corridor/HUD after fix `5f4bac8c`; exact tested source/module U. | `4-gameplay-webgl-lazy.png` absent with bundle; source fix is not exact run identity. Ordinary input/FPS not separately established by these summaries. Recover both identities and original membership. |
+| `simgolf_demo` / M | H dated table: software gameplay; exact October 6 ID/source U. | H `20261006T0503Z-simgolf_demo-webgl-route-w5`, browser GL course/build bar; tested source/module U. | Historical screenshot review, not fresh controls/FPS qualification. Recover software ID, browser bundle/identities and original membership. Cursor edge-scroll can explain a black view. |
+| `ptct` / M | H P10: `20261010T1850Z-gld3d-current-main-probes`, software GL beams. | H P10 Node GL beams; B6 describes browser beams in `20261006T1840Z-gld3d-webgl`. | Correctness explicitly unverified, zero texture uploads in P10. The old 0.35 presents/s is not qualified gameplay FPS. Recover images/expected content and original membership; presentation demo input applicability unresolved. |
+| `mw3` / M | H older cockpit gameplay; exact routed software ID/source U. | H `20261010T2110Z-mw3-webgl-cockpit-w5`, Node `--headless-gl --d3dim-gpu`, cockpit/forward movement, 49,818 draws/zero fallback reported; tested source/module U. | Node result is not browser proof. Recover both routed bundles/identities, screenshot/input receipts and original membership; FPS U. |
+| `dx_boids` / M | H September 23 rendering report; exact software ID/source U. | H `20261006T1935Z-gld3d-webgl-recheck`, browser render; tested source/module not pinned by that row. | Non-game render sample: input/FPS U. Recover exact source and two-arm scene receipts, plus membership; do not count unit pixel tests as app rendering. |
+| `dx_tunnel` / M | H September 23 rendering report; exact software ID/source U. | H `20261006T1935Z-gld3d-webgl-recheck`, browser render; exact source/module U. | Same missing source/scene/ID/membership evidence as Boids; FPS U. |
+| `dx_twist` / M | H September 23 rendering report; exact software ID/source U. | H `20261006T1935Z-gld3d-webgl-recheck`, browser render; exact source/module U. | Same missing source/scene/ID/membership evidence as Boids; FPS U. |
+| `dx_flip3dtl` / M | H P10: `20261010T1850Z-gld3d-current-main-probes`, textured cube. | H `20261006T1935Z-gld3d-webgl-recheck`, browser render; later P10 Node GL reports 33k draws/zero fallback. | Recover paired images and browser source/module; sample interaction/FPS U. Original membership remains unproved. |
+| `dx_globe` / M | H P10: `20261010T1850Z-gld3d-current-main-probes`, sphere. | H B6 browser; P10 Node GL reports 233k draws. | Rendering is not texture correctness: [SDK note](re-notes/dx-sdk-d3drm-samples.md) retains a texture-band defect. Recover same-scene paired frames and membership; menu regression tests are narrower than visual acceptance. FPS U. |
+| `dx_viewer` / M | H P10: `20261010T1850Z-gld3d-current-main-probes`, renders. | H B6 browser; H P10 Node GL. | Recover reviewed scene/identity evidence and membership. SDK Open/Change Color tests alone do not prove scene correctness; FPS U. |
+| `mcm` / M | H P10: `20261010T1850Z-gld3d-current-main-probes`, routed Stunt Quarry race, 200 s. | H P10 Node GL routed race, 225k draws/zero fallback reported; older September 20 browser report lacks exact ID here. | Recover route/input/frame receipts; don't promote Node GL to browser. FPS and original membership U. |
+| `arcanum_demo` / M | H `20261008T1431Z-arcanum-gameplay-qualified`, browser cooperative software D3DIM, crash-site westward movement. | H same run, explicit browser WebGL, westward movement. | [Review](../ops/handoffs/arcanum-gameplay-20261008.md) pins module `d8d4096f957ed51cecab589b5a1ec7bf402336f13959ce0710faf2f7d3c68960`; full tested closure is missing `provenance/pins.json` (branch base `7e4ce05ce` alone is insufficient). WebGL 434/20.127145 s = **21.562919 visible presentations/s**, idle scene, not scanout. Software FPS rejected because observer missed OffscreenCanvas. Recover bundle/membership. |
+| `ut2003_demo` / M | H U10 Antalus movement; later `20261013T2247Z-ut2003-registered-comctl-software` fails `invalid native free list` / LockRect after native COMCTL loads. | H U10 Node GL Antalus movement; historical browser gameplay September 25 lacks exact run ID here. | [Later report](re-notes/unreal-family-demos.md): candidate `a4d487337`, underlying source `3540d8304`, module `9b3ef6f173daaa8be90733a4b8449733d74ca861062d0383a709f4be02ce1c77`. Later failure supersedes an unqualified current software pass. Recover bundles/first-failure evidence; FPS/membership U. |
+| `ut2003_demo_server` / M | H October 6 DM-Antalus sweep claim, but exact reviewed software `result.json` was already missing in the October 10 table. | H B6: `20261006T1840Z-gld3d-webgl`, browser DM-Antalus/HUD. | Recover software ID/result/source and browser bundle. COMCTL seed applies to both registry entries, but the client failure above is not proof of a server run failure. Ordinary control/FPS/membership U. |
+| `ut2004_demo` / M | H U10 menus only; software menu input lands late/high and did not reach gameplay. Older September 29 spawn is report-only without exact ID here. | H U10 Node GL DM-Rankin spawn, forward/turn; browser September 25 report lacks exact ID. | Software ordinary gameplay and GPU empty menu lists unresolved in cited route; recover exact source/module/bundles. No browser pair/FPS/membership certification. |
+| `morrowind` / M | No reviewed software movement receipt identified; software fix unit tests do not qualify the world. | H `20261005-morrowind-prison-movement`, browser Worker/WebGL forward/reverse/idle; source `94d18605`, module `2e2fd8d1ca62cd87f0bc09312bc4836108df610d00cb7771bb5ae22755eceedc`. | [Metadata review](../ops/handoffs/morrowind-dashboard-evidence-metadata-20261005.md) reports four reviewed gameplay images; bundle absent. Preserve no-heavy-Morrowind restriction. Recover evidence/membership; no software gameplay/FPS claim. |
+| `black_white_2_demo` / M | H `20261010T1638Z-bw2-raster-budget-boat-w6`: software island, 3300 s, zero failed commands; exact tested source/module U in table. | No fresh WebGL gameplay receipt identified in this reconciliation. | [Later camera note](re-notes/black-white-2.md) reports `20261011T1840Z-bw2-lock-flag-boat` zoom/drag after the scripted intro; exact backend/source must be recovered before upgrading either column. 3300 s and zero failures are not FPS/control proof. Recover membership and full paired gameplay, preserve pauses. |
+| `winamp` / M | No CLI software MilkDrop visualization receipt. | H browser `20261007-winamp-milkdrop-complete-closure`: source `0cbc1c6ffd`, module `7c6864f8e224a0d42c6743b3c088ce79349101182295b79b1e4fa8a4c3911cc0`; ordinary Start ends in illegal-operation `(2)`, not a backend rendering pass. | [Review](../ops/handoffs/winamp-milkdrop-ordinary-20261007.md) reports 11 images and complete-loader rerun. Capture actual exception/API; do not repeat obsolete “needs Winamp 5” inference. Visualization/FPS unqualified; recover bundle/membership. |
+| `pawn` / M | H P10: `20261010T1850Z-gld3d-current-main-probes`, D3D9 board renders. | H B6 browser board; P10 Node GL board. | Earlier September 23 gameplay report lacks exact ID/input receipts here. Board image alone does not establish ordinary chess control. Recover bundle, input/identity receipts and membership; FPS U. |
+
+### What this delivers, and what remains unqualified
+
+The nine explicitly linked members now have individual software/WebGL evidence
+rows, and all 21 additional named historical leads have separate provenance
+labels and dependencies. This closes the documentation omission only to the
+proved subset, not the historical denominator or runtime goal. Local historical
+imports named `history-scr_*` remain unreviewed/unknown-source evidence and
+cannot replace the missing dated run bundles.
+
+The strongest remaining dependencies are (1) original enumeration provenance,
+(2) recovery of the dated run bundles and source/backend/PNG/input receipts,
+and (3) actual paired gameplay or rendering correctness where only menus,
+API tests, Node bridge routes or defective scenes were reported. Missing local
+bundles are not evidence of deletion everywhere and do not invalidate the
+committed historical reviews. Conversely, a merged caps/mip/Surface/COM fix
+cannot turn those reviews into current-main render qualification.
+
+Existing broader-app work, including Darkstone, Hype and Pirates, remains in
+the dated sections of this canonical table; none is silently assigned a missing
+September membership slot. Preserve laptop Warcraft III/Heroes II ownership,
+all game/heavy-run pauses, CMR3's automated-review hold, and other denied-action
+restrictions. This document authorizes no rerun, replacement game, Claude
+activity, deployment or main integration.
 
 ## October 17 retained Darkstone movement review
 
