@@ -1,5 +1,8 @@
 # Army Men same-surface BltFast conformance, 2026-10-20
 
+The source-phase account below is historical. The subsequent full-VM
+validation and two adjacent test-fixture corrections are recorded at the end.
+
 Base: `origin/main` fetched and resolved to
 `515897841fde86f9b2e0274387aff10cc9add405`. Isolated sparse worktree:
 `/tmp/wa-army-bltfast-oct20`, branch `task/army-bltfast-conformance-oct20`.
@@ -126,3 +129,78 @@ showed coordinator48000 `BodyAfterPrefix` rows. Thus **200000 total could not
 be verified from available runtime evidence**. This limitation was appended
 to the shared messageboard before edits. No config-only verification claim
 or repeated probing followed.
+
+## Full-VM validation, 2026-10-20 10:34–10:38 UTC
+
+The coordinator assigned `bx_b7sxrkh9` exclusively for this synthetic
+validation. No game, benchmark, held diagnostic or local full build ran.
+Source was `9951a1d83d98b80418cb72e053242cbb5b09e659`, streamed with
+`git archive --format=tar.gz` through the documented Boat Files upload API.
+All 6,864 regular source files were SHA-256 verified before and after the
+initial tests. Archive SHA-256:
+`4ff05820a2b8c884b1c33e50bffa4f691f6317f16e0e2133f5ab5bc4700ed638`.
+Fresh `origin/main` remained `515897841fde86f9b2e0274387aff10cc9add405`;
+no merge was performed.
+
+Remote root: `/home/user/army-validation/source`. Node `v24.18.1`, npm
+`11.16.0`. Setup and normal build both exited zero:
+
+```sh
+timeout -k 10s 300s npm ci --ignore-scripts --omit=optional
+timeout -k 10s 480s bash tools/build.sh
+```
+
+Normal tail-call module: 1,874,813 bytes, SHA-256
+`76ff73ed52bce2cbc60bf7234eced7aa9963b4dd2ff2a309299cc6225c28e638`.
+Compatibility module: 1,877,386 bytes, SHA-256
+`d70adaf6c634931a93766ffb6ef8159107897d473990a78012daf01a86422a71`.
+All normal build gates passed, including compiled data-segment overlap checks.
+
+Each test ran serially using:
+
+```sh
+timeout -k 10s 180s node \
+  --require /home/user/army-validation/observe-compile.js test/TEST.js
+```
+
+The retained external observer wraps `compileSrcWasm`, saves and hashes its
+returned bytes, and returns those same bytes unchanged. The tests compile the
+full source closure with their own test exports, so their module hashes differ
+from the normal build. No handler or host behavior was replaced.
+
+| Test | Result |
+| --- | --- |
+| `test-directdraw-blt-clipping.js` | PASS clipping and five real-handler same-surface/padded-pitch cases, including down and down-right |
+| `test-directdraw-ckey-blit.js` | PASS 3,640 cases, 8/16/24/32bpp |
+| `test-directdraw-blt-status.js` | PASS surface/query validation |
+| `test-directdraw-dxt-blt.js` | Initially FAIL at Lock, then PASS after fixture correction |
+| `test-directdraw-palette-format.js` | Initially FAIL at GetSurfaceDesc, then PASS after fixture correction |
+
+Both initial failures were `E_INVALIDARG` (`0x80070057`). Substituting only the
+pre-patch DirectDraw fragment from `515897841` reproduced both exact failures;
+the fixed fragment was then restored and hash-verified. The DXT test filled
+the output descriptor with `0xcc`, including `dwSize`; the palette test left
+`dwSize` zero. Existing `$dx_surface_desc_valid` requires the legacy descriptor
+size, 108. Each correction initializes that one field before calling the real
+handler. Both corrected tests passed with their original assertions intact,
+using the same compiled module hashes as their initial failing runs.
+Production source was unchanged. Final source verification found exactly
+these two test-file differences from the archived commit.
+
+Evidence recovered and SHA-256 verified on the host:
+`scratch/runs/20261020-army-bltfast-fullvm-validation-2/`.
+`recovered/` contains the full build/install/test logs, original failures,
+baseline controls, corrected results, source postflights, exact test commands
+and `artifact-manifest.json` with all normal/harness module hashes.
+`source-manifest.json`, upload receipts, exec receipts, `stage.py`,
+`observe-compile.js`, `run-tests.py`, `baseline-check.py`, and
+`corrected-tests.py` retain the source and reproduction procedure.
+The recovered evidence archive is 6,958 bytes, SHA-256
+`5914e5b1fe698145b31d5a5c06405bda800a42ff9944dc1f39cbb223d98970ed`.
+Module binaries remain remote; they were not duplicated onto the disk-limited
+host. Rebuild from the pinned commit and use the retained observer to reproduce
+the listed hashes.
+
+This validates the synthetic downward self-overlap fix. The 192 captured
+upward-geometry source cases already passed the baseline; Army Men's terrain
+stripes remain unexplained, and no gameplay improvement is claimed.
