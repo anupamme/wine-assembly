@@ -337,6 +337,9 @@ function main() {
       const f = writeFixtures(caseDir, kind);
       const args = [path.join(__dirname, 'run.js'), `--exe=${f.exe}`, `--overlay-dir=${f.overlay}`,
         '--no-build', `--wasm=${path.resolve(wasm)}`, '--quiet-api', '--no-renderer',
+        // The default host log sink discards OutputDebugStringA. Observe the
+        // real API arguments for the terminal case, which has no final dump.
+        ...(kind === 'capacity' ? ['--trace-api=OutputDebugStringA'] : []),
         '--max-batches=4000', '--batch-size=1000', '--max-seconds=120',
         `--dump=0x${DATA.toString(16)}:1024`];
       const r = spawnSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8',
