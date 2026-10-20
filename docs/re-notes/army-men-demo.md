@@ -120,4 +120,6 @@ tests are represented by these source checks.
 Later investigation: [2026-10-20 BltFast conformance](army-men-bltfast-conformance-20261020.md)
 uses the retained original same-surface trace. Its upward geometries pass;
 a separate synthetic downward-overlap bug is fixed with source-level tests.
-Full VM validation is pending, and the game's striping remains unexplained.
+Normal build and five full-VM DirectDraw suites passed on 2026-10-20, with two
+baseline-reproduced descriptor fixture corrections. The game's upward striping
+remains unexplained; actual pitch/HRESULT and pre/post pixels need a new diagnostic.

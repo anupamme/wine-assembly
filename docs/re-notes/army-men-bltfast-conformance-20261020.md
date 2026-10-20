@@ -108,7 +108,8 @@ bytes, above the 2GiB floor.
 
 ## Next diagnostic, requiring a new assignment
 
-First run the authored full-handler regression in an admitted environment.
+The authored full-handler regression has now passed in the admitted environment
+recorded below.
 For Army Men itself, a future bounded diagnostic should observe the same
 actual call at handler entry and return: surface identity, resolved backing,
 width/height/bpp/pitch, source RECT/destination/flags, returned HRESULT, and
@@ -204,3 +205,22 @@ the listed hashes.
 This validates the synthetic downward self-overlap fix. The 192 captured
 upward-geometry source cases already passed the baseline; Army Men's terrain
 stripes remain unexplained, and no gameplay improvement is claimed.
+
+## Integration review, 2026-10-20
+
+Fresh `origin/main` was still `515897841fde86f9b2e0274387aff10cc9add405`,
+the laptop Warcraft III commit and ancestor of both reviewed commits.
+An isolated sparse checkout fast-forwarded through `9951a1d83` to
+`3b4330ef5`; production source is identical to the tested source.
+Independent review verified all 47 local evidence hashes, all 6,864 source
+manifest entries against Git blobs, baseline handler identity, both corrected
+fixture hashes, original/baseline failure logs and successful test/build logs.
+The observer returns the compiled bytes unchanged; initial and corrected
+DXT/palette harness hashes match. Binary hashes are retained remote observations,
+not a claim of locally recovered module binaries.
+
+The canonical shared Army task text matched main before the scoped ledger
+update. Unrelated shared ledger edits, HEAD/index and laptop work were left
+untouched. Only static evidence/ancestry/diff review ran during integration;
+no new build, runtime, browser or deployment. Exact task/main push receipts
+are recorded on the append-only shared messageboard.
