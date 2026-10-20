@@ -2318,3 +2318,220 @@ wall-second; browser FPS is not measured.
 --id=warcraft3-demo` downloads `W3Demo.exe` and then fails `7z exit 2` with no
 `unar`. Ship the local install tree, and `test/binaries/dlls` too: without the
 real `msvcrt.dll` the game traps on `_clearfp`.
+
+## Browser gameplay profiling: cooperative versus Workers (2026-10-19)
+
+Evidence: `scratch/runs/20261019-wc3-profile`. Two sequential 60-second
+profiles reach the original Prologue HUD, select Thrall, move him toward the
+stone circle and return him to the starting path. Timings cover the selected,
+stationary unit in the animated gameplay world, after live warmup; they do not
+cover combat. Both final images and move-order evidence were reviewed.
+
+| Measured gameplay presentation | No threads / cooperative | Workers |
+|---|---:|---:|
+| GPU presents in 60 seconds | 1253 | 848 |
+| Guest GPU presents per wall-second | 20.88 | 14.13 |
+| Inter-present median | 45.81 ms | 67.47 ms |
+| Inter-present p95 | 63.87 ms | 99.88 ms |
+| Six consecutive 10-second rates | 19.9–21.4 | 13.2–15.0 |
+| Page rAF rate | 60.0/s | 60.0/s |
+| Main-thread long tasks over 50 ms | 0 | 0 |
+| Host one-minute load, before → after | 5.23 → 5.45 | 7.54 → 12.76 |
+
+Workers presented 32.3% fewer frames in these observations. This is a
+**preliminary comparison, not an isolated causal speedup measurement**:
+the machine was shared and busy, each mode has one profiled window, and
+profiling twelve Workers adds different overhead from profiling one page.
+Some host load is the emulator itself; the load increase cannot simply be
+attributed to unrelated jobs. Ten-second subdivisions are not independent
+repetitions. `gpu` presents are the guest metric; 60 Hz page composition is
+not 60 Hz Warcraft gameplay. No audio, Safari, mobile or completion claim.
+
+Both use headful Chrome 155.0.8059.80 on Apple M1, hardware ANGLE Metal,
+native 800×600 guest canvas, 1280×900 page viewport, WebGL, uop tier and
+default slice 100000. Both origins serve COOP/COEP and report isolation true.
+Cooperative has no guest Worker; the other reports backend `worker`, an
+actual guest-main Worker, ten additional guest Workers and the owning WebGL
+render Worker. The toolbar wraps differently with the Worker status label;
+the guest backing resolution remains 800×600. The complete source snapshot
+predates the concurrent final-display gamma changes and lazy-audit changes.
+It was rebuilt in `/private/tmp/wc3-profile-20261019`, not in the root tree:
+WASM SHA-256 `4eb9264e9326b95f5e1922a2bd2b62e0558dba00205d85c307ea2eb47d7863bc`,
+layout `eb58be38f5ebb837`. `identity.json` records source hashes and original
+commit; `combined.wat` is retained for exact profile symbol resolution.
+
+The cooperative page spends 82.7% of sampled non-idle time in WASM. Its top
+self-time entries are `$uop_fast` 13.2%, `$x87_island_fast` 5.2%,
+`$branch_end_at` 4.5%, `$g2w_slow` 4.2%, and `$th_load32_rop` 4.0%.
+`$gl_finish_immediate` is 1.9% and `$gl_state_array_element` 1.5%; page
+`drawImage` totals only 118 ms over 60 seconds. Guest execution is the main
+observed cost, rather than final canvas copying.
+
+Worker profiling identifies additional scheduling/transport work worth
+investigating: page `postMessage` accounts for 10.0 seconds of samples and
+`worker.onmessage` 6.7 seconds. Two other guest-Worker profiles each spend
+roughly 16.5 seconds in non-idle samples, dominated by message sending and
+dispatch, with little WASM execution. The first/main guest Worker records
+10.8 seconds in `waitForResponse`; that function blocks in `Atomics.wait`,
+so the harness's “busy” label must **not** be read as actual CPU consumption.
+The render Worker records 7.6 seconds of non-idle samples, chiefly GL uniform
+setup and drawing. These profiles support examining redundant worker
+slice/status messaging and synchronous RPC waits before a rendering rewrite;
+they do not by themselves prove which change would improve throughput.
+
+Navigation used the existing `ctl.js` hub and frozen-step workflow, with
+native-coordinate screenshots before inputs. `preparation.json` records
+the route and commands; `run.sh` reproduces the gated profiling harness.
+Initial setup failures were a stale local WASM/mirror pair and a snapshot
+missing the root `binaries -> test/binaries` symlink, which caused the real
+CRT lookup to fail and fall onto `_clearfp`. A matched build and the original
+fixture route resolved both, without implementing a new CRT stub.
+
+**Frozen-resume clock edge case:** if stepped guest time exceeds
+`performance.now()`, `setFrozen(false)` computes a negative `wallStartMs`.
+The live tick path treats that valid negative origin as uninitialized and
+resets it to now. The guest clock then remains at its prior maximum, yielding
+zero presents while scheduler ticks continue. This was observed in both
+arms, not counted as performance. Waiting until wall time exceeded the
+stepped time and using ordinary `frozen on` / `frozen off` rebased a positive
+origin and restored clock/frame progress. No clock fields or guest memory
+were edited. Future runs should fix that generic origin-sentinel issue or
+avoid stepping guest time ahead of wall time; do not interpret the resulting
+paused screen as a WC3 deadlock. No runtime optimization was made here.
+
+### Cooperative profile attribution follow-up (2026-10-19)
+
+Reclassified the same saved 60-second profile against its own `combined.wat`,
+not the current build. Analysis is in
+`scratch/runs/20261019-wc3-coop-deep/profile-breakdown.json`; these are sample
+shares, not independently measured speedups. Non-overlapping stack attribution
+assigns 50.51% to main guest execution excluding GL, 24.57% to cooperative
+background guest execution, 16.98% to GL encoding/frontend, and 7.94% elsewhere.
+Tail calls can erase callers, so these stacks do not identify guest PCs.
+
+A concrete GL candidate is repeated translation of the encoder's own scratch
+vertices: `$g2w_slow` under `$gl_append_vertex4` and `$gl_finish_immediate`
+accounts for 739.851 + 736.834 ms, or 2.45% of total sampled time. The existing
+`$gl_alloc_affine` verifies contiguous backing, and `$gl_immediate_wa` retains
+its mapped address, but append/copy still translate each field separately.
+Reusing that verified mapped base for internal scratch packing is a bounded
+candidate; arbitrary guest client arrays must retain sparse-safe translation.
+No optimization or speedup is claimed yet.
+
+Background execution also deserves attribution: 2191 ms of
+`$x87_island_fast` self samples descend from cooperative `runSlice`, versus
+844 ms from main execution. Per-thread timing through the existing
+`__waProfileThreadRun` hook is needed before assigning this to audio or game
+logic. JS uniform handling is another smaller candidate (`setUniform` 1.20%,
+`_applyUniforms` about 1.08%); final window composition is only 0.69%.
+
+The fresh follow-up navigation did **not** produce a valid gameplay timing.
+Frozen status reported about 1,174,278 ms before resume and 88,400 ms after;
+later inspection found audio-thread waitStartedAt around 1,174,273 while
+the live scheduling clock was only 365,735. `clock-mismatch.json` preserves
+the subsequent paused state. Do not merge this run with the original CPU
+profile. The final reviewed image reached the briefing's PRESS ANY KEY
+prompt, not gameplay; the harness gate timed out and sampled the deliberately
+frozen page with zero guest presents, then closed its browser. A static map
+image alone was not evidence of a game deadlock.
+
+Preparation counters also distinguish low-work import retries from zero work:
+threads 8/9 repeatedly returned yield 9 at `0x07500300`, retiring two blocks
+per call. These are retry slices, not zero-block slices. Counts from loading
+are diagnostic evidence only and do not establish gameplay throughput.
+
+### 2026-10-19 Worker scheduling census (diagnostic, not another FPS result)
+
+Evidence: `scratch/runs/20261019-wc3-threads-deep/loading-census.json` and
+`loading-census.png`; commands in `run.sh`, `sample.js`, and
+`control-commands.ndjson`. Separate fixture `/private/tmp/wc3-threads-deep-20261019`
+copies the earlier matched profile build (WASM SHA256
+`4eb9264e9326b95f5e1922a2bd2b62e0558dba00205d85c307ea2eb47d7863bc`).
+Runtime code unchanged; census wraps message dispatch and Atomics.wait and
+uses built-in `?rpc-census`. Browser Chrome155, Worker backend, COI enabled.
+
+Guest threads/slots8 and9 accumulated692,821 and692,964 yield9 returns,
+respectively. Their **entire** accumulated slice wall times were only1,278.34
+and1,256.36ms. Thus roughly1.386 million blocking-import retry slices did
+almost no guest work. This is cumulative preparation evidence, not a rate
+measured during gameplay. **Correction:** yield9 is not specific to critical
+sections. The later live check found CS address/owner/park EIP all zero for
+T8/T9, with EIP0x07500300. As already identified above in the IOCP investigation,
+this is War3Demo import96, GetQueuedCompletionStatus. These are IOCP consumers,
+not demonstrated lock contenders; the earlier CS attribution was incorrect.
+
+The exact snapshot `lib/thread-manager.js:2327` handles every yield9 with
+`await thread.link.callExport('clear_yield')`, then leaves the thread eligible
+for the next scheduler round. Every retry therefore entails a slice request
+and reply plus an additional clear_yield request/reply. This provides a
+specific source explanation for the earlier profile's message-heavy Workers.
+Next candidate for these IOCP waits: bounded retry pacing or host-round gating
+instead of immediate free-run redispatch. An actual CS waiter can separately
+use ownership checks, but only after verifying its current EIP matches the
+reported CS park EIP: console and IOCP waits also use yield9. These proposals
+are not measured speedups.
+
+The five-second census separately identifies slot4, start0xecc590, as audio:
+699 slices,1,244,926 blocks,464.07ms slice wall,624 asynchronous voice ring
+submissions. Its measured Atomics.wait time for wait_single/set_event was
+about110ms; blocked elapsed time must not be reported as CPU. Slot11,
+start0xee7690, made302 seven-block wait iterations (40.53ms slice wall).
+
+Fresh preparation did not produce another valid gameplay sample. The census
+image is the chapter/map screen; main is parked on infinite wait handle
+234882057, while background audio continues. Frozen-to-live clock readings
+also regressed during preparation. Zero presents here are **not** gameplay
+FPS or proof of a deadlock. The earlier20.88 versus14.13 presents/s comparison
+remains the only gameplay comparison and retains its unequal-load/single-run
+limitations. No runtime optimization, merge, or deployment was performed.
+
+### Worker import retry and frozen-clock fixes (2026-10-19)
+
+The fix separates the two meanings of yield9. An actual critical-section
+frame is qualified by its current EIP matching the reported `csParkEip`;
+only then can an aligned, in-bounds shared owner word keep it parked. A
+changed owner permits a retry, with acquisition still checked by WAT. Missing,
+packed, or stale diagnostics retain the retry path rather than blocking an
+unrelated API.
+
+The WC3 IOCP consumers take that generic path: retry no sooner than one host
+millisecond later, instead of immediately chaining free-running Worker RPCs.
+The scheduler's idle bound and nested callback pumps honor the deadline;
+`clear_yield` is deferred until the retry, and an in-progress preparation guard
+prevents duplicate clears/slices. Guest handler logic still determines queue
+completion and timeout. This pacing uses the host clock, not frozen guest
+time, so agent stepping cannot strand the retry.
+
+Separately, frozen mode now latches already-observed audio/deadline time and
+stops the continuous guest clock as well as batch ticks. Resume preserves the
+same epoch. Zero/negative wall origins are valid; null denotes an uninitialized
+origin. Deterministic regression tests cover stepping ahead of wall time,
+startup-clock scaling, pending deadlines, retry races, and stale CS records.
+
+Acceptance evidence: `scratch/runs/20261019-wc3-fix-verified`. Reviewed original
+Prologue HUD, Thrall selection, movement toward the circle, and return to the
+starting position. Chrome155/Apple M1 hardware WebGL, actual Worker backend,
+800x600 guest, one browser. Thirty seconds after movement produced 705 GPU
+presents (23.49/s), p95 interval59.17ms, no observed main-thread long tasks.
+This is a gameplay observation, **not a controlled speedup comparison** against
+the earlier profiled run. T8/T9 added4371/4369 slices across the surrounding
+measurement/report interval, with about30.5/30.1ms guest slice wall time, and
+their CS diagnostics remained zero. Audio thread4 still did substantial work.
+
+The live freeze check held guestMs10017 through a1.5-second wall pause and
+resume, then advanced to11020 after another second. Focused scheduler/clock
+tests pass. The broader browser checks passed Notepad/Calc/Win16/Rodent2000/
+Winamp execution and input. Its two COM-loader failures reproduce in the
+untouched baseline; `test-thread-manager.js:570` also fails on that baseline.
+The root build now passes all gates after reviewing the changed host-file
+callback-lifetime inventory (including the earlier renderer gamma change).
+Root WASM and mirror both use layouteb58be38f5ebb837; rebuilt WASM SHA256
+4eb9264e9326b95f5e1922a2bd2b62e0558dba00205d85c307ea2eb47d7863bc
+matches the acceptance fixture byte for byte, replacing the stalef008dcdb
+artifact that caused the original launch failure. No deployment.
+
+Earlier fix validation folders retain their limits: `20261019-wc3-fix` reached
+the cinematic, not gameplay, while `20261019-wc3-fix-gameplay` timed out at
+briefing because direct renderer keyboard calls targeted HWND0. The final
+driver uses `agent-remote.runCommands`, the same DOM-event path as `ctl.js`,
+and waits for the visible gameplay HUD before moving and sampling.

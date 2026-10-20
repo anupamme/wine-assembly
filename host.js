@@ -1254,7 +1254,8 @@ class WineAssembly {
         const sc = this._startupClock;
         if (!sc || !sc.active || name !== sc.config.endOn) return;
         const st = this._guestTickState(ctx.sharedAudio);
-        const raw = st.wallStartMs > 0 ? this._audioSchedulerNow() - st.wallStartMs : 0;
+        const raw = this._frozen ? sc.unmap(st.batchMs) :
+          (Number.isFinite(st.wallStartMs) ? this._audioSchedulerNow() - st.wallStartMs : 0);
         sc.end(raw, name);
         console.log(`[startup-clock] ended by ${name} at raw ${Math.round(raw)} ms = ` +
           `guest ${Math.round(sc.map(raw))} ms`);
@@ -1520,7 +1521,7 @@ class WineAssembly {
   _guestTickState(sharedAudio) {
     const shared = sharedAudio || this._sharedAudio || (this._sharedAudio = {});
     if (!shared.guestTickState) {
-      shared.guestTickState = { wallStartMs: 0, batchMs: 0, callsInBatch: 0, lastReturnedMs: 0 };
+      shared.guestTickState = { wallStartMs: null, batchMs: 0, callsInBatch: 0, lastReturnedMs: 0 };
     }
     return shared.guestTickState;
   }
@@ -1531,7 +1532,7 @@ class WineAssembly {
     // wall — see the frozen-mode block above `class WineAssembly`.
     if (this._frozen) { st.callsInBatch = 0; return; }
     const now = this._audioSchedulerNow();
-    if (!Number.isFinite(st.wallStartMs) || st.wallStartMs <= 0) st.wallStartMs = now;
+    if (!Number.isFinite(st.wallStartMs)) st.wallStartMs = now;
     const elapsed = Math.max(0, Math.floor(this._startupElapsed(now - st.wallStartMs)));
     st.batchMs = Math.max(Number.isFinite(st.batchMs) ? st.batchMs : 0, elapsed) & 0x7FFFFFFF;
     st.callsInBatch = 0;
@@ -1558,7 +1559,7 @@ class WineAssembly {
     let elapsed = Number.isFinite(st.batchMs) ? st.batchMs : 0;
     if ((calls % stride) === 0) {
       const now = this._audioSchedulerNow();
-      if (!Number.isFinite(st.wallStartMs) || st.wallStartMs <= 0) st.wallStartMs = now;
+      if (!Number.isFinite(st.wallStartMs)) st.wallStartMs = now;
       elapsed = Math.max(0, Math.floor(this._startupElapsed(now - st.wallStartMs)));
     }
     const batchMs = Math.max(Number.isFinite(st.batchMs) ? st.batchMs : 0, elapsed);
@@ -1596,7 +1597,7 @@ class WineAssembly {
     const st = this._guestTickState(sharedAudio);
     const base = Math.max(Number.isFinite(st.batchMs) ? st.batchMs : 0,
       Number.isFinite(st.lastReturnedMs) ? st.lastReturnedMs : 0);
-    if (!Number.isFinite(st.wallStartMs) || st.wallStartMs <= 0) return base;
+    if (this._frozen || !Number.isFinite(st.wallStartMs)) return base;
     return Math.max(base, this._startupElapsed(this._audioSchedulerNow() - st.wallStartMs));
   }
 
@@ -6064,6 +6065,14 @@ class WineAssembly {
     const next = !!on;
     this._frozenTickMs = Number.isFinite(this._frozenTickMs) ? this._frozenTickMs : frozenBus.tickMs;
     if (this._frozen === next) return this.frozenStatus();
+    // Latch the continuous clock before freezing. Audio and deadline waits
+    // may have observed time beyond the last executed batch.
+    const st = this._guestTickState(this.hostCtx && this.hostCtx.sharedAudio);
+    if (next) {
+      const guestMs = Math.max(this._guestContinuousMs(this.hostCtx && this.hostCtx.sharedAudio),
+        this._guestAudioClockMs(this.hostCtx && this.hostCtx.sharedAudio));
+      st.batchMs = st.lastReturnedMs = Math.ceil(guestMs);
+    }
     this._frozen = next;
     if (next) {
       this._frozenBudget = 0;
@@ -6082,7 +6091,7 @@ class WineAssembly {
       // Live again. Slide the wall-clock origin forward by the time the guest
       // did not experience, or it gets the whole frozen interval as one jump:
       // every timer instantly overdue, every timeGetTime delta enormous.
-      const st = this._guestTickState(this.hostCtx && this.hostCtx.sharedAudio);
+      st.batchMs = Math.max(st.batchMs, st.lastReturnedMs);
       // batchMs is guest time; a startup clock maps raw wall time onto it.
       const rawMs = this._startupClock ? this._startupClock.unmap(st ? st.batchMs | 0 : 0) : null;
       if (st) st.wallStartMs = this._audioSchedulerNow() - (rawMs === null ? (st.batchMs | 0) : rawMs);
@@ -6607,7 +6616,7 @@ class WineAssembly {
     const pausedMs = Math.max(0, this._audioSchedulerNow() - (this._hiddenPausedAt || 0));
     if (pausedMs > 0) {
       const st = this._guestTickState(this.hostCtx && this.hostCtx.sharedAudio);
-      if (st && Number.isFinite(st.wallStartMs) && st.wallStartMs > 0) {
+      if (st && Number.isFinite(st.wallStartMs)) {
         st.wallStartMs += pausedMs;
       }
     }

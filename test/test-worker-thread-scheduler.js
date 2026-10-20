@@ -116,6 +116,97 @@ function makeManager(backend, extraOpts) {
 (async () => {
   console.log('ThreadManager worker backend\n');
 
+  // A contended CS must not produce an unbounded free-run RPC chain. Polling
+  // ownership is only a hint; a racing acquisition must park the waiter again.
+  {
+    const backend = makeBackend([[]]);
+    const tm = makeManager(backend);
+    tm.createThread(0x401500, 0, 0, 0);
+    await tm._spawnPendingWorkers();
+    const [handle, thread] = [...tm.threads.entries()][0];
+    const addr = 0x400;
+    const owner = new Int32Array(tm.memory.buffer, addr + 12, 1);
+    Atomics.store(owner, 0, 7);
+    const blocked = { yield: 9, csWaitAddr: addr, csWaitOwner: 7, csParkEip: 0x401000, blocks: 2 };
+    thread.link.script = [blocked];
+    await tm.runWorkerSlices(1000);
+    for (let i = 0; i < 100; i++) await tm.runWorkerSlices(1000);
+    await tm._runWorkerThread(handle, thread, 1000); // nested send pump path
+    assert.strictEqual(thread.link.calls.length, 1, 'unchanged owner gets no retry slices');
+    assert.deepStrictEqual(thread.link.exports, [], 'parking sends no clear_yield RPC');
+    tm.workerFreeRun = true;
+    assert.strictEqual(tm.freeRunParkBound(50), 50, 'held CS permits host parking');
+    tm._freeRunSliceSize = 1000;
+    tm._freeRunStepAt = tm._waitNow();
+    assert.strictEqual(tm.offerSatisfiedWaiters(), 0, 'held CS is not offered');
+    Atomics.store(owner, 0, 0);
+    assert.strictEqual(tm.freeRunParkBound(50), 0, 'released CS wakes the scheduler');
+    const offered = [];
+    tm._freeRunDispatch = (...args) => offered.push(args);
+    assert.strictEqual(tm.offerSatisfiedWaiters(), 1, 'release offers a prompt retry');
+    assert.strictEqual(offered[0][0], handle);
+    tm.workerFreeRun = false;
+    // Another owner won before the slice; WAT reports contention again.
+    thread.link.script = [{ ...blocked, csWaitOwner: 8 }];
+    Atomics.store(owner, 0, 8);
+    await tm.runWorkerSlices(1000);
+    assert.strictEqual(thread.link.calls.length, 2, 'changed owner permits an acquire recheck');
+    assert.deepStrictEqual(thread.link.exports, ['clear_yield']);
+    await tm.runWorkerSlices(1000);
+    assert.strictEqual(thread.link.calls.length, 2, 'new contention remains parked');
+    Atomics.store(owner, 0, 0);
+    thread.link.script = [{ yield: 0, blocks: 100 }];
+    await tm.runWorkerSlices(1000);
+    assert.strictEqual(thread.parkedCriticalSection, null, 'successful retry clears parking');
+    assert.strictEqual(thread.link.calls.length, 3);
+    assert.strictEqual(tm.lastWorkerSliceBlocks, 100);
+    // Missing, packed, sentinel and out-of-bounds diagnostic addresses must
+    // fall back to actual guest execution, not read arbitrary memory or hang.
+    for (const bad of [0, 0xF0, addr + 1, tm.memory.buffer.byteLength - 12, 0xFFFFFFFC]) {
+      thread.parkedCriticalSection = { addr: bad, owner: 7 };
+      assert.strictEqual(tm._criticalSectionBlocked(thread), false);
+      await tm._runWorkerThread(handle, thread, 1000);
+      assert.strictEqual(thread.parkedCriticalSection, null);
+    }
+    Atomics.store(owner, 0, 7);
+    let retryNow = 1000;
+    tm._waitNow = () => 0; // frozen guest time must not strand a host retry
+    tm._now = () => retryNow;
+    for (const csParkEip of [0, 0x402000]) {
+      thread.link.script = [{ ...blocked, csParkEip }];
+      const before = thread.link.calls.length;
+      await tm.runWorkerSlices(1000);
+      for (let i = 0; i < 100; i++) await tm.runWorkerSlices(1000);
+      assert.strictEqual(thread.link.calls.length, before + 1,
+        'generic yield 9 cannot immediately chain empty slices');
+      tm.workerFreeRun = true;
+      assert.strictEqual(tm.freeRunParkBound(50), 1, 'generic import retry has a bounded deadline');
+      tm.workerFreeRun = false;
+      retryNow++;
+      await tm.runWorkerSlices(1000);
+      assert.strictEqual(thread.link.calls.length, before + 2,
+        'non-CS yield 9 ignores stale lock diagnostics');
+      assert(!thread.parkedCriticalSection);
+      retryNow++;
+    }
+    // A nested callback pump arriving while clear_yield is in flight cannot
+    // send a second clear or slice for the same parked frame.
+    let releaseClear;
+    const clears = thread.link.exports.length;
+    thread.link.callExport = async name => {
+      thread.link.exports.push(name);
+      await new Promise(resolve => { releaseClear = resolve; });
+    };
+    const resuming = tm._runWorkerThread(handle, thread, 1000);
+    await tm._runWorkerThread(handle, thread, 1000);
+    assert.strictEqual(thread.link.exports.length, clears + 1);
+    assert.strictEqual(tm._workerSkipReason(thread, retryNow, true), 'inflight');
+    releaseClear();
+    await resuming;
+    assert.strictEqual(thread.importRetryPreparing, false);
+    check(true, 'CS waiters park without RPC churn, wake on release, and recheck acquisition races');
+  }
+
   // A parked helper must not force the host's idle GetMessage worker to spin.
   // Exercise real wait bookkeeping, including consuming an auto-reset event
   // exactly once between the parking decision and dispatch.

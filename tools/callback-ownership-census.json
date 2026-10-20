@@ -218,9 +218,9 @@
     {
       "file": "host.js",
       "name": "host-file",
-      "sha256": "723fada14cb3a070adfdc0d524eb833870b6f762da114e4db632f8f46e58b760",
+      "sha256": "7bd1128894f13841bb3ed2455fe8e8857fe3702df97bd68b3a462f58e3262e4c",
       "kind": "host-entry",
-      "reason": "Conservative whole-file host boundary inventory. LockFile review: stop marks this host stopped, synchronously retires VFS disk handles before asynchronous guest-runtime retirement, and rejects late opens; final duplicate close releases owner locks and pending read reservations. closeAllDiskHandles/closeHandle invoke no guest callback or context restoration. Other callback ownership remains pending. SetLocalTime review: synchronous process calendar offset state is shared through host context construction; no guest callbacks, suspended invocation or context restoration added.",
+      "reason": "Conservative whole-file host boundary inventory. LockFile review: stop marks this host stopped, synchronously retires VFS disk handles before asynchronous guest-runtime retirement, and rejects late opens; final duplicate close releases owner locks and pending read reservations. closeAllDiskHandles/closeHandle invoke no guest callback or context restoration. Other callback ownership remains pending. SetLocalTime review: synchronous process calendar offset state is shared through host context construction; no guest callbacks, suspended invocation or context restoration added. Frozen-clock review: clock origin initialization and freeze/resume rebasing change only host clock state; no new guest invocation or restoration boundary.",
       "ownership": "pending"
     },
     {
@@ -266,9 +266,9 @@
     {
       "file": "lib/guest-worker.js",
       "name": "host-file",
-      "sha256": "77529dad2295c6e3460c71a5bc4d3481a759d0147b093a9aa1b66b8ccfa682c3",
+      "sha256": "183504743d9813ef1029d698c986832fc259b8c52e88d979aa20cde463a595eb",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
+      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. CS park-EIP reporting reads an existing diagnostic export after a slice; it creates no guest context or continuation.",
       "ownership": "pending"
     },
     {
@@ -346,9 +346,9 @@
     {
       "file": "lib/thread-manager.js",
       "name": "host-file",
-      "sha256": "1d584146b61a5ff0a8e6b4b3f9d844b9dc893ede6ccd7babc0cd8265b3e1e9fa",
+      "sha256": "3e2d48066645cbab519a9a23d09cb90810b172d9c44a60f533a3f90adb69caf9",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
+      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. Import retry review: retain the existing parked thunk frame until host deadline or qualified CS owner change; clear_yield resumes that same frame, with preparation guarded against nested dispatch and cleanup in finally. No context restore or new guest callback is introduced; acquisition remains in WAT.",
       "ownership": "pending"
     },
     {
