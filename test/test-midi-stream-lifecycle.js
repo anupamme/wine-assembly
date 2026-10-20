@@ -39,6 +39,16 @@ const mutations = {
     'r.owner.post_message_q(r.callback, item.message, item.handle, item.header);'],
   'browser-owner': ["if(!owner.tid && this.instance?.exports!==ex) return {status:'retired'};",
     '/* no VM identity check */', 'host.js'],
+  'fraction-lost': ['+ s.remainder;', '+ 0n;'],
+  'fraction-tempo': ['if (ev.type === 1) s.tempo = ev.value;',
+    'if (ev.type === 1) { s.tempo = ev.value; s.remainder = 0n; }'],
+  'fraction-pause': ['s.running = false; s.pausedAt = now;',
+    's.running = false; s.pausedAt = now; s.remainder = 0n;'],
+  'fraction-drain': ['s.remainder = 0n;', '/* retained discarded fraction */'],
+  'division-running-empty': ['(s.running || s.pausedAt !== null)', 's.queue.length'],
+  'division-stopped-queued': ['(s.running || s.pausedAt !== null)',
+    '(s.running || s.pausedAt !== null || s.queue.length)'],
+  'division-paused': ['(s.running || s.pausedAt !== null)', 's.running'],
 };
 const mutation = process.env.MIDI_MUTATION;
 let hostSource = sources['lib/host-audio.js'];
@@ -236,6 +246,84 @@ function setup() {
     done: () => notifications.filter(n => n.args[1] === 0x3c9) };
 }
 function test(name, fn) { fn(); cases++; console.log('PASS ' + name); }
+function property(s, h, value, flags = 0x80000001) {
+  s.dv.setUint32(700, 8, true); s.dv.setUint32(704, value, true);
+  return s.call('midiStreamProperty', h, 700, flags);
+}
+function notes(s, index = 0) { return s.synths[index]?.notes.get('0:60') || 0; }
+test('fractional deltas accumulate to 50ms across 96 events', () => {
+  const s = setup(), h = s.open(0);
+  assert.equal(property(s, h, 960), 0);
+  s.queue(h, 1024, 1, Array(96).fill(0x643c90));
+  s.call('midiStreamRestart', h); s.e.service(100);
+  assert.equal(notes(s), 1, 'only the first sub-ms deadline rounds to zero');
+  s.e.service(149); assert.equal(notes(s), 95); assert.equal(s.flags(1024), 18);
+  s.e.service(150); assert.equal(notes(s), 96); assert.equal(s.flags(1024), 3);
+});
+test('fraction survives headers, tempo events and sibling service', () => {
+  const s = setup(), a = s.open(0), b = s.open(0);
+  assert.equal(property(s, a, 960), 0); assert.equal(property(s, b, 960), 0);
+  // 500000/960000 + 460000/960000 = exactly one millisecond.
+  s.queue(a, 1024, 1, [0x01000000 | 460000]);
+  s.queue(a, 1536, 1);
+  s.queue(b, 2048, 1, [0x643c90, 0x643c90]);
+  s.call('midiStreamRestart', a); s.call('midiStreamRestart', b);
+  s.e.service(100);
+  assert.equal(s.flags(1536), 18); assert.equal(notes(s), 1, 'sibling first note');
+  s.e.service(101);
+  assert.equal(s.flags(1536), 3); assert.equal(notes(s), 2);
+  assert.equal(notes(s, 1), 1, 'tempo stream note');
+});
+test('fraction survives repeated pause/restart with a pending deadline and clock wrap', () => {
+  const s = setup(), h = s.open(0);
+  assert.equal(property(s, h, 1000), 0); // half-ms ticks
+  s.setNow(0xfffffffe);
+  s.queue(h, 1024, 1, Array(4).fill(0x643c90));
+  s.call('midiStreamRestart', h); s.e.service(0xfffffffe);
+  assert.equal(notes(s), 1); // second event is pending at ffffffff
+  s.call('midiStreamPause', h); s.call('midiStreamPause', h);
+  s.setNow(8); s.call('midiStreamRestart', h); s.call('midiStreamRestart', h);
+  s.e.service(8); assert.equal(notes(s), 1);
+  s.e.service(9); assert.equal(notes(s), 3);
+  // Third event left a half-ms carry; fourth is already pending.
+  s.e.service(10); assert.equal(notes(s), 4); assert.equal(s.flags(1024), 3);
+  // Pause after an exhausted header, before another delta consumes its carry.
+  s.queue(h, 2048, 1); s.e.service(10); assert.equal(notes(s), 5);
+  s.setNow(10); s.call('midiStreamPause', h);
+  s.setNow(20); s.call('midiStreamRestart', h);
+  s.queue(h, 2560, 1); s.e.service(20); assert.equal(notes(s), 5);
+  s.e.service(21); assert.equal(notes(s), 6);
+});
+for (const action of ['midiStreamStop', 'midiOutReset']) {
+  test(`${action} discards fractional timeline before requeue/restart`, () => {
+    const s = setup(), h = s.open(0);
+    assert.equal(property(s, h, 1000), 0);
+    s.queue(h, 1024, 1); s.call('midiStreamRestart', h); s.e.service(100);
+    assert.equal(notes(s), 1);
+    assert.equal(s.call(action, h), 0);
+    s.setNow(200); s.queue(h, 1536, 1);
+    s.call('midiStreamRestart', h); s.e.service(200);
+    assert.equal(notes(s), 1, 'fresh half-ms rounds from new origin');
+    assert.equal(s.flags(1536), 3);
+  });
+}
+test('time division follows stopped state including running-empty and stopped-queued', () => {
+  const s = setup(), h = s.open(0);
+  s.call('midiStreamRestart', h);
+  assert.equal(property(s, h, 960), 11, 'running empty is not stopped');
+  assert.equal(property(s, h, 0, 0x40000001), 0);
+  assert.equal(s.dv.getUint32(704, true), 480, 'failed SET leaves division intact');
+  s.call('midiStreamPause', h);
+  assert.equal(property(s, h, 960), 11, 'paused is not stopped');
+  s.call('midiStreamStop', h);
+  s.queue(h, 1024, 960);
+  assert.equal(property(s, h, 960), 0, 'queued on a stopped device is permitted');
+  s.call('midiStreamRestart', h); s.e.service(599); assert.equal(notes(s), 0);
+  s.e.service(600); assert.equal(notes(s), 1);
+  assert.equal(property(s, h, 240), 11, 'exhausted running stream is still running');
+  s.call('midiOutReset', h); s.queue(h, 1536, 240);
+  assert.equal(property(s, h, 240), 0, 'reset establishes stopped state');
+});
 test('public hash lookup and generated dispatch execute real Stop with stdcall', () => {
   const s = setup(), h = s.open(); s.queue(h);
   new Uint8Array(s.dv.buffer, 400, 15).set(Buffer.from('midiStreamStop\0'));
