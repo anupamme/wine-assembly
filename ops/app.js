@@ -40,6 +40,7 @@ const taskStates = [
   ['backlog', 'Backlog', 'Not scheduled yet', '○'],
   ['deferred', 'Deferred', 'Intentionally set aside', 'Ⅱ'],
   ['done', 'Done', 'Completed tasks; evidence remains available', '✓'],
+  ['duplicate', 'Duplicate', 'Duplicate records retained for provenance; not queued or completed work', '·'],
   ['unknown', 'Historical notes', 'No current task status recorded', '·'],
 ];
 const expandedTaskGroups = new Map();
@@ -266,7 +267,7 @@ function blockerDetail(id) {
   show('BLOCKER / ' + t.id, `<h1>${escape(t.title)}</h1><p>${escape(t.blocker || 'No blocker reason recorded.')}</p>${t.needs ? `<p><strong>Needs:</strong> ${escape(t.needs)}</p>` : ''}<p class="sub">Owner: ${escape(blockerOwner(t))} · Waiting on: ${escape(t.waitingOn || 'unspecified')}</p>${t.replyAllowed ? `<form id="blocker-reply" data-task-id="${escape(t.id)}"><label for="reply-text">Decision or help for the owner</label><textarea id="reply-text" required maxlength="2000" rows="4" placeholder="What changed, what to try, or which decision to follow…"></textarea><p class="source-note">Posts to the shared messageboard as dashboard-user. The owner must verify and update the task; posting does not unblock it.</p><button type="submit">Post reply to messageboard</button><p id="reply-status" role="status"></p></form>` : '<p class="notice">Add an explicit id: to this task in TODOS.md before posting a reply.</p>'}${section('Recent replies')}<div class="panel">${feedRows(t.replies || [])}</div><details class="blocker-source"><summary>Task source</summary><pre>${escape(t.body)}</pre></details>`);
 }
 function overview() {
-  const tasks = sortedTasks(state.tasks.filter(t => !['done', 'deferred', 'unknown'].includes(t.status) && matches(t)));
+  const tasks = sortedTasks(state.tasks.filter(t => !['done', 'deferred', 'duplicate', 'unknown'].includes(t.status) && matches(t)));
   return title('Operations console', 'Track the work. Inspect the evidence. Keep the agents in view.') +
     statusSummary()+
     `<div class="stats">${['active','ready','blocked','review'].map(status=>`<a class="stat" href="#tasks"><div class="sub">${escape(taskState(status)[1])}</div><div class="value task-label-${status}">${state.tasks.filter(t=>t.status===status).length}</div><div class="sub">From the task ledger</div></a>`).join('')}</div>` +

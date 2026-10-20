@@ -131,7 +131,9 @@ function parseTasks(text, candidates = []) {
     const explicit = metadata(meta, 'status');
     const candidateIds = candidates.filter(c => new RegExp(`(^|[^a-zA-Z0-9_-])${c.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-zA-Z0-9_-])`).test(body)).map(c => c.id);
     tasks.push({ id: metadata(meta, 'id') || `todo-${line}`, title: clip(title, 250), body: body.slice(0, 24000), line, endLine,
-      section, kind, status: ['backlog', 'ready', 'active', 'blocked', 'review', 'deferred', 'done'].includes(explicit) ? explicit : status,
+      // A duplicate is retained for provenance, not queued by its stale checkbox
+      // or counted as completed work (including dependency satisfaction).
+      section, kind, status: ['backlog', 'ready', 'active', 'blocked', 'review', 'deferred', 'done', 'duplicate'].includes(explicit) ? explicit : status,
       next: field(meta, 'next',2000), done: field(meta,'done',2000), notes:field(meta,'notes',4000), evidence:field(meta,'evidence',4000),
       explicitCandidates:field(meta,'candidate',4000).split(/[,\s]+/).filter(Boolean),
       dependencies:field(meta,'depends-on',4000).split(/[,\s]+/).filter(Boolean),
