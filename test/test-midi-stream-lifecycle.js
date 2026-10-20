@@ -165,7 +165,7 @@ function setup() {
   }
   const ctx = { getMemory: () => memory.buffer, WebAudioTinySynth: Synth,
     guestNowMs: () => now, audioClockMs: () => now };
-  const audio = createAudioHost(ctx, { getHost: () => ({ set_event: h => events.push(h) }),
+  const audio = createAudioHost(ctx, { getHost: () => ({ set_event: h => { events.push(h); return 1; } }),
     profileNow: () => 0, profileEvent: () => {} });
   const ac = { get currentTime() { return now / 1000; }, state: 'running' };
   ctx._voices._ensureCtx = () => ac;
@@ -339,6 +339,9 @@ test('event/window/NULL notifications and unsupported routes fail explicitly', (
     assert.deepEqual(s.windows, type === 1 ? [[77, 0x3c7, h, 0], [77, 0x3c9, h, 1024], [77, 0x3c8, h, 0]] : []);
   }
   const s = setup();
+  s.dv.setUint32(8216, 0x50000, true);
+  assert.equal(s.call('midiStreamOpen', 516, 512, 1, 0x80000001, 0), 11,
+    'event callback must not enter the host ReleaseMutex ABI');
   assert.throws(() => s.open(2), /unsupported/);
   s.ctx.threadManager = { workerBackend: true };
   assert.throws(() => s.open(3), /worker delivery unsupported/);
