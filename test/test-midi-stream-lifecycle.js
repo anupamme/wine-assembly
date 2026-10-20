@@ -26,7 +26,8 @@ const mutations = {
   'orphan-first': ['_midiOut.devices.set(handle, dev);', '_midiOut.devices.clear(); _midiOut.devices.set(handle, dev);'],
   'stale-queue': ['s.queue = [];', 's.queue = pending;'],
   'missing-done': ['_midiNotify(dev, 0x3c9, submission.ga);', '/* dropped notification */'],
-  'wrong-handle': ['handle: dev.handle, message, header', 'handle: dev.handle + 1, message, header'],
+  'wrong-handle': ['_midiCallbacks.push({ registration: r, handle: dev.handle, message, header',
+    '_midiCallbacks.push({ registration: r, handle: dev.handle + 1, message, header'],
   'wrong-instance': ['r.callback, r.instance, item.message', 'r.callback, 0, item.message'],
   'wrong-message': ['_midiNotify(dev, 0x3c9, submission.ga);', '_midiNotify(dev, 0x3bd, submission.ga);'],
   'shared-synth': ['let tiny = dev.tinySynth;', 'let tiny = _ensureTinySynth(ac);'],
@@ -112,7 +113,8 @@ const bodies = names.map(n => fn(audioFile, 'handle_' + n));
 bodies.push(fn(audioFile, 'midi_stream_service'));
 for (const n of ['fire_midi_out_callback_bound', 'fire_wave_out_callback_bound',
   'fire_audio_callback_bound', 'wave_callback_restore_wait']) bodies.push(fn('src/13-exports.wat', n));
-for (const n of ['save_caller_regs', 'restore_caller_regs']) bodies.push(fn('src/03-registers.wat', n));
+for (const n of ['save_caller_regs', 'restore_caller_regs', 'get_cf', 'set_flags_inc', 'set_flags_dec'])
+  bodies.push(fn('src/03-registers.wat', n));
 for (const n of ['hash_api_name', 'lookup_api_id']) bodies.push(fn('src/10-helpers.wat', n));
 const page = Math.floor(stop.id / 256);
 const dispatch = fn('src/09b2-dispatch-table.generated.wat', 'dispatch_api_table_page_' + page);
@@ -145,6 +147,9 @@ const wasmSource = `
  (export "lookup" (func $lookup_api_id))
  (export "dispatch" (func $dispatch_api_table_page_${page}))
  (export "restore" (func $restore_caller_regs))
+ (export "getCF" (func $get_cf))
+ (export "incFlags" (func $set_flags_inc))
+ (export "decFlags" (func $set_flags_dec))
  (export "restoreWait" (func $wave_callback_restore_wait))
 `;
 const compiled = compileClosure({ source: wasmSource, vfs: new Map() }, { tailCalls: false });
@@ -220,10 +225,19 @@ function setup() {
       assert(guard--, 'callback queue progress');
       const before = dv.getUint32(80, true);
       const pc = e.eip.value, eax = dv.getUint32(64, true);
+      // Alternate carry and INC/DEC across actual queued MIDI notifications.
+      // Explicit flags (op 9) seed CF; INC/DEC must preserve it lazily.
+      const carry = 1 - (notifications.length & 1);
+      e.flag_op.value = 9; e.flag_a.value = carry;
+      (notifications.length & 2 ? e.decFlags : e.incFlags)(5, 6);
+      assert.equal(e.getCF(), carry, 'interrupted lazy carry setup');
+      const saved = [pc, eax, dv.getUint32(68, true), dv.getUint32(72, true),
+        e.flag_op.value, e.flag_res.value, e.flag_a.value, e.flag_b.value,
+        e.flag_sign_shift.value, carry].map(v => v >>> 0);
       audio.pumpWaveOutCompletions();
       assert.equal(e.mm_timer_in_cb.value, 1);
       const sp = dv.getUint32(80, true);
-      assert.equal(sp, before - 60, 'invocation-owned 36-byte saved frame + ret/5 args');
+      const frame = Array.from({ length: 10 }, (_, i) => dv.getUint32(sp + 24 + i * 4, true));
       const args = Array.from({ length: 6 }, (_, i) => dv.getUint32(sp + i * 4, true));
       assert.equal(args[0], 0xcaca000a);
       notifications.push({ cb: e.eip.value >>> 0, args: args.slice(1) });
@@ -231,10 +245,18 @@ function setup() {
       audio.pumpWaveOutCompletions();
       assert.equal(ctx._midiOut.callbacks.length, q, 'nested async callback waits');
       if (onCallback) onCallback(notifications.at(-1));
+      // Model guest flag clobber using the actual flag helpers, not a fake restore.
+      e.flag_op.value = 9; e.flag_a.value = 1 - carry;
+      e.incFlags(7, 8);
+      assert.equal(e.getCF(), 1 - carry, 'callback changed lazy carry');
       // Simulate the guest's ret 20; use the production restore helpers.
       dv.setUint32(80, sp + 24, true);
       e.mm_timer_in_cb.value = 0;
       e.restore(); e.restoreWait();
+      // Check behavior before layout so the pre-fix control fails on lost CF.
+      assert.equal(e.getCF(), carry, 'MIDI callback must restore interrupted lazy carry');
+      assert.equal(sp, before - 64, 'invocation-owned 40-byte saved frame + ret/5 args');
+      assert.deepEqual(frame, saved, 'executed save frame retains old offsets and appends CF at +36');
       assert.equal(dv.getUint32(80, true), before);
       assert.equal(e.eip.value, pc);
       assert.equal(dv.getUint32(64, true), eax);
@@ -591,6 +613,8 @@ if (process.argv.includes('--mutations')) {
       env: { ...process.env, MIDI_MUTATION: name }, encoding: 'utf8' });
     assert.notEqual(r.status, 0, 'mutation escaped: ' + name);
     assert.match(r.stderr, /AssertionError/, 'mutation must reach behavioral assertion: ' + name + '\n' + r.stderr);
+    assert.doesNotMatch(r.stderr, /unique mutation site|Compilation failed/,
+      'mutation must execute the fixture: ' + name);
     console.log('KILLED ' + name);
   }
 }
