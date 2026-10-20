@@ -5090,6 +5090,19 @@ async function main() {
     // list is shared, and adopting a name the main table does not implement
     // throws rather than leaving the return-0 stub in place.
     adoptThreadPrimitives(wh, h);
+    // An ordinary broker call runs outside runSlice's _runningThreadHandle
+    // scope. Charge a parked single wait to its actual guest thread, not main.
+    // Nested real Workers reject named waits locally in guest-rpc; cooperative
+    // instances still need the recursive-frame guard here.
+    wh.wait_single = (handle, timeout) => {
+      if (!threadManager._issuedAuthorityEvents.has((handle >>> 0) & 0x7fffffff)) {
+        return h.wait_single(handle, timeout); // preserve existing local routing
+      }
+      const e = workerInstance && workerInstance.exports;
+      return e && e.get_sync_msg_depth && e.get_sync_msg_depth()
+        ? threadManager.waitSingleCooperative(handle, timeout, (tid | 0) + 1)
+        : threadManager.waitSingle(handle, timeout, (tid | 0) + 1);
+    };
     // A console reader may live on a guest worker (telnet does). Its low-level
     // input buffer is process-scoped, so it must drain the same host event and
     // metadata latch as the main instance.
@@ -6729,6 +6742,7 @@ async function main() {
   let mainRenderWait = null;
   const mainExecutionSuspended = () => {
     const ex = instance.exports;
+    if (threadManager.isMainNamedEventWaiting()) return true;
     if (ex.get_yield_reason() === 16) {
       const token = ex.get_d3d_render_token() | 0;
       if (!mainRenderWait || mainRenderWait.token !== token) {
@@ -10279,6 +10293,12 @@ async function main() {
         if (ms > 0) await new Promise(r => setTimeout(r, ms));
       }
       await awaitMainRenderPark();
+      // An external event can change only while real time passes. Park the
+      // host asynchronously between probes; runnable guest siblings still
+      // receive their ordinary slices below, and main's guest frame stays put.
+      if (threadManager.isMainNamedEventWaiting()) {
+        await new Promise(resolve => setTimeout(resolve, 4));
+      }
       // A main thread parked in GetMessage is otherwise resumed only by the
       // checkMainYield() after run(), so the input this batch just injected
       // was taken at the batch's END and everything it led to ran in the next
@@ -11004,6 +11024,9 @@ if (VERBOSE) {
         prevEip = eip;
         prevApiCount = apiNow;
         prevRegFp = regFp;
+        stuckCount = 0;
+      } else if (threadManager.isMainNamedEventWaiting()) {
+        // An owned finite authority continuation is intentional inactivity.
         stuckCount = 0;
       } else if (ex.get_yield_reason() === 16 && ctx.d3d9Bridge &&
           ctx.d3d9Bridge.requests.has(ex.get_d3d_render_token() | 0)) {
