@@ -254,9 +254,9 @@
     {
       "file": "host.js",
       "name": "host-file",
-      "sha256": "7bd1128894f13841bb3ed2455fe8e8857fe3702df97bd68b3a462f58e3262e4c",
+      "sha256": "0b72f42b4120559d225d382a18a7861956cc2228cc29c1634b371ffe72683342",
       "kind": "host-entry",
-      "reason": "Conservative whole-file host boundary inventory. LockFile review: stop marks this host stopped, synchronously retires VFS disk handles before asynchronous guest-runtime retirement, and rejects late opens; final duplicate close releases owner locks and pending read reservations. closeAllDiskHandles/closeHandle invoke no guest callback or context restoration. Other callback ownership remains pending. SetLocalTime review: synchronous process calendar offset state is shared through host context construction; no guest callbacks, suspended invocation or context restoration added. Frozen-clock review: clock origin initialization and freeze/resume rebasing change only host clock state; no new guest invocation or restoration boundary.",
+      "reason": "Conservative whole-file host boundary inventory. LockFile review: stop marks this host stopped, synchronously retires VFS disk handles before asynchronous guest-runtime retirement, and rejects late opens; final duplicate close releases owner locks and pending read reservations. closeAllDiskHandles/closeHandle invoke no guest callback or context restoration. Other callback ownership remains pending. SetLocalTime review: synchronous process calendar offset state is shared through host context construction; no guest callbacks, suspended invocation or context restoration added. Frozen-clock review: clock origin initialization and freeze/resume rebasing change only host clock state; no new guest invocation or restoration boundary. MIDI review 20261020: cooperative delivery authenticates captured exports against main/active thread identity and suspension; immutable registration arguments select wave or MIDI bound export; wait counters change only after admission. Worker MIDI transport throws. Native qualification pending.",
       "ownership": "pending"
     },
     {
@@ -310,9 +310,9 @@
     {
       "file": "lib/host-audio.js",
       "name": "host-file",
-      "sha256": "6f54dc628fae27a8badfa705aecbbf1bcc59ce90a536fbb9991095f581f08812",
+      "sha256": "00e02890ff3010cb514bbff3e946d9cbc8c00d8cba2d2966a16950e585574bdb",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review.",
+      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. MIDI lifecycle/timing review 20261020: immutable registration retains callback, instance, exports and routing owner; function queue guards reentrancy and retries busy/throw, browser pump guards await and removes only the same head. Window backpressure retains head; changed owner is rejected; event DONE rejects mutex encoding. Completion removes pending ownership before notification; drain detaches old queue and close retires handle before notification. Fractional timing remainder and running/queued division restrictions reviewed; no invocation token or nonlocal coverage claimed.",
       "ownership": "pending"
     },
     {
@@ -423,9 +423,9 @@
           ]
         ]
       ],
-      "sha256": "0ca321b5b66af8321f50fde8afb2b0bee72b9bd45b1db5cf61060071315f9626",
+      "sha256": "b16da1963c5e9e09b304ae584f2b266287d4122fc2bf1f5cbcb16469d23cfbdb",
       "kind": "context-restore",
-      "reason": "Restores saved EIP; caller continuation ownership must be validated before nonlocal restore.",
+      "reason": "Restores saved EIP; caller continuation ownership must be validated before nonlocal restore. Repaired carry review 20261020: ten-word guest-stack frame restores saved_cf at offset 36 with 40-byte cleanup; MIDI/wave/timer consumers retain relative stack layout. Behavioral pre-fix and six mutation controls reject lost carry/incorrect frame. Normal CACA000A completion is tested; nonlocal ownership remains pending.",
       "ownership": "pending"
     },
     {
@@ -7780,20 +7780,17 @@
     {
       "file": "src/13-exports.wat",
       "name": "$fire_wave_out_callback_bound",
-      "writes": 1,
-      "boundaryCalls": [],
+      "writes": 0,
+      "boundaryCalls": [
+        "$fire_audio_callback_bound"
+      ],
       "exports": [
         "fire_wave_out_callback_bound"
       ],
-      "targets": [
-        [
-          "local.get",
-          "$cb"
-        ]
-      ],
-      "sha256": "0d4571631f8fcce6c93862796f40928bb07b2231d688a1434acee0160b679404",
+      "targets": [],
+      "sha256": "ae3381422d893b5752dd396fa60c0d1acdea82b31d7d76f247d383729d99a3bc",
       "kind": "host-entry",
-      "reason": "External execution/context entry or wrapper; callback lifetime cannot be inferred from run depth.",
+      "reason": "Wave wrapper forwards immutable handle/header/callback/instance and literal WOM_DONE to shared audio admission. Captured host registration authenticates receiving VM; shared guest-stack continuation owns normal restoration, not a private invocation token. See midi-repaired-census-20261020.md; ownership pending.",
       "ownership": "pending"
     },
     {
@@ -8996,6 +8993,39 @@
       "sha256": "94361344e818cf4d9ef4ec8c2ce82fdaaae459d3979a94ccd047e99b13ec0dfb",
       "kind": "continuation",
       "reason": "Internal Beep retains its stdcall frame and invocation token across APC dispatch; resume validates owner/frame and completion leaves token. Public API disabled pending full retirement integration.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/13-exports.wat",
+      "name": "$fire_audio_callback_bound",
+      "writes": 1,
+      "boundaryCalls": [],
+      "exports": [],
+      "targets": [
+        [
+          "local.get",
+          "$cb"
+        ]
+      ],
+      "sha256": "a85475b8e286d796d69741050b14019fbc67ace1b1d3d1bc5f01f8e2ca8cbba5",
+      "kind": "callback",
+      "reason": "Shared MIDI/wave admission rejects null callback/EIP/ESP, unsupported yield and overlapping timer/audio callbacks; saves seven wait globals behind active guard and ten caller words including saved_cf, then five stdcall arguments plus CACA000A return thunk. Continuation restores caller then wait. No root/epoch/child token or trap/nonlocal retirement proof; ownership pending. See midi-repaired-census-20261020.md.",
+      "ownership": "pending"
+    },
+    {
+      "file": "src/13-exports.wat",
+      "name": "$fire_midi_out_callback_bound",
+      "writes": 0,
+      "boundaryCalls": [
+        "$fire_audio_callback_bound"
+      ],
+      "exports": [
+        "fire_midi_out_callback_bound"
+      ],
+      "targets": [],
+      "sha256": "8aa3d5fa0ae548b7d71ed23acc13f7b59621c3ec92143ea7c446b45d08dd3864",
+      "kind": "callback",
+      "reason": "MIDI exported wrapper forwards immutable handle/header/callback/instance/message to shared audio admission. Host queue retains originating VM registration across close/reset; unsupported worker transport fails. No private invocation token; normal-return qualification only. See midi-repaired-census-20261020.md.",
       "ownership": "pending"
     }
   ]

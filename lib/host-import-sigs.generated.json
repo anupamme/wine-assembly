@@ -1,6 +1,6 @@
 {
   "generated_from": "src/main.watx include closure",
-  "count": 284,
+  "count": 289,
   "sigs": {
     "log": {
       "params": [
@@ -1111,6 +1111,56 @@
     },
     "midi_num_devs": {
       "params": [],
+      "results": [
+        "i32"
+      ]
+    },
+    "midi_stream_open": {
+      "params": [
+        "i32",
+        "i32",
+        "i32",
+        "i32"
+      ],
+      "results": [
+        "i32"
+      ]
+    },
+    "midi_stream_control": {
+      "params": [
+        "i32",
+        "i32",
+        "i32"
+      ],
+      "results": [
+        "i32"
+      ]
+    },
+    "midi_stream_property": {
+      "params": [
+        "i32",
+        "i32",
+        "i32"
+      ],
+      "results": [
+        "i32"
+      ]
+    },
+    "midi_stream_service": {
+      "params": [
+        "i32"
+      ],
+      "results": []
+    },
+    "midi_header": {
+      "params": [
+        "i32",
+        "i32",
+        "i32",
+        "i32",
+        "i32",
+        "i32"
+      ],
       "results": [
         "i32"
       ]

@@ -39044,5 +39044,12 @@
     "nargs": 2,
     "convention": "stdcall",
     "hash": 2742787595
+  },
+  {
+    "id": 4593,
+    "name": "midiStreamStop",
+    "nargs": 1,
+    "convention": "stdcall",
+    "hash": 177440212
   }
 ]

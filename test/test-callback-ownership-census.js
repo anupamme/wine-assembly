@@ -60,4 +60,47 @@ assert(checkNonlocalAPIs([{ file: 'src/crt.wat', src: '(func $handle_longjmp)' }
 assert(checkNonlocalAPIs([], [{ name: '_setjmp', alias: '_setjmp3' }]).length,
   'API alias cannot bypass prerequisite review lock');
 assert(checkNonlocalAPIs([], [{ name: 'longjmp' }]).length);
+
+// MIDI/wave extraction: hash renewal alone must not conceal a changed target,
+// wrapper signature, or a claim that a guest-stack frame is a private token.
+const audioFile = 'src/audio-fixture.wat';
+const audio = `(func $fire_audio_callback_bound
+  (global.set $eip (local.get $cb)))
+  (func $fire_wave_out_callback_bound (export "fire_wave_out_callback_bound")
+    (call $fire_audio_callback_bound))
+  (func $fire_midi_out_callback_bound (export "fire_midi_out_callback_bound")
+    (call $fire_audio_callback_bound))`;
+const audioEntries = scanSources([{file: audioFile, src: audio}]);
+const audioCensus = {version: 1, entries: audioEntries.map(e => ({...e,
+  kind: 'callback', reason: 'Normal guest-stack continuation; token ownership pending.',
+  ownership: 'pending'}))};
+assert.strictEqual(audioEntries.length, 3);
+assert.deepStrictEqual(check(audioEntries, audioCensus), []);
+function refreshedHashes(actual) {
+  return {version: 1, entries: audioCensus.entries.map(e => ({...e,
+    sha256: actual.find(a => a.name === e.name)?.sha256 || e.sha256}))};
+}
+const retargeted = scanSources([{file: audioFile, src: audio.replace(
+  '(local.get $cb)', '(i32.const 0)')}]);
+assert(check(retargeted, refreshedHashes(retargeted)).some(e => e.includes('(targets)')),
+  'refreshed digest cannot hide null callback target');
+const renamed = scanSources([{file: audioFile, src: audio.replace(
+  '"fire_midi_out_callback_bound"', '"unreviewed_midi_entry"')}]);
+assert(check(renamed, refreshedHashes(renamed)).some(e => e.includes('(exports)')),
+  'refreshed digest cannot hide changed exported entry');
+const tokenClaim = refreshedHashes(audioEntries);
+tokenClaim.entries[0].ownership = 'covered';
+assert(check(audioEntries, tokenClaim).some(e => e.includes('unsupported ownership')),
+  'matching digests do not prove retained invocation ownership');
+// Even a completely refreshed inventory cannot unlock the independent API
+// prerequisite. This is deliberately separate from semantic execution tests:
+// census hashes alone cannot establish carry restoration or queue safety.
+const nonlocalSources = [{file: audioFile, src: audio +
+  '\n(func $handle_longjmp (global.set $eip (i32.const 1)))'}];
+const nonlocalEntries = scanSources(nonlocalSources);
+assert.deepStrictEqual(check(nonlocalEntries, {version: 1,
+  entries: nonlocalEntries.map(e => ({...e, kind: 'callback',
+    reason: 'Negative control', ownership: 'pending'}))}), []);
+assert(checkNonlocalAPIs(nonlocalSources, [{name: 'longjmp'}]).length >= 2,
+  'fully refreshed census still cannot authorize nonlocal handler/API');
 console.log('callback ownership census mutation tests PASS (source inventory only)');

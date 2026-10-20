@@ -1415,6 +1415,7 @@ class WineAssembly {
     if(!this.running || !owner || (registration.retired && !owner.link?._waveOffer)) return {status:'retired'};
     const tm=this.threadManager;
     if(owner.kind==='worker') {
+      if (item.midiMessage !== undefined) throw new Error('MIDI worker callback transport unsupported');
       const backend=owner.backend;
       if(this.guestWorker!==backend) return {status:'retired'};
       const live=owner.slot===0 ? backend.link : backend.threadLinks.get(owner.slot);
@@ -1457,7 +1458,10 @@ class WineAssembly {
     if(!ex.get_eip() || ex.get_yield_reason()===2) return {status:'retired'};
     const saved=thread ? {waitStartedAt:thread.waitStartedAt||0,waitPolls:thread.waitPolls||0}
       : {waitStartedAt:tm?._mainWaitStartedAt||0,waitPolls:tm?._mainWaitPolls||0};
-    if(!ex.fire_wave_out_callback_bound(registration.handle,item.waveHdrGA,registration.callback,registration.instance)) return {status:'busy'};
+    const admitted = item.midiMessage === undefined
+      ? ex.fire_wave_out_callback_bound(registration.handle,item.waveHdrGA,registration.callback,registration.instance)
+      : ex.fire_midi_out_callback_bound(registration.handle,item.waveHdrGA,registration.callback,registration.instance,item.midiMessage);
+    if(!admitted) return {status:'busy'};
     if(thread) {thread.waveWaitSaved=saved;thread.waitStartedAt=thread.waitPolls=0;}
     else if(tm) {this._waveMainWaitSaved=saved;tm._mainWaitStartedAt=tm._mainWaitPolls=0;}
     return {status:'accepted'};
@@ -1874,6 +1878,11 @@ class WineAssembly {
         return this.exports ? {kind:'cooperative',exports:this.exports,tid:opts.threadId|0} : null;
       },
       offerWaveCallback:item=>self._offerWaveCallback(item),
+      offerMidiCallback:item=>self._offerWaveCallback({
+        registration: { handle:item.handle, callback:item.registration.callback,
+          instance:item.registration.instance, owner:item.registration.routingOwner },
+        waveHdrGA:item.header, midiMessage:item.message,
+      }),
       wakeWaveCallback:()=>self._wakeStep(),
       audioClockMs: () => self._guestAudioClockMs(sharedAudio),
       // How far the global deadline clock trails real time (0 when off).

@@ -353,6 +353,13 @@
   (import "host" "mci_get_device_id" (func $host_mci_get_device_id (param i32) (result i32)))
   ;; mci_get_device_id(name_wa) → host device id for an mciSendStringA alias, or 0
   (import "host" "midi_num_devs" (func $host_midi_num_devs (result i32)))
+  (import "host" "midi_stream_open" (func $host_midi_stream_open (param i32 i32 i32 i32) (result i32)))
+  (import "host" "midi_stream_control" (func $host_midi_stream_control (param i32 i32 i32) (result i32)))
+  (import "host" "midi_stream_property" (func $host_midi_stream_property (param i32 i32 i32) (result i32)))
+  (import "host" "midi_stream_service" (func $host_midi_stream_service (param i32)))
+  ;; header(handle, headerWA, headerGA, dataWA, structSize, operation)
+  ;; operations: prepare=0, unprepare=1, streamOut=2, longMsg=3.
+  (import "host" "midi_header" (func $host_midi_header (param i32 i32 i32 i32 i32 i32) (result i32)))
   ;; midi_num_devs() → number of MIDI output devices
   (import "host" "midi_out_open" (func $host_midi_out_open (param i32 i32 i32 i32) (result i32)))
   ;; midi_out_open(device_id, callback, callback_instance, flags) → opaque MIDI handle or 0
