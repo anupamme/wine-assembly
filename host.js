@@ -1106,6 +1106,9 @@ class WineAssembly {
     // created by ThreadManager are threads of this process and share its PID
     // through the process's SharedArrayBuffer-backed memory.
     this.processId = WineAssembly._nextProcessId++;
+    this._processObject = { wine: this, exited: false, exitCode: 259 };
+    this._processAliases = new Map();
+    this._nextProcessAlias = 1;
     this.instance = null;
     this.memory = null;
     this.running = false;
@@ -2338,11 +2341,7 @@ class WineAssembly {
         spec.push({ which: view.getInt32(at, true), end: view.getInt32(at + 4, true),
           lport: view.getInt32(at + 8, true), rport: view.getInt32(at + 12, true) });
       }
-      if (!self._children) {
-        self._children = new Map();
-        // A parent that ends takes its children with it.
-        self._stopChildren = () => { for (const c of self._children.values()) if (c.wine && c.exitCode === 259) c.wine.stop(); };
-      }
+      if (!self._children) self._children = new Map();
       if (pipes && !self._childSegment) {
         self._childSegment = new Vlan.LoopbackSegment();
         self.vlanWire = self._childSegment.attach();
@@ -2354,19 +2353,39 @@ class WineAssembly {
       if (self.threadManager) self.threadManager.processCtl = (op, p, arg) => h.process_ctl(op, p, arg);
       const ip = childIp >>> 0;
       const ipText = [ip >>> 24, (ip >>> 16) & 255, (ip >>> 8) & 255, ip & 255].join('.');
-      const pid = (0x4000 + (self._children.size + 1) * 4) & 0xFFFF;
-      const rec = { wine: null, exitCode: 259, ip };
+      const pid = self._nextChildPid || 0x4004;
+      if (pid > 0xFFFF) return 0;
+      self._nextChildPid = pid + 4;
+      // Publish the process object with hProcess, before asynchronous boot.
+      // Aliases must keep this same identity through attachment and failure.
+      const rec = { object: { wine: null, pending: true, exited: false, exitCode: 259 },
+        exited: false, exitCode: 259, ip };
       self._children.set(pid, rec);
       const beforeRun = async (child) => {
-        rec.wine = child;
+        child._processObject = rec.object;
+        rec.object.pending = false;
+        if (rec.object.exited) {
+          // Termination of a published but not yet attached process cancels
+          // its boot. The shell's failure cleanup still owns launch resources.
+          child._exitCode = rec.object.exitCode;
+          child.stop();
+          throw new Error('process_spawn: process terminated before attachment');
+        }
+        rec.object.wine = child;
         if (!pipes) return;
-        await child.callGuest('set_vlan_local_ip', ip | 0);
-        await child.callGuest('pipe_detach_console');
+        const call = async (...args) => {
+          if (rec.object.exited) throw new Error('process_spawn: process terminated during attachment');
+          const result = await child.callGuest(...args);
+          if (rec.object.exited) throw new Error('process_spawn: process terminated during attachment');
+          return result;
+        };
+        await call('set_vlan_local_ip', ip | 0);
+        await call('pipe_detach_console');
         const byPort = new Map();
         for (const e of spec) {
           const known = byPort.get(e.lport);
-          if (known) { await child.callGuest('pipe_set_std', e.which | 0, known | 0); continue; }
-          const hnd = (await child.callGuest('pipe_attach_std', e.which | 0, e.end | 0,
+          if (known) { await call('pipe_set_std', e.which | 0, known | 0); continue; }
+          const hnd = (await call('pipe_attach_std', e.which | 0, e.end | 0,
             e.lport | 0, parentIp | 0, e.rport | 0)) >>> 0;
           if (!hnd) throw new Error(`process_spawn: could not attach std ${e.which}`);
           byPort.set(e.lport, hnd);
@@ -2374,7 +2393,9 @@ class WineAssembly {
         console.log(`[process_spawn] ${file} at ${ipText}: std handles attached`);
       };
       const onExit = (child) => {
-        if (rec.exitCode !== 259) return;
+        if (rec.exited) return;
+        rec.exited = true;
+        delete rec.object.complete;
         const childVfs = child && child._helpCtx && child._helpCtx.vfs;
         if (before && childVfs) {
           try {
@@ -2384,10 +2405,18 @@ class WineAssembly {
             console.log(`[process_spawn] merging ${file}'s files back failed: ${e.message}`);
           }
         }
-        rec.exitCode = (child && child._exitCode != null) ? (child._exitCode >>> 0) : (child ? 0 : 1);
+        const object = rec.object;
+        if (!object.exited) {
+          object.exitCode = (child && child._exitCode != null) ? (child._exitCode >>> 0) : (child ? 0 : 1);
+          object.exited = true;
+          object.wine = null;
+        }
+        object.pending = false;
+        rec.exitCode = object.exitCode;
         // EOF for the parent's ends of the child's pipes.
         if (pipes && self.vlanWire && self.vlanWire.peerGone) self.vlanWire.peerGone(ip);
       };
+      rec.object.complete = onExit;
       const ok = shell.launchVfsExe(file, self, dir, parsed.params.trim(), {
         ...(pipes ? { lanLink: { wire: self._childSegment.attach(), address: ipText, local: true } } : {}),
         bypassSingleApp: true, hidden: pipes, beforeRun, onExit,
@@ -2396,22 +2425,47 @@ class WineAssembly {
       console.log(`[process_spawn] CreateProcess "${cmd}" -> ${file} at ${ipText}, pid ${pid}`);
       return pid;
     };
-    // op 0: a child's exit code (259 while it runs); op 1: terminate it.
+    // E4: ops 0/1/2 query/terminate/validity. E4 and E6: 4..8
+    // query/terminate/access/close/wait. Status never encodes validity or exit.
     h.process_ctl = (op, pid, arg) => {
-      const rec = self._children && self._children.get(pid & 0xFFFF);
-      if (!rec) return -1;
-      if (op === 0) return rec.exitCode >>> 0;
-      if (op === 1) {
-        if (rec.exitCode === 259) {
-          const child = rec.wine;
-          rec.exitCode = arg >>> 0;
-          if (self.vlanWire && self.vlanWire.peerGone) self.vlanWire.peerGone(rec.ip);
-          if (child) child.stop();
+      if (op === 3) return self._duplicateProcessHandle(pid);
+      if (op >= 4 && op <= 8) {
+        const entry = self._processHandleEntry(pid);
+        const kind = (pid >>> 0) & 0xFFFF0000;
+        const record = kind === 0x00E40000 && self._children?.get(pid & 0xFFFF);
+        if ((!entry && !record) || (kind !== 0x00E40000 && kind !== 0x00E60000))
+          return op === 8 ? -1 : -6;
+        if (op === 7) {
+          if (record) self._children.delete(pid & 0xFFFF);
+          else self._processAliases.delete(pid >>> 0);
+          return 1;
         }
+        const object = entry?.object || record;
+        const access = entry ? entry.access : 0x1FFFFF;
+        if (op === 6) return (access & arg) === arg ? 1 : -5;
+        if (op === 4) return object.exitCode >>> 0;
+        if (op === 8) return !(access & 0x100000) ? -1 : object.exited ? 0 : 0x102;
+        if (!(access & 1) || object.exited) return -5;
+        if (object.pending) {
+          object.exitCode = arg >>> 0;
+          object.exited = true;
+          // The launch closure owns merge/EOF, even if E4 was already closed.
+          object.complete(null);
+          return 1;
+        }
+        if (!object.wine) return -6;
+        object.wine._exitCode = arg >>> 0;
+        object.wine.stop();
         return 1;
       }
+      const rec = self._children && self._children.get(pid & 0xFFFF);
+      if (!rec) return -1;
+      if (op === 2) return 1;
+      if (op === 0) return (rec.object || rec).exitCode >>> 0;
+      if (op === 1) return h.process_ctl(5, 0x00E40000 | (pid & 0xFFFF), arg) === 1 ? 1 : -1;
       return -1;
     };
+    self._processCtl = h.process_ctl;
     h.shell_execute = (hwnd, opWa, fileWa, paramsWa, dirWa, nShow) => {
       // ShellExecute/WinExec can also queue an asynchronous second process.
       WineAssembly._threadSnapshotSystemIncomplete = true;
@@ -2853,6 +2907,10 @@ class WineAssembly {
   }
 
   async init(canvas) {
+    if (this._processObject.exited) {
+      this._processObject = { wine: this, exited: false, exitCode: 259 };
+      delete this._exitCode;
+    }
     const compileEl = typeof document !== 'undefined' && document.getElementById('compile-status');
     let showTimeout = null;
     const cacheWarm = !!WineAssembly._wasmModulePromise;
@@ -3254,6 +3312,7 @@ class WineAssembly {
     // Arm `g` (default on): one shared clock that stands at the earliest
     // overdue timed-sleep deadline (see ThreadManager). Not in frozen mode,
     // whose clock only moves when the agent steps it.
+    this.threadManager.processCtl = this._processCtl;
     this.threadManager.deadlineClock = !this._frozen && this._schedArm('g');
     // Its real time is continuous, not the stepped batch clock: the audible
     // cursor it is compared against moves continuously too, and a stepped
@@ -4841,13 +4900,73 @@ class WineAssembly {
   // exists -- desktop icons hidden over a blank canvas. The two sites with no
   // repaint had the opposite fault: a crash left the dead app's last frame on
   // screen. Repainting last, once, fixes both.
+  _processHandleEntry(handle) {
+    handle >>>= 0;
+    if (handle === 0xFFFFFFFF) return { object: this._processObject, access: 0x1FFFFF };
+    if ((handle & 0xFFFF0000) === 0x00E60000) return this._processAliases.get(handle);
+    if ((handle & 0xFFFF0000) === 0x00E40000) {
+      const record = this._children?.get(handle & 0xFFFF);
+      if (record?.object) return { object: record.object, access: 0x1FFFFF };
+    }
+    if (handle === (0xE2000 | (this.processId & 0xFFF))) {
+      return { object: this._processObject, access: 0x1FFFFF };
+    }
+    return null;
+  }
+
+  _duplicateProcessHandle(stackWa) {
+    // The stdcall frame is in the caller's shared memory, including when its
+    // main thread runs in a Worker. No pointer crosses into the target memory.
+    const frame = new DataView(this.memory.buffer, stackWa >>> 0, 32);
+    const sourceProcess = this._processHandleEntry(frame.getUint32(4, true));
+    const targetProcess = this._processHandleEntry(frame.getUint32(12, true));
+    const sourceHost = sourceProcess?.object.wine;
+    const targetHost = targetProcess?.object.wine;
+    const sourceHandle = frame.getUint32(8, true);
+    const options = frame.getUint32(28, true);
+    const source = sourceHost?._processHandleEntry(sourceHandle);
+    const closeSource = () => {
+      if ((options & 1) && sourceHost && (sourceHandle & 0xFFFF0000) === 0x00E60000) {
+        sourceHost._processAliases.delete(sourceHandle);
+      }
+      if ((options & 1) && sourceHost && (sourceHandle & 0xFFFF0000) === 0x00E40000) {
+        sourceHost._children?.delete(sourceHandle & 0xFFFF);
+      }
+    };
+    // DUPLICATE_CLOSE_SOURCE closes a real alias even when duplication fails.
+    try {
+      if (!sourceHost || !source) return -6;
+      if (!(sourceProcess.access & 0x40)) return -5;
+      if (options & ~3) return -87;
+      // NULL target with CLOSE_SOURCE is a successful close-only request.
+      if (!frame.getUint32(12, true) && (options & 1)) return 1;
+      if (!targetHost) return -6;
+      if (!(targetProcess.access & 0x40)) return -5;
+      // NULL output is permitted: allocate even though the caller loses the handle.
+      const access = options & 2 ? source.access : frame.getUint32(20, true);
+      if ((access & source.access) !== access) return -5;
+      if (targetHost._nextProcessAlias > 0xFFFF) return -4;
+      const handle = 0x00E60000 | targetHost._nextProcessAlias++;
+      targetHost._processAliases.set(handle, {
+        object: source.object, access, inherit: !!frame.getUint32(24, true),
+      });
+      return handle;
+    } finally { closeSource(); }
+  }
+
   stop(options = {}) {
+    if (!this._processObject.exited) {
+      this._processObject.exited = true;
+      this._processObject.exitCode = (this._exitCode ?? 0) >>> 0;
+      this._processObject.wine = null;
+    }
+    this._processAliases.clear();
+    this._children?.clear();
     if (this._processSendEndpoint && this.renderer?._processSendBroker) {
       this.renderer._processSendBroker.retire(this._processSendEndpoint);
       this._processSendEndpoint = null;
     }
-    // Child processes this guest started (process_spawn) end with it.
-    if (this._stopChildren) { const stopKids = this._stopChildren; this._stopChildren = null; stopKids(); }
+    // Closing the owner table does not terminate the independently owned children.
     if (this._manifestAssetAbort) this._manifestAssetAbort.abort();
     if (this._backgroundAssetJobs) this._backgroundAssetJobs.length = 0;
     // Put the final frame on the canvas before stepping ends, then drop the
