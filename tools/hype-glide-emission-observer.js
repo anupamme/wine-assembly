@@ -143,15 +143,18 @@ function validateHypeMeasurement(input) {
       bad('counter owner missing or changed');
     if (hasSwaps && !count(s.swaps)) bad('missing or invalid swap count');
     if (previous) {
-      if (!(s.hostMs > previous.hostMs)) bad('non-monotonic or zero host interval');
-      if (s.count < previous.count) bad('logical counter reset or wrap');
-      if (hasSwaps && s.swaps < previous.swaps) bad('swap counter reset or wrap');
+      if (Number.isFinite(s.hostMs) && Number.isFinite(previous.hostMs) &&
+          !(s.hostMs > previous.hostMs)) bad('non-monotonic or zero host interval');
+      if (count(s.count) && count(previous.count) && s.count < previous.count) bad('logical counter reset or wrap');
+      if (hasSwaps && count(s.swaps) && count(previous.swaps) && s.swaps < previous.swaps) bad('swap counter reset or wrap');
     }
     previous = s;
   }
-  const durationMs = last.hostMs - first.hostMs;
-  const logicalFrames = last.count - first.count;
-  const swaps = hasSwaps ? last.swaps - first.swaps : null;
+  // Do not coerce malformed JSON objects during rejection: an object with
+  // null valueOf/toString properties cannot be converted to a primitive.
+  const durationMs = Number.isFinite(last.hostMs) && Number.isFinite(first.hostMs) ? last.hostMs - first.hostMs : NaN;
+  const logicalFrames = count(last.count) && count(first.count) ? last.count - first.count : NaN;
+  const swaps = hasSwaps ? (count(last.swaps) && count(first.swaps) ? last.swaps - first.swaps : NaN) : null;
   if (!Number.isFinite(durationMs) || durationMs <= 0) bad('invalid host duration');
   const fps = logicalFrames * 1000 / durationMs;
   const swapRate = swaps === null ? null : swaps * 1000 / durationMs;

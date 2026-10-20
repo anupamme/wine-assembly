@@ -137,6 +137,17 @@ test('absent receipt rejects without fabricating a rate',()=>{
     assert.equal(r.accepted,false); assert.equal(r.fps,null);
   }
 });
+test('malformed JSON numeric objects reject without coercion or numeric rates',()=>{
+  for(const field of ['hostMs','count','swaps']) for(const index of [0,1,2]){
+    const w=measurementFixture();
+    w.samples[index][field]=JSON.parse('{"valueOf":null,"toString":null}');
+    const r=validateHypeMeasurement(w);
+    assert.equal(r.accepted,false); assert.ok(r.reasons.length>0);
+    assert.equal(r.fps,null); assert.equal(r.glideSwapsPerSecond,null);
+    assert.equal(r.durationMs,null); assert.equal(r.logicalFrames,null);
+    assert.deepEqual(r.raw,w);
+  }
+});
 test('executable JSON validator emits raw evidence and meaningful exit status',()=>{
   const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
   const {spawnSync}=require('node:child_process');
@@ -150,6 +161,10 @@ test('executable JSON validator emits raw evidence and meaningful exit status',(
     let r=run(); assert.equal(r.status,0); assert.equal(JSON.parse(r.stdout).fps,15);
     w.samples[1].enabled=false; fs.writeFileSync(file,JSON.stringify(w));
     r=run(); assert.equal(r.status,1); assert.deepEqual(JSON.parse(r.stdout).raw,w);
+    w.samples[1].hostMs={valueOf:null,toString:null};
+    fs.writeFileSync(file,JSON.stringify(w));
+    r=run(); assert.equal(r.status,1); assert.equal(r.stderr,'');
+    assert.equal(JSON.parse(r.stdout).fps,null); assert.deepEqual(JSON.parse(r.stdout).raw,w);
     fs.writeFileSync(file,'{'); r=run(); assert.equal(r.status,2); assert.equal(r.stdout,'');
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
