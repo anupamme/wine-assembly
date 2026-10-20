@@ -2068,6 +2068,7 @@
     (local $old_esi i32) (local $old_edi i32) (local $old_ebp i32)
     (local $old_handler_set_eip i32) (local $old_steps i32)
     (local $old_yield_reason i32) (local $old_yield_flag i32) (local $rounds i32)
+    (local $expected_child i64) (local $expected_root i64) (local $expected_depth i32)
     (local.set $record (call $help_routine_at
       (call $help_find_routine (local.get $name_hash))))
     (if (i32.eqz (local.get $record))
@@ -2170,6 +2171,12 @@
         (local.set $old_steps (global.get $steps))
         (local.set $old_yield_reason (global.get $yield_reason))
         (local.set $old_yield_flag (global.get $yield_flag))
+        ;; Acquire before writing the guest frame; retain this invocation's
+        ;; identity across nested callbacks and bounded run slices.
+        (call $sync_depth_enter)
+        (local.set $expected_child (call $invocation_current))
+        (local.set $expected_root (global.get $invocation_root))
+        (local.set $expected_depth (global.get $sync_msg_depth))
         ;; Arguments go on in reverse: the first one has to end up nearest
         ;; the return address.
         (local.set $i (local.get $count))
@@ -2187,7 +2194,6 @@
         (global.set $steps (i32.const 0))
         (global.set $yield_reason (i32.const 0))
         (global.set $yield_flag (i32.const 0))
-        (call $sync_depth_enter)
         (local.set $rounds (i32.const 0))
         (block $call_done (loop $call_run
           (call $run (i32.const 1000000))
@@ -2195,6 +2201,14 @@
           (local.set $rounds (i32.add (local.get $rounds) (i32.const 1)))
           (br_if $call_done (i32.ge_u (local.get $rounds) (i32.const 64)))
           (br $call_run)))
+        ;; Validate even on timeout, before retirement or context restoration.
+        ;; Invalid ownership traps; process reset owns recovery.
+        (if (i64.ne (local.get $expected_child) (call $invocation_current))
+          (then (unreachable)))
+        (if (i64.ne (local.get $expected_root) (global.get $invocation_root))
+          (then (unreachable)))
+        (if (i32.ne (local.get $expected_depth) (global.get $sync_msg_depth))
+          (then (unreachable)))
         (call $sync_depth_leave)
         (global.set $eip (local.get $old_eip))
         (i32.store offset=16 (global.get $reg_base) (local.get $old_esp))
