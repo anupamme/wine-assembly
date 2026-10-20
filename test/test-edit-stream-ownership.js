@@ -187,6 +187,22 @@ for (const timeout of [false, true]) {
   assert.equal(f.call(), 1); assert.equal(f.runs(), 64);
   restored(f, before); cases++;
 }
+// A callback may change every saved register/control, even when it times out.
+// Clobber them all so deletion of any restore is observably wrong.
+for (const finish of ['return', 'last-slice', 'timeout']) {
+  const f = fixture(), before = f.snap();
+  f.hook(() => {
+    for (let i = 0; i < 8; i++) f.m.set(i * 4, 900 + i);
+    for (const key of ['$handler_set_eip', '$steps', '$yield_reason', '$yield_flag'])
+      f.g[key] = 999;
+    if (finish === 'return' || (finish === 'last-slice' && f.runs() === 64))
+      f.complete();
+  });
+  assert.equal(f.call(), finish === 'timeout' ? 1 : 77);
+  restored(f, before);
+  assert.equal(f.runs(), finish === 'return' ? 1 : 64);
+  assert.equal(f.snap().leaves, 1); cases++;
+}
 return cases;
 }
 const cases = suite();
@@ -210,5 +226,16 @@ const loop = fn.findIndex(n => Array.isArray(n) && n[1] === 'block');
 fn.splice(loop, 0, entry);
 assert.throws(suite, assert.AssertionError, 'late acquisition must fail before-write capacity test');
 negatives++;
+// Each interrupted-context restore must matter, not just appear in source.
+for (const saved of ['$old_eip', '$old_esp', '$old_eax', '$old_ecx', '$old_edx',
+  '$old_ebx', '$old_esi', '$old_edi', '$old_ebp', '$old_handler_set_eip',
+  '$old_steps', '$old_yield_reason', '$old_yield_flag']) {
+  fn = clone();
+  const i = fn.findIndex(n => Array.isArray(n) &&
+    ['global.set', 'i32.store'].includes(n[1]) && JSON.stringify(n).includes(saved));
+  assert(i > 0); fn.splice(i, 1);
+  assert.throws(suite, assert.AssertionError, 'missing restore must fail: ' + saved);
+  negatives++;
+}
 fn = good;
 console.log(`EDITSTREAM source ownership PASS: ${cases} cases, ${negatives} mutation negatives; modeled boundaries, no fullVM qualification`);

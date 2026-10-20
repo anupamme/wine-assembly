@@ -28,3 +28,24 @@ These are local JS source conformance tests, not a WAT build, fullVM test, or
 Circus compatibility claim. Actual x86 callbacks, spill pinning, SEH, async
 parking, and thread/epoch lifetime enforcement require separately authorized
 runtime qualification. No CRT jump API is enabled.
+
+## Independent paired review, 2026-10-20
+
+Reviewed against fetched main `7ddcd0572b132759c9122c80492e9f9c161a047a`
+and the actual `04-cache.wat` invocation/synchronous-depth helpers. Acquisition
+validates and allocates the child before pinning spill state or increasing depth.
+The wrapper captures identity after acquisition and checks it before leave;
+`invocation_sync_leave` alone cannot detect replacement because it passes the
+current identity to `invocation_leave`. Caller registers and execution controls
+are restored only after successful validation and retirement. A run trap
+propagates without retirement/restoration. The existing 64-slice abandonment
+returns error 1 after valid retirement; this review does not qualify asynchronous
+service or resumability of the abandoned guest callback.
+
+No additional production defect was demonstrated in this bounded review.
+The original test did not clobber most saved registers, leaving restoration
+coverage weaker than its description. Added all-register/control clobbers on
+ordinary return, return on slice 64, and timeout, plus removal mutations for
+all 13 restores. The dedicated suite now passes 23 cases and 17 mutation
+controls. Evidence and replay:
+`scratch/runs/20261020-callback-pair-review/`. Acceptance remains source-only.
