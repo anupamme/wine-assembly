@@ -1054,3 +1054,7 @@
   ;; Appended so every existing region retains its placement.
   (region.declare $WND_LOOKUP_GENERATIONS (size 2056) (align 8)
     (owner "09c0-window-table.wat:$wnd_lookup_generation"))
+
+  ;; Startup show value and one process-wide first-show latch.
+  (region.declare $STARTUP_SHOW_STATE (size 0x00000010) (align 0x00000010)
+    (owner "09a-handlers3-sync.wat:$STARTUP_SHOW_STATE"))
