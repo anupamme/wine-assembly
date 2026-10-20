@@ -1038,3 +1038,14 @@
   ;; Immutable launch identity, published before any guest thread starts.
   (region.declare $PROCESS_IMAGE_STATE (size 0x00000090) (align 0x00000010)
     (owner "13-exports.wat:$PROCESS_IMAGE_STATE"))
+
+  ;; FindWindow reconciles unpublished live windows with renderer publication.
+  ;; These bytes belong to shared class/window lifetimes, not JS instances.
+  (region.declare $CLASS_NAME_WIDE (size 64) (align 16)
+    (owner "09c0-window-table.wat:$class_name_is_wide"))
+  (region.declare $WND_LOOKUP_RETIRED (size 256) (align 16)
+    (owner "09c0-window-table.wat:$wnd_lookup_live"))
+  ;; Shared allocation serial followed by one i64 identity per WND slot.
+  ;; Appended so every existing region retains its placement.
+  (region.declare $WND_LOOKUP_GENERATIONS (size 2056) (align 8)
+    (owner "09c0-window-table.wat:$wnd_lookup_generation"))

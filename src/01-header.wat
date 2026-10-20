@@ -200,6 +200,9 @@
   (import "host" "get_window_text_length" (func $host_get_window_text_length (param i32) (result i32)))
   ;; get_window_text_length(hwnd) → length in chars (no NUL).
   (import "host" "get_window_related" (func $host_get_window_related (param i32 i32) (result i32)))
+  (import "host" "find_window" (func $host_find_window (param i32 i32 i32 i32 i32) (result i32)))
+  ;; find_window(parent, after, classWA, titleWA, wide): shared desktop query;
+  ;; strings are in the caller's memory. -1 means no host desktop available.
   ;; get_window_related(hwnd, GW_*) → renderer-wide top-level relation.
   (import "host" "get_window_info" (func $host_get_window_info (param i32 i32) (result i32)))
   ;; get_window_info(hwnd, 0=style, 1=visible, 2=enabled, 3=pid, 4=exists) → renderer property.
@@ -1855,6 +1858,12 @@
   ;; game and a class with cbClsExtra were writing the same 256 bytes. Moved
   ;; beside the other per-class tables instead.
   (global $CLASS_EXTRA_TABLE i32 (region.addr $CLASS_EXTRA_TABLE 0))
+  (global $CLASS_NAME_WIDE i32 (region.addr $CLASS_NAME_WIDE 0))
+  (global $CLASS_NAME_WIDE_SIZE i32 (region.size $CLASS_NAME_WIDE))
+  (global $WND_LOOKUP_RETIRED i32 (region.addr $WND_LOOKUP_RETIRED 0))
+  (global $WND_LOOKUP_RETIRED_SIZE i32 (region.size $WND_LOOKUP_RETIRED))
+  (global $WND_LOOKUP_GENERATIONS i32 (region.addr $WND_LOOKUP_GENERATIONS 0))
+  (global $WND_LOOKUP_GENERATIONS_SIZE i32 (region.size $WND_LOOKUP_GENERATIONS))
   (global $CLASS_EXTRA_TABLE_SIZE i32 (region.size $CLASS_EXTRA_TABLE))
   (global $CLASS_EXTRA_STRIDE i32 (i32.const 4))
   ;; EDIT visual-line scratch table. Each entry is { char_start, char_len }.
