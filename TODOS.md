@@ -1090,12 +1090,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] Keep two new games moving toward playable gameplay with screenshots
   id: NEW-GAMES-PIPELINE
-  status: active (Beep continuation; retained callback families)
+  worker: coordinator; edit-stream-owner-oct20
+  status: active (remaining source prerequisites; gameplay qualification incomplete)
   reclaimed: 2026-10-07T07:42:56.312Z
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   accepted: 2026-10-04T02:11:10.446Z
   accepted-by: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Mad Bomber real Beep prerequisite8497462d reviewed with pure audio test PASS; alertable continuation/APC tests active. Circus qsort9589eaec validated; next retained bsearch family source work. Root integration build PASS718297bd; no new gameplay screenshot.
+  Next: RichEdit edit_stream_call retained ownership is assigned to edit-stream-owner-oct20. Circus ICM source066436de and native fixture1bae355 await fullVM; Mad Bomber wave API7fd352855 reviewedfe540cf2 awaits fullVM. Keep child gameplay criteria open; runtime403 blocks captures, not remaining source work.
   done: Recurring user priority, not complete after two games; each child task needs a working launch route, visible player-controlled gameplay, ordinary input response and a reviewed screenshot linked to its run and source.
   notes: Known freeware/shareware/demo titles first; public NFS/Diablo/StarCraft variants do not count as new games. Serialize browser and benchmark ownership; preserve review gates. Standing policy in ops/ORCHESTRATOR.md.
 
@@ -1158,13 +1159,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] GL/Direct3D corpus: every 3D app works on software and WebGL
   id: GLD3D-CORPUS-27-20261006
-  status: blocked (saved runtime box stopped; scoped key cannot resume)
+  status: active (remaining texture source audit; both-backend gameplay incomplete)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: coordinator (Surface ABI merged; corpus scope/evidence reconciliation)
+  worker: legacy-texture-rest-oct20
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Surface4/7 ABI is merged. Current main inventory b276cb5a6 considers347 apps,201staticgraphics/135nonDD candidates and records exact missing paths for13entries/11manifests. Missing historical27 membership is separate and must not block available original validation. Software/WebGL gameplay coverage and legacy cube storage remain incomplete.
+  Next: Surface4/7 ABI is merged. legacy-texture-rest-oct20 owns remaining noncube capability contracts. Cube advertisement correctionf856627 is off main pending fullVM, not cube storage support. Hype validator is main6ccd344268 but actual FPS capture is pending. Historical27 membership and software/WebGL gameplay coverage remain incomplete; exact local path checks are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 
@@ -1500,11 +1501,13 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] User priority: Return Fire demo
   id: NEW-GAME-RETURN-FIRE-DEMO-20261009
-  status: review (historical gameplay recorded; original capture recovery pending)
+  blocker: Original scratch/runs/20261009T2046Z-return-fire-realized-native and scratch/runs/20261009T2050Z-return-fire-realized-browser are absent locally; recovery source availability is unknown, no remote probe.
+  worker: none (capture recovery needed)
+  status: blocked (historical capture recovery; no new gameplay review)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: return-fire-demo
   priority: user-first
-  Next: Registration/palette-depth/media recovery already main. 58originalpayload hashes+archive verified locally; original2046native/2050browser captures and2052audio absent. Recover original build/input/screenshots to review recorded ordinary H/W gameplay; audioquality/logicalFPS separate from this Done criterion. See docs/re-notes/alice-return-fire-reconciliation-20261018.md; no new runtime/publicdeploy.
+  Next: Recover original2046native/2050browser build/input/screenshots before renewed review. Registration/palette/media recovery are on main. Audio/FPS are separate from Done; exact locally absent capture directories are recorded in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Done: Registered launch, ordinary input visibly changes gameplay, reviewed screenshot with original source/build evidence; FPS/audio separate.
 
 - [ ] Serialize shared DLL mapping and lifetime mutation
@@ -1603,9 +1606,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Jedi Knight Dark Forces II original demo
   id: NEW-GAME-JEDI-KNIGHT-DEMO-20261015
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  worker: none (awaiting authorized runtime and verified original closure)
+  status: blocked (authorized acceptance; runtime and original-media prerequisites)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Next: Ordinary Accept/Yes authorization persists from20261018; acceptedInGuest=false until observed. Recover/verify original installer, supporting assets and historical receipt, then use an authorized bounded runtime to observe acceptance and installed payload. Local exact-path observations and unknown remote availability are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Previous checkpoint (licence-decision hold superseded): Originalchild141587 reaches actual Software License Agreement; leftunanswered peruserinstruction and stoppedclean. Rootarchive+14recoveredartifact hashes/actualscreen reviewed; Telegramphoto1404 delivered. Full matching text evidence/demo-license.txt preserved. No acceptance/bypass/install/gameplay; lane refilled while awaiting decision.
   Done: Registered original launch, ordinary player-controlled gameplay and reviewed screenshot with exact source/run identity.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1738,32 +1743,38 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [~] New-game lane: Circus Linux! 1.0.0 original Windows release
   id: NEW-GAME-CIRCUS-LINUX-20261018
-  status: queued (property-page ownership merged; remaining jump prerequisites)
+  worker: edit-stream-owner-oct20 (RichEdit prerequisite)
+  status: active (remaining callback source prerequisites; ICM native validation pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Propertypage1c917280a dualguest arguments/ownership and seven regressions PASS; root buildda72a16f PASS. Jump APIs remain disabled pending remaining callback/JS/concurrency/SEH work. Runtime slot rotates to user-authorized original installer acceptance; no active Circus worker or gameplay claim.
+  Next: Property-page/CRT/qsort/bsearch fixes are already main. ICM ownership066436de plus real-x86 fixture1bae355 are off main pending fullVM. edit-stream-owner-oct20 owns RichEdit edit_stream_call; remaining callback/JS/concurrency/SEH prerequisites keep jump APIs disabled. Runtime403 blocks native/gameplay evidence, not source work.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] New-game lane: Mad Bomber 0.2.5 original Windows release
   id: NEW-GAME-MADBOMBER-20261018
-  status: active (LockFile native/Worker qualification preparation)
-  owner: /root/madbomber_lockfile
-  Next: /root/lockfile_main_reconcile owns source preparation on task985f74312 reconciled with main6cfc. All4590 API rows and140 original fixture hashes verified; source/VFS/lazy/Surface/RTC gates pass. Dedicated realWorker RPC and public GetProcAddress/native edge fixtures are in preparation before serialized build/native/game qualification. No runtime grant or main integration yet.
+  depends-on: MADBOMBER-WINMM-ERROR-TEXT-20261019
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  worker: none (source prerequisites delivered)
+  status: blocked (wave API fullVM and original SDL/gameplay observation pending)
+  owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
+  Next: LockFile and SetLocalTime are already qualified on main. waveOutGetErrorTextA/W implementation7fd352855 is main and source reviewfe540cf2 passed; exact-source normalbuild/native API validation and original SDL observation remain. No active LockFile preparation or gameplay claim.
   Done: Original working launch, ordinary player-controlled gameplay and reviewed screenshot with exact run/source identity.
 
 - [~] Legacy texture cube API conformance
   id: D3D-LEGACY-TEXTURE-CAPS-AUDIT-20261013
-  status: active (Surface4/7 ABI merged; broader capability/backend contract incomplete)
+  worker: legacy-texture-rest-oct20
+  status: active (noncube source audit; cube fullVM pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: Surface4/7 ABI main73433fabe passed normal combined build and dual-dispatch native controls with independent source review. No active Surface worker. Remaining cube independent-face storage and software/GPU semantics require explicit implementation/capability evidence; inherited Texture2 GUID routing documented. Full capability audit is not complete.
+  Next: legacy-texture-rest-oct20 owns remaining caps audit excluding cube. f856627 clears unsupported CUBEMAP only, source115checks+4mutations PASS, off main pending exact-source normalbuild/public COM and rejection tests. Surface4/7 ABI is already merged. No independent-face storage or backend/gameplay qualification claimed.
   Done: Correct advertised API and software/GPU behavior with versioned contract and tests.
 
 - [ ] Authorized original installer acceptance
   id: NEW-GAME-AOE3-DEMO-20261010
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  status: blocked (authorized acceptance; runtime and original-media prerequisites)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: none (prepared queue; awaiting serialized runtime allocation)
+  worker: none (awaiting authorized runtime and verified original closure)
   candidate: test/binaries/win98-games-a-d/Age-of-empire-3trial-Win98-SW.exe
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Next: Ordinary Accept/Yes authorization persists from20261018; acceptedInGuest=false until observed. Recover/verify original installer, supporting assets and historical receipt, then use an authorized bounded runtime to observe acceptance and installed payload. Local exact-path observations and unknown remote availability are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Previous checkpoint (licence-decision hold superseded): Original reaches EULA with InterlockedExchangeAdd candidate, XP profile, native MSXML4 and its resource DLL. Screenshot991 sent; no button answered. Evidence scratch/runs/20261010T0430Z-aoe3-eula. Await user review before gameplay; pipeline refilled Beyond Good and Evil.
   Done: Ordinary original launch reaches player-controlled gameplay with reviewed screenshot and run/build identity; tested fixes on main.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1771,11 +1782,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Authorized original installer acceptance
   id: NEW-GAME-CONAN-DEMO-20261010
-  status: active (original installer availability and authorized acceptance preparation)
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  status: blocked (authorized acceptance; runtime and original-media prerequisites)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/conan_authorized_installer
+  worker: none (awaiting authorized runtime and verified original closure)
   candidate: test/binaries/win98-games-a-d/Conan cauldron-DX9-D3D/ConanPC-Demo.exe
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Next: Ordinary Accept/Yes authorization persists from20261018; acceptedInGuest=false until observed. Recover/verify original installer, supporting assets and historical receipt, then use an authorized bounded runtime to observe acceptance and installed payload. Local exact-path observations and unknown remote availability are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Previous checkpoint (licence-decision hold superseded): Original staged and SHA verified on bx_hx8msa33. Ordinary language/welcome/destination inputs reach EULA with I Reject selected, run20261010T0803Z-conan-destination. Do not answer acceptance. No installer process running; extracted game not yet available. Refill actionable new-game slot while this remains held.
   Done: Original launch, player-controlled gameplay, reviewed screenshot and tested fixes on main; no public deployment.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1783,10 +1795,12 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Authorized original installer acceptance
   id: NEW-GAME-ARANNA-DEMO-20261010
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  worker: none (awaiting authorized runtime and verified original closure)
+  status: blocked (authorized acceptance; runtime and original-media prerequisites)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
   candidate: test/binaries/win98-games-a-d/DungeonSiegelegendsofaranna_demo-D3D.exe
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Next: Ordinary Accept/Yes authorization persists from20261018; acceptedInGuest=false until observed. Recover/verify original installer, supporting assets and historical receipt, then use an authorized bounded runtime to observe acceptance and installed payload. Local exact-path observations and unknown remote availability are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Previous checkpoint (licence-decision hold superseded): Generic RTF fix cedee9b54 now shows readable original EULA; before1504Z/after1523Z browser evidence reviewed. No acceptance provided and no input sent. Payload /home/user/aranna-game-20261010 remains on bx_hx8msa33; no gameplay/FPS/audio qualification. Active slot refilled Invisible War.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/build identity; fixes committed on main.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1794,9 +1808,11 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Authorized original installer acceptance
   id: NEW-GAME-SHADOW-MAN-DEMO-20261013
-  status: queued (licence acceptance authorized; runtime/recovery preflight pending)
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  worker: none (awaiting authorized runtime and verified original closure)
+  status: blocked (authorized acceptance; runtime and original-media prerequisites)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  Next: User authorized ordinary Accept/Yes on 2026-10-18; queue original installer after fresh asset/source/disk checks. Guest acceptance has NOT occurred. Independent recovery/runtime/compatibility blockers remain; no public deployment.
+  Next: Ordinary Accept/Yes authorization persists from20261018; acceptedInGuest=false until observed. Recover/verify original installer, supporting assets and historical receipt, then use an authorized bounded runtime to observe acceptance and installed payload. Local exact-path observations and unknown remote availability are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Previous checkpoint (licence-decision hold superseded): Publisher Nov1999 CD index matches Archive gsscda1999/1999-11/GS1199.iso; remote-only download pins SHA1f985ca1349af958f886957aa662e87956a7db22d. Native1959files verified; originalSetup unpacked authenticengine, welcome->actual German licence screen reviewed in2221Z. No acceptance or installation; allPIDs absent22:23:28.352. Await user decision; Silver sourcepreflight replaces active lane.
   Done: Original launch, ordinary player-controlled gameplay and reviewed screenshot with source/input/build identity; refill on exact blocker.
   Authorization: docs/license-acceptance-authorization-20261018.json; acceptedInGuest=false until observed.
@@ -1823,7 +1839,8 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
 
 - [ ] Resolve original Mad Bomber SDL WinMM error-text dependency
   id: MADBOMBER-WINMM-ERROR-TEXT-20261019
-  status: active (confirm caller dependency and implement real API semantics)
+  blocker: Existing sandbox.resume 403 api_key_action_forbidden; requires documented authorized runtime access change and coordinator allocation, not a retry.
+  status: blocked (implementation on main; exact-source fullVM qualification pending)
   owner: codex:01a0ff91-cf9d-7f42-ba93-f9e7616b35a5
-  worker: /root/setlocaltime_compat
-  Next: Confirm original SDL caller at00b5a275 depends on missing waveOutGetErrorTextA; implement generic behavior with API conformance, then serialized build/native validation and original observation. No silent stub or gameplay claim.
+  worker: none (source review complete)
+  Next: Implementation7fd352855 already main; independent reviewfe540cf2 passed host+48cases and dispatch/API/import mirrors, no production changes. Next authorized exact-source normalbuild and public native wave API tests with module SHA, then original SDL observation; source checks do not qualify the guest.
