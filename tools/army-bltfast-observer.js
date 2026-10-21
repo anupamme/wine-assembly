@@ -130,7 +130,10 @@ module.exports={capture,CODE,NAME,ABI,diagnosticApis};
 
 // Source-only fixture tests import capture. A future admitted CLI run opts in
 // with an exclusive output filename and --require this file.
-if (process.env.ARMY_BLTFAST_OUTPUT) {
+// Node inherits preloads in auxiliary workers (including named-event transport).
+// Only the main CLI owns this capture; workers must neither reopen its file nor
+// wrap their own instantiate. Explicit capture() users remain independent.
+if (process.env.ARMY_BLTFAST_OUTPUT && require('node:worker_threads').isMainThread) {
   const fs=require('node:fs'), path=require('node:path');
   const out=process.env.ARMY_BLTFAST_OUTPUT;
   if (process.env.WINE_REGION_MAP) throw Error('Use the matching default region map');
