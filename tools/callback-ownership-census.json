@@ -3221,9 +3221,9 @@
           "$tmp"
         ]
       ],
-      "sha256": "1376e7b29e4a6701e73978f5ea59bbbf02055dea2bbbeae08f68cb01376c8551",
+      "sha256": "efcb7dda81314d186771f176b66ff594a7ebb82b6718db9cccd3a7b1270ef929",
       "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review. Startup review a339395: pending WM_SIZE reports minimized/maximized state and zero minimized extent; delivery target and retained callback boundaries unchanged.",
+      "reason": "Hock placement notification review 2026-10-21: pending main WM_SIZE now reads current CLIENT_RECT at selection; queue/remove and existing callback target/lifetime are unchanged. Invocation-token ownership remains pending.",
       "ownership": "pending"
     },
     {
@@ -3253,7 +3253,7 @@
     },
     {
       "file": "src/09a5-handlers-window.wat",
-      "name": "$handle_ShowWindow",
+      "name": "$show_window_core",
       "writes": 2,
       "boundaryCalls": [],
       "exports": [],
@@ -3267,9 +3267,9 @@
           "$wndproc"
         ]
       ],
-      "sha256": "1a480fd4a9d17ce7f50f4e78c5ee25d6409e0736bfeefc7358574b6377dcb097",
+      "sha256": "4d6f82f0d5d0e3c587cdda714c8bbb26db2b27027f3df52ebb83719f165bd99d",
       "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review. Startup review a339395: reject NULL/missing HWND before latch selection; select first eligible show, restrict activation commands, preserve prior visibility through synchronous guest-stack continuation. No private invocation token introduced.",
+      "reason": "Show-return frame construction unchanged. Prior visibility is captured for both ShowWindow results; placement/implicit creation use zero on destruction. Final WM_SIZE now returns through CACA003D before releasing the owned cells (2026-10-21 source-slice evidence; fresh actual-guest/runtime qualification pending). Other mixed-dispatch lifetimes and private invocation-token ownership remain pending.",
       "ownership": "pending"
     },
     {
@@ -4737,7 +4737,7 @@
     {
       "file": "src/09b-dispatch.wat",
       "name": "$win32_dispatch_inner",
-      "writes": 61,
+      "writes": 63,
       "boundaryCalls": [
         "$crt_callback_continue",
         "$crt_callback_continue",
@@ -4808,11 +4808,15 @@
           ]
         ],
         [
+          "global.get",
+          "$createwnd_ret_thunk"
+        ],
+        [
           "call",
           "$wnd_table_get",
           [
-            "global.get",
-            "$main_hwnd"
+            "local.get",
+            "$arg4"
           ]
         ],
         [
@@ -4823,8 +4827,8 @@
           "call",
           "$wnd_table_get",
           [
-            "global.get",
-            "$main_hwnd"
+            "local.get",
+            "$arg4"
           ]
         ],
         [
@@ -4835,8 +4839,8 @@
           "call",
           "$wnd_table_get",
           [
-            "global.get",
-            "$main_hwnd"
+            "local.get",
+            "$arg4"
           ]
         ],
         [
@@ -4847,13 +4851,17 @@
           "call",
           "$wnd_table_get",
           [
-            "global.get",
-            "$main_hwnd"
+            "local.get",
+            "$arg4"
           ]
         ],
         [
           "global.get",
           "$wndproc_addr"
+        ],
+        [
+          "global.get",
+          "$createwnd_ret_thunk"
         ],
         [
           "global.get",
@@ -5198,9 +5206,9 @@
           ]
         ]
       ],
-      "sha256": "7a041fc88b540d155423e5d0728339678affae78c09f3ed6194f791f1354b2f1",
+      "sha256": "ae5a94fa0474fd94f336f272c3a10239267c0b8aa7d92f1204f7e23e24e2ee75",
       "kind": "mixed-dispatch",
-      "reason": "Potential callback entry, completion, redirect or park; each listed EIP target remains pending retained-context ownership review. Startup review a339395: successful creation commits startup show using invocation-saved guest-frame HWND after callback acceptance; failure never restores latch. Activation/size payloads carry iconic state. Existing dialog, nested activation and removed-target liveness gaps remain.",
+      "reason": "Final SIZE lifetime correction 2026-10-21: allocate and synchronize CACA003D; retain target/destruction-result cells until final WM_SIZE returns, then validate the invocation target and release once. ShowWindow retains prior visibility; placement/implicit creation select zero on destruction. Exact dispatcher source-slice fixture passes 156 cases and rejects baseline plus four mutants. Maintained actual-guest extensions and full runtime qualification are UNEXECUTED; other mixed-dispatch/private invocation-token lifetimes remain pending.",
       "ownership": "pending"
     },
     {

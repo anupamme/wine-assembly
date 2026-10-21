@@ -1,5 +1,13 @@
 # TODOS
 
+## Hock notification qualification — 2026-10-21
+
+Placement/startup notification corrections are runtime-qualified on exact candidate
+776d37d55d2f749dcb29203e3bd26b8a5e9c05bd and accepted for integration. Full HUD,
+clock 120→86 and input passed the original 45-second route; score remained 0/20.
+Hits/scoring, completion, audio quality, FPS and Windows parity remain open.
+See [integration acceptance](docs/reviews/hock-qualified-notify-integration-20261021.md).
+
 ## Coordinated migration queue — 2026-10-01
 
 Historical sections below are preserved; they are not automatically ready work.

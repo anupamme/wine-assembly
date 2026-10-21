@@ -413,6 +413,12 @@
                 (global.set $paint_pending (i32.const 1))
                 (call $host_invalidate (global.get $main_hwnd)))
               (else
+                ;; Creation fails on destruction. Keep that result and the
+                ;; activation target above saved_ret/result, as ShowWindow does.
+                (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+                (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))
+                (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
+                (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $main_hwnd))
                 ;; Push WndProc args: hwnd, WM_ACTIVATEAPP(0x001C), TRUE, 0
                 (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
                 (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))                ;; lParam
@@ -453,27 +459,49 @@
     ;; ── First-ShowWindow synchronous activation chain (main window only) ──
     ;; Triggered by $handle_ShowWindow on the first non-hide call for main_hwnd.
     ;; Each thunk: wndproc returned → push next message → call wndproc again.
-    ;; Stack invariant: saved_ret and saved_hwnd sit at bottom throughout.
+    ;; Stack invariant: target HWND, destruction result, saved_ret, result
+    ;; sit below each callback. Both results are invocation-owned.
     ;; Chain: ShowWindow -> WM_ACTIVATE -> WM_SETFOCUS -> WM_MOVE -> WM_SIZE
-    ;;      -> CACA0001 (done, pop saved_ret+hwnd)
+    ;;      -> CACA003D (release owned frame) -> CACA0001 (saved_ret+result)
+
+    ;; Each continuation revalidates its own target, never a callback-mutated
+    ;; main_hwnd. On destruction, select this invocation's destruction result
+    ;; (entry visibility for ShowWindow, zero for placement/creation).
+    (if (i32.or
+          (i32.or (i32.eq (local.get $name_rva) (i32.const 0xCACA0022))
+                  (i32.eq (local.get $name_rva) (i32.const 0xCACA0023)))
+          (i32.or (i32.eq (local.get $name_rva) (i32.const 0xCACA0024))
+            (i32.or (i32.eq (local.get $name_rva) (i32.const 0xCACA0031))
+                    (i32.eq (local.get $name_rva) (i32.const 0xCACA003D)))))
+      (then
+        (local.set $arg4 (call $gl32 (i32.load offset=16 (global.get $reg_base))))
+        (if (i32.or (i32.eqz (local.get $arg4))
+              (i32.lt_s (call $wnd_table_find (local.get $arg4)) (i32.const 0)))
+          (then
+            (local.set $arg0 (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4))))
+            (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+            (call $gs32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 4)) (local.get $arg0))
+            (global.set $eip (global.get $createwnd_ret_thunk))
+            (global.set $steps (i32.const 0))
+            (return)))))
 
     ;; CACA0022: WM_ACTIVATEAPP returned → send WM_ACTIVATE synchronously
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0022))
       (then
         ;; Push WndProc args: hwnd, WM_ACTIVATE(0x0006), WA_ACTIVE(1), hwnd
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $main_hwnd))        ;; lParam = hwnd
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg4))        ;; lParam = hwnd
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base))
           (i32.or (i32.const 1)
-            (i32.shl (call $wnd_min_get (global.get $main_hwnd)) (i32.const 16)))) ;; WA_ACTIVE | iconic
+            (i32.shl (call $wnd_min_get (local.get $arg4)) (i32.const 16)))) ;; WA_ACTIVE | iconic
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x0006))             ;; WM_ACTIVATE
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $main_hwnd))        ;; hwnd
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg4))        ;; hwnd
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_setfocus_thunk))
-        (global.set $eip (call $wnd_table_get (global.get $main_hwnd)))
+        (global.set $eip (call $wnd_table_get (local.get $arg4)))
         (if (i32.eqz (global.get $eip))
           (then (global.set $eip (global.get $wndproc_addr))))
         (global.set $steps (i32.const 0))
@@ -483,7 +511,7 @@
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0023))
       (then
         ;; GetFocus already names the receiving window inside WM_SETFOCUS.
-        (global.set $focus_hwnd (global.get $main_hwnd))
+        (global.set $focus_hwnd (local.get $arg4))
         ;; Push WndProc args: hwnd, WM_SETFOCUS(0x0007), 0, 0
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0))                  ;; lParam = 0
@@ -492,10 +520,10 @@
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x0007))             ;; WM_SETFOCUS
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $main_hwnd))        ;; hwnd
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg4))        ;; hwnd
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_move_thunk))
-        (global.set $eip (call $wnd_table_get (global.get $main_hwnd)))
+        (global.set $eip (call $wnd_table_get (local.get $arg4)))
         (if (i32.eqz (global.get $eip))
           (then (global.set $eip (global.get $wndproc_addr))))
         (global.set $msg_phase (i32.const 5))  ;; skip all activation phases
@@ -503,7 +531,7 @@
         ;; once the WM_SETFOCUS handler returns (replaces legacy msg_phase==6
         ;; block). host_invalidate seeds the rgn map for region-driven pump.
         (global.set $paint_pending (i32.const 1))
-        (call $host_invalidate (global.get $main_hwnd))
+        (call $host_invalidate (local.get $arg4))
         (global.set $steps (i32.const 0))
         (return)))
 
@@ -511,7 +539,7 @@
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0024))
       (then
         (local.set $arg0 (call $paint_scratch_take))
-        (call $host_get_window_rect (global.get $main_hwnd) (local.get $arg0))
+        (call $host_get_window_rect (local.get $arg4) (local.get $arg0))
         ;; Push WndProc args: hwnd, WM_MOVE, 0, lParam=x|(y<<16).
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base))
@@ -525,10 +553,10 @@
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x0003))
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $main_hwnd))
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg4))
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_size_thunk))
-        (global.set $eip (call $wnd_table_get (global.get $main_hwnd)))
+        (global.set $eip (call $wnd_table_get (local.get $arg4)))
         (if (i32.eqz (global.get $eip))
           (then (global.set $eip (global.get $wndproc_addr))))
         (global.set $steps (i32.const 0))
@@ -538,14 +566,15 @@
     ;; SetWindowPos sequence must finish before posted commands can run.
     (if (i32.eq (local.get $name_rva) (i32.const 0xCACA0031))
       (then
-        ;; Restored startup uses the create-time pending size. Some Win98 apps
-        ;; make fragile first-show decisions from that exact value. Maximized
-        ;; startup must instead use the host-resized client size.
-        (if (call $wnd_min_get (global.get $main_hwnd))
+        ;; Keep target/destruction result live through WM_SIZE, including nested
+        ;; calls. CACA003D revalidates this target after the final callback.
+        ;; Activation/MOVE callbacks may have placed the window again. The
+        ;; creation-time pending value is a delivery flag, not current geometry.
+        ;; Read the authoritative client only after those callbacks return.
+        (call $defwndproc_do_nccalcsize (local.get $arg4))
+        (if (call $wnd_min_get (local.get $arg4))
           (then (local.set $arg0 (i32.const 0)))
-          (else (if (call $wnd_max_get (global.get $main_hwnd))
-          (then (local.set $arg0 (call $host_get_window_client_size (global.get $main_hwnd))))
-          (else (local.set $arg0 (global.get $pending_wm_size))))))
+          (else (local.set $arg0 (call $client_rect_wh_packed (local.get $arg4)))))
         ;; Push WndProc args: hwnd, WM_SIZE(0x0005), SIZE_*, lParam=client size.
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg0))              ;; lParam = cx|(cy<<16)
@@ -553,22 +582,33 @@
         (call $gs32 (i32.load offset=16 (global.get $reg_base))
           (select (i32.const 1)
             (select (i32.const 2) (i32.const 0)
-                    (call $wnd_max_get (global.get $main_hwnd)))
-            (call $wnd_min_get (global.get $main_hwnd)))) ;; SIZE_MINIMIZED/MAXIMIZED/RESTORED
+                    (call $wnd_max_get (local.get $arg4)))
+            (call $wnd_min_get (local.get $arg4)))) ;; SIZE_MINIMIZED/MAXIMIZED/RESTORED
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
         (call $gs32 (i32.load offset=16 (global.get $reg_base)) (i32.const 0x0005))             ;; WM_SIZE
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $main_hwnd))        ;; hwnd
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (local.get $arg4))        ;; hwnd
         (i32.store offset=16 (global.get $reg_base) (i32.sub (i32.load offset=16 (global.get $reg_base)) (i32.const 4)))
-        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_ret_thunk))
+        (call $gs32 (i32.load offset=16 (global.get $reg_base)) (global.get $createwnd_size_ret_thunk))
 	        ;; Consume pending_wm_size so GetMessageA drain path doesn't replay it.
-	        (global.set $pending_wm_size (i32.const 0))
+	        (if (i32.eq (local.get $arg4) (global.get $main_hwnd))
+          (then (global.set $pending_wm_size (i32.const 0))))
 	        ;; Match what the GetMessageA-drain path does: set WM_NCCALCSIZE pending.
-	        (call $nc_flags_set (global.get $main_hwnd) (i32.const 4))
-	        (call $invalidate_hwnd (global.get $main_hwnd))
-	        (global.set $eip (call $wnd_table_get (global.get $main_hwnd)))
+	        (call $nc_flags_set (local.get $arg4) (i32.const 4))
+	        (call $invalidate_hwnd (local.get $arg4))
+	        (global.set $eip (call $wnd_table_get (local.get $arg4)))
         (if (i32.eqz (global.get $eip))
           (then (global.set $eip (global.get $wndproc_addr))))
+        (global.set $steps (i32.const 0))
+        (return)))
+
+    ;; CACA003D: WM_SIZE returned. The shared check above selects the owned
+    ;; destruction result if needed. A live target keeps the normal result;
+    ;; main_hwnd may have changed, and the callback's EAX is not our result.
+    (if (i32.eq (local.get $name_rva) (i32.const 0xCACA003D))
+      (then
+        (i32.store offset=16 (global.get $reg_base) (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8)))
+        (global.set $eip (global.get $createwnd_ret_thunk))
         (global.set $steps (i32.const 0))
         (return)))
 
