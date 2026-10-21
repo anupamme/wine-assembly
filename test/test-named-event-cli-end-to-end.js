@@ -27,6 +27,10 @@ function load(file) {
   const mod = new Module(path.join(root, file), module);
   mod.filename = path.join(root, file); mod.paths = Module._nodeModulePaths(path.dirname(mod.filename));
   let text = source(file);
+  if (file === 'lib/thread-manager.js' && mutant === 'duplicate-registration') {
+    const needle = 'const registered = client.registerWait(reference, timeout, clock);';
+    assert(text.includes(needle)); text = text.replace(needle, 'client.registerWait(reference, timeout, clock); ' + needle);
+  }
   if (file === 'lib/thread-manager.js' && mutant === 'lost-pulse') {
     const needle = 'this._eventClient().waitStatus(wait.waitId)';
     assert(text.includes(needle));
@@ -80,7 +84,11 @@ async function workerFixture(slot = 0) {
   const h = slot ? adapter(f.tm, slot) : mainAdapter(f.tm);
   const broker = RPC.createMainBroker(f.memory, h, sigs, { onError: (n, e) => errors.push(e.code) });
   // Baseline Worker code is evaluated from its exact historical source too.
-  const workerSource = source('lib/guest-worker.js');
+  let workerSource = source('lib/guest-worker.js');
+  if (mutant === 'duplicate-completion') {
+    const needle = 'if (msg.namedWaitSequence || namedWaitTransport?.getNamedWaitSequence()) {';
+    assert(workerSource.includes(needle)); workerSource = workerSource.replace(needle, 'if (false) {');
+  }
   const completionStart = workerSource.indexOf("    if (msg.t === 'completeWait') {");
   const completionEnd = workerSource.indexOf("    if (msg.t === 'beginProcessSendWait'", completionStart);
   const w = new Worker(`
@@ -140,6 +148,7 @@ async function timing() {
       const validate = client.validateWaitClock.bind(client);
       client.validateWaitClock = clock => {
         const stamp = validate(clock);
+        assert.deepEqual(stamp.callerClock, clock, 'authority echoes the exact integer sample and domain');
         assert(Number(process.hrtime.bigint() - BigInt(clock.tick)) / 1e6 < 50, 'validation precedes expiry');
         block(180); return stamp;
       };
@@ -163,7 +172,14 @@ async function timing() {
       }
       // Same Worker, fresh invocation and metadata after every rejection.
       for (let i = 0; i < 12; i++) { f.tm.setEvent(h); assert.equal((await f.call(h, 500)).result, 0); }
+      const words = new Int32Array(f.memory.buffer, RPC.RPC_BASE + slot * RPC.RPC_STRIDE, RPC.CTRL_INTS);
+      Atomics.store(words, RPC.SLOT.WAIT_VERSION, 0);
+      f.tm.setEvent(h);
+      assert((await f.call(h, 50)).error, 'version disagreement rejects before the authority sees a wait');
+      assert.equal(f.tm.waitSingle(h, 0), 0);
+      Atomics.store(words, RPC.SLOT.WAIT_VERSION, 1);
       f.tm.setEvent(h); assert.equal((await f.call(h, 0)).result, 0);
+      assert.equal((await f.call(0x12345, 50)).result, 0, 'nonnamed legacy route remains unchanged');
       f.tm.setEvent(h); assert.equal((await f.call(h, -1)).result, 0xffffffff);
       assert.equal(f.tm.waitSingle(h, 0), 0);
       assert.equal(f.tm._authorityWaits.size, 0);
@@ -175,6 +191,7 @@ async function timing() {
       assert.equal(f.tm.resolveWait(r, {}, { threadId: slot + 1 }), null);
       f.tm.setEvent(h); f.tm.resetEvent(h);
       const done = f.tm.resolveWait(r, {}, { threadId: slot + 1 });
+      assert.notEqual(done, null, 'registered Worker Set-Reset wake must not be lost');
       assert.equal(done.result, 0);
       const bad = await f.complete({ ...done, namedWaitSequence: waiting.namedWaitSequence - 1 });
       assert(bad.ownershipMismatch); assert.equal(bad.esp, 256);
@@ -208,6 +225,11 @@ async function reservations() {
       tm.closeEvent(h);
     }
     const h = f.create();
+    const validClock = tm.captureNamedWaitEntry().clock;
+    for (const tick of [null, 1, '', '-1', '1.5', ' 1', '1e3', '9'.repeat(25), (process.hrtime.bigint() + 10000000000n).toString()]) {
+      assert.throws(() => client.validateWaitClock({ ...validClock, tick }), { code: 'EINVAL' });
+    }
+    assert.throws(() => client.validateWaitClock({ ...validClock, domain: 'foreign' }), { code: 'ECLOCKSCOPE' });
     assert.equal(mainAdapter(tm).wait_single(h, 50), 65535);
     const e = frame(h, 50); tm.mainInstance.exports = e;
     tm.setEvent(h); tm.resetEvent(h); await delay(180);
