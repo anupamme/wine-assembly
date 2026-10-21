@@ -103,4 +103,70 @@ assert.deepStrictEqual(check(nonlocalEntries, {version: 1,
     reason: 'Negative control', ownership: 'pending'}))}), []);
 assert(checkNonlocalAPIs(nonlocalSources, [{name: 'longjmp'}]).length >= 2,
   'fully refreshed census still cannot authorize nonlocal handler/API');
-console.log('callback ownership census mutation tests PASS (source inventory only)');
+// Exercise the real manifest, not only self-consistent fixture inventories.
+// An unreviewed lifetime edit must fail even when producer counts stay equal.
+const fs = require('fs'), path = require('path'), cp = require('child_process');
+const root = path.resolve(__dirname, '..');
+const real = JSON.parse(cp.execFileSync(process.execPath,
+  [path.join(root, 'tools/callback-ownership-census.js'), '--dump'], {encoding: 'utf8'}));
+const reviewed = require('../tools/callback-ownership-census.json');
+assert.deepStrictEqual(check(real.entries, reviewed), [], 'real source must match reviewed manifest');
+const hostSource = fs.readFileSync(path.join(root, 'host.js'), 'utf8');
+const retirement = 'this._processObject.wine = null;';
+assert(hostSource.includes(retirement));
+const changedHost = scanSources([{file: 'host.js', src: hostSource.replace(retirement, 'void this;')}]);
+assert.equal(changedHost.length, 1);
+const changedReal = real.entries.map(e => e.file === 'host.js' ? changedHost[0] : e);
+assert.deepStrictEqual(check(changedReal, reviewed),
+  ['changed producer host.js:host-file (sha256); review its lifetime'],
+  'removing process-host retirement must reject with an exact producer diagnostic');
+const workerSource = fs.readFileSync(path.join(root, 'lib/guest-worker.js'), 'utf8');
+const guard = '!namedWaitTransport?.consumeNamedWait(msg.namedWaitSequence)';
+assert(workerSource.includes(guard));
+const changedWorker = scanSources([{file: 'lib/guest-worker.js', src: workerSource.replace(guard, 'false')}]);
+assert.equal(changedWorker.length, 1);
+assert.deepStrictEqual(check(real.entries.map(e => e.file === 'lib/guest-worker.js' ? changedWorker[0] : e), reviewed),
+  ['changed producer lib/guest-worker.js:host-file (sha256); review its lifetime'],
+  'removing single-completion ownership must reject');
+// Startup integration: pin transport, first-show selection and saved invocation
+// ownership separately. Each mutation retains the same producer inventory.
+const startupMutations = [
+  ['host.js', 'host-file', 'hidden: pipes || showCmd === 0, showCmd, beforeRun, onExit,',
+    'hidden: pipes, beforeRun, onExit,'],
+  ['lib/browser-shell.js', 'host-file', 'pendingAppLaunches.push({ key, waitForExit, options });',
+    'pendingAppLaunches.push({ key, waitForExit });'],
+  ['lib/host-imports.js', 'host-file', 'count, forceSpawn, showCmd) => 0,', 'count) => 0,'],
+  ['lib/process-boot.js', 'host-file', 'if (cmd !== undefined) exports.set_startup_show(cmd);',
+    'if (cmd) exports.set_startup_show(cmd);'],
+  ['lib/renderer.js', 'host-file', 'cmd === 7 || cmd === 11', 'cmd === 7'],
+  ['src/09a5-handlers-window.wat', '$handle_CreateWindowExA',
+    '(call $startup_create_show (local.get $hwnd))',
+    '(call $startup_create_show (global.get $createwnd_saved_hwnd))'],
+  ['src/09a5-handlers-window.wat', '$handle_ShowWindow',
+    '(i32.or (i32.eqz (local.get $arg0))\n          (i32.lt_s (call $wnd_table_find (local.get $arg0)) (i32.const 0)))',
+    '(i32.lt_s (call $wnd_table_find (local.get $arg0)) (i32.const 0))'],
+  ['src/09a5-handlers-window.wat', '$handle_PeekMessageA_fetch',
+    '(select (i32.const 1)', '(select (i32.const 0)'],
+  ['src/09b-dispatch.wat', '$win32_dispatch_inner',
+    '(call $startup_create_show\n              (call $gl32 (i32.add (i32.load offset=16 (global.get $reg_base)) (i32.const 8))))',
+    '(call $startup_create_show (global.get $createwnd_saved_hwnd))'],
+];
+const watSources = fs.readdirSync(path.join(root, 'src')).filter(f => /\.watx?$/.test(f))
+  .map(f => ({file: 'src/' + f, src: fs.readFileSync(path.join(root, 'src', f), 'utf8')}));
+for (const [file, name, before, after] of startupMutations) {
+  const original = fs.readFileSync(path.join(root, file), 'utf8');
+  const start = name === 'host-file' ? 0 : original.indexOf('(func ' + name + ' ');
+  assert(start >= 0, `producer exists: ${name}`);
+  const at = original.indexOf(before, start);
+  assert(at >= start, `mutation target exists: ${name}`);
+  const mutated = original.slice(0, at) + after + original.slice(at + before.length);
+  // Host export recognition needs the actual WAT export reachability context.
+  const scanned = scanSources([...(name === 'host-file' ? watSources : []), {file, src: mutated}]);
+  const replacement = scanned.find(e => e.file === file && e.name === name);
+  assert(replacement, `producer survives: ${name}`);
+  assert.deepStrictEqual(check(real.entries.map(e =>
+    e.file === file && e.name === name ? replacement : e), reviewed),
+    [`changed producer ${file}:${name} (sha256); review its lifetime`],
+    `startup semantic mutation must reject: ${name} in ${file}`);
+}
+console.log('callback ownership census mutation tests PASS (fixtures, two lifetime and nine startup mutations; source inventory only)');
