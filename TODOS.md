@@ -1,5 +1,14 @@
 # TODOS
 
+- [x] Measure Hype logical gameplay FPS in browser
+  id: HYPE-BROWSER-FPS-20261013
+  status: done (one bounded instrumented browser logical callback interval)
+  owner: coordinator
+  worker: none (independent acceptance complete)
+  Result: Accepted12e430474/prior56c92dc2 on exactb88c818ba;188callbacks/10708.68ms=17.5558518884 logicalFPS,108real paired samples,authenticated slot1/internal1/exported2. Ten rejection checks and four gameplay images independently reviewed; old106wrong-owner samples invalid. Canonical728e1de8/build66tests reused;59originals verified. Software ANGLE/SwiftShader WebGL only; displayedFPS/hardwareGPU/nativeSoftware/fullgame/audio/parity/causal overhead unqualified.
+  Access: Coordinator snapshot-stop bx_2ghgsv9d completed12:36:32.756Z errornull; no runnable slot or new runtime action. Old SSH/resume denial not retried. No public deployment.
+  Evidence: docs/reviews/hype-fps-independent-integration-20261021.md; scratch/runs/20261021-hype-counter-owner-measure; scratch/runs/20261021-hype-fps-independent-integrate.
+
 ## Hock gameplay/scoring qualification — 2026-10-21
 
 Placement/startup notification corrections are runtime-qualified on exact candidate
@@ -1182,7 +1191,7 @@ Current scoped ownership after reconciling the stopped fleet. The shared operati
   prev-owner: claude:1863d2b5-bc58-4c0b-9c15-00fc951f0256 (fleet stopped)
   created: 2026-10-06T02:09:48.337Z
   accepted-by: claude:80aa9e95-435b-4acb-aeea-8ae3d860613c
-  Next: Surface4/7 ABI is merged. legacy-texture-rest-oct20 owns remaining noncube capability contracts. Cube advertisement correctionf856627 is off main pending fullVM, not cube storage support. Hype validator is main6ccd344268 but actual FPS capture is pending. Historical27 membership and software/WebGL gameplay coverage remain incomplete; exact local path checks are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
+  Next: Surface4/7 ABI is merged. legacy-texture-rest-oct20 owns remaining noncube capability contracts. Cube advertisement correctionf856627 is off main pending fullVM, not cube storage support. Hype bounded browser logical FPS independently accepted20261021:188callbacks/10708.68ms=17.5558518884 on software ANGLE/SwiftShader WebGL; see HYPE-BROWSER-FPS-20261013 and docs/reviews/hype-fps-independent-integration-20261021.md. Historical27 membership and software/WebGL gameplay coverage remain incomplete; exact local path checks are in docs/re-notes/dashboard-actionable-reconciliation-20261020.md.
   Done: Status table for the full GL/D3D set in docs (software + WebGL per app, with run ids), and each fixed app has a reviewed in-game screenshot and commit on main.
   Evidence: memory project_gl_d3d_corpus_goal (27-app set, 2026-09-22); tools/gfx-app-census.js; tools/gl-name-census.js
 

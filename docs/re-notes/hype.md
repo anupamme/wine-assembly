@@ -1,5 +1,26 @@
 # Hype: The Time Quest demo
 
+## Current measurement acceptance — 2026-10-21
+
+HYPE-BROWSER-FPS-20261013 is complete for one instrumented browser gameplay
+interval: **188 authenticated finish-callback entries / 10,708.68 ms =
+17.5558518884 logical FPS**, 108 real same-worker performance.now samples.
+Independent review accepted capture12e430474 and prior56c92dc2 against exact
+tested source b88c818ba; canonical module728e1de8, all59 originals and66 prior
+observer/validator tests verified/reused. Actual owner is slot1/internal tid1/
+exported ID2, selected by emission; old106 slot0 samples remain invalid, not
+zero FPS. Ten rejection checks pass, but the validator alone does not
+authenticate files or owners. Four actual gameplay/input images reviewed.
+
+Software ANGLE/SwiftShader WebGL only; no displayed FPS, hardware GPU, native
+software Glide, full-game/audio/parity or overhead-corrected-rate claim.
+Current access: coordinator snapshot-stopped bx_2ghgsv9d; final receipt records
+stop_223af722c87d2f18 completed12:36:32.756Z, error null. No runnable slot;
+no lifecycle or runtime action by this reviewer.
+See [independent acceptance](../reviews/hype-fps-independent-integration-20261021.md)
+and scratch/runs/20261021-hype-fps-independent-integrate. Historical blockers
+and RUNNING handoffs below retain their original observation scope.
+
 App: `hype_glide_demo` (experimental). Original executable:
 `test/binaries/candidates/hype-time-quest-demo/launch-game/MaiDFXvr_bleu.exe`.
 The executable directly imports 50 Glide 3 entry points. Static extraction,
@@ -491,3 +512,34 @@ recompiles at 32 slots: the game loop needs more pages than that, so a shared
 on-demand pool (and code-partition pooling with it) is the remaining lever.
 Evidence: `scratch/runs/20261011T0850Z-hype-fps-measure-boat`,
 `20261011T1000Z-hype-page-index-boat`, `20261011T1030Z-hype-page-index-ab-boat`.
+
+
+## 2026-10-21: original browser movement, FPS owner-attribution blocker
+
+Exact integrated main b88c818ba3a071877e889e7cc779975a193591ce was staged
+on authorized bx_2ghgsv9d through documented exec/file APIs.6731 Git blobs
+and59 originals38067871bytes verified before/after; canonical build and
+66 accepted observer/validator tests passed, including restored exact-HEAD
+append-only API-table baseline. Module728e1de80ec20a284fc41b339895ee8ac29f16e4ded83325b27576cfacd4466c.
+
+Two bounded browser attempts: first reached menu then synchronous API30s
+timeout closed it; second used detached exec and ordinary Enter/Space to
+reach the nighttime street. Reviewed ArrowUp600ms/ArrowDown600ms images
+show movement/reversal and stable world. Chrome151.0.7922.108, real Workers,
+Glide WebGL endpoint on ANGLE/SwiftShader software rendering,4vCPU x86_64.
+
+No FPS accepted. The sampler matched get_current_thread_id()==1, initially
+ambiguous across guest/render workers, then filtered guest-worker URL and
+selected slot0. Its106 real performance.now samples were count0 while
+gameplay advanced. src/13-exports.wat sets exported current_thread_id to
+internal tid+1: the startup log's internal tid1/slot1 is not exported ID1.
+Live callback code authentication alone did not establish emitting ownership.
+The unchanged accepted validator rejects the receipt with fps:null; this is
+a harness attribution blocker, not zero FPS or a demonstrated game defect.
+No third capture or source repair.
+
+Evidence/report/recovery: scratch/runs/20261021-hype-browser-fps-authorized;
+tracked review/archive docs/reviews/hype-browser-fps-authorized-20261021*.
+Browser/server closed12:10:30Z; source/build/originals retained on same box,
+left RUNNING idle/healthok, expiry14:01:16.889Z, coordinator lifecycle owner.
+No SSH retry, public deployment, main merge or workers.
