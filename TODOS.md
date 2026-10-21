@@ -9,13 +9,13 @@ real-input gameplay on the same module shows score 0/20→5/20.
 Exact collision/target, completion, audio quality, FPS and Windows parity remain open.
 See [integration acceptance](docs/reviews/hock-qualified-notify-integration-20261021.md).
 
-- [ ] Add original Hock-A-Loogie (1995) requested in Telegram103
+- [x] Add original Hock-A-Loogie (1995) requested in Telegram103
   id: TG103-HOCK-A-LOOGIE-1995-20261020
-  status: candidate corpus registration and bounded explicit-EXE gameplay/scoring accepted; registered-route runtime unqualified
+  status: accepted original corpus registration, registered CLI startup, normal browser selector/Launch and bounded mouse gameplay/scoring
   Done: Original game registered, player-controlled gameplay and reviewed screenshots with exact source/runtime evidence.
   Evidence: [scoring review and integration](docs/reviews/hock-scoring-runtime-20261021.md); report54b0ee54ba8053d7d430350dc332e1ff1ddcce92 on qualified inputs integrated at d2034ccf750f2482fa78012b30039800e75b9f54. Original39-file package, real mouse charge/release, visible0/20→5/20; source/module/package identities retained. Capacity hold resolved; evidence integrated without runtime/build.
-  Next: Coordinator owns any registered-route runtime/app-selector assignment. Candidate hock-a-loogie-1995 is accepted with its original39-file recipe; actual list/dry-run is LOCAL with zero skips after provenance-based BG assertion correction. See [combined acceptance](docs/reviews/hock-corpus-independent-integration-20261021.md). No lib/apps.js selector entry or registered guest execution was added or qualified.
-  Limits: Task stays open for registered-route acceptance; candidate registration does not transfer explicit-EXE gameplay evidence to that route. Whole-game completion, persistence, audio quality, FPS and Windows parity remain unqualified. Exact collision instant/struck target remain unqualified. Broader goals remain open; no automatic follow-up assignment. Runtime bx_c6f3np32 was snapshot-stopped by coordinator at06:53:53.444Z.
+  Browser acceptance: Association b000885e and launcher fix52c165ee/evidence6ccf7691 independently reviewed against main71bc4a6d. Actual normal selector plus Launch reaches original selection and real mouse gameplay0/20→10/20;102outer/85inner seals and source/module/original39-file38-companion mapping verified. See [independent integration](docs/reviews/hock-toolbar-independent-integration-20261021.md). Registered CLI startup was independently accepted at71bc4a6d; prior explicit-EXE0→5 remains separate evidence.
+  Limits: Whole-game completion, persistence, keyboard coverage, audio quality, FPS and Windows parity remain unqualified. Exact collision instant/struck target remain unqualified. Broader goals remain open; coordinator assigns any further work. No public deployment. SAME bx_egnm3u4y remains coordinator-reported RUNNING/idle10:06UTC, expiry10:44:02.530UTC; coordinator owns shutdown, no runtime replay/lifecycle action in this review.
 
 ## Coordinated migration queue — 2026-10-01
 
