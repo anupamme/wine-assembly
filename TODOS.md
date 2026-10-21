@@ -1,12 +1,21 @@
 # TODOS
 
-## Hock notification qualification — 2026-10-21
+## Hock gameplay/scoring qualification — 2026-10-21
 
 Placement/startup notification corrections are runtime-qualified on exact candidate
 776d37d55d2f749dcb29203e3bd26b8a5e9c05bd and accepted for integration. Full HUD,
-clock 120→86 and input passed the original 45-second route; score remained 0/20.
-Hits/scoring, completion, audio quality, FPS and Windows parity remain open.
+clock 120→86 and input passed the original 45-second route. Subsequent sealed
+real-input gameplay on the same module shows score 0/20→5/20.
+Exact collision/target, completion, audio quality, FPS and Windows parity remain open.
 See [integration acceptance](docs/reviews/hock-qualified-notify-integration-20261021.md).
+
+- [ ] Add original Hock-A-Loogie (1995) requested in Telegram103
+  id: TG103-HOCK-A-LOOGIE-1995-20261020
+  status: bounded player-controlled gameplay/scoring accepted; registration requirement not established
+  Done: Original game registered, player-controlled gameplay and reviewed screenshots with exact source/runtime evidence.
+  Evidence: [scoring review and integration](docs/reviews/hock-scoring-runtime-20261021.md); report54b0ee54ba8053d7d430350dc332e1ff1ddcce92 on qualified inputs integrated at d2034ccf750f2482fa78012b30039800e75b9f54. Original39-file package, real mouse charge/release, visible0/20→5/20; source/module/package identities retained. Capacity hold resolved; evidence integrated without runtime/build.
+  Next: Coordinator must resolve original-game registration acceptance: no Hock/BBLOOGIE entry was found in main lib/apps.js or test/candidate-corpus/manifest.json; the reviewed route uses explicit --exe. No registration or other production change is authorized in this integration.
+  Limits: Gameplay/scoring and reviewed exact-identity screenshots satisfy those parts of Done, but registration is not established, so the task stays open. Whole-game completion, audio, FPS and Windows parity are separate unqualified dimensions. Exact collision instant/struck target remain unqualified. Broader goals remain open; no automatic follow-up assignment. Runtime bx_c6f3np32 was snapshot-stopped by coordinator at06:53:53.444Z.
 
 ## Coordinated migration queue — 2026-10-01
 
