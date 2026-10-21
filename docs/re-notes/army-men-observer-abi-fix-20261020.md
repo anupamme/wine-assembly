@@ -79,3 +79,24 @@ Self-contained replay/source evidence and the remote commit receipt are in
 `scratch/runs/20261020-army-observer-abi-fix`. Initial corruption remains
 unknown; terrain-stripe causality, native COM/full-VM and actual pre/post pixel
 capture remain pending a separate runtime assignment.
+
+## 2026-10-21 original runtime and preload ownership correction
+
+Exact main30a2c3fb plus observer-only candidate6f26b8c35 repairs a startup
+ETIMEDOUT without changing named-event transport or deadlines. Node inherited
+the CLI observer preload into the authority worker, whose exclusive open of
+the main owner's evidence path threw EEXIST before server startup. Automatic
+preload installation now requires isMainThread; explicit capture() is unchanged.
+Real --require and NODE_OPTIONS worker regressions fail before/pass after,
+while main ownership and evidence rejection controls remain enforced.
+
+On the same assigned box, unchanged canonical728e1de8 module and419 verified
+originals, ole32 DllMain now returns1; ordinary click reaches Boot Camp and
+Enter dismisses its welcome pane. Inspected before/after Numpad6 frames show
+unobscured terrain and a camera response. The 750-batch run exits0. Eight
+original BltFast pairs now complete with HRESULT0 and matching sampled copied
+bytes; initial corruption/stripe causality remain unknown. This is bounded
+CLI input/capture evidence, not FPS/audio/browser/full-gameplay qualification.
+See [the startup repair report](../reviews/army-authority-startup-repair-20261021.md)
+and its sealed evidence archive. Candidate awaits independent acceptance;
+main was not merged by this worker.
