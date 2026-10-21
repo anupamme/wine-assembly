@@ -7,11 +7,12 @@ const root = path.resolve(__dirname, '..');
 const filename = path.join(__dirname, 'test-cli-candidate-corpus.js');
 const localRequire = createRequire(filename);
 const calls = [];
+let childResult = { status: 0, stdout: 'bounded smoke', stderr: '' };
 const moduleObject = { exports: {} };
 function requireStub(name) {
   if (name === 'child_process') return { spawnSync(command, args, options) {
     calls.push({ command, args, options });
-    return { status: 0, stdout: 'bounded smoke', stderr: '' };
+    return childResult;
   } };
   return localRequire(name);
 }
@@ -32,6 +33,16 @@ try {
   const result = runCandidate(candidate, '/original/silver.exe', '/snapshot.wasm');
   assert.equal(result.status, 'READY');
   assert.equal(calls.length, 1);
+  assert.equal(calls[0].options.killSignal, 'SIGKILL',
+    'the smoke deadline must terminate a CPU-bound runner with a JS signal handler');
+  const started = Date.now();
+  const timedOut = require('child_process').spawnSync(process.execPath, ['-e',
+    "process.on('SIGTERM', () => {}); process.stdout.write('armed'); while (true) {}"],
+  { ...calls[0].options, timeout: 1000 });
+  assert.equal(timedOut.stdout, 'armed', 'negative fixture entered its CPU loop');
+  assert.equal(timedOut.error.code, 'ETIMEDOUT');
+  assert.equal(timedOut.signal, 'SIGKILL');
+  assert(Date.now() - started < 5000, 'termination must finish promptly');
   const args = calls[0].args;
   for (const value of ['--exe=/original/silver.exe', '--wasm=/snapshot.wasm',
     '--exe-guest-path=C:\\SILVER\\silver.exe', '--cwd=C:\\SILVER\\',
@@ -50,6 +61,29 @@ try {
   assert.equal(runCandidate(candidate, '/original/silver.exe', '/snapshot.wasm').status, 'BLOCKED');
   assert.equal(calls.length, 1);
   console.log('PASS actual runner launch arguments, missing media, distinct roots, directory validation');
+  candidate.cli = {};
+  childResult = timedOut;
+  const timeoutVerdict = runCandidate(candidate, '/original/silver.exe', '/snapshot.wasm');
+  assert.equal(timeoutVerdict.status, 'BLOCKED');
+  assert.equal(timeoutVerdict.reason, 'timeout');
+  console.log('PASS CPU-bound child hard deadline; timeout remains BLOCKED');
+  const warning = '[dll] comctl32.dll is loaded as a real PE but is not on disk (comctl32.dll); ' +
+    'its imports fall to WAT stubs and an ordinal import from it crashes as "<ord>". ' +
+    'test/binaries/dlls is gitignored: copy it into a fresh worktree.';
+  childResult = { status: 0, stdout: 'Stats: 68196 API calls, 3000 batches', stderr: warning };
+  assert.equal(runCandidate(candidate, '/original/hock.exe', '/snapshot.wasm').status, 'READY',
+    'a conditional DLL warning is not an observed guest crash');
+  for (const marker of ['*** CRASH at batch 7: unreachable', 'STUCK at 0x404340',
+    'RuntimeError: unreachable', 'LinkError: incompatible import',
+    'UNIMPLEMENTED API: MissingFunction', 'failed to load required.dll']) {
+    childResult = { status: 0, stdout: marker, stderr: warning };
+    assert.equal(runCandidate(candidate, '/original/hock.exe', '/snapshot.wasm').status, 'BLOCKED', marker);
+  }
+  for (const result of [{ status: 1 }, { status: null, signal: 'SIGKILL' }, timedOut]) {
+    childResult = { stdout: '', stderr: warning, ...result };
+    assert.equal(runCandidate(candidate, '/original/hock.exe', '/snapshot.wasm').status, 'BLOCKED');
+  }
+  console.log('PASS conditional warning vs genuine crash/stuck/error/missing-DLL/exit/signal/timeout controls');
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
 }

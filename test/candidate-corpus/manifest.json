@@ -5091,7 +5091,7 @@
       },
       "cli": {
         "maxBatches": 3000,
-        "batchSize": 100000,
+        "batchSize": 1000,
         "vfsInclude": [
           "**/*"
         ]

@@ -178,6 +178,11 @@ function validate(c) {
   assert.deepStrictEqual(c.executables, ['game/BBLOOGIE.EXE']);
   assert.deepStrictEqual(c.browser, {fileRoot: 'game', exe: 'game/BBLOOGIE.EXE'});
   assert.deepStrictEqual(c.cli.vfsInclude, ['**/*']);
+  // Measured registered smoke: retain 3000 batches, but use the CLI's normal
+  // 1000-block quantum. 100000 spends the deadline polling at the start screen.
+  assert.equal(c.cli.batchSize, 1000);
+  assert.equal(c.cli.maxBatches, 3000);
+  assert.equal(c.cli.timeoutMs || 120000, 120000);
   assert.deepStrictEqual(c.postExtract, [{type: 'extractArchive', archive: 'distribution/BEAVISLG.ZIP', into: 'game'}]);
   assert.equal(c.packages.length, 1);
   assert.equal(c.packages[0].url, 'https://archive.org/download/Hock-A-Loogie-1995/beavislg.zip');
@@ -192,11 +197,13 @@ assert.equal(manifest.candidates.filter(c => c.id === candidate.id).length, 1);
 for (const mutate of [c => c.localOnly = false, c => c.postExtract = [],
   c => c.postExtract[0].archive = 'BEAVISLG.ZIP', c => c.postExtract[0].into = 'wrong',
   c => c.browser.fileRoot = 'distribution', c => c.executables = ['BBLOOGIE.EXE'],
-  c => c.cli.vfsInclude = ['*.exe'], c => c.packages[0].sha1 = '0'.repeat(40)]) {
+  c => c.cli.vfsInclude = ['*.exe'], c => c.packages[0].sha1 = '0'.repeat(40),
+  c => c.cli.batchSize = 100000, c => c.cli.maxBatches = 80,
+  c => c.cli.timeoutMs = 120001]) {
   const broken = structuredClone(candidate); mutate(broken);
   assert.throws(() => validate(broken));
 }
-console.log('PASS registration and 8 negative controls');
+console.log('PASS registration and 11 negative controls');
 const intakeArg = process.argv.find(a => a.startsWith('--intake='));
 if (!intakeArg) {
   console.log('SKIP retained-package extraction: pass --intake=/absolute/intake/directory');

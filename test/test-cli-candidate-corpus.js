@@ -83,7 +83,8 @@ function classify(output, status, signal, error) {
   if (error && error.code === 'ETIMEDOUT') return { status: 'BLOCKED', reason: 'timeout' };
   const missingDll = output.match(/(?:cannot|failed to) (?:load|resolve)[^\r\n]*\.dll[^\r\n]*/i);
   if (missingDll) return { status: 'BLOCKED', reason: missingDll[0].trim() };
-  const marker = output.match(/(?:RuntimeError|LinkError|CRASH|STUCK)[^\r\n]*/i);
+  // Match diagnostic tokens, not prose such as the DLL warning's "crashes as".
+  const marker = output.match(/\b(?:RuntimeError|LinkError|CRASH|STUCK)\b[^\r\n]*/i);
   if (marker) return { status: 'BLOCKED', reason: marker[0].trim().slice(0, 180) };
   if (signal) return { status: 'BLOCKED', reason: `terminated by ${signal}` };
   if (status !== 0) return { status: 'BLOCKED', reason: `runner exit ${status}` };
@@ -105,6 +106,9 @@ function runCandidate(candidate, executable, wasmPath) {
     cwd: ROOT,
     encoding: 'utf8',
     timeout: cli.timeoutMs || 120000,
+    // run.js handles SIGTERM in JS; a CPU-bound guest can keep that callback
+    // queued indefinitely. This smoke deadline must also bound termination.
+    killSignal: 'SIGKILL',
     maxBuffer: 32 * 1024 * 1024,
     stdio: ['ignore', 'pipe', 'pipe'],
   });

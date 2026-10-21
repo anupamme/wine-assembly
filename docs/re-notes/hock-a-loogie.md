@@ -173,3 +173,28 @@ candidate `86ffa207` are superseded; this task has no runtime allocation.
 Accepted startup/input/scoring evidence above is from an explicit-EXE route,
 not this registry recipe. Completion, persistence, audio quality, FPS, Windows
 parity and registered/browser route runtime acceptance remain unqualified.
+
+
+## Registered CLI timeout repair (2026-10-21; branch review pending)
+
+On exact main d4ba733 the registered 3000 × 100000-block smoke overspent its
+120-second deadline while repeatedly running the already-visible startup loop.
+Measured batches returned normally; this was not a single-call hang. Reusing the
+prior successful driver's normal 1000-block quantum retains all 3000 batches
+and completes the actual registered child in 23.307 seconds. The corpus now
+uses SIGKILL at its unchanged deadline and matches complete CRASH/STUCK tokens,
+not the conditional missing-DLL warning word “crashes”. Genuine fatal and timeout
+controls remain blocked. The oversized-workload actual registered control
+returns ETIMEDOUT/SIGKILL rather than hanging past the deadline.
+
+The actual `test/test-cli-candidate-corpus.js --id=hock-a-loogie-1995 --strict`
+route passes 1 READY / zero blocked/skipped/harness failures. A separate replay
+adding only the normal PNG output flag shows the original character-selection
+screen; that image matches the explicit-EXE diagnostic captures. Canonical
+all-gates rebuild retains SHA256 728e1de8…, original 39 files / 38 companions
+remain intact. No registered input/scoring, browser route, completion, audio
+quality, persistence, FPS or Windows parity claim follows. Missing-comctl32
+advisory remains visible. See the [repair report](../reviews/hock-registered-timeout-repair-20261021.md)
+for exact source/module identity, negative controls, failed exploratory steps,
+evidence and same-box recovery. Independent review is required before merging
+`task/hock-registered-timeout-repair-oct21`.
