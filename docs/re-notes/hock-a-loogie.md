@@ -2,10 +2,10 @@
 
 Current status (2026-10-21): bounded original-game startup, input and visible
 0/20 → 5/20 scoring evidence is accepted on the explicit-EXE route, integrated
-at `2e2c363e8`. Candidate registration reconciliation is preserved on
-`task/hock-registration-reconcile-oct21`, **not integrated**: the existing corpus
-runner rejects main's unrelated Baldur's Gate package pin before selecting
-Hock. See the [registration review](../reviews/hock-registration-reconcile-20261021.md).
+at `2e2c363e8`. Candidate registration and the provenance-based BG corpus gate
+correction are independently accepted together. Actual corpus list/dry-run now
+reports Hock LOCAL with zero skips; original extraction, all 39 file hashes and
+38 companion mappings pass. See the [combined acceptance](../reviews/hock-corpus-independent-integration-20261021.md).
 No app-selector or registered-route runtime qualification is claimed.
 
 ## Historical startup placement repair (2026-10-21)
@@ -122,7 +122,7 @@ unqualified. No guest bytes/state or production source were changed.
 
 ## Original candidate package contract (2026-10-21)
 
-The proposed `hock-a-loogie-1995` candidate recipe is local-only proprietary
+The accepted `hock-a-loogie-1995` candidate recipe is local-only proprietary
 Viacom New Media material; it grants no redistribution or public deployment.
 Source is the archival wrapper at
 `https://archive.org/download/Hock-A-Loogie-1995/beavislg.zip`, not an
@@ -166,8 +166,9 @@ node test/test-hock-a-loogie-local-registration.js --intake=/home/user/wine-asse
 ```
 
 Without the intake option only metadata checks run and package checks explicitly
-skip. The registration review records actual fetcher/planner/VFS checks and the
-unrelated corpus-runner blocker. Historical runtime/publication holds in saved
+skip. The historical registration review records actual fetcher/planner/VFS checks
+and the then-unresolved corpus blocker, now resolved by the combined acceptance.
+Historical runtime/publication holds in saved
 candidate `86ffa207` are superseded; this task has no runtime allocation.
 Accepted startup/input/scoring evidence above is from an explicit-EXE route,
 not this registry recipe. Completion, persistence, audio quality, FPS, Windows
