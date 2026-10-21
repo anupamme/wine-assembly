@@ -920,6 +920,16 @@
       (i32.sub (local.get $right) (local.get $left))
       (i32.sub (local.get $bottom) (local.get $top))
       (i32.const 0))
+    ;; Placement changed the outer rect; GetClientRect and the renderer prefer
+    ;; USER's CLIENT_RECT once initialized. Refresh it after the host move,
+    ;; as SetWindowPos does, before showing or returning the new placement.
+    (call $defwndproc_do_nccalcsize (local.get $arg0))
+    (call $host_sync_window_client
+      (local.get $arg0)
+      (call $wnd_client_screen_x (local.get $arg0))
+      (call $wnd_client_screen_y (local.get $arg0))
+      (i32.sub (call $client_rect_get_r (local.get $arg0)) (call $client_rect_get_l (local.get $arg0)))
+      (i32.sub (call $client_rect_get_b (local.get $arg0)) (call $client_rect_get_t (local.get $arg0))))
     ;; showCmd used to be read and dropped, so an app that saved "I was
     ;; maximized" and set the placement back at startup got its normal rect and
     ;; nothing else.
