@@ -6,6 +6,67 @@
 const assert = require('assert');
 const { createBrowserShell } = require('../lib/browser-shell');
 const { applyStartupShow } = require('../lib/process-boot');
+const fs = require('fs');
+const path = require('path');
+
+async function checkOptionLifetimes() {
+  // Execute the actual scheduling/public-entry slice, stubbing the inner PE
+  // loader only. This is host option transport, not guest-token conformance.
+  const source = fs.readFileSync(path.join(__dirname, '../lib/browser-shell.js'), 'utf8');
+  const start = source.indexOf('    let launchInFlight = false;');
+  const end = source.indexOf('    function settleLaunchWindow(', start);
+  assert(start >= 0 && end > start);
+  const calls = [], tasks = [], settled = [], failures = [], runningApps = [];
+  let hold = null;
+  const api = {};
+  const fixture = new Function('api', 'apps', 'runningApps', 'queueMicrotask',
+    'launchAppInner', 'settleLaunchWindow', 'appendDebugLog', `
+    const launchUi = null;
+    let pendingLaunchFail = null;
+    ${source.slice(start, end)}
+    return { launchApp, queuePendingLaunch, dispatchPendingLaunch,
+      cancel() { inFlightLaunch = { cancelled: true }; },
+      failWith(fn) { pendingLaunchFail = fn; },
+      state() { return { launchInFlight, inFlightLaunch }; } };
+  `)(api, { fixture: {} }, runningApps, fn => tasks.push(fn),
+    async (key, options) => { calls.push({ key, options }); if (hold) await hold; },
+    (ctx, options) => settled.push(options), () => {});
+  api.launchApp = fixture.launchApp;
+  const options = Object.freeze({ showCmd: 0, bypassSingleApp: true,
+    beforeRun() {}, onExit() {}, retained: new Map() });
+  await fixture.launchApp('fixture', options);
+  assert.strictEqual(calls[0].options, options);
+  assert.strictEqual(settled[0], options);
+  runningApps.push({});
+  fixture.queuePendingLaunch('fixture', true, options);
+  assert.equal(tasks.length, 0, 'parent-exit wait must hold launch');
+  runningApps.pop(); fixture.dispatchPendingLaunch();
+  tasks.shift()(); await Promise.resolve(); await Promise.resolve();
+  assert.strictEqual(calls[1].options, options, 'queue retains object/callback owner');
+  let release;
+  hold = new Promise(resolve => { release = resolve; });
+  const active = fixture.launchApp('fixture', options);
+  await fixture.launchApp('fixture', options);
+  assert.equal(calls.length, 3, 'reentrant request cannot replace live boot');
+  fixture.cancel();
+  await fixture.launchApp('fixture', options);
+  assert.equal(calls.length, 3, 'replacement waits for cancelled boot cleanup');
+  hold = null; release(); await active;
+  tasks.shift()(); await Promise.resolve(); await Promise.resolve();
+  const restarted = calls[3].options;
+  for (const key of ['showCmd', 'bypassSingleApp', 'beforeRun', 'onExit', 'retained']) {
+    assert.strictEqual(restarted[key], options[key], `restart preserves ${key}`);
+  }
+  // Restart already clones the options to attach directIntent; callbacks and
+  // retained assets must still belong to the original request.
+  hold = Promise.reject(new Error('inner failure'));
+  fixture.failWith(error => failures.push(error.message));
+  await fixture.launchApp('fixture', options);
+  assert.deepStrictEqual(failures, ['inner failure']);
+  assert.deepStrictEqual(fixture.state(), { launchInFlight: false, inFlightLaunch: null });
+  assert.strictEqual(settled.at(-1), options, 'failure finally keeps request ownership');
+  console.log('PASS option identity, parent-exit queue, reentrancy, cancelled restart and failure cleanup');
+}
 
 async function check(label, args, expectedShowCmd) {
   const calls = [], booting = [], startup = [];
@@ -58,6 +119,7 @@ async function check(label, args, expectedShowCmd) {
 
 (async () => {
   try {
+    await checkOptionLifetimes();
     await check('toolbar with no arguments', [], undefined);
     await check('app key with omitted options', ['fixture'], undefined);
     await check('explicit undefined', ['fixture', undefined], undefined);

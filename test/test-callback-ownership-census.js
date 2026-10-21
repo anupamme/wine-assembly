@@ -169,4 +169,26 @@ for (const [file, name, before, after] of startupMutations) {
     [`changed producer ${file}:${name} (sha256); review its lifetime`],
     `startup semantic mutation must reject: ${name} in ${file}`);
 }
-console.log('callback ownership census mutation tests PASS (fixtures, two lifetime and nine startup mutations; source inventory only)');
+// Pin real host changes and lifetime-sensitive neighboring paths. These
+// mutations retain the producer inventory: only exact whole-file sealing can
+// reject them. No mutation refreshes its own expected hash.
+const hostReviewMutations = [
+  ['lib/apps.js', "requiredFiles: true,\n      },\n      kkrieger_beta:",
+    "requiredFiles: false,\n      },\n      kkrieger_beta:"],
+  ['lib/browser-shell.js', 'launchOpts = launchOpts ?? {};', 'launchOpts = {};'],
+  ['lib/browser-shell.js', 'showCmd: launchOpts.showCmd,', 'showCmd: launchOpts.showCmd || 1,'],
+  ['lib/browser-shell.js', 'options: launchOpts || {}, intent: null', 'options: {}, intent: null'],
+  ['lib/browser-shell.js', 'finally { launchOpts.onExit(w); }', 'finally {}'],
+  ['lib/browser-shell.js', 'await Promise.resolve(launchOpts.beforeRun(wine))',
+    'await Promise.resolve()'],
+];
+for (const [file, before, after] of hostReviewMutations) {
+  const original = fs.readFileSync(path.join(root, file), 'utf8');
+  assert.equal(original.split(before).length, 2, `unique host mutation: ${before}`);
+  const scanned = scanSources([...watSources, {file, src: original.replace(before, after)}]);
+  const replacement = scanned.find(e => e.file === file && e.name === 'host-file');
+  assert(replacement, `host producer survives: ${file}`);
+  assert.deepStrictEqual(check(real.entries.map(e => e.file === file ? replacement : e), reviewed),
+    [`changed producer ${file}:host-file (sha256); review its lifetime`]);
+}
+console.log('callback ownership census mutation tests PASS (fixtures, two lifetime, nine startup and six host review mutations; source inventory only)');

@@ -270,17 +270,17 @@
     {
       "file": "lib/apps.js",
       "name": "host-file",
-      "sha256": "ae48052ee3b6b827d99b2a61ca74ad934d382d6737a686297fa9cebb58a2a22f",
+      "sha256": "09aa50e962aae8c8de0495d1820ce2737e0a091092e795688fcba5da62144669",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. Review 20261021: only Mad Bomber private candidate metadata, asset paths and threads=false added since the pinned source; no executable callback producer, restoration or lifetime change. Whole-file conservative inventory retained.",
+      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. Review 20261021: Mad Bomber metadata previously reviewed. Entire delta from seal at 2ae81e402 to 80f8278a adds only Hock local selector/EXE/required manifest data (b000885e); no executable callback producer, restoration or lifetime change. Whole-file inventory and ownership pending retained. See docs/reviews/army-host-census-reconcile-20261021.md.",
       "ownership": "pending"
     },
     {
       "file": "lib/browser-shell.js",
       "name": "host-file",
-      "sha256": "705eed3d465244d383b89d9aacfec98fa7bfbed6282d64040aca6daa2accaa67",
+      "sha256": "bcc096641ebe4cd587aed5abbf160ef73dfee5bdaae96ad4a7581cec60e6d318",
       "kind": "host-entry",
-      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. Startup review a339395: pending queue retains launch options; only bypassSingleApp tracked children bypass parent-exit scheduling. Options reach loadExe; no new guest continuation identity.",
+      "reason": "Conservative lexical host boundary match; entire file retained for alias, exception and restoration review. Startup review a339395: pending queue retains launch options; only bypassSingleApp tracked children bypass parent-exit scheduling. Entire delta from seal at 2ae81e402 to 80f8278a is nullish launchOpts normalization (52c165ee): supplied object/callback identity and showCmd zero survive; queue, restart, cancellation, beforeRun and onExit paths unchanged. No new guest continuation identity or ownership certification. See docs/reviews/army-host-census-reconcile-20261021.md.",
       "ownership": "pending"
     },
     {
